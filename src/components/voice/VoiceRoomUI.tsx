@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff, Headphones, PhoneOff, Monitor, Maximize2 } from 'lucide-react';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
@@ -37,23 +37,31 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
         audio.autoplay = true;
         remoteAudiosRef.current[p.id] = audio;
       } else if (p.stream && remoteAudiosRef.current[p.id]) {
-        remoteAudiosRef.current[p.id].srcObject = p.stream;
+        const audioElement = remoteAudiosRef.current[p.id];
+        if (audioElement) {
+          audioElement.srcObject = p.stream;
+        }
       }
     });
 
     // Cleanup disconnected participants
     Object.keys(remoteAudiosRef.current).forEach(id => {
       if (!participants.find(p => p.id === id)) {
-        remoteAudiosRef.current[id].pause();
-        remoteAudiosRef.current[id].srcObject = null;
-        delete remoteAudiosRef.current[id];
+        const audioElement = remoteAudiosRef.current[id];
+        if (audioElement) {
+          audioElement.pause();
+          audioElement.srcObject = null;
+          delete remoteAudiosRef.current[id];
+        }
       }
     });
   }, [participants]);
 
   useEffect(() => {
     Object.values(remoteAudiosRef.current).forEach(audio => {
-      audio.muted = isDeafened;
+      if (audio) {
+        audio.muted = isDeafened;
+      }
     });
   }, [isDeafened]);
 
