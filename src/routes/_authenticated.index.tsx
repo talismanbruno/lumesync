@@ -150,6 +150,8 @@ function DashboardComponent() {
   useEffect(() => {
     if (!activeChannel) return;
     
+    let isSubscribed = true;
+
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from("messages")
@@ -163,7 +165,9 @@ function DashboardComponent() {
         return;
       }
       
-      setMessages(data as Message[]);
+      if (isSubscribed) {
+        setMessages(data as Message[]);
+      }
     };
     
     fetchMessages();
@@ -181,46 +185,40 @@ function DashboardComponent() {
         async (payload) => {
           const newMsg = payload.new as any;
           
-          // Hydrate profile data
           let profile = profilesCache[newMsg.user_id] || null;
           if (!profile) {
             const { data } = await supabase
               .from("profiles")
               .select("*")
               .eq("id", newMsg.user_id)
-              .single();
+              .maybeSingle();
             if (data) {
               profile = data as Profile;
-              setProfilesCache(prev => {
-                const updated = { ...prev };
-                if (profile) updated[newMsg.user_id] = profile;
-                return updated;
-              });
+              setProfilesCache(prev => ({ ...prev, [newMsg.user_id]: profile as Profile }));
             }
           }
           
-          const hydratedMsg: Message = { 
-            id: newMsg.id,
-            channel_id: newMsg.channel_id,
-            user_id: newMsg.user_id,
-            content: newMsg.content,
-            created_at: newMsg.created_at,
-            profile: profile
-          };
-          
-          setMessages(prev => [...prev, hydratedMsg]);
+          if (isSubscribed) {
+            const hydratedMsg: Message = { 
+              id: newMsg.id,
+              channel_id: newMsg.channel_id,
+              user_id: newMsg.user_id,
+              content: newMsg.content,
+              created_at: newMsg.created_at,
+              profile: profile
+            };
+            
+            setMessages(prev => [...prev, hydratedMsg]);
+          }
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`Realtime subscribed to channel ${activeChannel.name}`);
-        }
-      });
+      .subscribe();
 
     return () => {
+      isSubscribed = false;
       supabase.removeChannel(channel);
     };
-  }, [activeChannel, profilesCache]);
+  }, [activeChannel?.id]);
 
   const handleCreateServer = async () => {
     if (!newServerName.trim() || !myProfile?.id) return;
