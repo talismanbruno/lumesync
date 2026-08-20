@@ -53,7 +53,22 @@ type Message = {
 function DashboardComponent() {
   const navigate = useNavigate();
   const loaderData = Route.useLoaderData() as any;
-  const myProfile = loaderData?.profile as Profile;
+  const [currentUser, setCurrentUser] = useState<{ id: string, email?: string } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setCurrentUser({ id: session.user.id, email: session.user.email });
+    });
+  }, []);
+
+  const fallbackProfile: Profile = {
+    id: currentUser?.id || "",
+    username: currentUser?.email?.split('@')[0] || "usuário",
+    display_name: currentUser?.email?.split('@')[0] || "Usuário Lume",
+    avatar_url: null
+  };
+
+  const myProfile = (loaderData?.profile as Profile) || fallbackProfile;
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
@@ -313,7 +328,7 @@ function DashboardComponent() {
         
         <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
           <DialogTrigger asChild>
-            <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black">
+            <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20">
               <Plus size={24} />
             </button>
           </DialogTrigger>
@@ -344,44 +359,52 @@ function DashboardComponent() {
       <div className="flex w-60 flex-col border-r border-white/5 bg-[#121212]/30">
         <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={copyInvite}>
           <h2 className="text-sm font-bold truncate flex-1 uppercase tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
-          <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />
+          {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
         </div>
         
         <div className="flex-1 overflow-y-auto p-2 space-y-4">
-          <div className="space-y-0.5">
-            <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-              <span className="flex-1">Canais de Texto</span>
-              <Plus size={14} className="cursor-pointer hover:text-white" />
+          {!activeServer ? (
+            <div className="flex flex-col items-center justify-center h-full text-zinc-600 text-[10px] uppercase font-bold tracking-widest">
+              Nenhum servidor selecionado
             </div>
-            {channels.filter(c => c.type === 'text').map(channel => (
-              <button 
-                key={channel.id} 
-                onClick={() => setActiveChannel(channel)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                  activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                }`}
-              >
-                <Hash size={16} className="text-zinc-500" />
-                <span>{channel.name}</span>
-              </button>
-            ))}
-          </div>
+          ) : (
+            <>
+              <div className="space-y-0.5">
+                <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
+                  <span className="flex-1">Canais de Texto</span>
+                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                </div>
+                {channels.filter(c => c.type === 'text').map(channel => (
+                  <button 
+                    key={channel.id} 
+                    onClick={() => setActiveChannel(channel)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                      activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                    }`}
+                  >
+                    <Hash size={16} className="text-zinc-500" />
+                    <span>{channel.name}</span>
+                  </button>
+                ))}
+              </div>
 
-          <div className="space-y-0.5">
-            <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-              <span className="flex-1">Canais de Voz</span>
-              <Plus size={14} className="cursor-pointer hover:text-white" />
-            </div>
-            {channels.filter(c => c.type === 'voice').map(channel => (
-              <button 
-                key={channel.id} 
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
-              >
-                <Volume2 size={16} className="text-zinc-500" />
-                <span>{channel.name}</span>
-              </button>
-            ))}
-          </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
+                  <span className="flex-1">Canais de Voz</span>
+                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                </div>
+                {channels.filter(c => c.type === 'voice').map(channel => (
+                  <button 
+                    key={channel.id} 
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
+                  >
+                    <Volume2 size={16} className="text-zinc-500" />
+                    <span>{channel.name}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* User Footer */}
@@ -458,12 +481,20 @@ function DashboardComponent() {
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
-            <div className="max-w-md space-y-4">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#00D1FF]/10 text-[#00D1FF] glow-sm">
-                <Plus size={40} />
+            <div className="max-w-md space-y-6">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#00D1FF]/10 text-[#00D1FF] glow-md border border-[#00D1FF]/20">
+                <h1 className="text-3xl font-black">L</h1>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">Crie ou selecione um servidor</h1>
-              <p className="text-zinc-500">LUME é o seu novo espaço de comunicação minimalista.</p>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao LUME</h1>
+                <p className="text-zinc-500">Seu espaço premium de comunicação. Comece criando seu primeiro servidor.</p>
+              </div>
+              <Button 
+                onClick={() => setIsCreatingServer(true)}
+                className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8"
+              >
+                Criar meu primeiro Servidor
+              </Button>
             </div>
           </div>
         )}
