@@ -239,7 +239,7 @@ function DashboardComponent() {
         .select()
         .single();
         
-      if (serverError || !serverData) throw serverError || new Error("Failed to create server");
+      if (serverError || !serverData) throw serverError || new Error("Erro ao criar servidor");
       
       const server: Server = {
         id: serverData.id,
@@ -260,11 +260,11 @@ function DashboardComponent() {
       if (memberError) throw memberError;
 
       // 3. Create default channels
-      const { error: channelsError } = await supabase
+      const { data: channelsData, error: channelsError } = await supabase
         .from("channels")
         .insert([
           { server_id: server.id, name: "geral", type: 'text' },
-          { server_id: server.id, name: "Sala de Voz", type: 'voice' }
+          { server_id: server.id, name: "Sala Principal", type: 'voice' }
         ])
         .select();
         
@@ -272,6 +272,13 @@ function DashboardComponent() {
 
       setServers(prev => [...prev, server]);
       setActiveServer(server);
+      
+      // Auto-select #geral
+      if (channelsData && channelsData.length > 0) {
+        const textChannel = channelsData.find((c: any) => c.type === 'text');
+        if (textChannel) setActiveChannel(textChannel as Channel);
+      }
+
       setNewServerName("");
       setIsCreatingServer(false);
       toast.success("Servidor criado com sucesso!");
@@ -282,7 +289,7 @@ function DashboardComponent() {
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!newMessage.trim() || !activeChannel || !myProfile?.id) return;
 
     const content = newMessage;
@@ -384,7 +391,9 @@ function DashboardComponent() {
               <div className="space-y-0.5">
                 <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Canais de Texto</span>
-                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                  {activeServer?.owner_id === myProfile.id && (
+                    <Plus size={14} className="cursor-pointer hover:text-white" />
+                  )}
                 </div>
                 {channels.filter(c => c.type === 'text').map(channel => (
                   <button 
@@ -403,7 +412,9 @@ function DashboardComponent() {
               <div className="space-y-0.5">
                 <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Canais de Voz</span>
-                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                  {activeServer?.owner_id === myProfile.id && (
+                    <Plus size={14} className="cursor-pointer hover:text-white" />
+                  )}
                 </div>
                 {channels.filter(c => c.type === 'voice').map(channel => (
                   <button 
@@ -475,10 +486,19 @@ function DashboardComponent() {
             </div>
 
             <div className="p-4 pt-0">
-              <form onSubmit={handleSendMessage} className="relative">
+              <form 
+                onSubmit={handleSendMessage} 
+                className="relative"
+              >
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e as any);
+                    }
+                  }}
                   placeholder={`Conversar em #${activeChannel.name}`}
                   className="bg-[#121212] border-none focus-visible:ring-1 focus-visible:ring-[#00D1FF]/50 pr-12 h-11 text-sm text-white"
                 />
