@@ -320,7 +320,7 @@ function DashboardComponent() {
       {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
         <div onClick={() => setActiveServer(null)} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
-          <LumeLogo variant="icon" className="w-10 h-10 rounded-xl" />
+          <LumeLogo variant="icon" />
         </div>
 
         {servers.map((server) => (

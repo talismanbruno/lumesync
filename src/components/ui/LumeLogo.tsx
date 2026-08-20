@@ -6,32 +6,24 @@ interface LogoProps {
 }
 
 export const LumeLogo: React.FC<LogoProps> = ({ variant = 'full', className = '' }) => {
-  // ÍCONE QUADRADO (Sidebar / Home)
+  // TOPO DA BARRA LATERAL DE SERVIDORES - COLUNA 1 (ÍCONE DO APP)
   if (variant === 'icon') {
     return (
-      <img
-        src="https://i.ibb.co/pvXzxPn5/logo-icon.png"
-        alt="Lume Icon"
-        className={`w-10 h-10 rounded-xl object-contain select-none ${className}`}
-        onError={(e) => {
-          // Fallback se o link direto mudar
-          (e.target as HTMLImageElement).src = "https://ibb.co/pvXzxPn5";
-        }}
+      <img 
+        src="https://i.ibb.co/99YTNvGS/image.png" 
+        alt="Lume Icon" 
+        className={`w-10 h-10 rounded-xl object-contain hover:scale-105 transition-transform select-none ${className}`} 
       />
     );
   }
 
-  // LOGO DE TEXTO COMPLETA (Login / Dashboard)
+  // ÁREA CENTRAL DO DASHBOARD E TELA DE LOGIN (LOGO COMPLETA)
   return (
     <div className={`flex items-center justify-center select-none ${className}`}>
-      <img
-        src="https://i.ibb.co/q3khCM2Z/logo-full.png"
-        alt="Lume Logo"
-        className="h-10 md:h-12 w-auto max-w-[260px] object-contain"
-        onError={(e) => {
-          // Fallback se o link direto mudar
-          (e.target as HTMLImageElement).src = "https://ibb.co/q3khCM2Z";
-        }}
+      <img 
+        src="https://i.ibb.co/C3h465Sr/image.png" 
+        alt="Lume" 
+        className="h-12 w-auto max-w-[280px] mx-auto object-contain mb-3" 
       />
     </div>
   );
