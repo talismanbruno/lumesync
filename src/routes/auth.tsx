@@ -23,7 +23,6 @@ function AuthComponent() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [passwordFocus, setPasswordFocus] = useState(false);
-  const [passwordFocus, setPasswordFocus] = useState(false);
 
   const passwordRequirements = [
     { label: "Mínimo de 8 caracteres", test: (pw: string) => pw.length >= 8 },
