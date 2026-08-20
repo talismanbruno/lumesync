@@ -328,7 +328,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const toggleDeafen = () => {
     const nextState = !isDeafened;
     setIsDeafened(nextState);
-    if (channelRef.current) channelRef.current.track({ isDeafened: nextState });
+    if (channelRef.current) channelRef.current.track({ 
+      user_id: myProfile.id,
+      username: myProfile.username,
+      display_name: myProfile.display_name,
+      avatar_url: myProfile.avatar_url,
+      isMuted,
+      isDeafened: nextState,
+      isSharingScreen
+    });
   };
 
   const toggleScreenShare = async () => {
@@ -338,13 +346,29 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
       setScreenStream(null);
       setIsSharingScreen(false);
-      if (channelRef.current) channelRef.current.track({ isSharingScreen: false });
+      if (channelRef.current) channelRef.current.track({ 
+        user_id: myProfile.id,
+        username: myProfile.username,
+        display_name: myProfile.display_name,
+        avatar_url: myProfile.avatar_url,
+        isMuted,
+        isDeafened,
+        isSharingScreen: false 
+      });
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         setScreenStream(stream);
         setIsSharingScreen(true);
-        if (channelRef.current) channelRef.current.track({ isSharingScreen: true });
+        if (channelRef.current) channelRef.current.track({ 
+          user_id: myProfile.id,
+          username: myProfile.username,
+          display_name: myProfile.display_name,
+          avatar_url: myProfile.avatar_url,
+          isMuted,
+          isDeafened,
+          isSharingScreen: true 
+        });
 
         const videoTrack = stream.getTracks()[0];
         if (videoTrack) {
