@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2 } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardComponent,
@@ -84,6 +91,8 @@ function DashboardComponent() {
   const [newMessage, setNewMessage] = useState("");
   const [isCreatingServer, setIsCreatingServer] = useState(false);
   const [newServerName, setNewServerName] = useState("");
+  const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
+  const [isDeletingServer, setIsDeletingServer] = useState(false);
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -276,6 +285,58 @@ function DashboardComponent() {
     }
   };
 
+  const handleDeleteServer = async () => {
+    if (!serverToDelete || !myProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("servers")
+        .delete()
+        .eq("id", serverToDelete.id);
+        
+      if (error) throw error;
+      
+      toast.success("Servidor excluído com sucesso!");
+      
+      // Update local state
+      setServers(prev => prev.filter(s => s.id !== serverToDelete.id));
+      
+      if (activeServer?.id === serverToDelete.id) {
+        setActiveServer(null);
+      }
+      
+      setServerToDelete(null);
+      setIsDeletingServer(false);
+    } catch (error: any) {
+      console.error("Erro ao excluir servidor:", error);
+      toast.error(error.message || "Erro ao excluir servidor");
+    }
+  };
+
+  const handleLeaveServer = async (serverId: string) => {
+    if (!myProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("members")
+        .delete()
+        .eq("server_id", serverId)
+        .eq("user_id", myProfile.id);
+        
+      if (error) throw error;
+      
+      toast.success("Você saiu do servidor");
+      
+      setServers(prev => prev.filter(s => s.id !== serverId));
+      if (activeServer?.id === serverId) {
+        setActiveServer(null);
+      }
+    } catch (error: any) {
+      console.error("Erro ao sair do servidor:", error);
+      toast.error(error.message || "Erro ao sair do servidor");
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !activeChannel || !myProfile?.id) return;
@@ -319,16 +380,41 @@ function DashboardComponent() {
         </div>
 
         {servers.map((server) => (
-          <button
-            key={server.id}
-            onClick={() => setActiveServer(server)}
-            className={`group relative flex h-12 w-12 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
-              activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
-            }`}
-          >
-            <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
-            <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
-          </button>
+          <ContextMenu key={server.id}>
+            <ContextMenuTrigger>
+              <button
+                onClick={() => setActiveServer(server)}
+                className={`group relative flex h-12 w-12 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
+                  activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
+                }`}
+              >
+                <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
+                <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
+              </button>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="bg-[#121212] border-white/10 text-white min-w-[160px]">
+              {server.owner_id === myProfile.id ? (
+                <ContextMenuItem 
+                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer flex items-center gap-2"
+                  onClick={() => {
+                    setServerToDelete(server);
+                    setIsDeletingServer(true);
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Excluir Servidor</span>
+                </ContextMenuItem>
+              ) : (
+                <ContextMenuItem 
+                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer flex items-center gap-2"
+                  onClick={() => handleLeaveServer(server.id)}
+                >
+                  <LogOut size={14} />
+                  <span>Sair do Servidor</span>
+                </ContextMenuItem>
+              )}
+            </ContextMenuContent>
+          </ContextMenu>
         ))}
         
         <div className="mx-4 h-[2px] w-8 bg-white/5" />
@@ -357,6 +443,29 @@ function DashboardComponent() {
             <DialogFooter>
               <Button variant="ghost" onClick={() => setIsCreatingServer(false)}>Cancelar</Button>
               <Button onClick={handleCreateServer} className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm">Criar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Modal */}
+        <Dialog open={isDeletingServer} onOpenChange={setIsDeletingServer}>
+          <DialogContent className="bg-[#121212] border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle>Excluir '{serverToDelete?.name}'?</DialogTitle>
+              <DialogDescription className="text-zinc-400 pt-2">
+                Esta ação não pode ser desfeita. Todos os canais e mensagens serão apagados permanentemente.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="ghost" onClick={() => setIsDeletingServer(false)} className="text-white hover:bg-white/5">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleDeleteServer} 
+                className="bg-red-600 text-white hover:bg-red-700 glow-red border-none"
+              >
+                Sim, excluir servidor
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
