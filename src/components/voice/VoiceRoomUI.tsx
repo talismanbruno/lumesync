@@ -1,22 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff, Monitor, PhoneOff, Headphones } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor, Maximize2 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-
-interface Participant {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  display_name: string | null;
-  isMuted: boolean;
-  isDeafened: boolean;
-  isSharingScreen: boolean;
-  isTalking?: boolean;
-  stream?: MediaStream;
-}
+import { VoiceParticipant } from '@/hooks/useVoiceRoom';
 
 interface VoiceRoomUIProps {
-  participants: Participant[];
+  participants: VoiceParticipant[];
   myProfile: any;
   isMuted: boolean;
   isDeafened: boolean;
@@ -38,170 +27,136 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   toggleScreenShare,
   onDisconnect
 }) => {
-  const sharingParticipant = participants.find(p => p.isSharingScreen) || (isSharingScreen ? { ...myProfile, id: myProfile.id, isSharingScreen: true } : null);
+  const remoteAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
 
-  return (
-    <div className="flex flex-1 flex-col bg-[#050505] relative overflow-hidden">
-      {/* Stage / Grid Area */}
-      <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-hidden">
-        {sharingParticipant ? (
-          <div className="w-full h-full flex flex-col gap-4">
-             {/* Screen Share Stage */}
-             <div className="flex-1 bg-black rounded-xl overflow-hidden relative border border-white/5">
-                <VideoPlayer stream={sharingParticipant.stream} isLocal={sharingParticipant.id === myProfile.id} />
-                <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-xs font-bold text-white">
-                  {sharingParticipant.display_name || sharingParticipant.username} está compartilhando a tela
-                </div>
-             </div>
-             
-             {/* Miniatures */}
-             <div className="h-32 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                {participants.map(p => (
-                   <ParticipantCard key={p.id} participant={p} isMini />
-                ))}
-                <ParticipantCard 
-                  participant={{
-                    ...myProfile,
-                    isMuted,
-                    isDeafened,
-                    isSharingScreen,
-                    isTalking: false // Local talking state can be added if needed
-                  }} 
-                  isMini 
-                  isLocal 
-                />
-             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl overflow-y-auto max-h-full p-4 scrollbar-hide">
-            {participants.map(p => (
-              <ParticipantCard key={p.id} participant={p} />
-            ))}
-            <ParticipantCard 
-              participant={{
-                ...myProfile,
-                isMuted,
-                isDeafened,
-                isSharingScreen,
-                isTalking: false
-              }} 
-              isLocal 
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Controls Bar */}
-      <div className="h-20 border-t border-white/5 bg-[#121212]/80 backdrop-blur-xl flex items-center justify-center gap-4 px-6">
-        <div className="flex items-center gap-3 bg-[#050505]/40 p-1.5 rounded-2xl border border-white/5 shadow-2xl">
-          <ControlButton 
-            icon={isMuted ? MicOff : Mic} 
-            active={!isMuted} 
-            onClick={toggleMute} 
-            danger={isMuted}
-            label={isMuted ? "Desmutar" : "Mutar"}
-          />
-          <ControlButton 
-            icon={Headphones} 
-            active={!isDeafened} 
-            onClick={toggleDeafen} 
-            danger={isDeafened}
-            label={isDeafened ? "Ativar Áudio" : "Ensurdecer"}
-          />
-          <ControlButton 
-            icon={Monitor} 
-            active={isSharingScreen} 
-            onClick={toggleScreenShare} 
-            label="Compartilhar"
-          />
-          <ControlButton 
-            icon={PhoneOff} 
-            onClick={onDisconnect} 
-            danger 
-            label="Sair"
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ParticipantCard: React.FC<{ participant: Participant; isMini?: boolean; isLocal?: boolean }> = ({ participant, isMini, isLocal }) => {
-  return (
-    <div className={`relative bg-[#121212] rounded-2xl border transition-all duration-300 flex flex-col items-center justify-center overflow-hidden shadow-xl
-      ${participant.isTalking ? "border-[#00D1FF] glow-sm scale-[1.02]" : "border-white/5"}
-      ${isMini ? "w-40 h-full flex-shrink-0" : "aspect-video w-full"}
-    `}>
-      <Avatar className={`${isMini ? "h-12 w-12" : "h-24 w-24"} border-2 border-white/5 shadow-2xl`}>
-        <AvatarImage src={participant.avatar_url || ""} />
-        <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] font-bold text-xl">
-          {participant.username.substring(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      
-      <div className="mt-4 flex flex-col items-center">
-        <span className="text-sm font-bold text-white">{participant.display_name || participant.username}</span>
-        <div className="flex gap-2 mt-1">
-          {participant.isMuted && <MicOff size={12} className="text-red-500" />}
-          {participant.isDeafened && <Headphones size={12} className="text-red-500" />}
-        </div>
-      </div>
-
-      {!isLocal && participant.stream && (
-        <audio 
-          ref={el => { if (el) el.srcObject = participant.stream!; }} 
-          autoPlay 
-          playsInline 
-        />
-      )}
-    </div>
-  );
-};
-
-const VideoPlayer: React.FC<{ stream?: MediaStream; isLocal?: boolean }> = ({ stream, isLocal }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
+    participants.forEach(p => {
+      if (p.stream && !remoteAudiosRef.current[p.id]) {
+        const audio = new Audio();
+        audio.srcObject = p.stream;
+        audio.autoplay = true;
+        remoteAudiosRef.current[p.id] = audio;
+      } else if (p.stream && remoteAudiosRef.current[p.id]) {
+        remoteAudiosRef.current[p.id].srcObject = p.stream;
+      }
+    });
+
+    // Cleanup disconnected participants
+    Object.keys(remoteAudiosRef.current).forEach(id => {
+      if (!participants.find(p => p.id === id)) {
+        remoteAudiosRef.current[id].pause();
+        remoteAudiosRef.current[id].srcObject = null;
+        delete remoteAudiosRef.current[id];
+      }
+    });
+  }, [participants]);
+
+  useEffect(() => {
+    Object.values(remoteAudiosRef.current).forEach(audio => {
+      audio.muted = isDeafened;
+    });
+  }, [isDeafened]);
 
   return (
-    <video 
-      ref={videoRef}
-      autoPlay 
-      playsInline 
-      muted={isLocal}
-      className="w-full h-full object-contain"
-    />
-  );
-};
+    <div className="flex flex-1 flex-col h-full bg-[#050505]">
+      {/* Participant Grid */}
+      <div className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto content-start">
+        {/* Local Participant */}
+        <div className={`relative aspect-video rounded-xl bg-[#121212] border-2 transition-all duration-300 flex flex-col items-center justify-center ${
+          !isMuted ? "border-[#00D1FF]/30 shadow-[0_0_15px_rgba(0,209,255,0.1)]" : "border-white/5"
+        }`}>
+          <Avatar className="h-20 w-20 border-2 border-white/10">
+            <AvatarImage src={myProfile?.avatar_url || ""} />
+            <AvatarFallback className="text-xl bg-[#00D1FF]/10 text-[#00D1FF]">
+              {(myProfile?.username || "U").substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="mt-4 text-sm font-medium text-zinc-200">
+            {myProfile?.display_name || myProfile?.username} (Você)
+          </span>
+          <div className="absolute top-3 right-3 flex gap-2">
+            {isMuted && <MicOff size={16} className="text-red-500" />}
+            {isDeafened && <Headphones size={16} className="text-red-500" />}
+          </div>
+        </div>
 
-const ControlButton: React.FC<{ 
-  icon: any; 
-  active?: boolean; 
-  onClick: () => void; 
-  danger?: boolean; 
-  label: string;
-}> = ({ icon: Icon, active, onClick, danger, label }) => {
-  return (
-    <div className="flex flex-col items-center gap-1 group">
-      <button
-        onClick={onClick}
-        className={`h-11 w-11 flex items-center justify-center rounded-xl transition-all duration-200 shadow-lg
-          ${danger 
-            ? "bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500 hover:text-white" 
-            : active 
-              ? "bg-[#00D1FF]/20 text-[#00D1FF] border border-[#00D1FF]/40 hover:bg-[#00D1FF] hover:text-black" 
-              : "bg-white/5 text-zinc-400 border border-white/5 hover:bg-white/10 hover:text-white"}
-        `}
-      >
-        <Icon size={20} />
-      </button>
-      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
-        {label}
-      </span>
+        {/* Remote Participants */}
+        {participants.map(p => (
+          <div 
+            key={p.id} 
+            className={`relative aspect-video rounded-xl bg-[#121212] border-2 transition-all duration-300 flex flex-col items-center justify-center ${
+              p.isTalking ? "border-[#00D1FF] shadow-[0_0_20px_rgba(0,209,255,0.2)]" : "border-white/5"
+            }`}
+          >
+            <Avatar className="h-20 w-20 border-2 border-white/10">
+              <AvatarImage src={p.avatar_url || ""} />
+              <AvatarFallback className="text-xl bg-zinc-800 text-zinc-400">
+                {p.username.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="mt-4 text-sm font-medium text-zinc-200">
+              {p.display_name || p.username}
+            </span>
+            <div className="absolute top-3 right-3 flex gap-2">
+              {p.isMuted && <MicOff size={16} className="text-red-500" />}
+              {p.isDeafened && <Headphones size={16} className="text-red-500" />}
+            </div>
+            {p.isSharingScreen && (
+              <div className="absolute bottom-3 left-3 bg-[#00D1FF]/20 text-[#00D1FF] text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Monitor size={10} />
+                AO VIVO
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Control Bar */}
+      <div className="h-20 bg-[#121212]/80 backdrop-blur-md border-t border-white/5 flex items-center justify-center px-6 gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleMute}
+          className={`h-12 w-12 rounded-full transition-all ${
+            isMuted ? "bg-red-500/10 text-red-500 hover:bg-red-500/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleDeafen}
+          className={`h-12 w-12 rounded-full transition-all ${
+            isDeafened ? "bg-red-500/10 text-red-500 hover:bg-red-500/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          {isDeafened ? <Headphones size={20} className="text-red-500" /> : <Headphones size={20} />}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleScreenShare}
+          className={`h-12 w-12 rounded-full transition-all ${
+            isSharingScreen ? "bg-[#00D1FF]/10 text-[#00D1FF] hover:bg-[#00D1FF]/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          <Monitor size={20} />
+        </Button>
+
+        <div className="w-px h-8 bg-white/5 mx-2" />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDisconnect}
+          className="h-12 w-12 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+        >
+          <PhoneOff size={20} />
+        </Button>
+      </div>
     </div>
   );
 };
