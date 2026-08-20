@@ -170,11 +170,20 @@ function DashboardComponent() {
               .single();
             if (data) {
               profile = data as Profile;
-              setProfilesCache(prev => ({ ...prev, [newMsg.user_id]: profile }));
+              setProfilesCache(prev => {
+                const updated = { ...prev };
+                if (profile) updated[newMsg.user_id] = profile;
+                return updated;
+              });
             }
           }
           
-          setMessages(prev => [...prev, { ...newMsg, profile: profile || undefined }]);
+          const hydratedMsg: Message = { 
+            ...newMsg, 
+            profile: profile || undefined 
+          };
+          
+          setMessages(prev => [...prev, hydratedMsg]);
         }
       )
       .subscribe((status) => {
@@ -204,7 +213,12 @@ function DashboardComponent() {
         .single();
         
       if (serverError || !serverData) throw serverError || new Error("Failed to create server");
-      const server = serverData as Server;
+      const server: Server = {
+        id: serverData.id,
+        name: serverData.name,
+        owner_id: serverData.owner_id,
+        invite_code: serverData.invite_code || ""
+      };
 
       // 2. Add owner to members
       const { error: memberError } = await supabase
@@ -309,7 +323,7 @@ function DashboardComponent() {
                   value={newServerName}
                   onChange={(e) => setNewServerName(e.target.value)}
                   placeholder="O servidor de..." 
-                  className="bg-[#050505] border-white/10"
+                  className="bg-[#050505] border-white/10 text-white"
                 />
               </div>
             </div>
@@ -324,7 +338,7 @@ function DashboardComponent() {
       {/* Column 2: Channels/Navigation */}
       <div className="flex w-60 flex-col border-r border-white/5 bg-[#121212]/30">
         <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={copyInvite}>
-          <h2 className="text-sm font-bold truncate flex-1 uppercase tracking-tight">{activeServer?.name || "LUME"}</h2>
+          <h2 className="text-sm font-bold truncate flex-1 uppercase tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
           <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />
         </div>
         
@@ -371,7 +385,7 @@ function DashboardComponent() {
             <AvatarImage src={myProfile.avatar_url || ""} />
             <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{myProfile.username.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-white">
             <p className="truncate text-xs font-bold">{myProfile.display_name || myProfile.username}</p>
             <p className="truncate text-[10px] text-emerald-500">online</p>
           </div>
@@ -387,7 +401,7 @@ function DashboardComponent() {
           <>
             <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
               <Hash size={20} className="mr-2 text-zinc-500" />
-              <h3 className="text-sm font-bold">{activeChannel.name}</h3>
+              <h3 className="text-sm font-bold text-white">{activeChannel.name}</h3>
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
                 <Search size={18} className="cursor-pointer hover:text-white" />
                 <Settings size={18} className="cursor-pointer hover:text-white" />
@@ -406,7 +420,7 @@ function DashboardComponent() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-bold hover:underline cursor-pointer">
+                      <span className="text-sm font-bold hover:underline cursor-pointer text-white">
                         {msg.profile?.display_name || msg.profile?.username || "Carregando..."}
                       </span>
                       <span className="text-[10px] text-zinc-500">
@@ -438,7 +452,7 @@ function DashboardComponent() {
             </div>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-center">
+          <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-4">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#00D1FF]/10 text-[#00D1FF] glow-sm">
                 <Plus size={40} />
