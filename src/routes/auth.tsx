@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Check, Circle } from "lucide-react";
-import { LumeLogo } from "@/components/ui/LumeLogo";
-import { LumeWordmark } from "@/components/ui/LumeWordmark";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
@@ -79,7 +77,11 @@ function AuthComponent() {
     <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center flex flex-col items-center">
-          <LumeWordmark size="lg" className="mb-2" />
+          <img 
+            src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
+            alt="Lume Logo" 
+            className="h-10 w-auto object-contain mx-auto mb-2" 
+          />
           <p className="mt-2 text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
         </div>
 
