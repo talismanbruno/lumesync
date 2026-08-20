@@ -497,11 +497,11 @@ function DashboardComponent() {
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6 flex flex-col items-center">
-              <div className="flex items-center justify-center mb-6 scale-110">
+              <div className="flex justify-center items-center my-4">
                 <img 
                   src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
                   alt="Lume" 
-                  className="h-10 w-auto max-w-[200px] object-contain mx-auto block" 
+                  className="h-10 md:h-12 w-auto max-w-none object-contain" 
                 />
               </div>
               <div className="space-y-2">
