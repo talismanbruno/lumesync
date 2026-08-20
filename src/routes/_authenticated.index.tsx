@@ -116,6 +116,9 @@ function DashboardComponent() {
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
   const [activeVoiceChannel, setActiveVoiceChannel] = useState<Channel | null>(null);
+  const [showVoiceUI, setShowVoiceUI] = useState(false);
+  const [inviteCodeInput, setInviteCodeInput] = useState("");
+  const [serverModalTab, setServerModalTab] = useState<'create' | 'join'>('create');
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
@@ -320,6 +323,64 @@ function DashboardComponent() {
     }
   };
 
+  const handleJoinServer = async () => {
+    if (!inviteCodeInput.trim() || !myProfile?.id) return;
+    
+    try {
+      // 1. Find server by invite code
+      const { data: server, error: findError } = await supabase
+        .from("servers")
+        .select("*")
+        .eq("invite_code", inviteCodeInput.trim())
+        .maybeSingle();
+        
+      if (findError || !server) {
+        toast.error("Código de convite inválido!");
+        return;
+      }
+      
+      // 2. Check if already a member
+      const { data: existingMember } = await supabase
+        .from("members")
+        .select("*")
+        .eq("server_id", server.id)
+        .eq("user_id", myProfile.id)
+        .maybeSingle();
+        
+      if (existingMember) {
+        toast.info("Você já é membro deste servidor.");
+        setActiveServer(server as Server);
+        setIsCreatingServer(false);
+        setInviteCodeInput("");
+        return;
+      }
+      
+      // 3. Join server
+      const { error: joinError } = await supabase
+        .from("members")
+        .insert({
+          server_id: server.id,
+          user_id: myProfile.id,
+          role: 'member'
+        });
+        
+      if (joinError) throw joinError;
+      
+      toast.success("Você entrou no servidor!");
+      
+      // Update local state
+      const newServer: Server = server as Server;
+      setServers(prev => [...prev, newServer]);
+      setActiveServer(newServer);
+      
+      setInviteCodeInput("");
+      setIsCreatingServer(false);
+    } catch (error: any) {
+      console.error("Erro ao entrar no servidor:", error);
+      toast.error(error.message || "Erro ao entrar no servidor");
+    }
+  };
+
   const handleDeleteServer = async () => {
     if (!serverToDelete || !myProfile?.id) return;
     
@@ -514,7 +575,7 @@ function DashboardComponent() {
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
       {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
-        <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
+        <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
           <LumeLogo variant="icon" />
         </div>
 
@@ -577,30 +638,83 @@ function DashboardComponent() {
         
         <div className="mx-4 h-[2px] w-8 bg-white/5" />
         
-        <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
+        <Dialog open={isCreatingServer} onOpenChange={(open) => { setIsCreatingServer(open); if (!open) setServerModalTab('create'); }}>
           <DialogTrigger asChild>
             <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20">
               <Plus size={24} />
             </button>
           </DialogTrigger>
-          <DialogContent className="bg-[#121212] border-white/10 text-white">
+          <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px]">
             <DialogHeader>
-              <DialogTitle>Personalize seu servidor</DialogTitle>
+              <DialogTitle className="text-center text-2xl font-bold">
+                {serverModalTab === 'create' ? "Crie seu servidor" : "Entre em um servidor"}
+              </DialogTitle>
+              <DialogDescription className="text-center text-zinc-400">
+                {serverModalTab === 'create' 
+                  ? "Seu servidor é onde você e seus amigos se reúnem. Crie o seu e comece a conversar." 
+                  : "Insira um convite abaixo para entrar em um servidor existente."}
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-zinc-400">Nome do Servidor</label>
-                <Input 
-                  value={newServerName}
-                  onChange={(e) => setNewServerName(e.target.value)}
-                  placeholder="O servidor de..." 
-                  className="bg-[#050505] border-white/10 text-white"
-                />
-              </div>
+            
+            <div className="flex gap-2 p-1 bg-[#050505] rounded-lg mb-4">
+              <button 
+                onClick={() => setServerModalTab('create')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'create' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                Criar
+              </button>
+              <button 
+                onClick={() => setServerModalTab('join')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'join' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                Entrar
+              </button>
             </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsCreatingServer(false)}>Cancelar</Button>
-              <Button onClick={handleCreateServer} className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm">Criar</Button>
+
+            {serverModalTab === 'create' ? (
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">Nome do Servidor</label>
+                  <Input 
+                    value={newServerName}
+                    onChange={(e) => setNewServerName(e.target.value)}
+                    placeholder="O servidor de..." 
+                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">Link de convite</label>
+                  <Input 
+                    value={inviteCodeInput}
+                    onChange={(e) => setInviteCodeInput(e.target.value)}
+                    placeholder="hYp3r-LUM3" 
+                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
+                  />
+                  <p className="text-[10px] text-zinc-500">
+                    Os convites devem ser parecidos com <span className="text-zinc-400 font-mono">hYp3r-LUM3</span>
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter className="bg-[#18181b]/50 -mx-6 -mb-6 p-4 rounded-b-lg">
+              <div className="flex w-full justify-between items-center">
+                <button 
+                  onClick={() => setIsCreatingServer(false)}
+                  className="text-sm text-zinc-400 hover:underline"
+                >
+                  Voltar
+                </button>
+                <Button 
+                  onClick={serverModalTab === 'create' ? handleCreateServer : handleJoinServer} 
+                  className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold px-8 h-10"
+                >
+                  {serverModalTab === 'create' ? "Criar Servidor" : "Entrar no Servidor"}
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -662,7 +776,7 @@ function DashboardComponent() {
                   return (
                     <button 
                       key={friend.id}
-                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); }}
+                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); setShowVoiceUI(false); }}
                       className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                         activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                       }`}
@@ -694,7 +808,7 @@ function DashboardComponent() {
                 {channels.filter(c => c.type === 'text').map(channel => (
                   <button 
                     key={channel.id} 
-                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); }}
+                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); setShowVoiceUI(false); }}
                     className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                       activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                     }`}
@@ -717,8 +831,7 @@ function DashboardComponent() {
                     <button 
                       onClick={() => {
                         setActiveVoiceChannel(channel);
-                        setActiveChannel(null);
-                        setActiveDMFriend(null);
+                        setShowVoiceUI(true);
                       }}
                       className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                         activeVoiceChannel?.id === channel.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
@@ -767,6 +880,52 @@ function DashboardComponent() {
           )}
         </div>
 
+        {/* Voice Connection Widget */}
+        {activeVoiceChannel && (
+          <div className="mx-2 mb-2 flex flex-col rounded-md bg-[#050505] p-2 border border-[#00D1FF]/20 shadow-[0_0_10px_rgba(0,209,255,0.05)] animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Voz Conectada</span>
+                  <span className="text-[11px] text-zinc-300 truncate font-medium">{activeVoiceChannel.name}</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowVoiceUI(true)}
+                className="p-1 text-zinc-400 hover:text-white transition-colors"
+                title="Abrir Tela da Chamada"
+              >
+                <Monitor size={14} />
+              </button>
+            </div>
+            <div className="flex items-center justify-around bg-white/5 rounded p-1">
+              <button 
+                onClick={toggleMute} 
+                className={`p-1.5 rounded transition-colors ${isMuted ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
+              <button 
+                onClick={toggleDeafen} 
+                className={`p-1.5 rounded transition-colors ${isDeafened ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                {isDeafened ? <Headphones size={16} className="text-red-500" /> : <Headphones size={16} />}
+              </button>
+              <button 
+                onClick={() => {
+                  disconnect();
+                  setActiveVoiceChannel(null);
+                  setShowVoiceUI(false);
+                }} 
+                className="p-1.5 rounded text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <PhoneOff size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* User Footer */}
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2">
           <Avatar className="h-8 w-8 border border-white/5">
@@ -785,7 +944,7 @@ function DashboardComponent() {
 
       {/* Column 3: Main Content (Chat or Friends) */}
       <div className="flex flex-1 flex-col bg-[#050505] overflow-hidden">
-        {activeVoiceChannel ? (
+        {activeVoiceChannel && showVoiceUI ? (
           <VoiceRoomUI 
             participants={participants}
             myProfile={myProfile}
@@ -795,7 +954,12 @@ function DashboardComponent() {
             toggleMute={toggleMute}
             toggleDeafen={toggleDeafen}
             toggleScreenShare={toggleScreenShare}
-            onDisconnect={() => setActiveVoiceChannel(null)}
+            onDisconnect={() => {
+              disconnect();
+              setActiveVoiceChannel(null);
+              setShowVoiceUI(false);
+            }}
+            onClose={() => setShowVoiceUI(false)}
           />
         ) : activeChannel || activeDMFriend ? (
           <>
@@ -993,7 +1157,7 @@ function DashboardComponent() {
                       </div>
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); }}
+                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
                           className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-[#00D1FF] hover:text-black transition-all"
                         >
                           <MessageSquare size={16} />
