@@ -52,8 +52,8 @@ type Message = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
-  const loaderData = Route.useLoaderData() as { profile: Profile };
-  const myProfile = loaderData.profile;
+  const loaderData = Route.useLoaderData() as any;
+  const myProfile = loaderData?.profile as Profile;
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
@@ -77,6 +77,8 @@ function DashboardComponent() {
 
   // Fetch servers
   useEffect(() => {
+    if (!myProfile?.id) return;
+    
     const fetchServers = async () => {
       const { data, error } = await supabase
         .from("members")
@@ -96,7 +98,7 @@ function DashboardComponent() {
     };
     
     fetchServers();
-  }, [myProfile.id]);
+  }, [myProfile?.id]);
 
   // Fetch channels when active server changes
   useEffect(() => {
@@ -172,7 +174,7 @@ function DashboardComponent() {
             }
           }
           
-          setMessages(prev => [...prev, { ...newMsg, profile }]);
+          setMessages(prev => [...prev, { ...newMsg, profile: profile || undefined }]);
         }
       )
       .subscribe((status) => {
@@ -187,7 +189,7 @@ function DashboardComponent() {
   }, [activeChannel, profilesCache]);
 
   const handleCreateServer = async () => {
-    if (!newServerName.trim()) return;
+    if (!newServerName.trim() || !myProfile?.id) return;
     
     try {
       // 1. Create server
@@ -239,7 +241,7 @@ function DashboardComponent() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeChannel) return;
+    if (!newMessage.trim() || !activeChannel || !myProfile?.id) return;
 
     const content = newMessage;
     setNewMessage("");
@@ -268,6 +270,8 @@ function DashboardComponent() {
     navigator.clipboard.writeText(activeServer.invite_code);
     toast.success("Código de convite copiado!");
   };
+
+  if (!myProfile) return <div className="flex h-screen w-full items-center justify-center bg-[#050505] text-white">Carregando...</div>;
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
