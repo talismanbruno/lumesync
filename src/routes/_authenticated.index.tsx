@@ -57,7 +57,7 @@ function DashboardComponent() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setCurrentUser({ id: session.user.id, email: session.user.email });
+      if (session?.user) setCurrentUser({ id: session.user.id, email: session.user.email ?? undefined });
     });
   }, []);
 
