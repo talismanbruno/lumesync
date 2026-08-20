@@ -115,6 +115,7 @@ function DashboardComponent() {
   const [addFriendUsername, setAddFriendUsername] = useState("");
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
+  const [activeVoiceChannel, setActiveVoiceChannel] = useState<Channel | null>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
