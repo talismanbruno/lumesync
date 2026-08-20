@@ -162,22 +162,53 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         };
 
         channel
-          .on('presence', { event: 'join' }, ({ newPresences }) => {
-            newPresences.forEach((p: any) => {
-              if (p.id !== myProfile.id) {
+          .on('presence', { event: 'sync' }, () => {
+            const presenceState = channel.presenceState();
+            currentPresenceState.current = presenceState;
+            
+            const participantList = Object.values(presenceState).flat().map((p: any) => ({
+              id: p.user_id,
+              username: p.username,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+              isMuted: p.isMuted,
+              isDeafened: p.isDeafened,
+              isSharingScreen: p.isSharingScreen || false,
+              isSpeaking: false
+            }));
+
+            setParticipants(prev => {
+              const next: Record<string, VoiceParticipant> = {};
+              participantList.forEach(p => {
+                if (p.id === myProfile.id) return; // Skip self in WebRTC list
+                next[p.id] = {
+                  ...p,
+                  stream: prev[p.id]?.stream
+                } as VoiceParticipant;
+              });
+              return next;
+            });
+
+            // Start WebRTC for new participants
+            participantList.forEach(p => {
+              if (p.id !== myProfile.id && !pcs.current[p.id]) {
                 createPC(p.id, true, stream);
               }
             });
           })
+          .on('presence', { event: 'join' }, ({ newPresences }) => {
+            // Already handled by sync
+          })
           .on('presence', { event: 'leave' }, ({ leftPresences }) => {
             leftPresences.forEach((p: any) => {
-              const pc = pcs.current[p.id];
+              const id = p.user_id || p.id;
+              const pc = pcs.current[id];
               if (pc) {
                 pc.close();
-                delete pcs.current[p.id];
+                delete pcs.current[id];
                 setParticipants(prev => {
                   const next = { ...prev };
-                  delete next[p.id];
+                  delete next[id];
                   return next;
                 });
               }
@@ -224,15 +255,16 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             }
           })
           .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED' && channelRef.current) {
-              await channelRef.current.track({
-                id: myProfile.id,
+            if (status === 'SUBSCRIBED') {
+              await channel.track({
+                user_id: myProfile.id,
                 username: myProfile.username,
-                avatar_url: myProfile.avatar_url,
                 display_name: myProfile.display_name,
+                avatar_url: myProfile.avatar_url,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false
+                isSharingScreen: false,
+                joined_at: new Date().toISOString()
               });
             }
           });
