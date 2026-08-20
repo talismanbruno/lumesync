@@ -323,6 +323,64 @@ function DashboardComponent() {
     }
   };
 
+  const handleJoinServer = async () => {
+    if (!inviteCodeInput.trim() || !myProfile?.id) return;
+    
+    try {
+      // 1. Find server by invite code
+      const { data: server, error: findError } = await supabase
+        .from("servers")
+        .select("*")
+        .eq("invite_code", inviteCodeInput.trim())
+        .maybeSingle();
+        
+      if (findError || !server) {
+        toast.error("Código de convite inválido!");
+        return;
+      }
+      
+      // 2. Check if already a member
+      const { data: existingMember } = await supabase
+        .from("members")
+        .select("*")
+        .eq("server_id", server.id)
+        .eq("user_id", myProfile.id)
+        .maybeSingle();
+        
+      if (existingMember) {
+        toast.info("Você já é membro deste servidor.");
+        setActiveServer(server as Server);
+        setIsCreatingServer(false);
+        setInviteCodeInput("");
+        return;
+      }
+      
+      // 3. Join server
+      const { error: joinError } = await supabase
+        .from("members")
+        .insert({
+          server_id: server.id,
+          user_id: myProfile.id,
+          role: 'member'
+        });
+        
+      if (joinError) throw joinError;
+      
+      toast.success("Você entrou no servidor!");
+      
+      // Update local state
+      const newServer: Server = server as Server;
+      setServers(prev => [...prev, newServer]);
+      setActiveServer(newServer);
+      
+      setInviteCodeInput("");
+      setIsCreatingServer(false);
+    } catch (error: any) {
+      console.error("Erro ao entrar no servidor:", error);
+      toast.error(error.message || "Erro ao entrar no servidor");
+    }
+  };
+
   const handleDeleteServer = async () => {
     if (!serverToDelete || !myProfile?.id) return;
     
