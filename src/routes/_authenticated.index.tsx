@@ -290,7 +290,20 @@ function DashboardComponent() {
     toast.success("Código de convite copiado!");
   };
 
-  if (!myProfile) return <div className="flex h-screen w-full items-center justify-center bg-[#050505] text-white">Carregando...</div>;
+  if (!myProfile) return (
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-[#050505] p-6 text-white">
+      <div className="max-w-md space-y-4 text-center">
+        <h2 className="text-2xl font-bold text-[#00D1FF]">Sincronizando Perfil...</h2>
+        <p className="text-zinc-500">Se você ficar preso aqui, clique no botão abaixo.</p>
+        <Button 
+          onClick={() => window.location.reload()}
+          className="bg-[#121212] border border-white/10 hover:bg-[#1f1f1f]"
+        >
+          Recarregar Interface
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
@@ -426,7 +439,7 @@ function DashboardComponent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-bold hover:underline cursor-pointer text-white">
-                        {msg.profile?.display_name || msg.profile?.username || "Carregando..."}
+                        {msg.profile?.display_name || msg.profile?.username || "Membro do Lume"}
                       </span>
                       <span className="text-[10px] text-zinc-500">
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
