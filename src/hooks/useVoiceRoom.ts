@@ -12,7 +12,8 @@ export interface VoiceParticipant {
   isSharingScreen?: boolean;
   isTalking?: boolean;
   isSpeaking?: boolean;
-  stream?: MediaStream;
+  stream?: MediaStream | null;
+  screenStream?: MediaStream | null;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
@@ -23,6 +24,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const channelRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const remoteStreams = useRef<Map<string, MediaStream>>(new Map());
+  const remoteScreenStreams = useRef<Map<string, MediaStream>>(new Map());
 
   const cleanup = useCallback(async () => {
     if (localStreamRef.current) {
@@ -44,24 +47,90 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     
     peerConnections.current.forEach(pc => pc.close());
     peerConnections.current.clear();
+    remoteStreams.current.clear();
+    remoteScreenStreams.current.clear();
     
     setParticipants([]);
     setScreenStream(null);
   }, [screenStream]);
 
+  const createPeerConnection = useCallback((userId: string, isInitiator: boolean, voiceChannel: any) => {
+    if (peerConnections.current.has(userId)) return peerConnections.current.get(userId)!;
+
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    peerConnections.current.set(userId, pc);
+
+    // Add local tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        voiceChannel.send({
+          type: 'broadcast',
+          event: 'ice-candidate',
+          payload: { candidate: event.candidate, to: userId, from: myProfile.id }
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      const stream: MediaStream | undefined = event.streams[0];
+      if (!stream) return;
+
+      const isVideo = event.track.kind === 'video';
+      
+      if (isVideo) {
+        remoteScreenStreams.current.set(userId, stream);
+      } else {
+        remoteStreams.current.set(userId, stream);
+        const audio = new Audio();
+        audio.srcObject = stream;
+        audio.autoplay = true;
+        (audio as any).playsInline = true;
+        audio.play().catch(e => console.warn("Autoplay blocked:", e));
+      }
+
+      setParticipants(prev => prev.map(p => 
+        p.id === userId ? { 
+          ...p, 
+          stream: (!isVideo ? stream : (p.stream || null)) as MediaStream | null,
+          screenStream: (isVideo ? stream : (p.screenStream || null)) as MediaStream | null
+        } : p
+      ));
+    };
+
+    if (isInitiator) {
+      pc.createOffer().then(offer => pc.setLocalDescription(offer)).then(() => {
+        voiceChannel.send({
+          type: 'broadcast',
+          event: 'offer',
+          payload: { offer: pc.localDescription, to: userId, from: myProfile.id }
+        });
+      });
+    }
+
+    return pc;
+  }, [myProfile.id]);
+
   const joinVoiceChannel = useCallback(async (cid: string) => {
-    if (channelRef.current) return; // Já conectado
+    if (channelRef.current) return;
     
     let stream: MediaStream | null = null;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       localStreamRef.current = stream;
     } catch (err) {
-      console.warn("Microfone indisponível ou permissão negada. Entrando no modo ouvinte.");
-      toast.warning("Não foi possível acessar o microfone. Você entrou como ouvinte.");
+      console.warn("Microfone indisponível ou permissão negada.");
+      toast.warning("Entrando como ouvinte.");
     }
 
-    // Conectar canal de Presence estático
     const voiceChannel = supabase.channel(`voice-room-${cid}`, {
       config: { presence: { key: myProfile.id } }
     });
@@ -69,7 +138,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     voiceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = voiceChannel.presenceState();
-        const users = Object.values(state).flat().map((p: any) => ({
+        const users: VoiceParticipant[] = Object.values(state).flat().map((p: any) => ({
           id: p.user_id,
           username: p.username,
           display_name: p.display_name,
@@ -78,9 +147,43 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           isDeafened: p.isDeafened,
           isSharingScreen: p.isSharingScreen,
           isSpeaking: false,
-          isTalking: false
+          isTalking: false,
+          stream: remoteStreams.current.get(p.user_id) || null,
+          screenStream: remoteScreenStreams.current.get(p.user_id) || null
         }));
+        
+        // Trigger signaling for new users
+        users.forEach(u => {
+          if (u.id !== myProfile.id && !peerConnections.current.has(u.id)) {
+            // Deterministic initiator: user with "smaller" ID initiates
+            const isInitiator = myProfile.id < u.id;
+            createPeerConnection(u.id, isInitiator, voiceChannel);
+          }
+        });
+
         setParticipants(users);
+      })
+      .on('broadcast', { event: 'offer' }, async ({ payload }) => {
+        if (payload.to !== myProfile.id) return;
+        const pc = createPeerConnection(payload.from, false, voiceChannel);
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        voiceChannel.send({
+          type: 'broadcast',
+          event: 'answer',
+          payload: { answer: pc.localDescription, to: payload.from, from: myProfile.id }
+        });
+      })
+      .on('broadcast', { event: 'answer' }, async ({ payload }) => {
+        if (payload.to !== myProfile.id) return;
+        const pc = peerConnections.current.get(payload.from);
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+      })
+      .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
+        if (payload.to !== myProfile.id) return;
+        const pc = peerConnections.current.get(payload.from);
+        if (pc) await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -97,7 +200,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       });
 
     channelRef.current = voiceChannel;
-  }, [myProfile]);
+  }, [myProfile, createPeerConnection]);
 
   useEffect(() => {
     if (channelId) {
@@ -109,6 +212,14 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       setScreenStream(stream);
+      
+      // Add track to all active peer connections
+      const videoTrackToShare = stream.getVideoTracks()[0];
+      if (videoTrackToShare) {
+        peerConnections.current.forEach(pc => {
+          pc.addTrack(videoTrackToShare, stream);
+        });
+      }
       
       if (channelRef.current) {
         channelRef.current.track({
@@ -123,9 +234,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
 
       // Se o usuário parar o compartilhamento pelo navegador
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.onended = () => {
+      const videoTrackEnded = stream.getVideoTracks()[0];
+      if (videoTrackEnded) {
+        videoTrackEnded.onended = () => {
           setScreenStream(null);
           if (channelRef.current) {
             channelRef.current.track({

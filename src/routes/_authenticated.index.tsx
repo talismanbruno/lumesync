@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -119,6 +119,8 @@ function DashboardComponent() {
   const [showVoiceUI, setShowVoiceUI] = useState(false);
   const [inviteCodeInput, setInviteCodeInput] = useState("");
   const [serverModalTab, setServerModalTab] = useState<'create' | 'join'>('create');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
@@ -199,6 +201,39 @@ function DashboardComponent() {
     
     fetchChannels();
   }, [activeServer]);
+
+  // Background Presence for Sidebar
+  useEffect(() => {
+    if (!channels.length) return;
+    
+    const voiceChannels = channels.filter(c => c.type === 'voice');
+    const channelsToSubscribe = voiceChannels.map(vc => {
+      const channel = supabase.channel(`voice-room-${vc.id}`, {
+        config: { presence: { key: myProfile.id } }
+      });
+      
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const users = Object.values(state).flat().map((p: any) => ({
+            user_id: p.user_id,
+            username: p.username,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url,
+            isMuted: p.isMuted,
+            isDeafened: p.isDeafened
+          }));
+          setVoiceParticipantsMap(prev => ({ ...prev, [vc.id]: users }));
+        })
+        .subscribe();
+        
+      return channel;
+    });
+    
+    return () => {
+      channelsToSubscribe.forEach(c => supabase.removeChannel(c));
+    };
+  }, [channels, myProfile.id]);
 
   // Fetch messages and setup realtime
   useEffect(() => {
@@ -575,8 +610,41 @@ function DashboardComponent() {
 // Removed the blocking "Sincronizando Perfil..." interface.
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
-      {/* Column 1: Server List */}
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans md:flex-row">
+      {/* Mobile Top Header */}
+      <div className="flex h-12 w-full items-center justify-between border-b border-white/5 bg-[#050505] px-4 md:hidden">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="text-zinc-400 hover:text-white"
+          >
+            <Menu size={24} />
+          </Button>
+          <LumeLogo variant="icon" />
+        </div>
+        <h1 className="text-sm font-bold text-white truncate max-w-[150px]">
+          {activeServer?.name || activeDMFriend?.display_name || activeDMFriend?.username || "Amigos"}
+        </h1>
+        <div className="w-8" /> {/* Spacer for centering */}
+      </div>
+
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Wrapper */}
+      <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-full w-full">
+
+
+
+        {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
         <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
           <LumeLogo variant="icon" />
@@ -744,10 +812,9 @@ function DashboardComponent() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Column 2: Channels/Navigation */}
       <div className="flex w-60 flex-col border-r border-white/5 bg-[#121212]/30">
+
+
         <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={activeServer ? copyInvite : undefined}>
           <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
           {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
@@ -836,35 +903,34 @@ function DashboardComponent() {
                         setActiveVoiceChannel(channel);
                         setShowVoiceUI(true);
                       }}
-                      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                      className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors ${
                         activeVoiceChannel?.id === channel.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                       }`}
                     >
-                      <Volume2 size={16} className="text-zinc-500" />
-                      <span className="flex-1 text-left">{channel.name}</span>
+                      <Volume2 size={18} className="text-zinc-500" />
+                      <span className="flex-1 text-left font-medium">{channel.name}</span>
                     </button>
                     
-                    {activeVoiceChannel?.id === channel.id && (
-                      <div className="ml-6 space-y-1">
-                        {allParticipantsInRoom.map((p: any) => (
-                          <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
-                            <Avatar className="h-5 w-5 border border-white/5">
-                              <AvatarImage src={p.avatar_url || ""} />
-                              <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
-                                {p.username.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
-                              {p.display_name || p.username}
-                            </span>
-                            <div className="ml-auto flex gap-1">
-                              {p.isMuted && <MicOff size={10} className="text-red-500" />}
-                              {p.isDeafened && <Headphones size={10} className="text-red-500" />}
-                            </div>
+                    {/* Background Presence List in Sidebar */}
+                    <div className="ml-6 space-y-1">
+                      {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
+                        <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group">
+                          <Avatar className="h-5 w-5 border border-white/10 group-hover:border-[#00D1FF]/30">
+                            <AvatarImage src={p.avatar_url || ""} />
+                            <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-500">
+                              {p.username.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
+                            {p.display_name || p.username}
+                          </span>
+                          <div className="ml-auto flex gap-1">
+                            {p.isMuted && <MicOff size={10} className="text-red-500" />}
+                            {p.isDeafened && <Headphones size={10} className="text-red-500" />}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -933,8 +999,34 @@ function DashboardComponent() {
           </button>
         </div>
       </div>
+    </div>
+      </div>
+    </div>
 
-      {/* Column 3: Main Content (Chat or Friends) */}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       <div className="flex flex-1 flex-col bg-[#050505] overflow-hidden">
         {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
@@ -1184,3 +1276,20 @@ function DashboardComponent() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
