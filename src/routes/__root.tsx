@@ -154,7 +154,7 @@ function RootComponent() {
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
+        const { data: fetchedProfile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
@@ -164,7 +164,7 @@ function RootComponent() {
           console.warn("[Lume Auth] Profile fetch error:", profileError);
         }
 
-        let profile = profileData;
+        let profile = fetchedProfile;
 
         if (!profile) {
           console.log("[Lume Auth] No profile found, attempting auto-creation...");
