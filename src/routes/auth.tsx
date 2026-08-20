@@ -76,13 +76,15 @@ function AuthComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center flex flex-col items-center">
+        <div className="flex justify-center items-center my-4">
           <img 
             src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
             alt="Lume" 
-            className="h-10 w-auto max-w-[200px] object-contain mx-auto block" 
+            className="h-10 md:h-12 w-auto max-w-none object-contain" 
           />
-          <p className="mt-2 text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
         </div>
 
         <div className="rounded-xl border border-border bg-[#121212] p-6 shadow-2xl">
