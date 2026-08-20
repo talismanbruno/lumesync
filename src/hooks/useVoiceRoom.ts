@@ -31,6 +31,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   
   const pcs = useRef<Record<string, RTCPeerConnection>>({});
   const channelRef = useRef<any>(null);
+  const currentPresenceState = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<Record<string, AnalyserNode>>({});
   const talkingThreshold = 20;
