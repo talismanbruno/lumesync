@@ -37,9 +37,15 @@ function AuthComponent() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     try {
       if (isSignUp) {
+        if (!allRequirementsMet) {
+          toast.error("Por favor, atenda a todos os requisitos de senha.");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -47,12 +53,14 @@ function AuthComponent() {
         if (error) throw error;
         toast.success("Conta criada com sucesso! Verifique seu e-mail se necessário.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        toast.success("Bem-vindo de volta!");
+        if (data.session) {
+          toast.success("Bem-vindo de volta!");
+        }
       }
     } catch (error: any) {
       if (error.message?.toLowerCase().includes("weak") || error.message?.toLowerCase().includes("common")) {

@@ -145,7 +145,6 @@ function RootComponent() {
 
         if (!mounted) return;
         setDebugInfo(prev => ({ ...prev, session, user: session?.user }));
-        console.log("[Lume Auth] User ID:", session?.user?.id);
 
         if (!session) {
           if (window.location.pathname !== "/auth") {
@@ -167,7 +166,6 @@ function RootComponent() {
         let profile = fetchedProfile;
 
         if (!profile) {
-          console.log("[Lume Auth] No profile found, attempting auto-creation...");
           const defaultUsername = session.user.email?.split('@')[0] || `user_${Date.now().toString().slice(-4)}`;
           
           const { data: newProfile, error: upsertError } = await supabase
@@ -181,10 +179,7 @@ function RootComponent() {
             .select()
             .maybeSingle();
 
-          if (upsertError) {
-            console.error("[Lume Auth] Auto-creation failed:", upsertError);
-          } else {
-            console.log("[Lume Auth] Auto-creation successful:", newProfile);
+          if (!upsertError && newProfile) {
             profile = newProfile;
           }
         }
@@ -192,9 +187,10 @@ function RootComponent() {
         if (!mounted) return;
         setDebugInfo(prev => ({ ...prev, profile }));
         
+        const path = window.location.pathname;
         if (!profile?.username) {
-          router.navigate({ to: "/onboarding" });
-        } else if (window.location.pathname === "/auth" || window.location.pathname === "/onboarding") {
+          if (path !== "/onboarding") router.navigate({ to: "/onboarding" });
+        } else if (path === "/auth" || path === "/onboarding") {
           router.navigate({ to: "/" });
         }
       } catch (error) {
@@ -207,10 +203,10 @@ function RootComponent() {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Lume Auth] Event:", event);
-      router.invalidate();
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         checkAuth();
       } else if (event === "SIGNED_OUT") {
         setDebugInfo({ session: null, user: null, profile: null, error: null });
@@ -225,7 +221,7 @@ function RootComponent() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
 
   // No static loading block here; rendering immediately.
