@@ -808,7 +808,7 @@ function DashboardComponent() {
                 {channels.filter(c => c.type === 'text').map(channel => (
                   <button 
                     key={channel.id} 
-                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); }}
+                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); setShowVoiceUI(false); }}
                     className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                       activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                     }`}
