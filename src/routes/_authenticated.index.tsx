@@ -414,11 +414,11 @@ function DashboardComponent() {
         {/* User Footer */}
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2">
           <Avatar className="h-8 w-8 border border-white/5">
-            <AvatarImage src={myProfile.avatar_url || ""} />
-            <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{myProfile.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={myProfile?.avatar_url || ""} />
+            <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0 text-white">
-            <p className="truncate text-xs font-bold">{myProfile.display_name || myProfile.username}</p>
+            <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
             <p className="truncate text-[10px] text-emerald-500">online</p>
           </div>
           <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500">
