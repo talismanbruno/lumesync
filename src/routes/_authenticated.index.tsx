@@ -228,62 +228,50 @@ function DashboardComponent() {
     if (!newServerName.trim() || !myProfile?.id) return;
     
     try {
-      // 1. Create server
-      const { data: serverData, error: serverError } = await supabase
+      const { data: newServerId, error } = await supabase.rpc('create_server', {
+        server_name: newServerName.trim()
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Servidor criado com sucesso!");
+      
+      // Update local state by fetching servers again or constructing the new one
+      const { data: serverData, error: fetchError } = await supabase
         .from("servers")
-        .insert({
-          name: newServerName,
-          owner_id: myProfile.id,
-          invite_code: Math.random().toString(36).substring(2, 8).toUpperCase()
-        })
-        .select()
+        .select("*")
+        .eq("id", newServerId)
         .single();
         
-      if (serverError || !serverData) throw serverError || new Error("Erro ao criar servidor");
-      
-      const server: Server = {
-        id: serverData.id,
-        name: serverData.name,
-        owner_id: serverData.owner_id,
-        invite_code: serverData.invite_code || ""
-      };
-
-      // 2. Add owner to members
-      const { error: memberError } = await supabase
-        .from("members")
-        .insert({
-          server_id: server.id,
-          user_id: myProfile.id,
-          role: 'owner'
-        });
+      if (!fetchError && serverData) {
+        const newServer: Server = {
+          id: serverData.id,
+          name: serverData.name,
+          owner_id: serverData.owner_id,
+          invite_code: serverData.invite_code || ""
+        };
         
-      if (memberError) throw memberError;
-
-      // 3. Create default channels
-      const { data: channelsData, error: channelsError } = await supabase
-        .from("channels")
-        .insert([
-          { server_id: server.id, name: "geral", type: 'text' },
-          { server_id: server.id, name: "Sala Principal", type: 'voice' }
-        ])
-        .select();
+        setServers(prev => [...prev, newServer]);
+        setActiveServer(newServer);
         
-      if (channelsError) throw channelsError;
-
-      setServers(prev => [...prev, server]);
-      setActiveServer(server);
-      
-      // Auto-select #geral
-      if (channelsData && channelsData.length > 0) {
-        const textChannel = channelsData.find((c: any) => c.type === 'text');
-        if (textChannel) setActiveChannel(textChannel as Channel);
+        // Fetch channels for the new server immediately
+        const { data: channelsData } = await supabase
+          .from("channels")
+          .select("*")
+          .eq("server_id", newServerId)
+          .order("created_at", { ascending: true });
+          
+        if (channelsData) {
+          setChannels(channelsData as Channel[]);
+          const textChannel = channelsData.find((c: any) => c.type === 'text');
+          if (textChannel) setActiveChannel(textChannel as Channel);
+        }
       }
 
       setNewServerName("");
       setIsCreatingServer(false);
-      toast.success("Servidor criado com sucesso!");
-      
     } catch (error: any) {
+      console.error("Erro ao criar servidor:", error);
       toast.error(error.message || "Erro ao criar servidor");
     }
   };
