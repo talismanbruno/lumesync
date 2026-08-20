@@ -123,7 +123,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
 
       // Se o usuário parar o compartilhamento pelo navegador
-      stream.getVideoTracks()[0].onended = () => {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
         setScreenStream(null);
         if (channelRef.current) {
           channelRef.current.track({
