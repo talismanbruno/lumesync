@@ -55,7 +55,11 @@ function AuthComponent() {
         toast.success("Bem-vindo de volta!");
       }
     } catch (error: any) {
-      toast.error(error.message || "Erro ao autenticar. Verifique suas credenciais.");
+      if (error.message?.toLowerCase().includes("weak") || error.message?.toLowerCase().includes("common")) {
+        toast.error("Esta senha é muito comum. Tente combinar palavras diferentes.");
+      } else {
+        toast.error(error.message || "Erro ao autenticar. Verifique suas credenciais.");
+      }
     } finally {
       setLoading(false);
     }
