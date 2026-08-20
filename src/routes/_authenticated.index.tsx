@@ -638,30 +638,83 @@ function DashboardComponent() {
         
         <div className="mx-4 h-[2px] w-8 bg-white/5" />
         
-        <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
+        <Dialog open={isCreatingServer} onOpenChange={(open) => { setIsCreatingServer(open); if (!open) setServerModalTab('create'); }}>
           <DialogTrigger asChild>
             <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20">
               <Plus size={24} />
             </button>
           </DialogTrigger>
-          <DialogContent className="bg-[#121212] border-white/10 text-white">
+          <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px]">
             <DialogHeader>
-              <DialogTitle>Personalize seu servidor</DialogTitle>
+              <DialogTitle className="text-center text-2xl font-bold">
+                {serverModalTab === 'create' ? "Crie seu servidor" : "Entre em um servidor"}
+              </DialogTitle>
+              <DialogDescription className="text-center text-zinc-400">
+                {serverModalTab === 'create' 
+                  ? "Seu servidor é onde você e seus amigos se reúnem. Crie o seu e comece a conversar." 
+                  : "Insira um convite abaixo para entrar em um servidor existente."}
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-zinc-400">Nome do Servidor</label>
-                <Input 
-                  value={newServerName}
-                  onChange={(e) => setNewServerName(e.target.value)}
-                  placeholder="O servidor de..." 
-                  className="bg-[#050505] border-white/10 text-white"
-                />
-              </div>
+            
+            <div className="flex gap-2 p-1 bg-[#050505] rounded-lg mb-4">
+              <button 
+                onClick={() => setServerModalTab('create')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'create' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                Criar
+              </button>
+              <button 
+                onClick={() => setServerModalTab('join')}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'join' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                Entrar
+              </button>
             </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsCreatingServer(false)}>Cancelar</Button>
-              <Button onClick={handleCreateServer} className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm">Criar</Button>
+
+            {serverModalTab === 'create' ? (
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">Nome do Servidor</label>
+                  <Input 
+                    value={newServerName}
+                    onChange={(e) => setNewServerName(e.target.value)}
+                    placeholder="O servidor de..." 
+                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-zinc-400">Link de convite</label>
+                  <Input 
+                    value={inviteCodeInput}
+                    onChange={(e) => setInviteCodeInput(e.target.value)}
+                    placeholder="hYp3r-LUM3" 
+                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
+                  />
+                  <p className="text-[10px] text-zinc-500">
+                    Os convites devem ser parecidos com <span className="text-zinc-400 font-mono">hYp3r-LUM3</span>
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter className="bg-[#18181b]/50 -mx-6 -mb-6 p-4 rounded-b-lg">
+              <div className="flex w-full justify-between items-center">
+                <button 
+                  onClick={() => setIsCreatingServer(false)}
+                  className="text-sm text-zinc-400 hover:underline"
+                >
+                  Voltar
+                </button>
+                <Button 
+                  onClick={serverModalTab === 'create' ? handleCreateServer : handleJoinServer} 
+                  className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold px-8 h-10"
+                >
+                  {serverModalTab === 'create' ? "Criar Servidor" : "Entrar no Servidor"}
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
