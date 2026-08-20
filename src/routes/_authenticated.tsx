@@ -3,25 +3,38 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   loader: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    
-    if (!session) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      
+      console.log("[Lume Auth Protected] Checking session:", session?.user?.id);
+      
+      if (!session) {
+        throw redirect({ to: "/auth" });
+      }
+      
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("[Lume Auth Protected] Profile error:", error);
+      }
+        
+      if (!profile?.username) {
+        console.log("[Lume Auth Protected] No username, redirecting to onboarding");
+        throw redirect({ to: "/onboarding" });
+      }
+
+      return { session, profile };
+    } catch (e) {
+      if (e instanceof Error && (e as any).status === 307) throw e; // Handle redirects
+      console.error("[Lume Auth Protected] Loader error:", e);
       throw redirect({ to: "/auth" });
     }
-    
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
-      
-    if (!profile?.username) {
-      throw redirect({ to: "/onboarding" });
-    }
-
-    return { session, profile };
   },
   component: () => <Outlet />,
 });

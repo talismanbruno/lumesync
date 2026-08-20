@@ -130,43 +130,82 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    // Listen for auth changes to force navigation
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN") {
-        // Force re-validation of routes
-        router.invalidate();
+    let mounted = true;
+
+    // Safety timeout: 4 seconds
+    const timeout = setTimeout(() => {
+      if (mounted && isInitializing) {
+        console.log("[Lume Auth] Safety timeout triggered");
+        setIsInitializing(false);
+        // Only toast if we're not on auth page
+        if (window.location.pathname !== "/auth") {
+          import("sonner").then(({ toast }) => {
+            toast.error("Tempo limite ao carregar sessão. Tente novamente.");
+          });
+          router.navigate({ to: "/auth" });
+        }
+      }
+    }, 4000);
+
+    const handleAuth = async (session: any) => {
+      if (!mounted) return;
+      
+      try {
+        console.log("[Lume Auth] User ID:", session?.user?.id);
         
-        // Check profile completion
         if (session?.user) {
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from("profiles")
             .select("username")
             .eq("id", session.user.id)
-            .single();
+            .maybeSingle();
             
+          console.log("[Lume Auth] Profile:", profile);
+          
+          if (error) throw error;
+
           if (!profile?.username) {
             router.navigate({ to: "/onboarding" });
-          } else {
+          } else if (window.location.pathname === "/auth" || window.location.pathname === "/onboarding") {
             router.navigate({ to: "/" });
           }
+        } else if (window.location.pathname !== "/auth") {
+          router.navigate({ to: "/auth" });
         }
+      } catch (error) {
+        console.error("[Lume Auth] Error:", error);
+      } finally {
+        if (mounted) {
+          setIsInitializing(false);
+          clearTimeout(timeout);
+        }
+      }
+    };
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Lume Auth] Event:", event);
+      router.invalidate();
+      
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+        await handleAuth(session);
       } else if (event === "SIGNED_OUT") {
-        router.invalidate();
+        setIsInitializing(false);
+        clearTimeout(timeout);
         router.navigate({ to: "/auth" });
       }
-      
-      setIsInitializing(false);
     });
 
     // Initial check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session && window.location.pathname !== "/auth") {
-        // router.navigate({ to: "/auth" }); // beforeLoad handles this but this is safer
-      }
-      setIsInitializing(false);
+      handleAuth(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [router]);
 
   if (isInitializing) {
