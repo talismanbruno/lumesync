@@ -728,13 +728,29 @@ function DashboardComponent() {
         </div>
       </div>
 
-      {/* Column 3: Main Content (Chat) */}
+      {/* Column 3: Main Content (Chat or Friends) */}
       <div className="flex flex-1 flex-col bg-[#050505]">
-        {activeChannel ? (
+        {activeChannel || activeDMFriend ? (
           <>
             <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
-              <Hash size={20} className="mr-2 text-zinc-500" />
-              <h3 className="text-sm font-bold text-white">{activeChannel.name}</h3>
+              {activeChannel ? (
+                <>
+                  <Hash size={20} className="mr-2 text-zinc-500" />
+                  <h3 className="text-sm font-bold text-white">{activeChannel.name}</h3>
+                </>
+              ) : (
+                <>
+                  <div className="relative mr-2">
+                    <Avatar className="h-6 w-6 border border-white/5">
+                      <AvatarImage src={activeDMFriend?.avatar_url || ""} />
+                      <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
+                        {activeDMFriend?.username.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
+                </>
+              )}
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
                 <Search size={18} className="cursor-pointer hover:text-white" />
                 <Settings size={18} className="cursor-pointer hover:text-white" />
@@ -743,35 +759,35 @@ function DashboardComponent() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((msg, index) => (
-                <div key={msg.id || index} className="flex gap-4 group">
-                  <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
-                    <AvatarImage src={msg.profile?.avatar_url || ""} />
-                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                      {(msg.profile?.display_name || msg.profile?.username || "?").substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-bold hover:underline cursor-pointer text-white">
-                        {msg.profile?.display_name || msg.profile?.username || "Membro do Lume"}
-                      </span>
-                      <span className="text-[10px] text-zinc-500">
-                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+              {messages.map((msg, index) => {
+                const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
+                return (
+                  <div key={msg.id || index} className="flex gap-4 group">
+                    <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
+                      <AvatarImage src={profile?.avatar_url || ""} />
+                      <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                        {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-bold hover:underline cursor-pointer text-white">
+                          {profile?.display_name || profile?.username || "Membro do Lume"}
+                        </span>
+                        <span className="text-[10px] text-zinc-500">
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>
                     </div>
-                    <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={chatEndRef} />
             </div>
 
             <div className="p-4 pt-0">
-              <form 
-                onSubmit={handleSendMessage} 
-                className="relative"
-              >
+              <form onSubmit={handleSendMessage} className="relative">
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -781,18 +797,150 @@ function DashboardComponent() {
                       handleSendMessage(e as any);
                     }
                   }}
-                  placeholder={`Conversar em #${activeChannel.name}`}
+                  placeholder={activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`}
                   className="bg-[#121212] border-none focus-visible:ring-1 focus-visible:ring-[#00D1FF]/50 pr-12 h-11 text-sm text-white"
                 />
-                <button 
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors"
-                >
+                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors">
                   <Send size={18} />
                 </button>
               </form>
             </div>
           </>
+        ) : !activeServer ? (
+          <div className="flex flex-col h-full">
+            <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
+              <Users size={20} className="mr-2 text-zinc-500" />
+              <h3 className="text-sm font-bold text-white mr-4">Amigos</h3>
+              <div className="h-6 w-[1px] bg-white/10 mx-2" />
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setFriendFilter('online')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'online' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
+                >
+                  Disponível
+                </button>
+                <button 
+                  onClick={() => setFriendFilter('all')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'all' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
+                >
+                  Todos
+                </button>
+                <button 
+                  onClick={() => setFriendFilter('pending')}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors relative ${friendFilter === 'pending' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
+                >
+                  Pendentes
+                  {friendships.filter(f => f.status === 'pending' && f.addressee_id === myProfile.id).length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white">
+                      {friendships.filter(f => f.status === 'pending' && f.addressee_id === myProfile.id).length}
+                    </span>
+                  )}
+                </button>
+                <button 
+                  onClick={() => setFriendFilter('add')}
+                  className={`px-3 py-1 text-xs rounded-md font-bold transition-colors ${friendFilter === 'add' ? "text-[#00D1FF]" : "bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90"}`}
+                >
+                  Adicionar Amigo
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 p-6 overflow-y-auto">
+              {friendFilter === 'add' ? (
+                <div className="max-w-xl space-y-4">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Adicionar Amigo</h4>
+                    <p className="text-xs text-zinc-400">Você pode adicionar amigos com o nome de usuário do Lume.</p>
+                  </div>
+                  <div className="relative group">
+                    <Input 
+                      value={addFriendUsername}
+                      onChange={(e) => setAddFriendUsername(e.target.value)}
+                      placeholder="Insira o nome de usuário..."
+                      className="bg-[#121212] border border-[#121212] focus:border-[#00D1FF]/50 text-white h-12 pr-40"
+                    />
+                    <Button 
+                      onClick={handleSendFriendRequest}
+                      disabled={!addFriendUsername.trim()}
+                      className="absolute right-1 top-1 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 h-10 px-4"
+                    >
+                      Enviar pedido
+                    </Button>
+                  </div>
+                </div>
+              ) : friendFilter === 'pending' ? (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">
+                    Pedidos de Amizade — {friendships.filter(f => f.status === 'pending').length}
+                  </h4>
+                  {friendships.filter(f => f.status === 'pending').map(f => (
+                    <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={f.friend_profile?.avatar_url || ""} />
+                        <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                          {f.friend_profile?.username.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                        <p className="text-[10px] text-zinc-500">{f.requester_id === myProfile.id ? "Pedido enviado" : "Pedido recebido"}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {f.addressee_id === myProfile.id ? (
+                          <>
+                            <button onClick={() => handleAcceptFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all">
+                              <Check size={18} />
+                            </button>
+                            <button onClick={() => handleDeclineFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                              <X size={18} />
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => handleDeclineFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-red-500 hover:text-white transition-all">
+                            <X size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">
+                    Amigos — {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || f.friend_profile?.status === 'online')).length}
+                  </h4>
+                  {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || f.friend_profile?.status === 'online')).map(f => (
+                    <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
+                      <div className="relative">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={f.friend_profile?.avatar_url || ""} />
+                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                            {f.friend_profile?.username.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#050505] ${f.friend_profile?.status === 'online' ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                        <p className="text-[10px] text-zinc-500 capitalize">{f.friend_profile?.status || 'offline'}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); }}
+                          className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-[#00D1FF] hover:text-black transition-all"
+                        >
+                          <MessageSquare size={16} />
+                        </button>
+                        <button className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 transition-all">
+                          <Sparkles size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6 flex flex-col items-center">
@@ -802,10 +950,7 @@ function DashboardComponent() {
               <div className="space-y-2">
                 <p className="text-sm text-zinc-500 font-medium tracking-wide">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
               </div>
-              <Button 
-                onClick={() => setIsCreatingServer(true)}
-                className="mt-4 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8"
-              >
+              <Button onClick={() => setIsCreatingServer(true)} className="mt-4 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8">
                 Criar meu primeiro Servidor
               </Button>
             </div>
