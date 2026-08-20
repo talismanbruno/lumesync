@@ -356,6 +356,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
   return {
     participants: Object.values(participants),
+    allParticipantsInRoom: currentPresenceState.current ? Object.values(currentPresenceState.current).flat() : [],
     localStream,
     screenStream,
     isMuted,
