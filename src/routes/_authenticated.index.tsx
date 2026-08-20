@@ -492,8 +492,8 @@ function DashboardComponent() {
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#00D1FF]/10 text-[#00D1FF] glow-md border border-[#00D1FF]/20">
-                <h1 className="text-3xl font-black">L</h1>
+              <div className="mx-auto flex items-center justify-center mb-6">
+                <LumeLogo size="lg" />
               </div>
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao LUME</h1>
