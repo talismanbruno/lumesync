@@ -93,7 +93,7 @@ function DashboardComponent() {
       const serverList = (data as any[]).map(item => item.servers).filter(Boolean) as Server[];
       setServers(serverList);
       if (serverList.length > 0 && !activeServer) {
-        setActiveServer(serverList[0]);
+        setActiveServer(serverList[0] || null);
       }
     };
     
