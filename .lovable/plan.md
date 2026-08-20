@@ -1,44 +1,86 @@
-# Implementation Plan - LUME Platform
+# Implementation Plan - Phase 2: Servers, Channels, and Realtime Chat
 
-Initialize the LUME communication platform with a premium minimal dark aesthetic, Lovable Cloud backend integration, and robust authentication/onboarding flow.
+This plan implements the complete logic for Servers, Channels, and Realtime Messages as requested for Phase 2.
 
-## User Review Required
+## Backend (Supabase)
 
-> [!IMPORTANT]
-> - I will enable Lovable Cloud to handle authentication, database tables, and the profile creation trigger.
-> - The application will use a "Dark & Glow" theme as specified (#050505 background).
-> - Initial focus is on the secure login -> onboarding (username selection) -> dashboard skeleton flow.
+### 1. Database Schema
+- Create `channels` table: `id`, `server_id`, `name`, `type` (text/voice).
+- Create `messages` table: `id`, `channel_id`, `user_id`, `content`, `created_at`.
+- Enable RLS on both tables.
+- Grant access to `authenticated` and `service_role`.
 
-## Proposed Changes
+### 2. RLS Policies
+- `channels`: Members of the server can read channels. Only owners can insert/update/delete.
+- `messages`: Members of the server can read and insert messages in its channels.
 
-### Backend & Database (Lovable Cloud)
-- Enable Lovable Cloud.
-- Create `profiles` table with RLS and a trigger to automatically create profiles on auth signup.
-- Create `servers` and `members` tables with appropriate foreign keys and RLS.
-- Configure Google and Email authentication.
+### 3. Realtime
+- Ensure the `messages` table is added to the `supabase_realtime` publication to enable realtime updates.
 
-### Visual Identity (Global Styles)
-- Update `src/styles.css` with the LUME color palette:
-  - Background: `#050505`
-  - Cards/Surface: `#121212`
-  - Accent (Glow): `#00D1FF` (Cyan)
-- Set Geist or Inter as the primary sans-serif font.
-- Define custom utility classes for "glow" effects.
+## Frontend (Dashboard)
 
-### Authentication & Onboarding
-- **Login Page (`/auth`):** Premium dark interface with LUME branding, Email/Google login, and loading states.
-- **Onboarding Page (`/onboarding`):** Forced redirect for users without a `username`. Allows setting `username` and `display_name`.
-- **Auth Middleware:** Protect routes and ensure profile completion before dashboard access.
+### 1. Server Management
+- Implement "Create Server" modal in the first column.
+- Logic: Create server -> Insert owner into `members` -> Create default channels (#geral, 🔊 Sala de Voz) -> Navigate to the new server.
+- Add "Invite Friends" functionality (copy invite code).
 
-### Dashboard Skeleton
-- **Main Layout (`_authenticated`):** 3-column architecture.
-  - Sidebar (Servers list)
-  - Navigation (Channels/Categories)
-  - Main Content (Placeholder for future chat)
-- Responsive design for mobile/desktop.
+### 2. Channel Management
+- List channels by type (Text/Voice) in the second column.
+- Implement "Create Channel" button for server owners.
+- Handle active channel selection state.
+
+### 3. Realtime Chat
+- Replace the chat placeholder with a functional message list and input.
+- Use `supabase.channel('messages')` to listen for new messages in real-time.
+- Fetch initial message history on channel switch.
+- Auto-scroll to bottom on new messages.
+- Display user avatars and display names in messages.
 
 ## Technical Details
-- **Tech Stack:** TanStack Start v1, React 19, Tailwind CSS v4, Lovable Cloud.
-- **Security:** RLS policies to ensure users can only see their profiles and servers they belong to.
-- **Trigger:** PostgreSQL function `handle_new_user()` to sync `auth.users` to `public.profiles`.
-- **Navigation:** TanStack Router with `beforeLoad` guards for profile validation.
+
+### Database Migrations
+```sql
+-- Channels
+CREATE TABLE public.channels (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    server_id uuid REFERENCES public.servers(id) ON DELETE CASCADE NOT NULL,
+    name text NOT NULL,
+    type text DEFAULT 'text' CHECK (type IN ('text', 'voice')),
+    created_at timestamptz DEFAULT now()
+);
+
+-- Messages
+CREATE TABLE public.messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    channel_id uuid REFERENCES public.channels(id) ON DELETE CASCADE NOT NULL,
+    user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    content text NOT NULL,
+    created_at timestamptz DEFAULT now()
+);
+
+-- Grants
+GRANT SELECT ON public.channels TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.channels TO authenticated;
+GRANT SELECT, INSERT ON public.messages TO authenticated;
+
+-- RLS
+ALTER TABLE public.channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Policies (simplified logic)
+CREATE POLICY "Members can view channels" ON public.channels FOR SELECT TO authenticated USING (
+    EXISTS (SELECT 1 FROM public.members WHERE server_id = channels.server_id AND user_id = auth.uid())
+);
+CREATE POLICY "Members can view messages" ON public.messages FOR SELECT TO authenticated USING (
+    EXISTS (SELECT 1 FROM public.channels c JOIN public.members m ON c.server_id = m.server_id WHERE c.id = messages.channel_id AND m.user_id = auth.uid())
+);
+CREATE POLICY "Members can insert messages" ON public.messages FOR INSERT TO authenticated WITH CHECK (
+    EXISTS (SELECT 1 FROM public.channels c JOIN public.members m ON c.server_id = m.server_id WHERE c.id = messages.channel_id AND m.user_id = auth.uid())
+);
+```
+
+### Components
+- `ServerSidebar`: Column 1 navigation.
+- `ChannelSidebar`: Column 2 channel list.
+- `ChatArea`: Column 3 message display and input.
+- `CreateServerModal`: Shadcn Dialog for new servers.
