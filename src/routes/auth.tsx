@@ -80,7 +80,7 @@ function AuthComponent() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center flex flex-col items-center">
           <LumeWordmark size="lg" className="mb-2" />
-          <p className="mt-2 text-sm text-muted-foreground">Plataforma de comunicação minimalista</p>
+          <p className="mt-2 text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
         </div>
 
         <div className="rounded-xl border border-border bg-[#121212] p-6 shadow-2xl">

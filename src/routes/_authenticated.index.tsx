@@ -494,11 +494,11 @@ function DashboardComponent() {
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6 flex flex-col items-center">
-              <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center justify-center mb-6 scale-110">
                 <LumeWordmark size="lg" />
               </div>
               <div className="space-y-2">
-                <p className="text-sm text-zinc-500">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
+                <p className="text-sm text-zinc-500 font-medium tracking-wide">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
               </div>
               <Button 
                 onClick={() => setIsCreatingServer(true)}
