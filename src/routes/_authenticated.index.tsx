@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
+import { LumeWordmark } from "@/components/ui/LumeWordmark";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -369,7 +370,7 @@ function DashboardComponent() {
       {/* Column 2: Channels/Navigation */}
       <div className="flex w-60 flex-col border-r border-white/5 bg-[#121212]/30">
         <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={copyInvite}>
-          <h2 className="text-sm font-bold truncate flex-1 uppercase tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
+          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
           {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
         </div>
         
@@ -494,10 +495,9 @@ function DashboardComponent() {
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6 flex flex-col items-center">
               <div className="flex items-center justify-center mb-6">
-                <LumeLogo size="lg" />
+                <LumeWordmark size="lg" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-xl font-bold tracking-widest text-white uppercase">LUME</h1>
                 <p className="text-sm text-zinc-500">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
               </div>
               <Button 
