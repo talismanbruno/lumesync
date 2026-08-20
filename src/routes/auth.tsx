@@ -79,10 +79,10 @@ function AuthComponent() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center flex flex-col items-center">
           <LumeLogo size="lg" className="mb-4" />
-          <h1 className="text-4xl font-bold tracking-tighter text-[#00D1FF] glow-sm inline-block px-2">
+          <h1 className="text-xl font-bold tracking-widest text-white uppercase">
             LUME
           </h1>
-          <p className="mt-2 text-muted-foreground">Plataforma de comunicação minimalista</p>
+          <p className="mt-2 text-sm text-muted-foreground">Plataforma de comunicação minimalista</p>
         </div>
 
         <div className="rounded-xl border border-border bg-[#121212] p-6 shadow-2xl">
