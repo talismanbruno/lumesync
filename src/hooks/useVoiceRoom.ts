@@ -18,7 +18,7 @@ interface Participant {
   isDeafened: boolean;
   isSharingScreen: boolean;
   isTalking?: boolean;
-  stream?: MediaStream;
+  stream: MediaStream | undefined;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
@@ -117,7 +117,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 display_name: null,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false
+                isSharingScreen: false,
+                stream: undefined
               };
               
               const updated: Participant = {
