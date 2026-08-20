@@ -127,6 +127,7 @@ function DashboardComponent() {
   const {
     participants,
     allParticipantsInRoom,
+    screenStream,
     isMuted,
     isDeafened,
     isSharingScreen,
@@ -135,6 +136,7 @@ function DashboardComponent() {
     toggleScreenShare,
     disconnect
   } = useVoiceRoom(activeVoiceChannel?.id || null, myProfile);
+
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
