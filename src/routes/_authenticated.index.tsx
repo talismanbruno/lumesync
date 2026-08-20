@@ -776,7 +776,7 @@ function DashboardComponent() {
                   return (
                     <button 
                       key={friend.id}
-                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); }}
+                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); setShowVoiceUI(false); }}
                       className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                         activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                       }`}
