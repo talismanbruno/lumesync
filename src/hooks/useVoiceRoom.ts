@@ -31,15 +31,17 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   
   const pcs = useRef<Record<string, RTCPeerConnection>>({});
   const channelRef = useRef<any>(null);
+  const currentPresenceState = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<Record<string, AnalyserNode>>({});
   const talkingThreshold = 20;
 
-  const cleanup = useCallback(() => {
+  const cleanup = useCallback(async () => {
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
     Object.values(pcs.current).forEach(pc => pc.close());
     if (channelRef.current) {
+      await channelRef.current.untrack();
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
@@ -83,8 +85,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         }
         setLocalStream(stream);
 
-        const channel = supabase.channel(`voice-room:${channelId}`, {
-          config: { broadcast: { self: true }, presence: { key: myProfile.id } }
+        const channelTopic = `voice-channel:${channelId}`;
+        const channel = supabase.channel(channelTopic, {
+          config: { presence: { key: myProfile.id } }
         });
 
         channelRef.current = channel;
@@ -160,22 +163,53 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         };
 
         channel
-          .on('presence', { event: 'join' }, ({ newPresences }) => {
-            newPresences.forEach((p: any) => {
-              if (p.id !== myProfile.id) {
+          .on('presence', { event: 'sync' }, () => {
+            const presenceState = channel.presenceState();
+            currentPresenceState.current = presenceState;
+            
+            const participantList = Object.values(presenceState).flat().map((p: any) => ({
+              id: p.user_id,
+              username: p.username,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+              isMuted: p.isMuted,
+              isDeafened: p.isDeafened,
+              isSharingScreen: p.isSharingScreen || false,
+              isSpeaking: false
+            }));
+
+            setParticipants(prev => {
+              const next: Record<string, VoiceParticipant> = {};
+              participantList.forEach(p => {
+                if (p.id === myProfile.id) return; // Skip self in WebRTC list
+                next[p.id] = {
+                  ...p,
+                  stream: prev[p.id]?.stream
+                } as VoiceParticipant;
+              });
+              return next;
+            });
+
+            // Start WebRTC for new participants
+            participantList.forEach(p => {
+              if (p.id !== myProfile.id && !pcs.current[p.id]) {
                 createPC(p.id, true, stream);
               }
             });
           })
+          .on('presence', { event: 'join' }, ({ newPresences }) => {
+            // Already handled by sync
+          })
           .on('presence', { event: 'leave' }, ({ leftPresences }) => {
             leftPresences.forEach((p: any) => {
-              const pc = pcs.current[p.id];
+              const id = p.user_id || p.id;
+              const pc = pcs.current[id];
               if (pc) {
                 pc.close();
-                delete pcs.current[p.id];
+                delete pcs.current[id];
                 setParticipants(prev => {
                   const next = { ...prev };
-                  delete next[p.id];
+                  delete next[id];
                   return next;
                 });
               }
@@ -222,15 +256,16 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             }
           })
           .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED' && channelRef.current) {
-              await channelRef.current.track({
-                id: myProfile.id,
+            if (status === 'SUBSCRIBED') {
+              await channel.track({
+                user_id: myProfile.id,
                 username: myProfile.username,
-                avatar_url: myProfile.avatar_url,
                 display_name: myProfile.display_name,
+                avatar_url: myProfile.avatar_url,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false
+                isSharingScreen: false,
+                joined_at: new Date().toISOString()
               });
             }
           });
@@ -277,7 +312,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
-        if (channelRef.current) channelRef.current.track({ isMuted: !audioTrack.enabled });
+        if (channelRef.current) channelRef.current.track({ 
+          user_id: myProfile.id,
+          username: myProfile.username,
+          display_name: myProfile.display_name,
+          avatar_url: myProfile.avatar_url,
+          isMuted: !audioTrack.enabled,
+          isDeafened,
+          isSharingScreen
+        });
       }
     }
   };
@@ -285,7 +328,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const toggleDeafen = () => {
     const nextState = !isDeafened;
     setIsDeafened(nextState);
-    if (channelRef.current) channelRef.current.track({ isDeafened: nextState });
+    if (channelRef.current) channelRef.current.track({ 
+      user_id: myProfile.id,
+      username: myProfile.username,
+      display_name: myProfile.display_name,
+      avatar_url: myProfile.avatar_url,
+      isMuted,
+      isDeafened: nextState,
+      isSharingScreen
+    });
   };
 
   const toggleScreenShare = async () => {
@@ -295,13 +346,29 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
       setScreenStream(null);
       setIsSharingScreen(false);
-      if (channelRef.current) channelRef.current.track({ isSharingScreen: false });
+      if (channelRef.current) channelRef.current.track({ 
+        user_id: myProfile.id,
+        username: myProfile.username,
+        display_name: myProfile.display_name,
+        avatar_url: myProfile.avatar_url,
+        isMuted,
+        isDeafened,
+        isSharingScreen: false 
+      });
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         setScreenStream(stream);
         setIsSharingScreen(true);
-        if (channelRef.current) channelRef.current.track({ isSharingScreen: true });
+        if (channelRef.current) channelRef.current.track({ 
+          user_id: myProfile.id,
+          username: myProfile.username,
+          display_name: myProfile.display_name,
+          avatar_url: myProfile.avatar_url,
+          isMuted,
+          isDeafened,
+          isSharingScreen: true 
+        });
 
         const videoTrack = stream.getTracks()[0];
         if (videoTrack) {
@@ -321,6 +388,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
   return {
     participants: Object.values(participants),
+    allParticipantsInRoom: currentPresenceState.current ? Object.values(currentPresenceState.current).flat() : [],
     localStream,
     screenStream,
     isMuted,
