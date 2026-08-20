@@ -880,6 +880,52 @@ function DashboardComponent() {
           )}
         </div>
 
+        {/* Voice Connection Widget */}
+        {activeVoiceChannel && (
+          <div className="mx-2 mb-2 flex flex-col rounded-md bg-[#050505] p-2 border border-[#00D1FF]/20 shadow-[0_0_10px_rgba(0,209,255,0.05)] animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Voz Conectada</span>
+                  <span className="text-[11px] text-zinc-300 truncate font-medium">{activeVoiceChannel.name}</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowVoiceUI(true)}
+                className="p-1 text-zinc-400 hover:text-white transition-colors"
+                title="Abrir Tela da Chamada"
+              >
+                <Monitor size={14} />
+              </button>
+            </div>
+            <div className="flex items-center justify-around bg-white/5 rounded p-1">
+              <button 
+                onClick={toggleMute} 
+                className={`p-1.5 rounded transition-colors ${isMuted ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
+              <button 
+                onClick={toggleDeafen} 
+                className={`p-1.5 rounded transition-colors ${isDeafened ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                {isDeafened ? <Headphones size={16} className="text-red-500" /> : <Headphones size={16} />}
+              </button>
+              <button 
+                onClick={() => {
+                  disconnect();
+                  setActiveVoiceChannel(null);
+                  setShowVoiceUI(false);
+                }} 
+                className="p-1.5 rounded text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <PhoneOff size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* User Footer */}
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2">
           <Avatar className="h-8 w-8 border border-white/5">
