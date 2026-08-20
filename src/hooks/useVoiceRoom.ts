@@ -36,11 +36,12 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const analyserRef = useRef<Record<string, AnalyserNode>>({});
   const talkingThreshold = 20;
 
-  const cleanup = useCallback(() => {
+  const cleanup = useCallback(async () => {
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
     Object.values(pcs.current).forEach(pc => pc.close());
     if (channelRef.current) {
+      await channelRef.current.untrack();
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
