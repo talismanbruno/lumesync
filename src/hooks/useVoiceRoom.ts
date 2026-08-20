@@ -18,7 +18,7 @@ interface Participant {
   isDeafened: boolean;
   isSharingScreen: boolean;
   isTalking?: boolean;
-  stream: MediaStream | undefined;
+  stream?: MediaStream;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
@@ -117,18 +117,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 display_name: null,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false,
-                stream: undefined
+                isSharingScreen: false
               };
               
-              const updated: Participant = {
-                ...current,
-                stream: stream || undefined
-              };
-
               return {
                 ...prev,
-                [participantId]: updated
+                [participantId]: {
+                  ...current,
+                  stream: stream || undefined
+                }
               };
             });
 
@@ -139,14 +136,18 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
           if (isInitiator) {
             pc.onnegotiationneeded = async () => {
-              const offer = await pc.createOffer();
-              await pc.setLocalDescription(offer);
-              if (channelRef.current) {
-                channelRef.current.send({
-                  type: 'broadcast',
-                  event: 'offer',
-                  payload: { to: participantId, from: myProfile.id, offer }
-                });
+              try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                if (channelRef.current) {
+                  channelRef.current.send({
+                    type: 'broadcast',
+                    event: 'offer',
+                    payload: { to: participantId, from: myProfile.id, offer }
+                  });
+                }
+              } catch (e) {
+                console.error("Negotiation error", e);
               }
             };
           }
@@ -178,24 +179,40 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           .on('broadcast', { event: 'offer' }, async ({ payload }) => {
             if (payload.to !== myProfile.id) return;
             const pc = createPC(payload.from, false, stream);
-            await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            channel.send({
-              type: 'broadcast',
-              event: 'answer',
-              payload: { to: payload.from, from: myProfile.id, answer }
-            });
+            try {
+              await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              channel.send({
+                type: 'broadcast',
+                event: 'answer',
+                payload: { to: payload.from, from: myProfile.id, answer }
+              });
+            } catch (e) {
+              console.error("Offer error", e);
+            }
           })
           .on('broadcast', { event: 'answer' }, async ({ payload }) => {
             if (payload.to !== myProfile.id) return;
             const pc = pcs.current[payload.from];
-            if (pc) await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+            if (pc) {
+              try {
+                await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+              } catch (e) {
+                console.error("Answer error", e);
+              }
+            }
           })
           .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
             if (payload.to !== myProfile.id) return;
             const pc = pcs.current[payload.from];
-            if (pc && payload.candidate) await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            if (pc && payload.candidate) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+              } catch (e) {
+                console.error("ICE error", e);
+              }
+            }
           })
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
