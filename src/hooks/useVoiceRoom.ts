@@ -25,12 +25,20 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
 
   const cleanup = useCallback(async () => {
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    screenStream?.getTracks().forEach(t => t.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(t => t.stop());
+    }
     
     if (channelRef.current) {
-      await channelRef.current.untrack();
-      supabase.removeChannel(channelRef.current);
+      try {
+        await channelRef.current.untrack();
+        supabase.removeChannel(channelRef.current);
+      } catch (err) {
+        console.warn("Cleanup error:", err);
+      }
       channelRef.current = null;
     }
     
@@ -95,9 +103,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     if (channelId) {
       joinVoiceChannel(channelId);
     }
-    return () => {
-      // Logic handled by manual disconnect or route change
-    };
   }, [channelId, joinVoiceChannel]);
 
   const handleShareScreen = async () => {
@@ -188,5 +193,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     disconnect: cleanup
   };
 }
+
 
 
