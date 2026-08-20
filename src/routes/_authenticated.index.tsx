@@ -107,11 +107,14 @@ function DashboardComponent() {
         .eq("user_id", myProfile.id);
       
       if (error) {
-        toast.error("Erro ao carregar servidores");
+        console.error("Erro detalhado ao carregar servidores:", error);
+        // Only show toast if it's a real error, not just an empty result or RLS filtering
+        // members query returns error if something is wrong with the query itself
+        toast.error("Erro de conexão ao buscar servidores");
         return;
       }
       
-      const serverList = (data as any[]).map(item => item.servers).filter(Boolean) as Server[];
+      const serverList = (data as any[] || []).map(item => item.servers).filter(Boolean) as Server[];
       setServers(serverList);
       if (serverList.length > 0 && !activeServer) {
         setActiveServer(serverList[0] || null);
@@ -489,17 +492,17 @@ function DashboardComponent() {
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
-            <div className="max-w-md space-y-6">
-              <div className="mx-auto flex items-center justify-center mb-6">
+            <div className="max-w-md space-y-6 flex flex-col items-center">
+              <div className="flex items-center justify-center mb-6">
                 <LumeLogo size="lg" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao LUME</h1>
-                <p className="text-zinc-500">Seu espaço premium de comunicação. Comece criando seu primeiro servidor.</p>
+                <h1 className="text-xl font-bold tracking-widest text-white uppercase">LUME</h1>
+                <p className="text-sm text-zinc-500">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
               </div>
               <Button 
                 onClick={() => setIsCreatingServer(true)}
-                className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8"
+                className="mt-4 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8"
               >
                 Criar meu primeiro Servidor
               </Button>
