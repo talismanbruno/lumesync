@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useVoiceRoom } from "@/hooks/useVoiceRoom";
+import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardComponent,
@@ -113,10 +115,22 @@ function DashboardComponent() {
   const [addFriendUsername, setAddFriendUsername] = useState("");
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
+  const [activeVoiceChannel, setActiveVoiceChannel] = useState<Channel | null>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    participants,
+    isMuted,
+    isDeafened,
+    isSharingScreen,
+    toggleMute,
+    toggleDeafen,
+    toggleScreenShare,
+    disconnect
+  } = useVoiceRoom(activeVoiceChannel?.id || null, myProfile);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -699,13 +713,54 @@ function DashboardComponent() {
                   )}
                 </div>
                 {channels.filter(c => c.type === 'voice').map(channel => (
-                  <button 
-                    key={channel.id} 
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200"
-                  >
-                    <Volume2 size={16} className="text-zinc-500" />
-                    <span>{channel.name}</span>
-                  </button>
+                  <div key={channel.id} className="space-y-1">
+                    <button 
+                      onClick={() => {
+                        setActiveVoiceChannel(channel);
+                        setActiveChannel(null);
+                        setActiveDMFriend(null);
+                      }}
+                      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                        activeVoiceChannel?.id === channel.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                      }`}
+                    >
+                      <Volume2 size={16} className="text-zinc-500" />
+                      <span className="flex-1 text-left">{channel.name}</span>
+                    </button>
+                    
+                    {activeVoiceChannel?.id === channel.id && (
+                      <div className="ml-6 space-y-1">
+                        <div className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
+                          <Avatar className="h-5 w-5 border border-white/5">
+                            <AvatarImage src={myProfile?.avatar_url || ""} />
+                            <AvatarFallback className="text-[8px] bg-[#00D1FF]/10 text-[#00D1FF]">
+                              {(myProfile?.username || "U").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{myProfile?.display_name || myProfile?.username}</span>
+                          <div className="ml-auto flex gap-1">
+                            {isMuted && <MicOff size={10} className="text-red-500" />}
+                            {isDeafened && <Headphones size={10} className="text-red-500" />}
+                          </div>
+                        </div>
+                        {participants.map(p => (
+                          <div key={p.id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
+                            <Avatar className="h-5 w-5 border border-white/5">
+                              <AvatarImage src={p.avatar_url || ""} />
+                              <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
+                                {p.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{p.display_name || p.username}</span>
+                            <div className="ml-auto flex gap-1">
+                              {p.isMuted && <MicOff size={10} className="text-red-500" />}
+                              {p.isDeafened && <Headphones size={10} className="text-red-500" />}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </>
@@ -729,8 +784,20 @@ function DashboardComponent() {
       </div>
 
       {/* Column 3: Main Content (Chat or Friends) */}
-      <div className="flex flex-1 flex-col bg-[#050505]">
-        {activeChannel || activeDMFriend ? (
+      <div className="flex flex-1 flex-col bg-[#050505] overflow-hidden">
+        {activeVoiceChannel ? (
+          <VoiceRoomUI 
+            participants={participants}
+            myProfile={myProfile}
+            isMuted={isMuted}
+            isDeafened={isDeafened}
+            isSharingScreen={isSharingScreen}
+            toggleMute={toggleMute}
+            toggleDeafen={toggleDeafen}
+            toggleScreenShare={toggleScreenShare}
+            onDisconnect={() => setActiveVoiceChannel(null)}
+          />
+        ) : activeChannel || activeDMFriend ? (
           <>
             <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
               {activeChannel ? (
