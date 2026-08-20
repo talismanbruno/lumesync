@@ -358,26 +358,130 @@ function DashboardComponent() {
     }
   };
 
+  const fetchFriendships = async () => {
+    if (!myProfile?.id) return;
+    const { data, error } = await supabase
+      .from('friendships')
+      .select('*, requester:profiles!friendships_requester_id_fkey(*), addressee:profiles!friendships_addressee_id_fkey(*)')
+      .or(`requester_id.eq.${myProfile.id},addressee_id.eq.${myProfile.id}`);
+    
+    if (!error && data) {
+      const mapped = data.map((f: any) => ({
+        ...f,
+        friend_profile: f.requester_id === myProfile.id ? f.addressee : f.requester
+      }));
+      setFriendships(mapped);
+    }
+  };
+
+  useEffect(() => {
+    fetchFriendships();
+    const sub = supabase
+      .channel('friendships_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, fetchFriendships)
+      .subscribe();
+    return () => { supabase.removeChannel(sub); };
+  }, [myProfile?.id]);
+
+  const handleSendFriendRequest = async () => {
+    if (!addFriendUsername.trim() || !myProfile?.id) return;
+    const { data: targetProfile, error: searchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('username', addFriendUsername.trim())
+      .maybeSingle();
+      
+    if (searchError || !targetProfile) {
+      toast.error("Nenhum usuário encontrado com esse username.");
+      return;
+    }
+    
+    if (targetProfile.id === myProfile.id) {
+      toast.error("Você não pode adicionar a si mesmo!");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('friendships')
+      .insert({ requester_id: myProfile.id, addressee_id: targetProfile.id });
+      
+    if (error) {
+      toast.error("Pedido já existe ou erro ao enviar.");
+    } else {
+      toast.success("Pedido de amizade enviado!");
+      setAddFriendUsername("");
+    }
+  };
+
+  const handleAcceptFriendRequest = async (friendshipId: string) => {
+    const { error } = await supabase
+      .from('friendships')
+      .update({ status: 'accepted' })
+      .eq('id', friendshipId);
+    if (error) toast.error("Erro ao aceitar pedido.");
+  };
+
+  const handleDeclineFriendRequest = async (friendshipId: string) => {
+    const { error } = await supabase
+      .from('friendships')
+      .delete()
+      .eq('id', friendshipId);
+    if (error) toast.error("Erro ao recusar pedido.");
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() || !activeChannel || !myProfile?.id) return;
-
+    if (!newMessage.trim() || !myProfile?.id) return;
+    
     const content = newMessage;
     setNewMessage("");
 
-    const { error } = await supabase
-      .from("messages")
-      .insert({
-        channel_id: activeChannel.id,
-        user_id: myProfile.id,
-        content: content
-      });
-
-    if (error) {
-      toast.error("Erro ao enviar mensagem");
-      setNewMessage(content);
+    if (activeChannel) {
+      const { error } = await supabase
+        .from("messages")
+        .insert({ channel_id: activeChannel.id, user_id: myProfile.id, content });
+      if (error) toast.error("Erro ao enviar mensagem");
+    } else if (activeDMFriend) {
+      const { error } = await supabase
+        .from("direct_messages")
+        .insert({ sender_id: myProfile.id, recipient_id: activeDMFriend.id, content });
+      if (error) toast.error("Erro ao enviar DM");
     }
   };
+
+  // Realtime DMs
+  useEffect(() => {
+    if (!activeDMFriend || !myProfile?.id) return;
+    
+    const fetchDMs = async () => {
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .or(`and(sender_id.eq.${myProfile.id},recipient_id.eq.${activeDMFriend.id}),and(sender_id.eq.${activeDMFriend.id},recipient_id.eq.${myProfile.id})`)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      if (!error && data) setMessages(data as Message[]);
+    };
+    
+    fetchDMs();
+    const sub = supabase
+      .channel(`dms:${activeDMFriend.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${myProfile.id}` 
+      }, fetchDMs)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'direct_messages',
+        filter: `sender_id=eq.${myProfile.id}` 
+      }, fetchDMs)
+      .subscribe();
+      
+    return () => { supabase.removeChannel(sub); };
+  }, [activeDMFriend?.id, myProfile?.id]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
