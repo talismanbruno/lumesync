@@ -126,6 +126,7 @@ function DashboardComponent() {
   
   const {
     participants,
+    allParticipantsInRoom,
     isMuted,
     isDeafened,
     isSharingScreen,
