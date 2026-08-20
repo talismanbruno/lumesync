@@ -31,7 +31,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   
   const pcs = useRef<Record<string, RTCPeerConnection>>({});
   const channelRef = useRef<any>(null);
-  const streamsRef = useRef<Record<string, MediaStream>>({});
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<Record<string, AnalyserNode>>({});
   const talkingThreshold = 20;
@@ -46,7 +45,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     }
     
     pcs.current = {};
-    streamsRef.current = {};
     setParticipants({});
     setLocalStream(null);
     setScreenStream(null);
@@ -54,13 +52,17 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   }, [localStream, screenStream]);
 
   const setupAnalyser = (id: string, stream: MediaStream) => {
-    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
-    const ctx = audioContextRef.current;
-    const source = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    analyserRef.current[id] = analyser;
+    try {
+      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      const ctx = audioContextRef.current;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current[id] = analyser;
+    } catch (e) {
+      console.error("Error setting up analyser", e);
+    }
   };
 
   useEffect(() => {
@@ -92,8 +94,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           currentStream.getTracks().forEach(track => pc.addTrack(track, currentStream));
 
           pc.onicecandidate = (event) => {
-            if (event.candidate) {
-              channelRef.current?.send({
+            if (event.candidate && channelRef.current) {
+              channelRef.current.send({
                 type: 'broadcast',
                 event: 'ice-candidate',
                 payload: { to: participantId, from: myProfile.id, candidate: event.candidate }
@@ -103,10 +105,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
           pc.ontrack = (event) => {
             const stream = event.streams[0];
-            streamsRef.current[participantId] = stream;
             
             setParticipants(prev => {
-              const current = prev[participantId] || {
+              const current: Participant = prev[participantId] || {
                 id: participantId,
                 username: 'Usuário',
                 avatar_url: null,
@@ -124,18 +125,22 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
               };
             });
 
-            setupAnalyser(participantId, stream);
+            if (stream) {
+              setupAnalyser(participantId, stream);
+            }
           };
 
           if (isInitiator) {
             pc.onnegotiationneeded = async () => {
               const offer = await pc.createOffer();
               await pc.setLocalDescription(offer);
-              channelRef.current?.send({
-                type: 'broadcast',
-                event: 'offer',
-                payload: { to: participantId, from: myProfile.id, offer }
-              });
+              if (channelRef.current) {
+                channelRef.current.send({
+                  type: 'broadcast',
+                  event: 'offer',
+                  payload: { to: participantId, from: myProfile.id, offer }
+                });
+              }
             };
           }
 
@@ -222,10 +227,11 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         
         setParticipants(prev => {
           if (!prev[id]) return prev;
-          if (prev[id].isTalking === (average > talkingThreshold)) return prev;
+          const isTalking = average > talkingThreshold;
+          if (prev[id].isTalking === isTalking) return prev;
           return {
             ...prev,
-            [id]: { ...prev[id], isTalking: average > talkingThreshold }
+            [id]: { ...prev[id], isTalking }
           };
         });
       });
@@ -239,7 +245,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
-        channelRef.current?.track({ isMuted: !audioTrack.enabled });
+        if (channelRef.current) channelRef.current.track({ isMuted: !audioTrack.enabled });
       }
     }
   };
@@ -247,21 +253,23 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const toggleDeafen = () => {
     const nextState = !isDeafened;
     setIsDeafened(nextState);
-    channelRef.current?.track({ isDeafened: nextState });
+    if (channelRef.current) channelRef.current.track({ isDeafened: nextState });
   };
 
   const toggleScreenShare = async () => {
     if (isSharingScreen) {
-      screenStream?.getTracks().forEach(t => t.stop());
+      if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+      }
       setScreenStream(null);
       setIsSharingScreen(false);
-      channelRef.current?.track({ isSharingScreen: false });
+      if (channelRef.current) channelRef.current.track({ isSharingScreen: false });
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         setScreenStream(stream);
         setIsSharingScreen(true);
-        channelRef.current?.track({ isSharingScreen: true });
+        if (channelRef.current) channelRef.current.track({ isSharingScreen: true });
 
         stream.getTracks()[0].onended = () => {
           toggleScreenShare();
