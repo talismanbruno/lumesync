@@ -57,6 +57,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioContextRef.current;
+      if (!ctx) return;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
@@ -121,7 +122,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
               
               const updated: Participant = {
                 ...current,
-                stream: stream
+                stream: stream || undefined
               };
 
               return {
