@@ -9,7 +9,7 @@ const rtcConfig = {
   ]
 };
 
-interface Participant {
+export interface VoiceParticipant {
   id: string;
   username: string;
   avatar_url: string | null;
@@ -18,11 +18,11 @@ interface Participant {
   isDeafened: boolean;
   isSharingScreen: boolean;
   isTalking?: boolean;
-  stream: MediaStream | undefined;
+  stream?: MediaStream;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
-  const [participants, setParticipants] = useState<Record<string, Participant>>({});
+  const [participants, setParticipants] = useState<Record<string, VoiceParticipant>>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -111,25 +111,22 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             const stream = event.streams[0];
             
             setParticipants(prev => {
-              const current = prev[participantId] || {
+              const current: VoiceParticipant = prev[participantId] || {
                 id: participantId,
                 username: 'Usuário',
                 avatar_url: null,
                 display_name: null,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false,
-                stream: undefined
+                isSharingScreen: false
               };
               
-              const updated: Participant = {
-                ...current,
-                stream: stream || undefined
-              };
-
               return {
                 ...prev,
-                [participantId]: updated
+                [participantId]: {
+                  ...current,
+                  stream: stream || undefined
+                }
               };
             });
 
