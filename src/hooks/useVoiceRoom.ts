@@ -111,7 +111,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             const stream = event.streams[0];
             
             setParticipants(prev => {
-              const current: VoiceParticipant = prev[participantId] || {
+              const current = prev[participantId];
+              const base: VoiceParticipant = current || {
                 id: participantId,
                 username: 'Usuário',
                 avatar_url: null,
@@ -119,11 +120,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 isMuted: false,
                 isDeafened: false,
                 isSharingScreen: false,
-                stream: undefined,
               };
               
               const updated: VoiceParticipant = {
-                ...current,
+                ...base,
                 stream: stream || undefined
               };
 
