@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2 } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,6 +33,7 @@ type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+  status?: string;
 };
 
 type Server = {
@@ -51,11 +52,22 @@ type Channel = {
 
 type Message = {
   id: string;
-  channel_id: string;
-  user_id: string;
+  channel_id?: string;
+  sender_id?: string;
+  recipient_id?: string;
+  user_id?: string;
   content: string;
   created_at: string;
-  profile: Profile | null;
+  profile?: Profile | null;
+};
+
+type Friendship = {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  friend_profile?: Profile;
 };
 
 function DashboardComponent() {
@@ -94,6 +106,14 @@ function DashboardComponent() {
   const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
   const [isDeletingServer, setIsDeletingServer] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; server: Server } | null>(null);
+  
+  // Home / Friends state
+  const [friendships, setFriendships] = useState<Friendship[]>([]);
+  const [friendFilter, setFriendFilter] = useState<'online' | 'all' | 'pending' | 'add'>('online');
+  const [addFriendUsername, setAddFriendUsername] = useState("");
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
+  
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
   const chatEndRef = useRef<HTMLDivElement>(null);
