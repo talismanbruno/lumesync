@@ -7,8 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 
 import appCss from "../styles.css?url";
@@ -124,6 +126,62 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [isInitializing, setIsInitializing] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Listen for auth changes to force navigation
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN") {
+        // Force re-validation of routes
+        router.invalidate();
+        
+        // Check profile completion
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", session.user.id)
+            .single();
+            
+          if (!profile?.username) {
+            router.navigate({ to: "/onboarding" });
+          } else {
+            router.navigate({ to: "/" });
+          }
+        }
+      } else if (event === "SIGNED_OUT") {
+        router.invalidate();
+        router.navigate({ to: "/auth" });
+      }
+      
+      setIsInitializing(false);
+    });
+
+    // Initial check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session && window.location.pathname !== "/auth") {
+        // router.navigate({ to: "/auth" }); // beforeLoad handles this but this is safer
+      }
+      setIsInitializing(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#050505]">
+        <div className="flex flex-col items-center space-y-4">
+          <h1 className="text-4xl font-bold tracking-tighter text-[#00D1FF] glow-sm">LUME</h1>
+          <div className="flex items-center space-x-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Carregando Lume...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
