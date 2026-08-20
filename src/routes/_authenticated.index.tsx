@@ -93,6 +93,7 @@ function DashboardComponent() {
   const [newServerName, setNewServerName] = useState("");
   const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
   const [isDeletingServer, setIsDeletingServer] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; server: Server } | null>(null);
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -380,42 +381,61 @@ function DashboardComponent() {
         </div>
 
         {servers.map((server) => (
-          <ContextMenu key={server.id}>
-            <ContextMenuTrigger>
-              <button
-                onClick={() => setActiveServer(server)}
-                className={`group relative flex h-12 w-12 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
-                  activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
-                }`}
-              >
-                <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
-                <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
-              </button>
-            </ContextMenuTrigger>
-            <ContextMenuContent className="bg-[#121212] border-white/10 text-white min-w-[160px]">
-              {server.owner_id === myProfile.id ? (
-                <ContextMenuItem 
-                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer flex items-center gap-2"
-                  onClick={() => {
-                    setServerToDelete(server);
-                    setIsDeletingServer(true);
-                  }}
-                >
-                  <Trash2 size={14} />
-                  <span>Excluir Servidor</span>
-                </ContextMenuItem>
-              ) : (
-                <ContextMenuItem 
-                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer flex items-center gap-2"
-                  onClick={() => handleLeaveServer(server.id)}
-                >
-                  <LogOut size={14} />
-                  <span>Sair do Servidor</span>
-                </ContextMenuItem>
-              )}
-            </ContextMenuContent>
-          </ContextMenu>
+          <button
+            key={server.id}
+            onClick={() => setActiveServer(server)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setContextMenu({ x: e.clientX, y: e.clientY, server });
+            }}
+            className={`group relative flex h-12 w-12 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
+              activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
+            }`}
+          >
+            <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
+            <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
+          </button>
         ))}
+
+        {contextMenu && (
+          <>
+            <div 
+              className="fixed inset-0 z-50" 
+              onClick={() => setContextMenu(null)} 
+              onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} 
+            />
+            <div 
+              style={{ top: contextMenu.y, left: contextMenu.x }}
+              className="fixed z-50 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+            >
+              {contextMenu.server.owner_id === myProfile.id ? (
+                <button
+                  onClick={() => {
+                    setServerToDelete(contextMenu.server);
+                    setIsDeletingServer(true);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-md transition-colors text-left"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Excluir Servidor</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleLeaveServer(contextMenu.server.id);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 rounded-md transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair do Servidor</span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
         
         <div className="mx-4 h-[2px] w-8 bg-white/5" />
         
