@@ -844,28 +844,17 @@ function DashboardComponent() {
                     
                     {activeVoiceChannel?.id === channel.id && (
                       <div className="ml-6 space-y-1">
-                        <div className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
-                          <Avatar className="h-5 w-5 border border-white/5">
-                            <AvatarImage src={myProfile?.avatar_url || ""} />
-                            <AvatarFallback className="text-[8px] bg-[#00D1FF]/10 text-[#00D1FF]">
-                              {(myProfile?.username || "U").substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate">{myProfile?.display_name || myProfile?.username}</span>
-                          <div className="ml-auto flex gap-1">
-                            {isMuted && <MicOff size={10} className="text-red-500" />}
-                            {isDeafened && <Headphones size={10} className="text-red-500" />}
-                          </div>
-                        </div>
-                        {participants.map(p => (
-                          <div key={p.id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
+                        {allParticipantsInRoom.map((p: any) => (
+                          <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-300">
                             <Avatar className="h-5 w-5 border border-white/5">
                               <AvatarImage src={p.avatar_url || ""} />
                               <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
                                 {p.username.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="truncate">{p.display_name || p.username}</span>
+                            <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
+                              {p.display_name || p.username}
+                            </span>
                             <div className="ml-auto flex gap-1">
                               {p.isMuted && <MicOff size={10} className="text-red-500" />}
                               {p.isDeafened && <Headphones size={10} className="text-red-500" />}
