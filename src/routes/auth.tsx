@@ -64,21 +64,6 @@ function AuthComponent() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao entrar com Google");
-      setGoogleLoading(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
