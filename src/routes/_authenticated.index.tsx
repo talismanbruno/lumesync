@@ -575,7 +575,7 @@ function DashboardComponent() {
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
       {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
-        <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
+        <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
           <LumeLogo variant="icon" />
         </div>
 
