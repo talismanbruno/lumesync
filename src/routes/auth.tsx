@@ -1,5 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
@@ -11,33 +17,34 @@ export const Route = createFileRoute("/auth")({
   component: AuthComponent,
 });
 
-import { useState } from "react";
-import { lovable } from "@/integrations/lovable/index";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
 function AuthComponent() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-      toast.success("Check your email for the login link!");
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Conta criada com sucesso! Verifique seu e-mail se necessário.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Bem-vindo de volta!");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      toast.error(error.message || "Erro ao autenticar. Verifique suas credenciais.");
     } finally {
       setLoading(false);
     }
@@ -46,52 +53,77 @@ function AuthComponent() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
       });
-      if (result.error) throw result.error;
+      if (error) throw error;
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in with Google");
+      toast.error(error.message || "Erro ao entrar com Google");
       setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tighter text-primary glow-sm inline-block px-2">
+          <h1 className="text-4xl font-bold tracking-tighter text-[#00D1FF] glow-sm inline-block px-2">
             LUME
           </h1>
-          <p className="mt-2 text-muted-foreground">Minimalist communication platform</p>
+          <p className="mt-2 text-muted-foreground">Plataforma de comunicação minimalista</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-2xl">
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+        <div className="rounded-xl border border-border bg-[#121212] p-6 shadow-2xl">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50 text-foreground"
+                className="bg-background/50 text-foreground border-border/50 focus:border-[#00D1FF]/50 transition-colors"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-background/50 text-foreground border-border/50 focus:border-[#00D1FF]/50 transition-colors"
+              />
+            </div>
+            <Button type="submit" className="w-full bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black font-semibold" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Magic Link
+              {isSignUp ? "Criar Conta" : "Entrar"}
             </Button>
           </form>
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-[#00D1FF] hover:underline transition-all"
+            >
+              {isSignUp ? "Já tem uma conta? Entre aqui" : "Não tem uma conta? Crie uma agora"}
+            </button>
+          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-[#121212] px-2 text-muted-foreground">Ou continue com</span>
             </div>
           </div>
 

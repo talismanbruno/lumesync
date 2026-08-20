@@ -79,7 +79,7 @@ function OnboardingComponent() {
                 id="username"
                 placeholder="johndoe"
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ""))}
                 required
                 className="bg-background/50 text-foreground"
               />
