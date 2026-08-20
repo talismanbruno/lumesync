@@ -8,24 +8,24 @@ interface LumeWordmarkProps {
 
 export function LumeWordmark({ className, size = "md" }: LumeWordmarkProps) {
   const sizes = {
-    md: "h-8",
-    lg: "h-12",
+    md: "h-10",
+    lg: "h-14",
   };
 
   return (
     <div className={cn("flex items-center justify-center", sizes[size], className)}>
       <svg
-        viewBox="0 0 280 80"
+        viewBox="0 0 280 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="h-full w-auto"
       >
         <defs>
-          <linearGradient id="lume-wordmark-gradient" x1="55" y1="40" x2="105" y2="40" gradientUnits="userSpaceOnUse">
+          <linearGradient id="lume-u-gradient" x1="55" y1="55" x2="105" y2="55" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#FFFFFF" />
             <stop offset="100%" stopColor="#00D1FF" />
           </linearGradient>
-          <filter id="wordmark-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <filter id="wordmark-u-glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
@@ -33,42 +33,42 @@ export function LumeWordmark({ className, size = "md" }: LumeWordmarkProps) {
 
         {/* L */}
         <path
-          d="M 20 15 L 20 65 Q 20 70 25 70 L 25 70"
+          d="M 20 20 L 20 70 L 40 70"
           stroke="white"
-          strokeWidth="8"
+          strokeWidth="10"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
 
-        {/* U (The Brand Icon) */}
-        {/* Arc */}
+        {/* U (LUME Símbolo) */}
         <path
-          d="M 55 40 Q 80 75 105 40"
-          stroke="url(#lume-wordmark-gradient)"
-          strokeWidth="8"
+          d="M 55 45 Q 80 80 105 45"
+          stroke="url(#lume-u-gradient)"
+          strokeWidth="10"
           strokeLinecap="round"
           fill="none"
         />
-        {/* Left Dot */}
-        <circle cx="55" cy="40" r="7" fill="white" />
-        {/* Right Dot (Glowing) */}
-        <circle cx="105" cy="40" r="7" fill="#00D1FF" filter="url(#wordmark-glow)" />
+        <circle cx="55" cy="45" r="9" fill="white" />
+        <circle cx="105" cy="45" r="10" fill="#00D1FF" filter="url(#wordmark-u-glow)" />
 
         {/* M */}
         <path
-          d="M 135 70 L 135 45 Q 135 35 145 35 Q 155 35 155 45 L 155 70 M 155 45 Q 155 35 165 35 Q 175 35 175 45 L 175 70"
+          d="M 130 70 L 130 35 Q 130 25 145 25 Q 160 25 160 35 L 160 70 M 160 35 Q 160 25 175 25 Q 190 25 190 35 L 190 70"
           stroke="white"
-          strokeWidth="8"
+          strokeWidth="10"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
 
         {/* E */}
         <path
-          d="M 235 45 L 200 45 Q 200 35 210 35 Q 225 35 225 45 M 235 45 Q 235 70 215 70 Q 200 70 200 50 Q 200 30 220 30 Q 235 30 235 45"
+          d="M 235 45 L 205 45 Q 205 25 220 25 Q 235 25 235 40 M 235 45 Q 235 70 210 70 Q 205 70 205 60 Q 205 25 220 25 Q 235 25 235 45"
           stroke="white"
-          strokeWidth="8"
+          strokeWidth="10"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
       </svg>
