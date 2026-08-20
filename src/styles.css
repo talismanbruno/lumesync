@@ -97,3 +97,12 @@
 @utility glow-sm {
   box-shadow: 0 0 8px 1px var(--color-primary);
 }
+
+#lovable-badge,
+[id*="lovable-badge"],
+a[href*="lovable.dev"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
