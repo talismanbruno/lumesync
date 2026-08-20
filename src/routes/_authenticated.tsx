@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, isRedirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -31,7 +31,8 @@ export const Route = createFileRoute("/_authenticated")({
 
       return { session, profile };
     } catch (e) {
-      if (e instanceof Error && (e as any).status === 307) throw e; // Handle redirects
+      // Redirects thrown by the router must bubble up untouched
+      if (isRedirect(e) || e instanceof Response) throw e;
       console.error("[Lume Auth Protected] Loader error:", e);
       throw redirect({ to: "/auth" });
     }
