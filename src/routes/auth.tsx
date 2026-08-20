@@ -113,11 +113,42 @@ function AuthComponent() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setPasswordFocus(true)}
                 required
                 className="bg-background/50 text-foreground border-border/50 focus:border-[#00D1FF]/50 transition-colors"
               />
+              {isSignUp && (password.length > 0 || passwordFocus) && (
+                <div className="mt-2 space-y-2 rounded-lg border border-border/50 bg-[#121212] p-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {passwordRequirements.map((req, i) => {
+                    const met = req.test(password);
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2 text-xs transition-colors duration-200 ${
+                          met ? "text-emerald-400" : "text-zinc-500"
+                        }`}
+                      >
+                        {met ? (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <Circle className="h-3 w-3 opacity-20" />
+                        )}
+                        <span>{req.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <Button type="submit" className="w-full bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black font-semibold" disabled={loading}>
+            <Button 
+              type="submit" 
+              className={`w-full font-semibold transition-all duration-300 ${
+                isSignUp && !allRequirementsMet 
+                  ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" 
+                  : "bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black glow-sm"
+              }`}
+              disabled={loading || (isSignUp && !allRequirementsMet)}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSignUp ? "Criar Conta" : "Entrar"}
             </Button>
