@@ -23,6 +23,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useVoiceRoom } from "@/hooks/useVoiceRoom";
+import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: DashboardComponent,
