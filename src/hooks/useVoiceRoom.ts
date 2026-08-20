@@ -116,12 +116,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 isDeafened: false,
                 isSharingScreen: false
               };
+              
+              const updated: Participant = {
+                ...current,
+                stream: stream || undefined
+              };
+
               return {
                 ...prev,
-                [participantId]: {
-                  ...current,
-                  stream: stream
-                }
+                [participantId]: updated
               };
             });
 
