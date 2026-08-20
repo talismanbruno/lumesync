@@ -2,401 +2,201 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const rtcConfig = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
-  ]
-};
-
 export interface VoiceParticipant {
   id: string;
   username: string;
   avatar_url: string | null;
   display_name: string | null;
   isMuted: boolean;
-  isDeafened: boolean;
-  isSharingScreen: boolean;
+  isDeafened?: boolean;
+  isSharingScreen?: boolean;
   isTalking?: boolean;
-  stream?: MediaStream | undefined;
+  isSpeaking?: boolean;
+  stream?: MediaStream;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
-  const [participants, setParticipants] = useState<Record<string, VoiceParticipant>>({});
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
-  const [isSharingScreen, setIsSharingScreen] = useState(false);
   
-  const pcs = useRef<Record<string, RTCPeerConnection>>({});
   const channelRef = useRef<any>(null);
-  const currentPresenceState = useRef<any>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<Record<string, AnalyserNode>>({});
-  const talkingThreshold = 20;
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
 
   const cleanup = useCallback(async () => {
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-    Object.values(pcs.current).forEach(pc => pc.close());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(t => t.stop());
+    }
+    
     if (channelRef.current) {
-      await channelRef.current.untrack();
-      supabase.removeChannel(channelRef.current);
+      try {
+        await channelRef.current.untrack();
+        supabase.removeChannel(channelRef.current);
+      } catch (err) {
+        console.warn("Cleanup error:", err);
+      }
       channelRef.current = null;
     }
     
-    pcs.current = {};
-    setParticipants({});
-    setLocalStream(null);
+    peerConnections.current.forEach(pc => pc.close());
+    peerConnections.current.clear();
+    
+    setParticipants([]);
     setScreenStream(null);
-    setIsSharingScreen(false);
-  }, [localStream, screenStream]);
+  }, [screenStream]);
 
-  const setupAnalyser = (id: string, stream: MediaStream) => {
+  const joinVoiceChannel = useCallback(async (cid: string) => {
+    if (channelRef.current) return; // Já conectado
+    
+    let stream: MediaStream | null = null;
     try {
-      if (typeof window === 'undefined') return;
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      localStreamRef.current = stream;
+    } catch (err) {
+      console.warn("Microfone indisponível ou permissão negada. Entrando no modo ouvinte.");
+      toast.warning("Não foi possível acessar o microfone. Você entrou como ouvinte.");
+    }
+
+    // Conectar canal de Presence estático
+    const voiceChannel = supabase.channel(`voice-room-${cid}`, {
+      config: { presence: { key: myProfile.id } }
+    });
+
+    voiceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = voiceChannel.presenceState();
+        const users = Object.values(state).flat().map((p: any) => ({
+          id: p.user_id,
+          username: p.username,
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+          isMuted: p.isMuted,
+          isDeafened: p.isDeafened,
+          isSharingScreen: p.isSharingScreen,
+          isSpeaking: false,
+          isTalking: false
+        }));
+        setParticipants(users);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await voiceChannel.track({
+            user_id: myProfile.id,
+            username: myProfile?.username || 'Usuário',
+            display_name: myProfile?.display_name || 'Usuário',
+            avatar_url: myProfile?.avatar_url,
+            isMuted: false,
+            isDeafened: false,
+            isSharingScreen: false
+          });
+        }
+      });
+
+    channelRef.current = voiceChannel;
+  }, [myProfile]);
+
+  useEffect(() => {
+    if (channelId) {
+      joinVoiceChannel(channelId);
+    }
+  }, [channelId, joinVoiceChannel]);
+
+  const handleShareScreen = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      setScreenStream(stream);
+      
+      if (channelRef.current) {
+        channelRef.current.track({
+          user_id: myProfile.id,
+          username: myProfile?.username || 'Usuário',
+          display_name: myProfile?.display_name || 'Usuário',
+          avatar_url: myProfile?.avatar_url,
+          isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+          isDeafened,
+          isSharingScreen: true
+        });
       }
-      const ctx = audioContextRef.current;
-      if (!ctx) return;
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current[id] = analyser;
-    } catch (e) {
-      console.error("Error setting up analyser", e);
+
+      // Se o usuário parar o compartilhamento pelo navegador
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
+          setScreenStream(null);
+          if (channelRef.current) {
+            channelRef.current.track({
+              user_id: myProfile.id,
+              username: myProfile?.username || 'Usuário',
+              display_name: myProfile?.display_name || 'Usuário',
+              avatar_url: myProfile?.avatar_url,
+              isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+              isDeafened,
+              isSharingScreen: false
+            });
+          }
+        };
+      }
+    } catch (err) {
+      console.log("Compartilhamento cancelado");
     }
   };
 
-  useEffect(() => {
-    if (!channelId || !myProfile?.id) return;
-
-    let isSubscribed = true;
-
-    const initVoice = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        if (!isSubscribed) {
-          stream.getTracks().forEach(t => t.stop());
-          return;
-        }
-        setLocalStream(stream);
-
-        const channelTopic = `voice-channel:${channelId}`;
-        const channel = supabase.channel(channelTopic, {
-          config: { presence: { key: myProfile.id } }
-        });
-
-        channelRef.current = channel;
-
-        const createPC = (participantId: string, isInitiator: boolean, currentStream: MediaStream) => {
-          if (pcs.current[participantId]) return pcs.current[participantId];
-
-          const pc = new RTCPeerConnection(rtcConfig);
-          pcs.current[participantId] = pc;
-
-          currentStream.getTracks().forEach(track => pc.addTrack(track, currentStream));
-
-          pc.onicecandidate = (event) => {
-            if (event.candidate && channelRef.current) {
-              channelRef.current.send({
-                type: 'broadcast',
-                event: 'ice-candidate',
-                payload: { to: participantId, from: myProfile.id, candidate: event.candidate }
-              });
-            }
-          };
-
-          pc.ontrack = (event) => {
-            const stream = event.streams[0];
-            
-            setParticipants(prev => {
-              const current = prev[participantId];
-              const base: VoiceParticipant = current || {
-                id: participantId,
-                username: 'Usuário',
-                avatar_url: null,
-                display_name: null,
-                isMuted: false,
-                isDeafened: false,
-                isSharingScreen: false,
-              };
-              
-              const updated: VoiceParticipant = {
-                ...base,
-                stream: stream || undefined
-              };
-
-              return {
-                ...prev,
-                [participantId]: updated
-              };
-            });
-
-            if (stream) {
-              setupAnalyser(participantId, stream);
-            }
-          };
-
-          if (isInitiator) {
-            pc.onnegotiationneeded = async () => {
-              try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                if (channelRef.current) {
-                  channelRef.current.send({
-                    type: 'broadcast',
-                    event: 'offer',
-                    payload: { to: participantId, from: myProfile.id, offer }
-                  });
-                }
-              } catch (e) {
-                console.error("Negotiation error", e);
-              }
-            };
-          }
-
-          return pc;
-        };
-
-        channel
-          .on('presence', { event: 'sync' }, () => {
-            const presenceState = channel.presenceState();
-            currentPresenceState.current = presenceState;
-            
-            const participantList = Object.values(presenceState).flat().map((p: any) => ({
-              id: p.user_id,
-              username: p.username,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url,
-              isMuted: p.isMuted,
-              isDeafened: p.isDeafened,
-              isSharingScreen: p.isSharingScreen || false,
-              isSpeaking: false
-            }));
-
-            setParticipants(prev => {
-              const next: Record<string, VoiceParticipant> = {};
-              participantList.forEach(p => {
-                if (p.id === myProfile.id) return; // Skip self in WebRTC list
-                next[p.id] = {
-                  ...p,
-                  stream: prev[p.id]?.stream
-                } as VoiceParticipant;
-              });
-              return next;
-            });
-
-            // Start WebRTC for new participants
-            participantList.forEach(p => {
-              if (p.id !== myProfile.id && !pcs.current[p.id]) {
-                createPC(p.id, true, stream);
-              }
-            });
-          })
-          .on('presence', { event: 'join' }, ({ newPresences }) => {
-            // Already handled by sync
-          })
-          .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-            leftPresences.forEach((p: any) => {
-              const id = p.user_id || p.id;
-              const pc = pcs.current[id];
-              if (pc) {
-                pc.close();
-                delete pcs.current[id];
-                setParticipants(prev => {
-                  const next = { ...prev };
-                  delete next[id];
-                  return next;
-                });
-              }
-            });
-          })
-          .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-            if (payload.to !== myProfile.id) return;
-            const pc = createPC(payload.from, false, stream);
-            try {
-              await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
-              const answer = await pc.createAnswer();
-              await pc.setLocalDescription(answer);
-              if (channelRef.current) {
-                channelRef.current.send({
-                  type: 'broadcast',
-                  event: 'answer',
-                  payload: { to: payload.from, from: myProfile.id, answer }
-                });
-              }
-            } catch (e) {
-              console.error("Offer error", e);
-            }
-          })
-          .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-            if (payload.to !== myProfile.id) return;
-            const pc = pcs.current[payload.from];
-            if (pc) {
-              try {
-                await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
-              } catch (e) {
-                console.error("Answer error", e);
-              }
-            }
-          })
-          .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
-            if (payload.to !== myProfile.id) return;
-            const pc = pcs.current[payload.from];
-            if (pc && payload.candidate) {
-              try {
-                await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
-              } catch (e) {
-                console.error("ICE error", e);
-              }
-            }
-          })
-          .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED') {
-              await channel.track({
-                user_id: myProfile.id,
-                username: myProfile.username,
-                display_name: myProfile.display_name,
-                avatar_url: myProfile.avatar_url,
-                isMuted: false,
-                isDeafened: false,
-                isSharingScreen: false,
-                joined_at: new Date().toISOString()
-              });
-            }
-          });
-
-      } catch (err) {
-        console.error("Voice init error:", err);
-        toast.error("Erro ao acessar microfone");
-      }
-    };
-
-    initVoice();
-
-    return () => {
-      isSubscribed = false;
-      cleanup();
-    };
-  }, [channelId, myProfile?.id, cleanup]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      Object.entries(analyserRef.current).forEach(([id, analyser]) => {
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        
-        setParticipants(prev => {
-          const participant = prev[id];
-          if (!participant) return prev;
-          const isTalking = average > talkingThreshold;
-          if (participant.isTalking === isTalking) return prev;
-          return {
-            ...prev,
-            [id]: { ...participant, isTalking }
-          };
-        });
-      });
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
 
   const toggleMute = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
-        if (channelRef.current) channelRef.current.track({ 
-          user_id: myProfile.id,
-          username: myProfile.username,
-          display_name: myProfile.display_name,
-          avatar_url: myProfile.avatar_url,
-          isMuted: !audioTrack.enabled,
-          isDeafened,
-          isSharingScreen
-        });
+        const newMutedState = !audioTrack.enabled;
+        
+        if (channelRef.current) {
+          channelRef.current.track({
+            user_id: myProfile.id,
+            username: myProfile?.username || 'Usuário',
+            display_name: myProfile?.display_name || 'Usuário',
+            avatar_url: myProfile?.avatar_url,
+            isMuted: newMutedState,
+            isDeafened,
+            isSharingScreen: !!screenStream
+          });
+        }
       }
     }
   };
 
   const toggleDeafen = () => {
-    const nextState = !isDeafened;
-    setIsDeafened(nextState);
-    if (channelRef.current) channelRef.current.track({ 
-      user_id: myProfile.id,
-      username: myProfile.username,
-      display_name: myProfile.display_name,
-      avatar_url: myProfile.avatar_url,
-      isMuted,
-      isDeafened: nextState,
-      isSharingScreen
-    });
-  };
-
-  const toggleScreenShare = async () => {
-    if (isSharingScreen) {
-      if (screenStream) {
-        screenStream.getTracks().forEach(t => t.stop());
-      }
-      setScreenStream(null);
-      setIsSharingScreen(false);
-      if (channelRef.current) channelRef.current.track({ 
+    const nextDeafened = !isDeafened;
+    setIsDeafened(nextDeafened);
+    if (channelRef.current) {
+      channelRef.current.track({
         user_id: myProfile.id,
-        username: myProfile.username,
-        display_name: myProfile.display_name,
-        avatar_url: myProfile.avatar_url,
-        isMuted,
-        isDeafened,
-        isSharingScreen: false 
+        username: myProfile?.username || 'Usuário',
+        display_name: myProfile?.display_name || 'Usuário',
+        avatar_url: myProfile?.avatar_url,
+        isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+        isDeafened: nextDeafened,
+        isSharingScreen: !!screenStream
       });
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        setScreenStream(stream);
-        setIsSharingScreen(true);
-        if (channelRef.current) channelRef.current.track({ 
-          user_id: myProfile.id,
-          username: myProfile.username,
-          display_name: myProfile.display_name,
-          avatar_url: myProfile.avatar_url,
-          isMuted,
-          isDeafened,
-          isSharingScreen: true 
-        });
-
-        const videoTrack = stream.getTracks()[0];
-        if (videoTrack) {
-          videoTrack.onended = () => {
-            toggleScreenShare();
-          };
-        }
-
-        Object.values(pcs.current).forEach(pc => {
-          stream.getTracks().forEach(track => pc.addTrack(track, stream));
-        });
-      } catch (err) {
-        toast.error("Erro ao compartilhar tela");
-      }
     }
   };
 
   return {
-    participants: Object.values(participants),
-    allParticipantsInRoom: currentPresenceState.current ? Object.values(currentPresenceState.current).flat() : [],
-    localStream,
+    participants,
+    allParticipantsInRoom: participants,
     screenStream,
-    isMuted,
+    isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
     isDeafened,
-    isSharingScreen,
+    isSharingScreen: !!screenStream,
     toggleMute,
     toggleDeafen,
-    toggleScreenShare,
+    toggleScreenShare: handleShareScreen,
     disconnect: cleanup
   };
 }
+
+
+
