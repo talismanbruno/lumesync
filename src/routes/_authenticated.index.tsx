@@ -1000,6 +1000,8 @@ function DashboardComponent() {
         </div>
       </div>
     </div>
+  </div>
+
 
 
 
