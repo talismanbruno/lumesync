@@ -944,7 +944,7 @@ function DashboardComponent() {
 
       {/* Column 3: Main Content (Chat or Friends) */}
       <div className="flex flex-1 flex-col bg-[#050505] overflow-hidden">
-        {activeVoiceChannel ? (
+        {activeVoiceChannel && showVoiceUI ? (
           <VoiceRoomUI 
             participants={participants}
             myProfile={myProfile}
@@ -954,7 +954,12 @@ function DashboardComponent() {
             toggleMute={toggleMute}
             toggleDeafen={toggleDeafen}
             toggleScreenShare={toggleScreenShare}
-            onDisconnect={() => setActiveVoiceChannel(null)}
+            onDisconnect={() => {
+              disconnect();
+              setActiveVoiceChannel(null);
+              setShowVoiceUI(false);
+            }}
+            onClose={() => setShowVoiceUI(false)}
           />
         ) : activeChannel || activeDMFriend ? (
           <>
