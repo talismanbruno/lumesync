@@ -53,9 +53,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   useEffect(() => {
     if (!channelId || !myProfile?.id) return;
 
+    let isSubscribed = true;
+
     const initVoice = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!isSubscribed) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
         setLocalStream(stream);
 
         const channel = supabase.channel(`voice-room:${channelId}`, {
@@ -65,14 +71,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         channelRef.current = channel;
 
         channel
-          .on('presence', { event: 'sync' }, () => {
-            const state = channel.presenceState();
-            // Handle participants sync if needed
-          })
           .on('presence', { event: 'join' }, ({ newPresences }) => {
             newPresences.forEach((p: any) => {
               if (p.id !== myProfile.id) {
-                createPC(p.id, true);
+                createPC(p.id, true, stream);
               }
             });
           })
@@ -91,7 +93,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           })
           .on('broadcast', { event: 'offer' }, async ({ payload }) => {
             if (payload.to !== myProfile.id) return;
-            const pc = createPC(payload.from, false);
+            const pc = createPC(payload.from, false, stream);
             await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -118,9 +120,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 username: myProfile.username,
                 avatar_url: myProfile.avatar_url,
                 display_name: myProfile.display_name,
-                isMuted,
-                isDeafened,
-                isSharingScreen
+                isMuted: false,
+                isDeafened: false,
+                isSharingScreen: false
               });
             }
           });
@@ -131,14 +133,13 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
     };
 
-    const createPC = (participantId: string, isInitiator: boolean) => {
+    const createPC = (participantId: string, isInitiator: boolean, currentStream: MediaStream) => {
       if (pcs.current[participantId]) return pcs.current[participantId];
 
       const pc = new RTCPeerConnection(rtcConfig);
       pcs.current[participantId] = pc;
 
-      localStream?.getTracks().forEach(track => pc.addTrack(track, localStream));
-      if (screenStream) screenStream.getTracks().forEach(track => pc.addTrack(track, screenStream));
+      currentStream.getTracks().forEach(track => pc.addTrack(track, currentStream));
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -157,13 +158,18 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         setParticipants(prev => ({
           ...prev,
           [participantId]: {
-            ...prev[participantId],
             id: participantId,
+            username: prev[participantId]?.username || 'Usuário',
+            avatar_url: prev[participantId]?.avatar_url || null,
+            display_name: prev[participantId]?.display_name || null,
+            isMuted: prev[participantId]?.isMuted || false,
+            isDeafened: prev[participantId]?.isDeafened || false,
+            isSharingScreen: prev[participantId]?.isSharingScreen || false,
+            ...prev[participantId],
             stream: stream
           }
         }));
 
-        // Setup Audio Analyser for talking detection
         setupAnalyser(participantId, stream);
       };
 
@@ -184,8 +190,11 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
     initVoice();
 
-    return cleanup;
-  }, [channelId, myProfile?.id, localStream]);
+    return () => {
+      isSubscribed = false;
+      cleanup();
+    };
+  }, [channelId, myProfile?.id]);
 
   const setupAnalyser = (id: string, stream: MediaStream) => {
     if (!audioContextRef.current) audioContextRef.current = new AudioContext();
@@ -205,7 +214,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
         
         setParticipants(prev => {
-          if (prev[id]?.isTalking === (average > talkingThreshold)) return prev;
+          if (!prev[id]) return prev;
+          if (prev[id].isTalking === (average > talkingThreshold)) return prev;
           return {
             ...prev,
             [id]: { ...prev[id], isTalking: average > talkingThreshold }
@@ -219,15 +229,18 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const toggleMute = () => {
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      setIsMuted(!audioTrack.enabled);
-      channelRef.current?.track({ isMuted: !audioTrack.enabled });
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+        channelRef.current?.track({ isMuted: !audioTrack.enabled });
+      }
     }
   };
 
   const toggleDeafen = () => {
-    setIsDeafened(!isDeafened);
-    channelRef.current?.track({ isDeafened: !isDeafened });
+    const nextState = !isDeafened;
+    setIsDeafened(nextState);
+    channelRef.current?.track({ isDeafened: nextState });
   };
 
   const toggleScreenShare = async () => {
@@ -235,21 +248,18 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       screenStream?.getTracks().forEach(t => t.stop());
       setScreenStream(null);
       setIsSharingScreen(false);
-      // Remove screen tracks from all PCs
-      Object.values(pcs.current).forEach(pc => {
-        const senders = pc.getSenders();
-        const screenTrack = senders.find(s => s.track?.label.includes('screen') || (s.track as any).kind === 'video');
-        if (screenTrack) pc.removeTrack(screenTrack);
-      });
+      channelRef.current?.track({ isSharingScreen: false });
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         setScreenStream(stream);
         setIsSharingScreen(true);
+        channelRef.current?.track({ isSharingScreen: true });
+
         stream.getTracks()[0].onended = () => {
           toggleScreenShare();
         };
-        // Add screen tracks to all PCs
+
         Object.values(pcs.current).forEach(pc => {
           stream.getTracks().forEach(track => pc.addTrack(track, stream));
         });
