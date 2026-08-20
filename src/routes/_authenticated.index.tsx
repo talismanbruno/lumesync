@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles } from "lucide-react";
+import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -316,8 +317,8 @@ function DashboardComponent() {
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
       {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
-        <div className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] mb-2 glow-sm border border-[#00D1FF]/10">
-          <span className="text-lg font-black tracking-tighter">L</span>
+        <div onClick={() => setActiveServer(null)} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
+          <LumeLogo size="sm" />
         </div>
 
         {servers.map((server) => (
@@ -491,8 +492,8 @@ function DashboardComponent() {
         ) : (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#00D1FF]/10 text-[#00D1FF] glow-md border border-[#00D1FF]/20">
-                <h1 className="text-3xl font-black">L</h1>
+              <div className="mx-auto flex items-center justify-center mb-6">
+                <LumeLogo size="lg" />
               </div>
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao LUME</h1>

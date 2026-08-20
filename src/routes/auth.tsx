@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Check, Circle } from "lucide-react";
+import { LumeLogo } from "@/components/ui/LumeLogo";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
@@ -68,7 +69,8 @@ function AuthComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center">
+          <LumeLogo size="lg" className="mb-4" />
           <h1 className="text-4xl font-bold tracking-tighter text-[#00D1FF] glow-sm inline-block px-2">
             LUME
           </h1>
