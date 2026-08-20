@@ -1,39 +1,44 @@
-# Plano de Implementação - Fase 4: Sala de Voz e Compartilhamento de Tela
+# Implementation Plan - WebRTC Audio, Screen Share, Global Presence & Mobile Layout
 
-Vamos implementar chamadas de voz de baixa latência e compartilhamento de tela usando WebRTC e sinalização via Supabase Realtime (Broadcast).
+Implementing real audio playback, live stream watching, background presence for the sidebar, and a full mobile-responsive layout for LUME.
 
-## Alterações de Backend (SQL)
+## User Review Required
 
-- Nenhuma alteração de tabela necessária (utilizaremos Canais de Broadcast e Presence do Realtime).
+> [!IMPORTANT]
+> - Mobile navigation will use a Sheet/Drawer component for servers and channels.
+> - Background presence for the sidebar requires an additional channel listener that stays active regardless of voice room entry.
 
-## Alterações de Frontend
+## Proposed Changes
 
-### 1. Sistema de Voz (WebRTC)
-- Criar um hook `useVoiceRoom` ou componente `VoiceRoom` para gerenciar as conexões WebRTC.
-- Implementar sinalização via canal `voice-room:${channelId}` do Supabase.
-- Trocar `offer`, `answer` e `ice-candidate` entre os participantes.
+### WebRTC & Voice Hook (`src/hooks/useVoiceRoom.ts`)
+- **Audio Output**: Update `RTCPeerConnection` logic to handle `ontrack` by creating/attaching to hidden `<audio>` elements.
+- **Microphone Management**: Ensure local tracks are correctly added to all new peer connections.
+- **Screen Share Metadata**: Ensure `isSharingScreen` and the associated track info are broadcasted via Presence.
 
-### 2. Interface da Sala de Voz
-- Renderizar uma grade (Grid) de participantes na área central quando um canal de voz estiver ativo.
-- Adicionar detecção de volume (Web Audio API) para mostrar um glow ciano (#00D1FF) ao redor de quem está falando.
-- Exibir participantes abaixo do canal na barra lateral.
+### Voice Room UI (`src/components/voice/VoiceRoomUI.tsx`)
+- **Stage Mode**: Implement "Watch Stream" logic. When a user clicks "Watch", their stream (received via WebRTC) is promoted to the main stage.
+- **Participant Cards**: Add "Watch Stream" (Eye icon) button on cards where `isSharingScreen` is true.
+- **Controls**: Add a "Stop Watching" button to return to the participant grid.
 
-### 3. Compartilhamento de Tela
-- Implementar `navigator.mediaDevices.getDisplayMedia`.
-- Adicionar botão de compartilhamento na barra de controles.
-- Lógica de "Stage" para destacar a tela compartilhada enquanto minimiza os avatares dos outros participantes.
+### Dashboard & Sidebar (`src/routes/_authenticated.index.tsx`)
+- **Background Presence**: Implement a dedicated `supabase.channel` for every voice channel visible in the sidebar. This will sync participants even for users not currently in the call.
+- **Sidebar List**: Display the synced participant list (avatar + name) below the voice channel name in Column 2.
+- **Mobile Responsive Layout**:
+    - Wrap Column 1 (Servers) and Column 2 (Channels) in a responsive Drawer (Sheet) for screens `< 768px`.
+    - Add a header bar with a hamburger menu for mobile.
+    - Adjust Column 3 (Chat/Voice) to occupy full width on mobile.
+    - Optimize touch targets and layout for mobile voice controls.
 
-### 4. Barra de Controles de Voz
-- Adicionar controles flutuantes no rodapé da sala:
-    - Mutar/Desmutar microfone.
-    - Ensurdecer (Deafen).
-    - Compartilhar Tela.
-    - Desconectar da chamada.
+### Styling & Components
+- **Sheet/Drawer**: Use shadcn/ui Sheet for the mobile navigation drawer.
+- **Grid Layout**: Update the main dashboard container to be `flex-col` or `flex-row` based on screen size.
 
-## Detalhes Técnicos
-- Utilizar servidores STUN públicos do Google para NAT traversal.
-- Sincronização de estado de áudio/vídeo via Supabase Presence.
-- Gerenciamento de múltiplos fluxos de mídia (áudio local, áudio remoto, vídeo remoto).
+## Technical Details
+- **Presence Listener**: A single `useEffect` in the Sidebar component will manage presence for all visible voice channels to avoid multiple connections if possible, or one per visible server.
+- **WebRTC Tracks**: Using `RTCRtpReceiver` tracks to distinguish between audio (auto-played) and video (rendered on stage).
+- **Audio Autoplay**: Implement a "Click to enable audio" fallback if the browser blocks initial playback.
 
----
-*Este plano foca na implementação de 100% dos requisitos solicitados na Fase 4.*
+## Constrained to Rule 11
+- Professional finish with consistent spacing and theme-compliant colors (#00D1FF accent).
+- Full mobile responsiveness with no broken scrollbars.
+- Real-time synchronization for all states.
