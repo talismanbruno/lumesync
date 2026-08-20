@@ -23,6 +23,17 @@ function AuthComponent() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [passwordFocus, setPasswordFocus] = useState(false);
+
+  const passwordRequirements = [
+    { label: "Mínimo de 8 caracteres", test: (pw: string) => pw.length >= 8 },
+    { label: "Pelo menos 1 letra minúscula (a-z)", test: (pw: string) => /[a-z]/.test(pw) },
+    { label: "Pelo menos 1 letra maiúscula (A-Z)", test: (pw: string) => /[A-Z]/.test(pw) },
+    { label: "Pelo menos 1 número (0-9)", test: (pw: string) => /[0-9]/.test(pw) },
+    { label: "Pelo menos 1 caractere especial (!@#$%^&*...)", test: (pw: string) => /[^a-zA-Z0-9]/.test(pw) },
+  ];
+
+  const allRequirementsMet = passwordRequirements.every(req => req.test(password));
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
