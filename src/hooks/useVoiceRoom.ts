@@ -312,7 +312,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
-        if (channelRef.current) channelRef.current.track({ isMuted: !audioTrack.enabled });
+        if (channelRef.current) channelRef.current.track({ 
+          user_id: myProfile.id,
+          username: myProfile.username,
+          display_name: myProfile.display_name,
+          avatar_url: myProfile.avatar_url,
+          isMuted: !audioTrack.enabled,
+          isDeafened,
+          isSharingScreen
+        });
       }
     }
   };
