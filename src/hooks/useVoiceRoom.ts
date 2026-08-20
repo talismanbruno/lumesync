@@ -8,16 +8,20 @@ export interface VoiceParticipant {
   avatar_url: string | null;
   display_name: string | null;
   isMuted: boolean;
-  isSpeaking: boolean;
+  isDeafened?: boolean;
+  isSharingScreen?: boolean;
+  isTalking?: boolean;
+  isSpeaking?: boolean;
+  stream?: MediaStream;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [isDeafened, setIsDeafened] = useState(false);
   
   const channelRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  // Note: We are keeping the peerConnections ref but simplifying the logic as requested
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
 
   const cleanup = useCallback(async () => {
@@ -38,7 +42,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   }, [screenStream]);
 
   const joinVoiceChannel = useCallback(async (cid: string) => {
-    if (channelRef.current) return; // Already connected
+    if (channelRef.current) return; // Já conectado
     
     let stream: MediaStream | null = null;
     try {
@@ -49,7 +53,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       toast.warning("Não foi possível acessar o microfone. Você entrou como ouvinte.");
     }
 
-    // Connect static Presence channel
+    // Conectar canal de Presence estático
     const voiceChannel = supabase.channel(`voice-room-${cid}`, {
       config: { presence: { key: myProfile.id } }
     });
@@ -63,7 +67,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           display_name: p.display_name,
           avatar_url: p.avatar_url,
           isMuted: p.isMuted,
-          isSpeaking: false
+          isDeafened: p.isDeafened,
+          isSharingScreen: p.isSharingScreen,
+          isSpeaking: false,
+          isTalking: false
         }));
         setParticipants(users);
       })
@@ -74,7 +81,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             username: myProfile?.username || 'Usuário',
             display_name: myProfile?.display_name || 'Usuário',
             avatar_url: myProfile?.avatar_url,
-            isMuted: false
+            isMuted: false,
+            isDeafened: false,
+            isSharingScreen: false
           });
         }
       });
@@ -96,9 +105,32 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       setScreenStream(stream);
       
-      // If user stops sharing via browser UI
+      if (channelRef.current) {
+        channelRef.current.track({
+          user_id: myProfile.id,
+          username: myProfile?.username || 'Usuário',
+          display_name: myProfile?.display_name || 'Usuário',
+          avatar_url: myProfile?.avatar_url,
+          isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+          isDeafened,
+          isSharingScreen: true
+        });
+      }
+
+      // Se o usuário parar o compartilhamento pelo navegador
       stream.getVideoTracks()[0].onended = () => {
         setScreenStream(null);
+        if (channelRef.current) {
+          channelRef.current.track({
+            user_id: myProfile.id,
+            username: myProfile?.username || 'Usuário',
+            display_name: myProfile?.display_name || 'Usuário',
+            avatar_url: myProfile?.avatar_url,
+            isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+            isDeafened,
+            isSharingScreen: false
+          });
+        }
       };
     } catch (err) {
       console.log("Compartilhamento cancelado");
@@ -118,10 +150,28 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             username: myProfile?.username || 'Usuário',
             display_name: myProfile?.display_name || 'Usuário',
             avatar_url: myProfile?.avatar_url,
-            isMuted: newMutedState
+            isMuted: newMutedState,
+            isDeafened,
+            isSharingScreen: !!screenStream
           });
         }
       }
+    }
+  };
+
+  const toggleDeafen = () => {
+    const nextDeafened = !isDeafened;
+    setIsDeafened(nextDeafened);
+    if (channelRef.current) {
+      channelRef.current.track({
+        user_id: myProfile.id,
+        username: myProfile?.username || 'Usuário',
+        display_name: myProfile?.display_name || 'Usuário',
+        avatar_url: myProfile?.avatar_url,
+        isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+        isDeafened: nextDeafened,
+        isSharingScreen: !!screenStream
+      });
     }
   };
 
@@ -130,12 +180,13 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     allParticipantsInRoom: participants,
     screenStream,
     isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
-    isDeafened: false,
+    isDeafened,
     isSharingScreen: !!screenStream,
     toggleMute,
-    toggleDeafen: () => {}, // Simplified for now per instructions
+    toggleDeafen,
     toggleScreenShare: handleShareScreen,
     disconnect: cleanup
   };
 }
+
 
