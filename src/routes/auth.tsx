@@ -22,7 +22,7 @@ function AuthComponent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [passwordFocus, setPasswordFocus] = useState(false);
   const [passwordFocus, setPasswordFocus] = useState(false);
 
   const passwordRequirements = [
