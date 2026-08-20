@@ -831,8 +831,7 @@ function DashboardComponent() {
                     <button 
                       onClick={() => {
                         setActiveVoiceChannel(channel);
-                        setActiveChannel(null);
-                        setActiveDMFriend(null);
+                        setShowVoiceUI(true);
                       }}
                       className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                         activeVoiceChannel?.id === channel.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
