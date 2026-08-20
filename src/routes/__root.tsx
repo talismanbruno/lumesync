@@ -227,11 +227,6 @@ function RootComponent() {
     };
   }, [router]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    window.location.reload();
-  };
 
   if (isInitializing) {
     return (
