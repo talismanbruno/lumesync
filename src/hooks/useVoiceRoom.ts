@@ -84,8 +84,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         }
         setLocalStream(stream);
 
-        const channel = supabase.channel(`voice-room:${channelId}`, {
-          config: { broadcast: { self: true }, presence: { key: myProfile.id } }
+        const channelTopic = `voice-channel:${channelId}`;
+        const channel = supabase.channel(channelTopic, {
+          config: { presence: { key: myProfile.id } }
         });
 
         channelRef.current = channel;
