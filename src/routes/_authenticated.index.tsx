@@ -310,7 +310,11 @@ function DashboardComponent() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">
       {/* Column 1: Server List */}
-      <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3">
+      <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
+        <div className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] mb-2 glow-sm border border-[#00D1FF]/10">
+          <span className="text-lg font-black tracking-tighter">L</span>
+        </div>
+
         {servers.map((server) => (
           <button
             key={server.id}
