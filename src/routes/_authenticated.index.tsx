@@ -1157,7 +1157,7 @@ function DashboardComponent() {
                       </div>
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); }}
+                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
                           className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-[#00D1FF] hover:text-black transition-all"
                         >
                           <MessageSquare size={16} />
