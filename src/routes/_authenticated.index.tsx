@@ -120,6 +120,17 @@ function DashboardComponent() {
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    participants,
+    isMuted,
+    isDeafened,
+    isSharingScreen,
+    toggleMute,
+    toggleDeafen,
+    toggleScreenShare,
+    disconnect
+  } = useVoiceRoom(activeVoiceChannel?.id || null, myProfile);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
