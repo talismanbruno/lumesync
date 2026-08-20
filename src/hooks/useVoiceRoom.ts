@@ -121,12 +121,14 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 isSharingScreen: false
               };
               
+              const updated: VoiceParticipant = {
+                ...current,
+                stream: stream || undefined
+              };
+
               return {
                 ...prev,
-                [participantId]: {
-                  ...current,
-                  stream: stream || undefined
-                }
+                [participantId]: updated
               };
             });
 
@@ -184,11 +186,13 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
               await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
               const answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
-              channel.send({
-                type: 'broadcast',
-                event: 'answer',
-                payload: { to: payload.from, from: myProfile.id, answer }
-              });
+              if (channelRef.current) {
+                channelRef.current.send({
+                  type: 'broadcast',
+                  event: 'answer',
+                  payload: { to: payload.from, from: myProfile.id, answer }
+                });
+              }
             } catch (e) {
               console.error("Offer error", e);
             }
@@ -241,7 +245,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       isSubscribed = false;
       cleanup();
     };
-  }, [channelId, myProfile?.id]);
+  }, [channelId, myProfile?.id, cleanup]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -296,9 +300,12 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         setIsSharingScreen(true);
         if (channelRef.current) channelRef.current.track({ isSharingScreen: true });
 
-        stream.getTracks()[0].onended = () => {
-          toggleScreenShare();
-        };
+        const videoTrack = stream.getTracks()[0];
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            toggleScreenShare();
+          };
+        }
 
         Object.values(pcs.current).forEach(pc => {
           stream.getTracks().forEach(track => pc.addTrack(track, stream));
