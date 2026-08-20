@@ -18,7 +18,7 @@ interface Participant {
   isDeafened: boolean;
   isSharingScreen: boolean;
   isTalking?: boolean;
-  stream?: MediaStream;
+  stream: MediaStream | undefined;
 }
 
 export function useVoiceRoom(channelId: string | null, myProfile: any) {
@@ -110,22 +110,25 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             const stream = event.streams[0];
             
             setParticipants(prev => {
-              const current = prev[participantId] || {
+              const current: Participant = prev[participantId] || {
                 id: participantId,
                 username: 'Usuário',
                 avatar_url: null,
                 display_name: null,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false
+                isSharingScreen: false,
+                stream: undefined
               };
               
+              const updated: Participant = {
+                ...current,
+                stream: stream || undefined
+              };
+
               return {
                 ...prev,
-                [participantId]: {
-                  ...current,
-                  stream: stream || undefined
-                }
+                [participantId]: updated
               };
             });
 
