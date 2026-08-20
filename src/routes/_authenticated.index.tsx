@@ -52,7 +52,8 @@ type Message = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
-  const { profile: myProfile } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData() as { profile: Profile };
+  const myProfile = loaderData.profile;
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
@@ -87,7 +88,7 @@ function DashboardComponent() {
         return;
       }
       
-      const serverList = data.map(item => item.servers) as unknown as Server[];
+      const serverList = (data as any[]).map(item => item.servers).filter(Boolean) as Server[];
       setServers(serverList);
       if (serverList.length > 0 && !activeServer) {
         setActiveServer(serverList[0]);
@@ -190,7 +191,7 @@ function DashboardComponent() {
     
     try {
       // 1. Create server
-      const { data: server, error: serverError } = await supabase
+      const { data: serverData, error: serverError } = await supabase
         .from("servers")
         .insert({
           name: newServerName,
@@ -200,10 +201,10 @@ function DashboardComponent() {
         .select()
         .single();
         
-      if (serverError) throw serverError;
+      if (serverError || !serverData) throw serverError || new Error("Failed to create server");
+      const server = serverData as Server;
 
-      // 2. Add owner to members (Trigger handles this usually, but let's be explicit if needed or let RLS/Grants work)
-      // Note: If a trigger isn't set up for this yet, we do it here.
+      // 2. Add owner to members
       const { error: memberError } = await supabase
         .from("members")
         .insert({
@@ -421,7 +422,7 @@ function DashboardComponent() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={`Conversar em #${activeChannel.name}`}
-                  className="bg-[#121212] border-none focus-visible:ring-1 focus-visible:ring-[#00D1FF]/50 pr-12 h-11 text-sm"
+                  className="bg-[#121212] border-none focus-visible:ring-1 focus-visible:ring-[#00D1FF]/50 pr-12 h-11 text-sm text-white"
                 />
                 <button 
                   type="submit"
