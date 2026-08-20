@@ -79,8 +79,8 @@ function AuthComponent() {
         <div className="text-center flex flex-col items-center">
           <img 
             src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
-            alt="Lume Logo" 
-            className="h-10 w-auto object-contain mx-auto mb-2" 
+            alt="Lume" 
+            className="h-10 w-auto max-w-[200px] object-contain mx-auto block" 
           />
           <p className="mt-2 text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
         </div>

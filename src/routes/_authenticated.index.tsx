@@ -100,23 +100,24 @@ function DashboardComponent() {
     if (!myProfile?.id) return;
     
     const fetchServers = async () => {
-      const { data, error } = await supabase
-        .from("members")
-        .select("servers(*)")
-        .eq("user_id", myProfile.id);
-      
-      if (error) {
-        console.error("Erro detalhado ao carregar servidores:", error);
-        // Only show toast if it's a real error, not just an empty result or RLS filtering
-        // members query returns error if something is wrong with the query itself
-        toast.error("Erro de conexão ao buscar servidores");
-        return;
-      }
-      
-      const serverList = (data as any[] || []).map(item => item.servers).filter(Boolean) as Server[];
-      setServers(serverList);
-      if (serverList.length > 0 && !activeServer) {
-        setActiveServer(serverList[0] || null);
+      try {
+        const { data, error } = await supabase
+          .from("members")
+          .select("servers(*)")
+          .eq("user_id", myProfile.id);
+        
+        if (error) {
+          console.error("[Lume Servers Error]:", error);
+          return;
+        }
+        
+        const serverList = (data as any[] || []).map(item => item.servers).filter(Boolean) as Server[];
+        setServers(serverList || []);
+        if (serverList.length > 0 && !activeServer) {
+          setActiveServer(serverList[0] || null);
+        }
+      } catch (err) {
+        console.error("[Lume Servers Catch]:", err);
       }
     };
     
@@ -499,8 +500,8 @@ function DashboardComponent() {
               <div className="flex items-center justify-center mb-6 scale-110">
                 <img 
                   src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
-                  alt="Lume Logo" 
-                  className="h-10 w-auto object-contain mx-auto" 
+                  alt="Lume" 
+                  className="h-10 w-auto max-w-[200px] object-contain mx-auto block" 
                 />
               </div>
               <div className="space-y-2">
