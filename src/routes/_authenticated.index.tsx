@@ -52,23 +52,28 @@ type Message = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
-  const loaderData = Route.useLoaderData() as any;
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
+  const [dbProfile, setDbProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setCurrentUser({ id: session.user.id, email: session.user.email });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user) return;
+      setCurrentUser({ id: session.user.id, email: session.user.email });
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (data) setDbProfile(data as Profile);
     });
   }, []);
 
-  const fallbackProfile: Profile = {
+  const myProfile: Profile = dbProfile ?? {
     id: currentUser?.id || "",
     username: currentUser?.email?.split('@')[0] || "usuário",
     display_name: currentUser?.email?.split('@')[0] || "Usuário Lume",
     avatar_url: null
   };
-
-  const myProfile = (loaderData?.profile as Profile) || fallbackProfile;
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
