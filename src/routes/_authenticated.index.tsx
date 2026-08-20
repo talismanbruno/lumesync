@@ -617,15 +617,56 @@ function DashboardComponent() {
 
       {/* Column 2: Channels/Navigation */}
       <div className="flex w-60 flex-col border-r border-white/5 bg-[#121212]/30">
-        <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={copyInvite}>
+        <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={activeServer ? copyInvite : undefined}>
           <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
           {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
         </div>
         
         <div className="flex-1 overflow-y-auto p-2 space-y-4">
           {!activeServer ? (
-            <div className="flex flex-col items-center justify-center h-full text-zinc-600 text-[10px] uppercase font-bold tracking-widest">
-              Nenhum servidor selecionado
+            <div className="space-y-4">
+              <div className="space-y-0.5">
+                <button 
+                  onClick={() => setActiveDMFriend(null)}
+                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    !activeDMFriend ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                  }`}
+                >
+                  <Users size={20} className={!activeDMFriend ? "text-white" : "text-zinc-500"} />
+                  <span className="font-medium">Amigos</span>
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center px-3 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
+                  <span className="flex-1">Mensagens Diretas</span>
+                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                </div>
+                {friendships.filter(f => f.status === 'accepted').map(friendship => {
+                  const friend = friendship.friend_profile;
+                  if (!friend) return null;
+                  return (
+                    <button 
+                      key={friend.id}
+                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); }}
+                      className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                      }`}
+                    >
+                      <div className="relative">
+                        <Avatar className="h-8 w-8 border border-white/5">
+                          <AvatarImage src={friend.avatar_url || ""} />
+                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
+                            {friend.username.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#121212] ${friend.status === 'online' ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                      </div>
+                      <span className="flex-1 text-left truncate font-medium">{friend.display_name || friend.username}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <>
@@ -639,7 +680,7 @@ function DashboardComponent() {
                 {channels.filter(c => c.type === 'text').map(channel => (
                   <button 
                     key={channel.id} 
-                    onClick={() => setActiveChannel(channel)}
+                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); }}
                     className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                       activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                     }`}
