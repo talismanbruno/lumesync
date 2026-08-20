@@ -169,8 +169,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
           })
           .on('presence', { event: 'leave' }, ({ leftPresences }) => {
             leftPresences.forEach((p: any) => {
-              if (pcs.current[p.id]) {
-                pcs.current[p.id].close();
+              const pc = pcs.current[p.id];
+              if (pc) {
+                pc.close();
                 delete pcs.current[p.id];
                 setParticipants(prev => {
                   const next = { ...prev };
