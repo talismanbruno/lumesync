@@ -40,7 +40,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
     Object.values(pcs.current).forEach(pc => pc.close());
-    if (channelRef.current) supabase.removeChannel(channelRef.current);
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     
     pcs.current = {};
     streamsRef.current = {};
@@ -49,6 +52,16 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     setScreenStream(null);
     setIsSharingScreen(false);
   }, [localStream, screenStream]);
+
+  const setupAnalyser = (id: string, stream: MediaStream) => {
+    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+    const ctx = audioContextRef.current;
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current[id] = analyser;
+  };
 
   useEffect(() => {
     if (!channelId || !myProfile?.id) return;
@@ -69,6 +82,65 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         });
 
         channelRef.current = channel;
+
+        const createPC = (participantId: string, isInitiator: boolean, currentStream: MediaStream) => {
+          if (pcs.current[participantId]) return pcs.current[participantId];
+
+          const pc = new RTCPeerConnection(rtcConfig);
+          pcs.current[participantId] = pc;
+
+          currentStream.getTracks().forEach(track => pc.addTrack(track, currentStream));
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              channelRef.current?.send({
+                type: 'broadcast',
+                event: 'ice-candidate',
+                payload: { to: participantId, from: myProfile.id, candidate: event.candidate }
+              });
+            }
+          };
+
+          pc.ontrack = (event) => {
+            const stream = event.streams[0];
+            streamsRef.current[participantId] = stream;
+            
+            setParticipants(prev => {
+              const current = prev[participantId] || {
+                id: participantId,
+                username: 'Usuário',
+                avatar_url: null,
+                display_name: null,
+                isMuted: false,
+                isDeafened: false,
+                isSharingScreen: false
+              };
+              return {
+                ...prev,
+                [participantId]: {
+                  ...current,
+                  stream: stream
+                }
+              };
+            });
+
+            setupAnalyser(participantId, stream);
+          };
+
+          if (isInitiator) {
+            pc.onnegotiationneeded = async () => {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              channelRef.current?.send({
+                type: 'broadcast',
+                event: 'offer',
+                payload: { to: participantId, from: myProfile.id, offer }
+              });
+            };
+          }
+
+          return pc;
+        };
 
         channel
           .on('presence', { event: 'join' }, ({ newPresences }) => {
@@ -133,61 +205,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       }
     };
 
-    const createPC = (participantId: string, isInitiator: boolean, currentStream: MediaStream) => {
-      if (pcs.current[participantId]) return pcs.current[participantId];
-
-      const pc = new RTCPeerConnection(rtcConfig);
-      pcs.current[participantId] = pc;
-
-      currentStream.getTracks().forEach(track => pc.addTrack(track, currentStream));
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          channelRef.current?.send({
-            type: 'broadcast',
-            event: 'ice-candidate',
-            payload: { to: participantId, from: myProfile.id, candidate: event.candidate }
-          });
-        }
-      };
-
-      pc.ontrack = (event) => {
-        const stream = event.streams[0];
-        streamsRef.current[participantId] = stream;
-        
-        setParticipants(prev => ({
-          ...prev,
-          [participantId]: {
-            id: participantId,
-            username: prev[participantId]?.username || 'Usuário',
-            avatar_url: prev[participantId]?.avatar_url || null,
-            display_name: prev[participantId]?.display_name || null,
-            isMuted: prev[participantId]?.isMuted || false,
-            isDeafened: prev[participantId]?.isDeafened || false,
-            isSharingScreen: prev[participantId]?.isSharingScreen || false,
-            ...prev[participantId],
-            stream: stream
-          }
-        }));
-
-        setupAnalyser(participantId, stream);
-      };
-
-      if (isInitiator) {
-        pc.onnegotiationneeded = async () => {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          channelRef.current?.send({
-            type: 'broadcast',
-            event: 'offer',
-            payload: { to: participantId, from: myProfile.id, offer }
-          });
-        };
-      }
-
-      return pc;
-    };
-
     initVoice();
 
     return () => {
@@ -195,16 +212,6 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       cleanup();
     };
   }, [channelId, myProfile?.id]);
-
-  const setupAnalyser = (id: string, stream: MediaStream) => {
-    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
-    const ctx = audioContextRef.current;
-    const source = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    analyserRef.current[id] = analyser;
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
