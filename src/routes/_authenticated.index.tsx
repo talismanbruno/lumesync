@@ -53,7 +53,7 @@ type Message = {
 function DashboardComponent() {
   const navigate = useNavigate();
   const loaderData = Route.useLoaderData() as any;
-  const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
