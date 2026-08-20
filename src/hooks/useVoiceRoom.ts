@@ -118,7 +118,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
                 display_name: null,
                 isMuted: false,
                 isDeafened: false,
-                isSharingScreen: false
+                isSharingScreen: false,
+                stream: undefined,
               };
               
               const updated: VoiceParticipant = {
@@ -220,8 +221,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             }
           })
           .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED') {
-              await channel.track({
+            if (status === 'SUBSCRIBED' && channelRef.current) {
+              await channelRef.current.track({
                 id: myProfile.id,
                 username: myProfile.username,
                 avatar_url: myProfile.avatar_url,
