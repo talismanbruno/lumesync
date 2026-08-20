@@ -47,7 +47,7 @@ type Message = {
   user_id: string;
   content: string;
   created_at: string;
-  profile?: Profile;
+  profile: Profile | null;
 };
 
 function DashboardComponent() {
@@ -158,10 +158,10 @@ function DashboardComponent() {
           filter: `channel_id=eq.${activeChannel.id}`
         },
         async (payload) => {
-          const newMsg = payload.new as Message;
+          const newMsg = payload.new as any;
           
           // Hydrate profile data
-          let profile = profilesCache[newMsg.user_id];
+          let profile = profilesCache[newMsg.user_id] || null;
           if (!profile) {
             const { data } = await supabase
               .from("profiles")
@@ -179,8 +179,12 @@ function DashboardComponent() {
           }
           
           const hydratedMsg: Message = { 
-            ...newMsg, 
-            profile: profile || undefined 
+            id: newMsg.id,
+            channel_id: newMsg.channel_id,
+            user_id: newMsg.user_id,
+            content: newMsg.content,
+            created_at: newMsg.created_at,
+            profile: profile
           };
           
           setMessages(prev => [...prev, hydratedMsg]);
@@ -213,6 +217,7 @@ function DashboardComponent() {
         .single();
         
       if (serverError || !serverData) throw serverError || new Error("Failed to create server");
+      
       const server: Server = {
         id: serverData.id,
         name: serverData.name,
@@ -232,7 +237,7 @@ function DashboardComponent() {
       if (memberError) throw memberError;
 
       // 3. Create default channels
-      const { data: defaultChannels, error: channelsError } = await supabase
+      const { error: channelsError } = await supabase
         .from("channels")
         .insert([
           { server_id: server.id, name: "geral", type: 'text' },
