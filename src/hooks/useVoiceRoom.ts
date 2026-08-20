@@ -126,23 +126,25 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.onended = () => {
-        setScreenStream(null);
-        if (channelRef.current) {
-          channelRef.current.track({
-            user_id: myProfile.id,
-            username: myProfile?.username || 'Usuário',
-            display_name: myProfile?.display_name || 'Usuário',
-            avatar_url: myProfile?.avatar_url,
-            isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
-            isDeafened,
-            isSharingScreen: false
-          });
-        }
-      };
+          setScreenStream(null);
+          if (channelRef.current) {
+            channelRef.current.track({
+              user_id: myProfile.id,
+              username: myProfile?.username || 'Usuário',
+              display_name: myProfile?.display_name || 'Usuário',
+              avatar_url: myProfile?.avatar_url,
+              isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
+              isDeafened,
+              isSharingScreen: false
+            });
+          }
+        };
+      }
     } catch (err) {
       console.log("Compartilhamento cancelado");
     }
   };
+
 
   const toggleMute = () => {
     if (localStreamRef.current) {
