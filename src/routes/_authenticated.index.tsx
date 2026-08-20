@@ -116,6 +116,9 @@ function DashboardComponent() {
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
   const [activeVoiceChannel, setActiveVoiceChannel] = useState<Channel | null>(null);
+  const [showVoiceUI, setShowVoiceUI] = useState(false);
+  const [inviteCodeInput, setInviteCodeInput] = useState("");
+  const [serverModalTab, setServerModalTab] = useState<'create' | 'join'>('create');
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
