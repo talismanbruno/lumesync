@@ -53,7 +53,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
 
   const setupAnalyser = (id: string, stream: MediaStream) => {
     try {
-      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
       const ctx = audioContextRef.current;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -107,7 +109,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             const stream = event.streams[0];
             
             setParticipants(prev => {
-              const current: Participant = prev[participantId] || {
+              const current = prev[participantId] || {
                 id: participantId,
                 username: 'Usuário',
                 avatar_url: null,
@@ -119,7 +121,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
               
               const updated: Participant = {
                 ...current,
-                stream: stream || undefined
+                stream: stream
               };
 
               return {
