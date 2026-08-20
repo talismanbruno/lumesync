@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/auth/")({
+export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -77,7 +77,7 @@ function AuthComponent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50"
+                className="bg-background/50 text-foreground"
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -97,7 +97,7 @@ function AuthComponent() {
 
           <Button
             variant="outline"
-            className="w-full border-border bg-background/50 hover:bg-accent"
+            className="w-full border-border bg-background/50 hover:bg-accent text-foreground"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
           >
