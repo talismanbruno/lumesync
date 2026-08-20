@@ -290,20 +290,7 @@ function DashboardComponent() {
     toast.success("Código de convite copiado!");
   };
 
-  if (!myProfile) return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-[#050505] p-6 text-white">
-      <div className="max-w-md space-y-4 text-center">
-        <h2 className="text-2xl font-bold text-[#00D1FF]">Sincronizando Perfil...</h2>
-        <p className="text-zinc-500">Se você ficar preso aqui, clique no botão abaixo.</p>
-        <Button 
-          onClick={() => window.location.reload()}
-          className="bg-[#121212] border border-white/10 hover:bg-[#1f1f1f]"
-        >
-          Recarregar Interface
-        </Button>
-      </div>
-    </div>
-  );
+// Removed the blocking "Sincronizando Perfil..." interface.
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans">

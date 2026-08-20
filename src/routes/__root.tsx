@@ -228,20 +228,7 @@ function RootComponent() {
   }, [router]);
 
 
-  if (isInitializing) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050505] p-6 text-white font-sans">
-        <div className="flex flex-col items-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tighter text-[#00D1FF] glow-sm">LUME</h1>
-          <div className="flex items-center space-x-2 text-zinc-500">
-            <Loader2 className="h-4 w-4 animate-spin text-[#00D1FF]" />
-            <span className="text-sm font-medium tracking-wide uppercase">Entrando...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // No static loading block here; rendering immediately.
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
