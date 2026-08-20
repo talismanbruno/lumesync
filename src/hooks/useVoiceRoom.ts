@@ -256,12 +256,13 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
         
         setParticipants(prev => {
-          if (!prev[id]) return prev;
+          const participant = prev[id];
+          if (!participant) return prev;
           const isTalking = average > talkingThreshold;
-          if (prev[id].isTalking === isTalking) return prev;
+          if (participant.isTalking === isTalking) return prev;
           return {
             ...prev,
-            [id]: { ...prev[id], isTalking }
+            [id]: { ...participant, isTalking }
           };
         });
       });
