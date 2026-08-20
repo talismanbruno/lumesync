@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles } from "lucide-react";
+import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -319,11 +320,7 @@ function DashboardComponent() {
       {/* Column 1: Server List */}
       <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
         <div onClick={() => setActiveServer(null)} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
-          <img 
-            src="https://i.ibb.co/pvXzxPn5/lume-symbol.png" 
-            alt="Lume" 
-            className="w-10 h-10 rounded-xl object-contain hover:scale-105 transition-transform" 
-          />
+          <LumeLogo variant="icon" className="w-10 h-10 rounded-xl" />
         </div>
 
         {servers.map((server) => (
@@ -498,11 +495,7 @@ function DashboardComponent() {
           <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
             <div className="max-w-md space-y-6 flex flex-col items-center">
               <div className="flex justify-center items-center my-4">
-                <img 
-                  src="https://i.ibb.co/q3khCM2Z/lume-wordmark.png" 
-                  alt="Lume" 
-                  className="h-10 md:h-12 w-auto max-w-none object-contain" 
-                />
+                <LumeLogo variant="full" />
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-zinc-500 font-medium tracking-wide">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
