@@ -15,6 +15,8 @@ import { Loader2 } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "@/context/AuthContext";
+
 
 function NotFoundComponent() {
   return (
