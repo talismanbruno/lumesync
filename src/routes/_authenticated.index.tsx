@@ -202,38 +202,55 @@ function DashboardComponent() {
     fetchChannels();
   }, [activeServer]);
 
-  // Background Presence for Sidebar
+  // Background Presence and Realtime for Sidebar Voice Participants
   useEffect(() => {
     if (!channels.length) return;
     
     const voiceChannels = channels.filter(c => c.type === 'voice');
-    const channelsToSubscribe = voiceChannels.map(vc => {
-      const channel = supabase.channel(`voice-room-${vc.id}`, {
-        config: { presence: { key: myProfile.id } }
-      });
-      
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState();
-          const users = Object.values(state).flat().map((p: any) => ({
-            user_id: p.user_id,
-            username: p.username,
-            display_name: p.display_name,
-            avatar_url: p.avatar_url,
-            isMuted: p.isMuted,
-            isDeafened: p.isDeafened
-          }));
-          setVoiceParticipantsMap(prev => ({ ...prev, [vc.id]: users }));
-        })
-        .subscribe();
-        
-      return channel;
-    });
     
-    return () => {
-      channelsToSubscribe.forEach(c => supabase.removeChannel(c));
+    const fetchAllParticipants = async () => {
+      const channelIds = voiceChannels.map(vc => vc.id);
+      if (channelIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('voice_participants')
+        .select('user_id, channel_id, profiles(*)')
+        .in('channel_id', channelIds);
+
+      if (!error && data) {
+        const grouped: Record<string, any[]> = {};
+        (data as any[]).forEach((p: any) => {
+          const profile = p.profiles as any;
+          const channelId = p.channel_id;
+          if (!grouped[channelId]) grouped[channelId] = [];
+          grouped[channelId].push({
+            user_id: p.user_id,
+            username: profile?.username || 'Usuário',
+            display_name: profile?.display_name,
+            avatar_url: profile?.avatar_url
+          });
+        });
+        setVoiceParticipantsMap(grouped);
+      }
     };
-  }, [channels, myProfile.id]);
+
+    fetchAllParticipants();
+
+    const channel = supabase
+      .channel('voice_participants_global')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'voice_participants' 
+      }, () => {
+        fetchAllParticipants();
+      })
+      .subscribe();
+        
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [channels]);
 
   // Fetch messages and setup realtime
   useEffect(() => {
@@ -624,30 +641,46 @@ function DashboardComponent() {
       <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 md:w-auto md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full w-full">
           {/* COLUNA 1: SERVIDORES (LARGURA FIXA E NUNCA ESMAGA) */}
-          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 overflow-y-auto overflow-x-hidden">
-
-        <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
-          <LumeLogo variant="icon" />
-        </div>
-
-        {servers.map((server) => (
-          <button
-            key={server.id}
-            onClick={() => setActiveServer(server)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setContextMenu({ x: e.clientX, y: e.clientY, server });
-            }}
-            className={`group relative flex h-12 w-12 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
-              activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
-            }`}
-          >
-            <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
-            <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
-          </button>
-        ))}
-      </nav>
+          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none">
+            {/* 1. Botão Home / Lume Logo */}
+            <button 
+              onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+            >
+              <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 rounded-xl object-contain" />
+            </button>
+            
+            <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
+            
+            {/* 2. Lista de Servidores com o Botão + no final da lista */}
+            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto overflow-x-hidden py-1">
+              {servers.map((server) => (
+                <button
+                  key={server.id}
+                  onClick={() => setActiveServer(server)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setContextMenu({ x: e.clientX, y: e.clientY, server });
+                  }}
+                  className={`group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
+                    activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
+                  }`}
+                >
+                  <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
+                  <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
+                </button>
+              ))}
+              
+              {/* O Botão + DEVE FICAR AQUI DENTRO DA COLUNA 1, ABAIXO DOS SERVIDORES */}
+              <button 
+                onClick={() => setIsCreatingServer(true)}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20"
+              >
+                <Plus size={24} />
+              </button>
+            </div>
+          </nav>
       {/* Moved context menu and dialogs outside the nav but inside the wrapper if needed, 
           or just ensured the wrapper is closed correctly */}
 
@@ -692,14 +725,8 @@ function DashboardComponent() {
           </>
         )}
         
-        <div className="mx-4 h-[2px] w-8 bg-white/5" />
-        
+        {/* Remove old Plus button location outside Column 1 */}
         <Dialog open={isCreatingServer} onOpenChange={(open) => { setIsCreatingServer(open); if (!open) setServerModalTab('create'); }}>
-          <DialogTrigger asChild>
-            <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20">
-              <Plus size={24} />
-            </button>
-          </DialogTrigger>
           <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px]">
             <DialogHeader>
               <DialogTitle className="text-center text-2xl font-bold">
