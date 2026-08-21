@@ -308,6 +308,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      broadcast_system_update: {
+        Args: { update_text: string }
+        Returns: undefined
+      }
       create_server: { Args: { server_name: string }; Returns: string }
       find_profile_by_username: {
         Args: { p_username: string }
