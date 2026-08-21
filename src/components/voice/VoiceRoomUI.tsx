@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
 import { toast } from 'sonner';
@@ -121,12 +121,12 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
             {/* Header / Top Controls */}
             <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                <Avatar className="h-5 w-5 border border-white/10">
-                  <AvatarImage src={participants.find(p => p.id === activeWatchingStream.userId)?.avatar_url || ""} />
-                  <AvatarFallback className="text-[8px] bg-zinc-800">
-                    {activeWatchingStream.username.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar 
+                  avatarUrl={participants.find(p => p.id === activeWatchingStream.userId)?.avatar_url}
+                  name={activeWatchingStream.username}
+                  size="h-5 w-5"
+                  className="border border-white/10"
+                />
                 <span className="text-xs font-medium text-white">
                   {activeWatchingStream.userId === myProfile.id ? "Sua Transmissão" : `Transmissão de ${activeWatchingStream.username}`}
                 </span>
@@ -185,12 +185,12 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
             <div className={`relative rounded-xl bg-[#121212] border-2 transition-all duration-300 flex flex-col items-center justify-center p-6 aspect-video ${
               !isMuted ? "border-[#00D1FF]/30 shadow-[0_0_15px_rgba(0,209,255,0.1)]" : "border-white/5"
             }`}>
-              <Avatar className="h-20 w-20 border-2 border-white/10">
-                <AvatarImage src={myProfile?.avatar_url || ""} />
-                <AvatarFallback className="text-xl bg-[#00D1FF]/10 text-[#00D1FF]">
-                  {(myProfile?.username || "U").substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar 
+                avatarUrl={myProfile?.avatar_url}
+                name={myProfile?.display_name || myProfile?.username}
+                size="h-20 w-20"
+                className="border-2 border-white/10"
+              />
               <span className="mt-4 text-sm font-medium text-zinc-200">
                 {myProfile?.display_name || myProfile?.username} (Você)
               </span>
@@ -228,12 +228,12 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                     p.isSpeaking || p.isTalking ? "border-[#00D1FF] shadow-[0_0_20px_rgba(0,209,255,0.2)]" : "border-white/5"
                   }`}
                 >
-                  <Avatar className="h-20 w-20 border-2 border-white/10">
-                    <AvatarImage src={p.avatar_url || ""} />
-                    <AvatarFallback className="text-xl bg-zinc-800 text-zinc-400">
-                      {p.username.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar 
+                    avatarUrl={p.avatar_url}
+                    name={p.display_name || p.username}
+                    size="h-20 w-20"
+                    className="border-2 border-white/10"
+                  />
                   <span className="mt-4 text-sm font-medium text-zinc-200">
                     {p.display_name || p.username}
                   </span>
