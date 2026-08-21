@@ -161,6 +161,8 @@ function DashboardComponent() {
   const [editBio, setEditBio] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
@@ -998,63 +1000,53 @@ function DashboardComponent() {
   const openProfileEditor = () => {
     setEditDisplayName(myProfile.display_name || "");
     setEditBio(myProfile.bio || "");
-    setAvatarPreview(myProfile.avatar_url);
+    setAvatarPreview(myProfile.avatar_url || null);
     setBannerPreview(myProfile.banner_url || null);
+    setAvatarFile(null);
+    setBannerFile(null);
     setIsEditingProfile(true);
   };
 
-  const handleProfileImageUpload = async (file: File, type: 'avatar' | 'banner') => {
-    if (!myProfile?.id) return;
-    
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const bucket = type === 'avatar' ? 'avatars' : 'banners';
-      
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      if (type === 'avatar') {
-        setAvatarPreview(publicUrl);
-      } else {
-        setBannerPreview(publicUrl);
-      }
-      toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
-    } catch (error: any) {
-      toast.error("Erro no upload: " + error.message);
-    } finally {
-      setIsUploading(false);
-    }
+  const uploadFile = async (file: File, bucket: 'avatars' | 'banners') => {
+    const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return publicUrl;
   };
 
   const handleSaveProfile = async () => {
     if (!myProfile?.id) return;
     
+    setIsUploading(true);
     try {
-      const updated = {
-        ...myProfile,
-        display_name: editDisplayName,
-        bio: editBio,
-        avatar_url: avatarPreview,
-        banner_url: bannerPreview
-      };
+      let finalAvatarUrl = avatarPreview;
+      let finalBannerUrl = bannerPreview;
+
+      if (avatarFile) {
+        finalAvatarUrl = await uploadFile(avatarFile, 'avatars');
+      }
+
+      if (bannerFile) {
+        finalBannerUrl = await uploadFile(bannerFile, 'banners');
+      }
 
       const { error: profileUpdateError } = await supabase.from('profiles').update({
         display_name: editDisplayName,
         bio: editBio,
-        avatar_url: avatarPreview,
-        banner_url: bannerPreview
+        avatar_url: finalAvatarUrl,
+        banner_url: finalBannerUrl
       }).eq('id', myProfile.id);
 
       if (profileUpdateError) throw profileUpdateError;
+
+      const updated = {
+        ...myProfile,
+        display_name: editDisplayName,
+        bio: editBio,
+        avatar_url: finalAvatarUrl,
+        banner_url: finalBannerUrl
+      };
 
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
@@ -1063,6 +1055,8 @@ function DashboardComponent() {
       
     } catch (error: any) {
       toast.error("Erro ao salvar perfil: " + error.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -1110,7 +1104,7 @@ function DashboardComponent() {
       <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 md:w-auto md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full w-full">
           {/* COLUNA 1: SERVIDORES (LARGURA FIXA E NUNCA ESMAGA) */}
-          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none">
+          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none overflow-x-hidden">
             {/* 1. Botão Home / Lume Logo */}
             <button 
               onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
@@ -1122,7 +1116,7 @@ function DashboardComponent() {
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
             
             {/* 2. Lista de Servidores com o Botão + no final da lista */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto overflow-x-hidden py-1">
+            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto no-scrollbar overflow-x-hidden py-1">
               {servers.map((server) => (
                 <button
                   key={server.id}
@@ -2294,8 +2288,8 @@ function DashboardComponent() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
+              setAvatarFile(file);
               setAvatarPreview(URL.createObjectURL(file));
-              handleProfileImageUpload(file, 'avatar');
             }
           }} 
         />
@@ -2307,8 +2301,8 @@ function DashboardComponent() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
+              setBannerFile(file);
               setBannerPreview(URL.createObjectURL(file));
-              handleProfileImageUpload(file, 'banner');
             }
           }} 
         />

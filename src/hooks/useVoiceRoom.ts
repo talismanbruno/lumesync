@@ -184,9 +184,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         // Trigger signaling for new users
         users.forEach(u => {
           if (u.id !== myProfile.id && !peerConnections.current.has(u.id)) {
-            // Deterministic initiator: user with "smaller" ID initiates
-            const isInitiator = myProfile.id < u.id;
-            createPeerConnection(u.id, isInitiator, voiceChannel);
+            // When a new user joins, the existing user ALWAYS initiates the connection.
+            // This ensures deterministic connection establishment regardless of ID comparison.
+            createPeerConnection(u.id, true, voiceChannel);
           }
         });
 
