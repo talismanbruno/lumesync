@@ -1831,10 +1831,21 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                               banner_url: authorProfile?.banner_url,
                               bio: authorProfile?.bio,
                               created_at: authorProfile?.created_at,
-                              status: currentAuthorStatus
+                              status: currentAuthorStatus,
+                              is_verified: authorProfile?.is_verified || authorProfile?.id === LUME_BOT_ID
                             }}
                             isMe={userId === myProfile.id}
-                        onEditClick={() => setIsSettingsOpen(true)}
+                            onEditClick={userId === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
+                            onMessageClick={userId !== myProfile.id ? () => {
+                              const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
+                              if (friend) {
+                                setActiveDMFriend(friend as Profile);
+                                setActiveChannel(null);
+                                setShowVoiceUI(false);
+                                markAsRead(userId);
+                              }
+                            } : undefined}
+                          >
 
                           >
                             <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
