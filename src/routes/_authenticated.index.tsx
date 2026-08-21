@@ -1,3 +1,4 @@
+/*
 AJUSTE DE CSS: DESESPREMER AVATAR NO RODAPÉ DO USUÁRIO
 
 No componente do rodapé da barra lateral (onde fica o avatar, nome e status do usuário logado):
@@ -25,6 +26,7 @@ codeTsx
 Confirme que a foto fica 100% redonda, proporcional e sem distorção.
 
 IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
+*/
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useState, useEffect, useRef } from "react";
