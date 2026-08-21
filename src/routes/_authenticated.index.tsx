@@ -221,8 +221,9 @@ function DashboardComponent() {
         const grouped: Record<string, any[]> = {};
         (data as any[]).forEach((p: any) => {
           const profile = p.profiles as any;
-          if (!grouped[p.channel_id]) grouped[p.channel_id] = [];
-          grouped[p.channel_id].push({
+          const channelId = p.channel_id;
+          if (!grouped[channelId]) grouped[channelId] = [];
+          grouped[channelId].push({
             user_id: p.user_id,
             username: profile?.username || 'Usuário',
             display_name: profile?.display_name,
