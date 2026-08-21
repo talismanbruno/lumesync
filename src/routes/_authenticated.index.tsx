@@ -1722,6 +1722,7 @@ function DashboardComponent() {
                 </form>
               </div>
             </div>
+            )}
           </>
         ) : !activeServer ? (
           <div className="flex flex-col h-full">
