@@ -360,7 +360,10 @@ function DashboardComponent() {
               user_id: newMsg.user_id,
               content: newMsg.content,
               created_at: newMsg.created_at,
-              profile: profile
+              profile: profile,
+              file_url: newMsg.file_url,
+              file_type: newMsg.file_type,
+              file_name: newMsg.file_name
             };
             
             setMessages(prev => [...prev, hydratedMsg]);
