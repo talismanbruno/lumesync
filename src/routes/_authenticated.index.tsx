@@ -1655,18 +1655,18 @@ function DashboardComponent() {
                       <UserProfileCard 
                         user={{
                           id: userId || "",
-                          username: profile?.username || "usuário",
-                          display_name: profile?.display_name,
-                          avatar_url: profile?.avatar_url,
-                          banner_url: profile?.banner_url,
-                          bio: profile?.bio,
-                          created_at: profile?.created_at,
+                          username: authorProfile?.username || "usuário",
+                          display_name: authorProfile?.display_name,
+                          avatar_url: authorProfile?.avatar_url,
+                          banner_url: authorProfile?.banner_url,
+                          bio: authorProfile?.bio,
+                          created_at: authorProfile?.created_at,
                           status: currentAuthorStatus
                         }}
                         isMe={userId === myProfile.id}
                         onEditClick={openProfileEditor}
                         onMessageClick={userId !== myProfile.id ? () => {
-                          const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || profile;
+                          const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
                           if (friend) {
                             setActiveDMFriend(friend as Profile);
                             setActiveChannel(null);
@@ -1676,9 +1676,9 @@ function DashboardComponent() {
                         } : undefined}
                       >
                         <Avatar className="h-10 w-10 mt-0.5 border border-white/5 hover:opacity-90 transition-opacity">
-                          <AvatarImage src={profile?.avatar_url || ""} />
+                          <AvatarImage src={authorProfile?.avatar_url || ""} />
                           <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                            {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
+                            {(authorProfile?.display_name || authorProfile?.username || "?").substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </UserProfileCard>
@@ -1691,10 +1691,25 @@ function DashboardComponent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
-                            {profile?.display_name || profile?.username || "Membro do Lume"}
-                          </span>
-                          {(profile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
+                          <UserProfileCard
+                            user={{
+                              id: userId || "",
+                              username: authorProfile?.username || "usuário",
+                              display_name: authorProfile?.display_name,
+                              avatar_url: authorProfile?.avatar_url,
+                              banner_url: authorProfile?.banner_url,
+                              bio: authorProfile?.bio,
+                              created_at: authorProfile?.created_at,
+                              status: currentAuthorStatus
+                            }}
+                            isMe={userId === myProfile.id}
+                            onEditClick={openProfileEditor}
+                          >
+                            <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
+                              {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
+                            </span>
+                          </UserProfileCard>
+                          {(authorProfile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
                             <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                           )}
                         </div>
