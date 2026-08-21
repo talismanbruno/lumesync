@@ -914,6 +914,85 @@ function DashboardComponent() {
     setShowStatusMenu(false);
   };
 
+  const openProfileEditor = () => {
+    setEditDisplayName(myProfile.display_name || "");
+    setEditBio(myProfile.bio || "");
+    setEditAvatarUrl(myProfile.avatar_url);
+    setEditBannerUrl(myProfile.banner_url || null);
+    setIsEditingProfile(true);
+  };
+
+  const handleProfileImageUpload = async (file: File, type: 'avatar' | 'banner') => {
+    if (!myProfile?.id) return;
+    
+    setIsUploading(true);
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(b => b.name === 'chat-attachments')) {
+        await supabase.storage.createBucket('chat-attachments', { public: true });
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `profiles/${myProfile.id}/${type}_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath);
+
+      if (type === 'avatar') {
+        setEditAvatarUrl(publicUrl);
+      } else {
+        setEditBannerUrl(publicUrl);
+      }
+      toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!myProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: editDisplayName,
+          bio: editBio,
+          avatar_url: editAvatarUrl,
+          banner_url: editBannerUrl
+        })
+        .eq('id', myProfile.id);
+        
+      if (error) throw error;
+      
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditingProfile(false);
+      
+      // Update local state immediately
+      const updated = {
+        ...myProfile,
+        display_name: editDisplayName,
+        bio: editBio,
+        avatar_url: editAvatarUrl,
+        banner_url: editBannerUrl
+      };
+      setDbProfile(updated);
+      setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
+      
+    } catch (error: any) {
+      toast.error("Erro ao salvar perfil: " + error.message);
+    }
+  };
+
   const copyInvite = () => {
     if (!activeServer) return;
     navigator.clipboard.writeText(activeServer.invite_code);
