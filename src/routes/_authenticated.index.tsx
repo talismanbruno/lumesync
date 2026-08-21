@@ -363,61 +363,42 @@ function DashboardComponent() {
 
   const handleJoinServer = async () => {
     if (!inviteCodeInput.trim() || !myProfile?.id) return;
-    
+
     try {
-      // 1. Find server by invite code
-      const { data: server, error: findError } = await supabase
-        .from("servers")
-        .select("*")
-        .eq("invite_code", inviteCodeInput.trim())
-        .maybeSingle();
-        
-      if (findError || !server) {
+      // Server-side validated join (invite code is never exposed to non-members)
+      const { data: joinedServerId, error: joinError } = await supabase.rpc("join_server_by_invite", {
+        p_code: inviteCodeInput.trim(),
+      });
+
+      if (joinError || !joinedServerId) {
         toast.error("Código de convite inválido!");
         return;
       }
-      
-      // 2. Check if already a member
-      const { data: existingMember } = await supabase
-        .from("members")
+
+      const { data: server, error: findError } = await supabase
+        .from("servers")
         .select("*")
-        .eq("server_id", server.id)
-        .eq("user_id", myProfile.id)
+        .eq("id", joinedServerId as string)
         .maybeSingle();
-        
-      if (existingMember) {
-        toast.info("Você já é membro deste servidor.");
-        setActiveServer(server as Server);
-        setIsCreatingServer(false);
-        setInviteCodeInput("");
+
+      if (findError || !server) {
+        toast.error("Erro ao carregar o servidor.");
         return;
       }
-      
-      // 3. Join server
-      const { error: joinError } = await supabase
-        .from("members")
-        .insert({
-          server_id: server.id,
-          user_id: myProfile.id,
-          role: 'member'
-        });
-        
-      if (joinError) throw joinError;
-      
-      toast.success("Você entrou no servidor!");
-      
-      // Update local state
+
       const newServer: Server = server as Server;
-      setServers(prev => [...prev, newServer]);
+      setServers(prev => (prev.some(s => s.id === newServer.id) ? prev : [...prev, newServer]));
       setActiveServer(newServer);
-      
+      toast.success("Você entrou no servidor!");
+
       setInviteCodeInput("");
       setIsCreatingServer(false);
     } catch (error: any) {
       console.error("Erro ao entrar no servidor:", error);
-      toast.error(error.message || "Erro ao entrar no servidor");
+      toast.error("Erro ao entrar no servidor");
     }
   };
+
 
   const handleDeleteServer = async () => {
     if (!serverToDelete || !myProfile?.id) return;
@@ -498,21 +479,22 @@ function DashboardComponent() {
 
   const handleSendFriendRequest = async () => {
     if (!addFriendUsername.trim() || !myProfile?.id) return;
-    const { data: targetProfile, error: searchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .ilike('username', addFriendUsername.trim())
-      .maybeSingle();
-      
+    const { data: found, error: searchError } = await supabase.rpc("find_profile_by_username", {
+      p_username: addFriendUsername.trim(),
+    });
+
+    const targetProfile = Array.isArray(found) ? found[0] : found;
+
     if (searchError || !targetProfile) {
       toast.error("Nenhum usuário encontrado com esse username.");
       return;
     }
-    
+
     if (targetProfile.id === myProfile.id) {
       toast.error("Você não pode adicionar a si mesmo!");
       return;
     }
+
 
     const { error } = await supabase
       .from('friendships')

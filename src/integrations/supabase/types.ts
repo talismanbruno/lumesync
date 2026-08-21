@@ -270,6 +270,16 @@ export type Database = {
     }
     Functions: {
       create_server: { Args: { server_name: string }; Returns: string }
+      find_profile_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
+      join_server_by_invite: { Args: { p_code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
