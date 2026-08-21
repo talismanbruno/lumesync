@@ -1,5 +1,6 @@
 import * as React from "react";
-import { X, User, Settings, Volume2, Palette, Shield, Sparkles, Image as ImageIcon, Camera, Check } from "lucide-react";
+import { X, User, Settings, Volume2, Palette, Shield, Sparkles, Image as ImageIcon, Camera, Check, BadgeCheck } from "lucide-react";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
