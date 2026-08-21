@@ -125,10 +125,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Fallback used if a component renders outside the provider (e.g. during a
+// hot-reload boundary). Prevents a hard crash / blank screen.
+const fallbackAuth: AuthContextType = {
+  user: null,
+  profile: null,
+  isLoading: true,
+  updateProfile: async (updates) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+    if (error) toast.error("Erro ao salvar dados no banco");
+  },
+  signOut: async () => {
+    await supabase.auth.signOut();
+  },
+  refreshProfile: async () => {},
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    console.warn("[Lume] useAuth used outside AuthProvider — using fallback context.");
+    return fallbackAuth;
   }
   return context;
+
 }

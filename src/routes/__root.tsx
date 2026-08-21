@@ -119,7 +119,9 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Scripts />
       </body>
     </html>
@@ -232,10 +234,8 @@ function RootComponent() {
   // No static loading block here; rendering immediately.
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" theme="dark" richColors />
-      </AuthProvider>
+      <Outlet />
+      <Toaster position="top-center" theme="dark" richColors />
     </QueryClientProvider>
 
   );
