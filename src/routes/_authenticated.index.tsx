@@ -416,8 +416,8 @@ function DashboardComponent() {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
+      if (items[i].type?.indexOf("image") !== -1) {
+        const file = items[i].getAsFile?.();
         if (file) handleFileUpload(file);
       }
     }
