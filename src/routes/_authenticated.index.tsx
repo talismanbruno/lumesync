@@ -1270,11 +1270,13 @@ function DashboardComponent() {
               </Button>
             </div>
           </div>
+        )}
       </div>
     </main>
   </div>
   );
 }
+
 
 
 
