@@ -32,10 +32,10 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   onDisconnect,
   onClose
 }) => {
-  const [activeStreamId, setActiveStreamId] = React.useState<string | null>(null);
+  const [activeWatchingStream, setActiveWatchingStream] = React.useState<{ userId: string; username: string; stream: MediaStream } | null>(null);
 
-  const activeParticipant = participants.find(p => p.id === activeStreamId);
-  const displayedStream = activeStreamId === myProfile.id ? screenStream : activeParticipant?.screenStream;
+  const activeParticipant = participants.find(p => p.id === activeWatchingStream?.userId);
+  const displayedStream = activeWatchingStream?.userId === myProfile.id ? screenStream : activeWatchingStream?.stream;
 
   return (
     <div className="flex flex-1 flex-col h-full bg-[#050505] relative">
