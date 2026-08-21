@@ -1343,6 +1343,7 @@ function DashboardComponent() {
                   <div className="flex flex-col items-start flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 w-full">
                       <span className="font-semibold text-sm text-white truncate">Lume</span>
+                      <BadgeCheck className="w-4 h-4 text-cyan-400 shrink-0" />
                       <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
                     </div>
                     <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
@@ -1398,6 +1399,7 @@ function DashboardComponent() {
                         <div className="flex-1 text-left min-w-0">
                           <div className="flex items-center gap-1.5 truncate">
                             <span className="font-medium">{friend.display_name || friend.username}</span>
+                            {friend.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
                             {isBot && (
                               <span className="shrink-0 px-1 py-0.5 text-[9px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                             )}
@@ -1595,7 +1597,10 @@ function DashboardComponent() {
             className="flex-1 min-w-0 text-white cursor-pointer"
             onClick={() => setShowStatusMenu(!showStatusMenu)}
           >
-            <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+            <div className="flex items-center gap-1 min-w-0">
+              <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+              {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+            </div>
             <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight">
               {myProfile.status === 'online' ? 'Disponível' : 
                myProfile.status === 'idle' ? 'Ausente' : 
