@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/" as any)({
+export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "Lume — Comunicação minimalista" },
+      { name: "description", content: "Lume é a plataforma de comunicação minimalista, clean e ultra-veloz para times e comunidades." },
+      { property: "og:title", content: "Lume — Comunicação minimalista" },
+      { property: "og:description", content: "Chat, voz e comunidades em uma interface premium e ultra-veloz." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 function Index() {
