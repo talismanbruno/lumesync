@@ -1104,7 +1104,7 @@ function DashboardComponent() {
       <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 md:w-auto md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full w-full">
           {/* COLUNA 1: SERVIDORES (LARGURA FIXA E NUNCA ESMAGA) */}
-          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none">
+          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none overflow-x-hidden">
             {/* 1. Botão Home / Lume Logo */}
             <button 
               onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
@@ -1116,7 +1116,7 @@ function DashboardComponent() {
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
             
             {/* 2. Lista de Servidores com o Botão + no final da lista */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto overflow-x-hidden py-1">
+            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto no-scrollbar overflow-x-hidden py-1">
               {servers.map((server) => (
                 <button
                   key={server.id}
