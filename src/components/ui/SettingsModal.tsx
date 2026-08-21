@@ -12,12 +12,13 @@ import { useAuth } from "@/context/AuthContext";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userProfile: any;
-  onProfileUpdate: (updatedProfile: any) => void;
+  // userProfile e onProfileUpdate are now handled via useAuth internally
+  userProfile?: any;
+  onProfileUpdate?: (updatedProfile: any) => void;
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
   
   const [name, setName] = React.useState('');
@@ -65,14 +66,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const handleSave = async () => {
     if (!profile) return;
     setIsSaving(true);
-    await updateProfile({
-      display_name: name.trim() || profile?.username,
-      bio: bio.trim(),
-      avatar_url: avatarPreview,
-      banner_url: bannerPreview
-    });
-    setIsSaving(false);
-    onClose(); // Fecha o modal
+    try {
+      await updateProfile({
+        display_name: name.trim() || profile.username,
+        bio: bio.trim(),
+        avatar_url: avatarPreview,
+        banner_url: bannerPreview
+      });
+      onClose(); // Fecha o modal
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -245,7 +251,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">E-mail</p>
-                      <p className="text-white">{profile?.email || "..."}</p>
+                      <p className="text-white">{user?.email || "..."}</p>
                     </div>
                   </div>
                 </div>
