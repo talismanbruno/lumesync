@@ -11,12 +11,12 @@ interface UserProfileCardProps {
   user: {
     id: string;
     username: string;
-    display_name?: string | null;
-    avatar_url?: string | null;
-    banner_url?: string | null;
-    bio?: string | null;
-    created_at?: string;
-    status?: 'online' | 'idle' | 'dnd' | 'offline';
+    display_name?: string | null | undefined;
+    avatar_url?: string | null | undefined;
+    banner_url?: string | null | undefined;
+    bio?: string | null | undefined;
+    created_at?: string | undefined;
+    status?: 'online' | 'idle' | 'dnd' | 'offline' | undefined;
   };
   isMe?: boolean;
   onEditClick?: () => void;
