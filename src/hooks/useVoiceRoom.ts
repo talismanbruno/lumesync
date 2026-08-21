@@ -266,9 +266,9 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       
       // 1. Adiciona a faixa de vídeo em todas as conexões peer ativas
       peerConnections.current.forEach(async (pc, peerId) => {
-        const videoTrack = stream.getVideoTracks()[0];
-        if (!videoTrack) return;
-        pc.addTrack(videoTrack, stream);
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
         
         // 2. CRIA UM NOVO OFFER DE RENEGOCIAÇÃO
         const offer = await pc.createOffer();
