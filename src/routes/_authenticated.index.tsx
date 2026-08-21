@@ -622,27 +622,88 @@ function DashboardComponent() {
 
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
-    const { data, error } = await supabase
+    
+    // Garantir que o bot Lume esteja sempre na lista, mesmo que não haja "amizade"
+    const { data: friendshipsData, error } = await supabase
       .from('friendships')
       .select('*, requester:profiles!friendships_requester_id_fkey(*), addressee:profiles!friendships_addressee_id_fkey(*)')
       .or(`requester_id.eq.${myProfile.id},addressee_id.eq.${myProfile.id}`);
     
-    if (!error && data) {
-      const mapped = data.map((f: any) => ({
+    // Buscar perfil do bot
+    const { data: botProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', LUME_BOT_ID)
+      .maybeSingle();
+
+    if (!error && friendshipsData) {
+      const mapped = friendshipsData.map((f: any) => ({
         ...f,
         friend_profile: f.requester_id === myProfile.id ? f.addressee : f.requester
       }));
+
+      // Adicionar o bot se ele não estiver na lista (como accepted)
+      if (botProfile && !mapped.some(f => f.friend_profile?.id === LUME_BOT_ID)) {
+        mapped.unshift({
+          id: 'lume-bot-fixed',
+          requester_id: LUME_BOT_ID,
+          addressee_id: myProfile.id,
+          status: 'accepted',
+          created_at: new Date().toISOString(),
+          friend_profile: botProfile as Profile
+        });
+      }
+
       setFriendships(mapped);
+    }
+  };
+
+  const fetchUnreadCounts = async () => {
+    if (!myProfile?.id) return;
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('sender_id')
+      .eq('recipient_id', myProfile.id)
+      .eq('is_read', false);
+    
+    if (!error && data) {
+      const counts: Record<string, number> = {};
+      data.forEach(msg => {
+        counts[msg.sender_id] = (counts[msg.sender_id] || 0) + 1;
+      });
+      setUnreadCounts(counts);
     }
   };
 
   useEffect(() => {
     fetchFriendships();
-    const sub = supabase
+    fetchUnreadCounts();
+
+    const subFriends = supabase
       .channel('friendships_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, fetchFriendships)
       .subscribe();
-    return () => { supabase.removeChannel(sub); };
+
+    const subMessages = supabase
+      .channel('unread_messages_realtime')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${myProfile.id}`
+      }, fetchUnreadCounts)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${myProfile.id}`
+      }, fetchUnreadCounts)
+      .subscribe();
+
+    return () => { 
+      supabase.removeChannel(subFriends);
+      supabase.removeChannel(subMessages);
+    };
   }, [myProfile?.id]);
 
   // Realtime Status for Profiles
