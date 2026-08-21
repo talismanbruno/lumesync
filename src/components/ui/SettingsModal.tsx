@@ -1,5 +1,6 @@
 import * as React from "react";
-import { X, User, Settings, Volume2, Palette, Shield, Sparkles, Image as ImageIcon, Camera, Check } from "lucide-react";
+import { X, User, Settings, Volume2, Palette, Shield, Sparkles, Image as ImageIcon, Camera, Check, BadgeCheck } from "lucide-react";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,11 +50,13 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
     const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
     
     if (!updateError) {
+      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
       onProfileUpdate({
         ...userProfile,
-        [type === 'avatar' ? 'avatar_url' : 'banner_url']: publicUrl
+        ...updateData
       });
       toast.success(`${type === 'avatar' ? 'Foto' : 'Banner'} atualizado com sucesso!`);
+
     } else {
       toast.error(`Erro ao salvar ${type} no perfil`);
     }
@@ -62,17 +65,19 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
   const handleSaveInfo = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('profiles').update({
+      const updateData = {
         display_name: editDisplayName,
         bio: editBio
-      }).eq('id', userProfile.id);
+      };
+
+      const { error } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
 
       if (error) throw error;
       
+      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
       onProfileUpdate({
         ...userProfile,
-        display_name: editDisplayName,
-        bio: editBio
+        ...updateData
       });
       toast.success("Perfil atualizado!");
     } catch (err: any) {
@@ -81,6 +86,7 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
       setIsSaving(false);
     }
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -150,37 +156,39 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
                 {/* Preview da Carta */}
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Preview do Perfil</h3>
-                  <div className="w-[340px] rounded-xl bg-[#050505] border border-zinc-800 overflow-hidden shadow-2xl">
-                    <div className="h-24 w-full bg-zinc-900 relative">
+                  <div className="relative w-full rounded-2xl bg-[#121214] border border-zinc-800 overflow-hidden mt-4 max-w-[340px]">
+                    {/* Banner (Altura fixa de 120px) */}
+                    <div className="h-[120px] w-full bg-zinc-900">
                       {bannerPreview ? (
-                        <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+                        <img src={bannerPreview} className="w-full h-full object-cover" alt="Banner" />
                       ) : (
                         <div className="w-full h-full bg-[#00D1FF]/10" />
                       )}
                     </div>
-                    <div className="px-4 pb-4 relative">
-                      <div className="absolute -top-10 left-4">
-                        <div className="h-20 w-20 rounded-full border-4 border-[#050505] bg-zinc-800 overflow-hidden">
-                          {avatarPreview ? (
-                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-zinc-500 bg-zinc-900">
-                              <User size={32} />
-                            </div>
-                          )}
-                        </div>
+                    
+                    {/* Informações com padding top generoso para o Avatar não engolir o texto */}
+                    <div className="px-5 pb-5 pt-12 relative">
+                      {/* Avatar posicionado metade dentro, metade fora do banner */}
+                      <div className="absolute -top-10 left-5 w-20 h-20 rounded-full border-4 border-[#121214] bg-zinc-800 overflow-hidden">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} className="w-full h-full object-cover" alt="Avatar" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-zinc-500 bg-zinc-900">
+                            <User size={32} />
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-12 space-y-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-white">{editDisplayName || userProfile?.username}</span>
-                          {userProfile?.is_verified && <Check size={14} className="text-[#00D1FF]" />}
-                        </div>
-                        <div className="text-xs text-zinc-400 line-clamp-3 min-h-[1em]">
-                          {editBio || "Este usuário não possui bio."}
-                        </div>
+                      
+                      <div className="flex items-center gap-1 mt-1">
+                        <h3 className="font-bold text-white text-lg">{editDisplayName || userProfile?.username || 'Seu Nome'}</h3>
+                        {userProfile?.is_verified && <BadgeCheck className="w-4 h-4 text-cyan-400" />}
+                      </div>
+                      <div className="text-sm text-zinc-400 mt-1 line-clamp-3 min-h-[1.25rem]">
+                        {editBio || "Este usuário não possui bio."}
                       </div>
                     </div>
                   </div>
+
                 </div>
 
                 {/* Controles de Upload */}
