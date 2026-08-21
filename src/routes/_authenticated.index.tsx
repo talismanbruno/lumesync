@@ -479,21 +479,22 @@ function DashboardComponent() {
 
   const handleSendFriendRequest = async () => {
     if (!addFriendUsername.trim() || !myProfile?.id) return;
-    const { data: targetProfile, error: searchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .ilike('username', addFriendUsername.trim())
-      .maybeSingle();
-      
+    const { data: found, error: searchError } = await supabase.rpc("find_profile_by_username", {
+      p_username: addFriendUsername.trim(),
+    });
+
+    const targetProfile = Array.isArray(found) ? found[0] : found;
+
     if (searchError || !targetProfile) {
       toast.error("Nenhum usuário encontrado com esse username.");
       return;
     }
-    
+
     if (targetProfile.id === myProfile.id) {
       toast.error("Você não pode adicionar a si mesmo!");
       return;
     }
+
 
     const { error } = await supabase
       .from('friendships')
