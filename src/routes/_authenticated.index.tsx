@@ -1548,7 +1548,7 @@ function DashboardComponent() {
         )}
 
         {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative">
+        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
           {showStatusMenu && (
             <>
               <div 
@@ -1600,14 +1600,14 @@ function DashboardComponent() {
           </UserProfileCard>
           
           <div 
-            className="flex-1 min-w-0 text-white cursor-pointer"
+            className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
             onClick={() => setShowStatusMenu(!showStatusMenu)}
           >
-            <div className="flex items-center gap-1 min-w-0">
-              <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+            <div className="flex items-center gap-1 w-full min-w-0">
+              <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
               {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
             </div>
-            <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight">
+            <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
               {myProfile.status === 'online' ? 'Disponível' : 
                myProfile.status === 'idle' ? 'Ausente' : 
                myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
@@ -2222,36 +2222,45 @@ function DashboardComponent() {
 
         <div className="p-6 space-y-6">
           {/* Preview do Banner/Avatar */}
-          <div className="relative group/banner cursor-pointer" onClick={() => bannerUploadRef.current?.click()}>
-            <div 
-              className="h-32 w-full rounded-xl bg-cover bg-center border border-white/5 relative overflow-hidden"
-              style={{ backgroundImage: bannerPreview ? `url(${bannerPreview})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
-            >
-              {bannerPreview && (
-                <img src={bannerPreview} className="w-full h-full object-cover" alt="Banner preview" />
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera className="w-8 h-8 text-white" />
-              </div>
-            </div>
+          <div className="relative w-full h-32 bg-zinc-800 rounded-lg overflow-hidden group cursor-pointer border border-zinc-700 hover:border-cyan-500 transition-colors">
+            {bannerPreview ? (
+              <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-zinc-500">Clique para adicionar banner</div>
+            )}
+            <input 
+              type="file" 
+              accept="image/*,.gif" 
+              className="absolute inset-0 opacity-0 cursor-pointer" 
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setBannerFile(file);
+                  setBannerPreview(URL.createObjectURL(file));
+                }
+              }} 
+            />
             
-            <div 
-              className="absolute -bottom-6 left-6 group/avatar cursor-pointer"
-              onClick={(e) => { e.stopPropagation(); avatarUploadRef.current?.click(); }}
-            >
-              <Avatar className="h-20 w-20 border-4 border-[#121214] shadow-xl">
-                {avatarPreview ? (
-                  <img src={avatarPreview} className="w-full h-full object-cover rounded-full" alt="Avatar preview" />
-                ) : (
-                  <>
-                    <AvatarImage src={myProfile.avatar_url || ""} className="object-cover" />
-                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
-                      {myProfile.username.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </>
-                )}
-              </Avatar>
-              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent">
+            {/* Avatar Sobreposto */}
+            <div className="absolute -bottom-6 left-4 w-20 h-20 rounded-full border-4 border-[#121214] bg-zinc-900 overflow-hidden cursor-pointer group/avatar relative">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold">ADD</div>
+              )}
+              <input 
+                type="file" 
+                accept="image/*,.gif" 
+                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setAvatarFile(file);
+                    setAvatarPreview(URL.createObjectURL(file));
+                  }
+                }} 
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <Camera className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -2280,32 +2289,7 @@ function DashboardComponent() {
           </div>
         </div>
 
-        <input 
-          type="file" 
-          ref={avatarUploadRef} 
-          className="hidden" 
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setAvatarFile(file);
-              setAvatarPreview(URL.createObjectURL(file));
-            }
-          }} 
-        />
-        <input 
-          type="file" 
-          ref={bannerUploadRef} 
-          className="hidden" 
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setBannerFile(file);
-              setBannerPreview(URL.createObjectURL(file));
-            }
-          }} 
-        />
+        {/* Hidden inputs removed as they are now integrated directly into the preview areas */}
 
         <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
           <Button variant="ghost" onClick={() => setIsEditingProfile(false)} className="text-zinc-400 hover:text-white">
