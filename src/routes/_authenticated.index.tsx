@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2 } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -18,12 +18,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
   ContextMenu,
+
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
@@ -32,6 +32,7 @@ import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
+import { SettingsModal } from "@/components/ui/SettingsModal";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -157,16 +158,9 @@ function DashboardComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [editBio, setEditBio] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const avatarUploadRef = useRef<HTMLInputElement>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
@@ -998,68 +992,7 @@ function DashboardComponent() {
     setShowStatusMenu(false);
   };
 
-  const openProfileEditor = () => {
-    setEditDisplayName(myProfile.display_name || "");
-    setEditBio(myProfile.bio || "");
-    setAvatarPreview(myProfile.avatar_url || null);
-    setBannerPreview(myProfile.banner_url || null);
-    setAvatarFile(null);
-    setBannerFile(null);
-    setIsEditingProfile(true);
-  };
 
-  const uploadFile = async (file: File, bucket: 'avatars' | 'banners') => {
-    const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
-    if (uploadError) throw uploadError;
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
-    return publicUrl;
-  };
-
-  const handleSaveProfile = async () => {
-    if (!myProfile?.id) return;
-    
-    setIsUploading(true);
-    try {
-      let finalAvatarUrl = avatarPreview;
-      let finalBannerUrl = bannerPreview;
-
-      if (avatarFile) {
-        finalAvatarUrl = await uploadFile(avatarFile, 'avatars');
-      }
-
-      if (bannerFile) {
-        finalBannerUrl = await uploadFile(bannerFile, 'banners');
-      }
-
-      const { error: profileUpdateError } = await supabase.from('profiles').update({
-        display_name: editDisplayName,
-        bio: editBio,
-        avatar_url: finalAvatarUrl,
-        banner_url: finalBannerUrl
-      }).eq('id', myProfile.id);
-
-      if (profileUpdateError) throw profileUpdateError;
-
-      const updated = {
-        ...myProfile,
-        display_name: editDisplayName,
-        bio: editBio,
-        avatar_url: finalAvatarUrl,
-        banner_url: finalBannerUrl
-      };
-
-      setDbProfile(updated);
-      setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
-      setIsEditingProfile(false);
-      toast.success("Perfil atualizado!");
-      
-    } catch (error: any) {
-      toast.error("Erro ao salvar perfil: " + error.message);
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const copyInvite = () => {
     if (!activeServer) return;
@@ -1597,10 +1530,11 @@ function DashboardComponent() {
           <UserProfileCard
             user={myProfile}
             isMe={true}
-            onEditClick={openProfileEditor}
+            onEditClick={() => setIsSettingsOpen(true)}
           >
             <div className="hidden" /> 
           </UserProfileCard>
+
           
           <div 
             className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
@@ -1616,6 +1550,14 @@ function DashboardComponent() {
                myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
             </p>
           </div>
+          
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+            title="Configurações"
+          >
+            <Settings size={16} />
+          </button>
           
           <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 transition-colors">
             <LogOut size={16} />
@@ -1708,8 +1650,9 @@ function DashboardComponent() {
                     <UserProfileCard
                       user={activeDMFriend}
                       isMe={activeDMFriend.id === myProfile.id}
-                      onEditClick={activeDMFriend.id === myProfile.id ? openProfileEditor : undefined}
+                      onEditClick={activeDMFriend.id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
                     >
+
                       <div className="flex items-center gap-1.5 min-w-0 cursor-pointer">
                         <h3 className="text-sm font-bold text-white truncate">{activeDMFriend.display_name || activeDMFriend.username}</h3>
                         {activeDMFriend.is_verified && (
@@ -1753,7 +1696,7 @@ function DashboardComponent() {
                           status: currentAuthorStatus
                         }}
                         isMe={userId === myProfile.id}
-                        onEditClick={openProfileEditor}
+                        onEditClick={() => setIsSettingsOpen(true)}
                         onMessageClick={userId !== myProfile.id ? () => {
                           const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
                           if (friend) {
@@ -1792,7 +1735,8 @@ function DashboardComponent() {
                               status: currentAuthorStatus
                             }}
                             isMe={userId === myProfile.id}
-                            onEditClick={openProfileEditor}
+                        onEditClick={() => setIsSettingsOpen(true)}
+
                           >
                             <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
                               {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
@@ -2210,128 +2154,17 @@ function DashboardComponent() {
       </div>
     </main>
 
-    {/* Modal de Edição de Perfil */}
-    <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
-      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-[480px] p-0 overflow-hidden rounded-2xl shadow-2xl">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#00D1FF]" />
-            Editar Perfil
-          </DialogTitle>
-          <DialogDescription className="text-zinc-400">
-            Personalize sua presença no Lume. GIFs são permitidos!
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="p-6 space-y-6">
-          <div className="relative w-full mb-8">
-            {/* Área do Banner */}
-            <div className="relative w-full h-32 bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden group cursor-pointer hover:border-cyan-500 transition-colors">
-              {bannerPreview ? (
-                <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 group-hover:text-cyan-400">
-                  <ImageIcon className="w-6 h-6 mb-2" />
-                  <span className="text-xs font-medium">Alterar Banner</span>
-                </div>
-              )}
-              {/* Input invisível cobrindo todo o banner */}
-              <input type="file" accept="image/*,.gif" onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  const file = e.target.files[0];
-                  setBannerFile(file);
-                  setBannerPreview(URL.createObjectURL(file));
-                }
-              }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title=" " />
-            </div>
-
-            {/* Área do Avatar Sobreposto */}
-            <div className="absolute -bottom-6 left-4 w-20 h-20 rounded-full border-4 border-[#121214] bg-zinc-800 overflow-hidden cursor-pointer group hover:ring-2 hover:ring-cyan-500 transition-all z-20">
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 group-hover:text-cyan-400 bg-zinc-900">
-                  <Camera className="w-6 h-6" />
-                </div>
-              )}
-              {/* Input invisível cobrindo todo o avatar */}
-              <input type="file" accept="image/*,.gif" onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  const file = e.target.files[0];
-                  setAvatarFile(file);
-                  setAvatarPreview(URL.createObjectURL(file));
-                }
-              }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" title=" " />
-            </div>
-          </div>
-
-          <div className="pt-8 space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Nome de Exibição</label>
-              <Input 
-                value={editDisplayName}
-                onChange={(e) => setEditDisplayName(e.target.value)}
-                placeholder="Como você quer ser chamado?"
-                className="bg-[#050505] border-white/5 focus:border-[#00D1FF]/50 text-white h-11"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Sobre Mim (Bio)</label>
-              <textarea 
-                value={editBio}
-                onChange={(e) => setEditBio(e.target.value)}
-                placeholder="Conte um pouco sobre você..."
-                className="w-full bg-[#050505] border border-white/5 focus:border-[#00D1FF]/50 text-white rounded-md p-3 text-sm min-h-[100px] outline-none transition-colors resize-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Hidden inputs removed as they are now integrated directly into the preview areas */}
-
-        <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
-          <Button variant="ghost" onClick={() => setIsEditingProfile(false)} className="text-zinc-400 hover:text-white">
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSaveProfile}
-            disabled={isUploading}
-            className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold px-8 glow-sm"
-          >
-            {isUploading ? "Enviando..." : "Salvar Alterações"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    {/* Settings Modal (Estilo Discord) */}
+    <SettingsModal 
+      isOpen={isSettingsOpen}
+      onClose={() => setIsSettingsOpen(false)}
+      userProfile={myProfile}
+      onProfileUpdate={(updated) => {
+        setDbProfile(updated);
+        setProfilesCache(prev => ({ ...prev, [updated.id]: updated }));
+      }}
+    />
 
   </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
