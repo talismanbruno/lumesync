@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/context-menu";
 import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -909,7 +910,11 @@ function DashboardComponent() {
                             {friend.username.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#121212] ${friend.status === 'online' ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                        <StatusBadge 
+                          status={friend.status} 
+                          size="sm" 
+                          className="absolute bottom-0 right-0 border-2 border-[#121212]" 
+                        />
                       </div>
                       <span className="flex-1 text-left truncate font-medium">{friend.display_name || friend.username}</span>
                     </button>
@@ -966,12 +971,19 @@ function DashboardComponent() {
                     <div className="ml-6 space-y-1">
                       {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
                         <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group">
-                          <Avatar className="h-5 w-5 border border-white/10 group-hover:border-[#00D1FF]/30">
-                            <AvatarImage src={p.avatar_url || ""} />
-                            <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-500">
-                              {p.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="h-5 w-5 border border-white/10 group-hover:border-[#00D1FF]/30">
+                              <AvatarImage src={p.avatar_url || ""} />
+                              <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-500">
+                                {p.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <StatusBadge 
+                              status={p.profiles?.status} 
+                              size="sm" 
+                              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border-[1px] border-[#121214]" 
+                            />
+                          </div>
                           <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
                             {p.display_name || p.username}
                           </span>
@@ -1036,16 +1048,65 @@ function DashboardComponent() {
         )}
 
         {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2">
-          <Avatar className="h-8 w-8 border border-white/5">
-            <AvatarImage src={myProfile?.avatar_url || ""} />
-            <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0 text-white">
-            <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-            <p className="truncate text-[10px] text-emerald-500">online</p>
+        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative">
+          {showStatusMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowStatusMenu(false)} 
+              />
+              <div className="absolute bottom-full left-2 mb-2 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-50 animate-in slide-in-from-bottom-2 duration-200">
+                <div className="px-2 py-1.5 mb-1 border-b border-white/5">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
+                </div>
+                {[
+                  { id: 'online', label: 'Disponível', color: '#00D1FF' },
+                  { id: 'idle', label: 'Ausente', color: '#F59E0B' },
+                  { id: 'dnd', label: 'Não Perturbe', color: '#EF4444' },
+                  { id: 'offline', label: 'Invisível', color: '#71717A' }
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleUpdateStatus(s.id as any)}
+                    className="w-full flex items-center gap-3 px-2 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-md transition-colors text-left"
+                  >
+                    <StatusBadge status={s.id} size="sm" showGlow={s.id === 'online'} />
+                    <span>{s.label}</span>
+                    {myProfile.status === s.id && <Check size={14} className="ml-auto text-[#00D1FF]" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          
+          <div 
+            className="relative cursor-pointer group"
+            onClick={() => setShowStatusMenu(!showStatusMenu)}
+          >
+            <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
+              <AvatarImage src={myProfile?.avatar_url || ""} />
+              <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <StatusBadge 
+              status={myProfile.status} 
+              size="sm" 
+              className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+            />
           </div>
-          <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500">
+          
+          <div 
+            className="flex-1 min-w-0 text-white cursor-pointer"
+            onClick={() => setShowStatusMenu(!showStatusMenu)}
+          >
+            <p className="truncate text-xs font-bold">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+            <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight">
+              {myProfile.status === 'online' ? 'Disponível' : 
+               myProfile.status === 'idle' ? 'Ausente' : 
+               myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
+            </p>
+          </div>
+          
+          <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 transition-colors">
             <LogOut size={16} />
           </button>
         </div>
@@ -1126,6 +1187,11 @@ function DashboardComponent() {
                         {activeDMFriend?.username.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    <StatusBadge 
+                      status={activeDMFriend?.status} 
+                      size="sm" 
+                      className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
+                    />
                   </div>
                   <h3 className="text-sm font-bold text-white">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
                 </>
@@ -1142,12 +1208,19 @@ function DashboardComponent() {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
-                    <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
-                      <AvatarImage src={profile?.avatar_url || ""} />
-                      <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                        {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative h-fit">
+                      <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
+                        <AvatarImage src={profile?.avatar_url || ""} />
+                        <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                          {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <StatusBadge 
+                        status={profile?.status} 
+                        size="md" 
+                        className="absolute bottom-0 right-0 border-2 border-[#0e0e11]" 
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         <span className="text-sm font-bold hover:underline cursor-pointer text-white">
@@ -1286,9 +1359,9 @@ function DashboardComponent() {
               ) : (
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">
-                    Amigos — {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || f.friend_profile?.status === 'online')).length}
+                    Amigos — {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).length}
                   </h4>
-                  {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || f.friend_profile?.status === 'online')).map(f => (
+                  {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).map(f => (
                     <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
                       <div className="relative">
                         <Avatar className="h-8 w-8">
@@ -1297,7 +1370,11 @@ function DashboardComponent() {
                             {f.friend_profile?.username.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#050505] ${f.friend_profile?.status === 'online' ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                        <StatusBadge 
+                          status={f.friend_profile?.status} 
+                          size="sm" 
+                          className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+                        />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
