@@ -88,7 +88,6 @@ function DashboardComponent() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
