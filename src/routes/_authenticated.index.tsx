@@ -1590,24 +1590,20 @@ function DashboardComponent() {
             isMe={true}
             onEditClick={() => setIsSettingsOpen(true)}
           >
-            <div className="hidden" /> 
-          </UserProfileCard>
-
-          
-          <div 
-            className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
-          >
-            <div className="flex items-center gap-1 w-full min-w-0">
-              <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-              {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+            <div 
+              className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
+            >
+              <div className="flex items-center gap-1 w-full min-w-0">
+                <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+                {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+              </div>
+              <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
+                {myProfile.status === 'online' ? 'Disponível' : 
+                 myProfile.status === 'idle' ? 'Ausente' : 
+                 myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
+              </p>
             </div>
-            <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-              {myProfile.status === 'online' ? 'Disponível' : 
-               myProfile.status === 'idle' ? 'Ausente' : 
-               myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-            </p>
-          </div>
+          </UserProfileCard>
           
           <button 
             onClick={() => setIsSettingsOpen(true)}
