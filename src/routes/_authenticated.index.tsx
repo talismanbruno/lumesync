@@ -1507,20 +1507,25 @@ function DashboardComponent() {
             </>
           )}
           
-          <div 
-            className="relative cursor-pointer group"
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
+          <UserProfileCard
+            user={myProfile}
+            isMe={true}
+            onEditClick={openProfileEditor}
           >
-            <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
-              <AvatarImage src={myProfile?.avatar_url || ""} />
-              <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <StatusBadge 
-              status={myProfile.status} 
-              size="sm" 
-              className="absolute bottom-0 right-0 border-2 border-[#050505]" 
-            />
-          </div>
+            <div 
+              className="relative cursor-pointer group"
+            >
+              <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
+                <AvatarImage src={myProfile?.avatar_url || ""} />
+                <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <StatusBadge 
+                status={myProfile.status} 
+                size="sm" 
+                className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+              />
+            </div>
+          </UserProfileCard>
           
           <div 
             className="flex-1 min-w-0 text-white cursor-pointer"
