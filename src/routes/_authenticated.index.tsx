@@ -1632,12 +1632,36 @@ function DashboardComponent() {
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
                     <div className="relative h-fit">
-                      <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
-                        <AvatarImage src={profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                          {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserProfileCard 
+                        user={{
+                          id: userId || "",
+                          username: profile?.username || "usuário",
+                          display_name: profile?.display_name,
+                          avatar_url: profile?.avatar_url,
+                          banner_url: profile?.banner_url,
+                          bio: profile?.bio,
+                          created_at: profile?.created_at,
+                          status: currentAuthorStatus
+                        }}
+                        isMe={userId === myProfile.id}
+                        onEditClick={openProfileEditor}
+                        onMessageClick={userId !== myProfile.id ? () => {
+                          const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || profile;
+                          if (friend) {
+                            setActiveDMFriend(friend as Profile);
+                            setActiveChannel(null);
+                            setShowVoiceUI(false);
+                            markAsRead(userId);
+                          }
+                        } : undefined}
+                      >
+                        <Avatar className="h-10 w-10 mt-0.5 border border-white/5 hover:opacity-90 transition-opacity">
+                          <AvatarImage src={profile?.avatar_url || ""} />
+                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                            {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </UserProfileCard>
                       <StatusBadge 
                         status={currentAuthorStatus} 
                         size="md" 
