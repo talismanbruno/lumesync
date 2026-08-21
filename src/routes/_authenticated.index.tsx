@@ -800,6 +800,8 @@ function DashboardComponent() {
           {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
           <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20">
 
+          <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20">
+
 
 
         <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={activeServer ? copyInvite : undefined}>
