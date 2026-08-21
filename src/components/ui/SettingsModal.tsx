@@ -43,9 +43,10 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
     // 3. Pegar URL Pública e Salvar no Banco
     const { data: { publicUrl } } = supabase.storage.from('chat-attachments').getPublicUrl(filePath);
     
-    const { error: updateError } = await supabase.from('profiles').update({ 
-      [type === 'avatar' ? 'avatar_url' : 'banner_url']: publicUrl 
-    }).eq('id', userProfile.id);
+    const updateData: any = {};
+    updateData[type === 'avatar' ? 'avatar_url' : 'banner_url'] = publicUrl;
+
+    const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
     
     if (!updateError) {
       onProfileUpdate({
