@@ -1391,7 +1391,7 @@ function DashboardComponent() {
                               <span className="shrink-0 px-1 py-0.5 text-[9px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                             )}
                           </div>
-                          {isBot && <p className="text-[10px] text-zinc-500 truncate">Canal de Novidades e Atualizações</p>}
+                          
                         </div>
                         {(unreadCounts[friend.id] || 0) > 0 && (
                           <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
