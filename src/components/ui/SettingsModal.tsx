@@ -65,17 +65,19 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
   const handleSaveInfo = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('profiles').update({
+      const updateData = {
         display_name: editDisplayName,
         bio: editBio
-      }).eq('id', userProfile.id);
+      };
+
+      const { error } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
 
       if (error) throw error;
       
+      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
       onProfileUpdate({
         ...userProfile,
-        display_name: editDisplayName,
-        bio: editBio
+        ...updateData
       });
       toast.success("Perfil atualizado!");
     } catch (err: any) {
@@ -84,6 +86,7 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
       setIsSaving(false);
     }
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
