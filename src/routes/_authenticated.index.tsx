@@ -35,6 +35,7 @@ import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { SettingsModal } from "@/components/ui/SettingsModal";
+import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -169,6 +170,7 @@ function DashboardComponent() {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
@@ -1064,7 +1066,7 @@ function DashboardComponent() {
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
             
             {/* 2. Lista de Servidores com o Botão + no final da lista */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto no-scrollbar overflow-x-hidden py-1">
+            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto custom-scrollbar overflow-x-hidden py-1">
               {servers.map((server) => (
                 <button
                   key={server.id}
@@ -1236,7 +1238,7 @@ function DashboardComponent() {
           </DialogContent>
         </Dialog>
       {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
-      <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20">
+      <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20 overflow-hidden">
 
 
 
@@ -1248,7 +1250,7 @@ function DashboardComponent() {
           {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
         </div>
         
-        <div className="flex-1 overflow-y-auto p-2 space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar">
           {!activeServer ? (
             <div className="space-y-4">
               <div className="space-y-0.5">
@@ -1263,10 +1265,14 @@ function DashboardComponent() {
                 </button>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 overflow-x-hidden">
                 <div className="flex items-center px-3 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Mensagens Diretas</span>
-                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                  <Plus 
+                    size={14} 
+                    className="cursor-pointer hover:text-white transition-colors" 
+                    onClick={() => setIsCreateGroupOpen(true)}
+                  />
                 </div>
                 {/* CHAT FIXO DO BOT OFICIAL */}
                 <UserProfileCard
@@ -1326,7 +1332,7 @@ function DashboardComponent() {
                       <BadgeCheck className="w-4 h-4 text-cyan-400 shrink-0" />
                       <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
                     </div>
-                    <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
+                    
                   </div>
                   </button>
                 </UserProfileCard>
@@ -1346,11 +1352,11 @@ function DashboardComponent() {
                           setShowVoiceUI(false);
                           markAsRead(friend.id);
                         }}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors overflow-hidden ${
                           activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                         }`}
                       >
-                        <div className="relative">
+                        <div className="relative shrink-0">
                           <UserProfileCard
                             user={{
                               ...friend,
@@ -1385,7 +1391,7 @@ function DashboardComponent() {
                               <span className="shrink-0 px-1 py-0.5 text-[9px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                             )}
                           </div>
-                          {isBot && <p className="text-[10px] text-zinc-500 truncate">Canal de Novidades e Atualizações</p>}
+                          
                         </div>
                         {(unreadCounts[friend.id] || 0) > 0 && (
                           <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
@@ -1544,7 +1550,7 @@ function DashboardComponent() {
         )}
 
         {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
+        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
               <UserAvatar 
@@ -1553,7 +1559,7 @@ function DashboardComponent() {
                 size="h-9 w-9"
                 status={myProfile?.status || 'online'}
                 showStatus={true}
-                className="cursor-pointer group"
+                className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 object-cover aspect-square"
               />
             </PopoverTrigger>
             <PopoverPortal>
@@ -1791,31 +1797,31 @@ function DashboardComponent() {
                       {msg.content && <MessageText content={msg.content} />}
                       
                       {msg.file_url && (
-                        <div className="mt-2 max-w-sm">
-                          {msg.file_type?.startsWith('image/') ? (
+                        <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
+                          {msg.file_type?.startsWith('image/') || msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                             <PhotoProvider
                               maskOpacity={0.8}
                               loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
                             >
-                              <PhotoView src={msg.file_url}>
+                              <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
                                 <img 
-                                  src={msg.file_url} 
+                                  src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
                                   alt={msg.file_name || "image"} 
-                                  className="max-h-80 w-auto rounded-xl border border-zinc-800 cursor-pointer hover:opacity-90 transition-opacity" 
+                                  className="w-auto max-h-80 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" 
                                 />
                               </PhotoView>
                             </PhotoProvider>
                           ) : msg.file_type?.startsWith('video/') ? (
-                            <video controls className="max-h-80 rounded-xl border border-zinc-800 w-full bg-black">
-                              <source src={msg.file_url} type={msg.file_type} />
+                            <video controls className="max-h-80 rounded-xl w-full bg-black">
+                              <source src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} type={msg.file_type} />
                             </video>
                           ) : (
                             <a 
-                              href={msg.file_url} 
+                              href={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
                               download={msg.file_name}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-3 bg-[#121212] border border-zinc-800 rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
+                              className="flex items-center gap-3 p-3 bg-[#121212] rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
                             >
                               <div className="p-2 bg-zinc-900 rounded-lg group-hover/file:bg-zinc-800 transition-colors">
                                 <FileText className="w-6 h-6 text-[#00D1FF]" />
@@ -2193,6 +2199,40 @@ function DashboardComponent() {
     <SettingsModal 
       isOpen={isSettingsOpen}
       onClose={() => setIsSettingsOpen(false)}
+    />
+
+    <CreateGroupModal 
+      isOpen={isCreateGroupOpen}
+      onClose={() => setIsCreateGroupOpen(false)}
+      myProfile={myProfile}
+      friendships={friendships}
+      onCreateGroup={async (memberIds, name) => {
+        try {
+          const { data: group, error: groupError } = await supabase
+            .from('dm_groups')
+            .insert({ name: name || null, created_by: myProfile.id })
+            .select()
+            .single();
+            
+          if (groupError) throw groupError;
+          
+          const memberInserts = [myProfile.id, ...memberIds].map(uid => ({
+            group_id: group.id,
+            user_id: uid
+          }));
+          
+          const { error: membersError } = await supabase
+            .from('dm_group_members')
+            .insert(memberInserts);
+            
+          if (membersError) throw membersError;
+          
+          toast.success("Grupo criado com sucesso!");
+          // Opcional: navegar ou abrir o grupo
+        } catch (err: any) {
+          toast.error("Erro ao criar grupo: " + err.message);
+        }
+      }}
     />
 
     </div>

@@ -1,0 +1,135 @@
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { Search, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Profile {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  status?: 'online' | 'idle' | 'dnd' | 'offline';
+}
+
+interface CreateGroupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  myProfile: Profile;
+  friendships: any[];
+  onCreateGroup: (memberIds: string[], name?: string) => void;
+}
+
+export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
+  isOpen,
+  onClose,
+  myProfile,
+  friendships,
+  onCreateGroup
+}) => {
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const friends = friendships
+    .filter(f => f.status === 'accepted')
+    .map(f => f.friend_profile)
+    .filter(Boolean) as Profile[];
+
+  const filteredFriends = friends.filter(f => 
+    f.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (f.display_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const toggleFriend = (id: string) => {
+    setSelectedFriends(prev => 
+      prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
+    );
+  };
+
+  const handleCreate = () => {
+    if (selectedFriends.length < 2) {
+      toast.error("Selecione pelo menos 2 amigos para criar um grupo.");
+      return;
+    }
+    onCreateGroup(selectedFriends, groupName.trim() || undefined);
+    onClose();
+    setSelectedFriends([]);
+    setGroupName("");
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl font-bold">Criar Grupo</DialogTitle>
+          <p className="text-xs text-zinc-400">Você pode adicionar mais {9 - selectedFriends.length} amigos.</p>
+        </DialogHeader>
+
+        <div className="px-6 py-2 space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase text-zinc-500">Nome do Grupo (Opcional)</label>
+            <Input 
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Ex: Time Lume"
+              className="bg-[#050505] border-white/10 text-sm h-10 focus-visible:ring-[#00D1FF]"
+            />
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Input 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar amigos..."
+              className="bg-[#050505] border-white/10 pl-10 text-sm h-10 focus-visible:ring-[#00D1FF]"
+            />
+          </div>
+
+          <div className="max-h-[300px] overflow-y-auto pr-1 custom-scrollbar space-y-1">
+            {filteredFriends.length > 0 ? filteredFriends.map(friend => (
+              <div 
+                key={friend.id}
+                onClick={() => toggleFriend(friend.id)}
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+              >
+                <UserAvatar 
+                  avatarUrl={friend.avatar_url}
+                  name={friend.display_name || friend.username}
+                  size="h-8 w-8"
+                  status={friend.status}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{friend.display_name || friend.username}</p>
+                  <p className="text-[10px] text-zinc-500 truncate">@{friend.username}</p>
+                </div>
+                <Checkbox 
+                  checked={selectedFriends.includes(friend.id)}
+                  onCheckedChange={() => toggleFriend(friend.id)}
+                  className="border-zinc-700 data-[state=checked]:bg-[#00D1FF] data-[state=checked]:text-black"
+                />
+              </div>
+            )) : (
+              <div className="py-8 text-center text-zinc-500 text-sm">Nenhum amigo encontrado</div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="bg-[#18181b]/50 p-4 mt-2">
+          <Button 
+            onClick={handleCreate}
+            disabled={selectedFriends.length < 2}
+            className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold glow-sm border-none"
+          >
+            Criar Grupo
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
