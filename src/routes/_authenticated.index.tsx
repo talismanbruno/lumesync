@@ -1623,10 +1623,6 @@ function DashboardComponent() {
 
   {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
   <main className="flex-1 min-w-0 h-full bg-[#0e0e11] flex flex-col relative overflow-hidden pt-12 md:pt-0">
-
-
-
-
     return (
       <div className="flex flex-1 flex-col overflow-hidden">
 
