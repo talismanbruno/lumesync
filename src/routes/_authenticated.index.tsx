@@ -1268,23 +1268,49 @@ function DashboardComponent() {
                   <Plus size={14} className="cursor-pointer hover:text-white" />
                 </div>
                 {/* CHAT FIXO DO BOT OFICIAL */}
-                <button
-                  onClick={() => {
+                <UserProfileCard
+                  user={{
+                    id: LUME_BOT_ID,
+                    username: 'lume',
+                    display_name: 'Lume',
+                    avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                    status: 'online',
+                    is_verified: true,
+                    bio: 'Bot oficial do Lume. Aqui você recebe as últimas novidades e atualizações da plataforma.'
+                  }}
+                  isMe={false}
+                  onMessageClick={() => {
                     setActiveDMFriend({
                       id: LUME_BOT_ID,
                       username: 'lume',
                       display_name: 'Lume',
                       avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
-                      status: 'online'
-                    });
+                      status: 'online',
+                      is_verified: true
+                    } as Profile);
                     setActiveChannel(null);
                     setShowVoiceUI(false);
                     markAsRead(LUME_BOT_ID);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
-                    activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                  }`}
                 >
+                  <button
+                    onClick={() => {
+                      setActiveDMFriend({
+                        id: LUME_BOT_ID,
+                        username: 'lume',
+                        display_name: 'Lume',
+                        avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                        status: 'online',
+                        is_verified: true
+                      } as Profile);
+                      setActiveChannel(null);
+                      setShowVoiceUI(false);
+                      markAsRead(LUME_BOT_ID);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
+                      activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    }`}
+                  >
                   <div className="relative shrink-0">
                     <img 
                       src="https://i.ibb.co/99YTNvGS/image.png" 
@@ -1301,7 +1327,8 @@ function DashboardComponent() {
                     </div>
                     <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
                   </div>
-                </button>
+                  </button>
+                </UserProfileCard>
 
                 {friendships
                   .filter(f => f.status === 'accepted' && f.friend_profile?.id !== LUME_BOT_ID)
