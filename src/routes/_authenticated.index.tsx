@@ -1550,13 +1550,27 @@ function DashboardComponent() {
 
         {/* User Footer */}
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
-          {showStatusMenu && (
-            <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowStatusMenu(false)} 
-              />
-              <div className="fixed bottom-12 left-2 mb-2 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[100] animate-in slide-in-from-bottom-2 duration-200">
+          <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
+            <PopoverTrigger asChild>
+              <div className="relative cursor-pointer group">
+                <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
+                  <AvatarImage src={myProfile?.avatar_url || ""} />
+                  <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <StatusBadge 
+                  status={myProfile.status} 
+                  size="sm" 
+                  className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverPortal>
+              <PopoverContent 
+                side="top" 
+                align="start" 
+                sideOffset={12}
+                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[100] animate-in slide-in-from-bottom-2 duration-200"
+              >
                 <div className="px-2 py-1.5 mb-1 border-b border-white/5">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
                 </div>
@@ -1576,28 +1590,16 @@ function DashboardComponent() {
                     {myProfile.status === s.id && <Check size={14} className="ml-auto text-[#00D1FF]" />}
                   </button>
                 ))}
-              </div>
-            </>
-          )}
+              </PopoverContent>
+            </PopoverPortal>
+          </Popover>
           
           <UserProfileCard
             user={myProfile}
             isMe={true}
             onEditClick={openProfileEditor}
           >
-            <div 
-              className="relative cursor-pointer group"
-            >
-              <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
-                <AvatarImage src={myProfile?.avatar_url || ""} />
-                <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <StatusBadge 
-                status={myProfile.status} 
-                size="sm" 
-                className="absolute bottom-0 right-0 border-2 border-[#050505]" 
-              />
-            </div>
+            <div className="h-8 w-8 invisible" /> {/* Spacer replaced by Popover above */}
           </UserProfileCard>
           
           <div 
