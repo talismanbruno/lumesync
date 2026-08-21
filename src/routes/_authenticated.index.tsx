@@ -402,7 +402,7 @@ function DashboardComponent() {
       const messageData = {
         content: newMessage || "",
         file_url: publicUrl,
-        file_type: file.type,
+        file_type: file.type || 'application/octet-stream',
         file_name: file.name,
       };
 
@@ -413,14 +413,21 @@ function DashboardComponent() {
           user_id: myProfile.id
         } as any);
       } else if (activeDMFriend) {
+        // Correção: Garantir que recipient_id e sender_id estejam corretos e usar nomes de colunas exatos
         await supabase.from("direct_messages").insert({
-          ...messageData,
+          content: messageData.content,
+          file_url: messageData.file_url,
+          file_type: messageData.file_type,
+          file_name: messageData.file_name,
           sender_id: myProfile.id,
-          recipient_id: activeDMFriend.id
+          recipient_id: activeDMFriend.id,
+          is_read: false
         } as any);
       }
 
       setNewMessage("");
+      setAttachmentPreview(null);
+      setSelectedFile(null);
       toast.success("Arquivo enviado!");
     } catch (error: any) {
       toast.error("Erro no upload: " + error.message);
