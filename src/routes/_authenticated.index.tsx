@@ -173,7 +173,7 @@ function DashboardComponent() {
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const LUME_BOT_ID = "00000000-0000-0000-0000-000000000001";
+  
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
