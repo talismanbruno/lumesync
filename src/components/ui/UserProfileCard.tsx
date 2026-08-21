@@ -45,8 +45,8 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         <PopoverContent 
           side="right" 
           align="start" 
-          sideOffset={12} 
-          className="z-50 w-72 bg-[#121214] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl p-0 animate-in fade-in zoom-in-95 duration-200"
+          sideOffset={16} 
+          className="z-[9999] w-72 bg-[#121214] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl p-0 animate-in fade-in zoom-in-95 duration-200"
         >
         {/* Banner */}
         <div 

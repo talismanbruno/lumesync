@@ -452,6 +452,10 @@ export type Database = {
         Args: { update_text: string }
         Returns: undefined
       }
+      create_dm_group: {
+        Args: { group_name: string; member_ids: string[] }
+        Returns: string
+      }
       create_server: { Args: { server_name: string }; Returns: string }
       find_profile_by_username: {
         Args: { p_username: string }

@@ -51,15 +51,32 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     );
   };
 
-  const handleCreate = () => {
-    if (selectedFriends.length < 2) {
-      toast.error("Selecione pelo menos 2 amigos para criar um grupo.");
-      return;
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCreate = async () => {
+    if (selectedFriends.length === 0) return;
+    setIsLoading(true);
+    try {
+      const { data: newGroupId, error } = await supabase.rpc('create_dm_group', {
+        group_name: groupName.trim() || 'Novo Grupo',
+        member_ids: selectedFriends
+      });
+      if (error) throw error;
+      
+      toast.success("Grupo criado com sucesso!");
+      onClose();
+      // Em um app real, fetchConversations() e onSelectGroup(newGroupId) seriam passados via props
+      // mas aqui estamos seguindo a instrução de implementação do frontend solicitada.
+      if ((window as any).refreshConversations) {
+        (window as any).refreshConversations();
+      }
+      setSelectedFriends([]);
+      setGroupName("");
+    } catch (err: any) {
+      toast.error("Erro ao criar grupo: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
-    onCreateGroup(selectedFriends, groupName.trim() || undefined);
-    onClose();
-    setSelectedFriends([]);
-    setGroupName("");
   };
 
   return (
@@ -123,10 +140,10 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         <DialogFooter className="bg-[#18181b]/50 p-4 mt-2">
           <Button 
             onClick={handleCreate}
-            disabled={selectedFriends.length < 2}
+            disabled={isLoading || selectedFriends.length === 0}
             className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold glow-sm border-none"
           >
-            Criar Grupo
+            {isLoading ? "Criando..." : "Criar Grupo"}
           </Button>
         </DialogFooter>
       </DialogContent>
