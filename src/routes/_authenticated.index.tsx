@@ -1266,7 +1266,11 @@ function DashboardComponent() {
               <div className="space-y-1">
                 <div className="flex items-center px-3 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Mensagens Diretas</span>
-                  <Plus size={14} className="cursor-pointer hover:text-white" />
+                  <Plus 
+                    size={14} 
+                    className="cursor-pointer hover:text-white transition-colors" 
+                    onClick={() => setIsCreateGroupOpen(true)}
+                  />
                 </div>
                 {/* CHAT FIXO DO BOT OFICIAL */}
                 <UserProfileCard
