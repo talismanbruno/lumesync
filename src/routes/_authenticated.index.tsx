@@ -986,6 +986,9 @@ function DashboardComponent() {
           </button>
         </div>
       </aside>
+    </div>
+  </div>
+
 
 
 
