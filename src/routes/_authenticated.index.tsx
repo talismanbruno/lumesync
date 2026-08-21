@@ -1568,7 +1568,7 @@ function DashboardComponent() {
                         </span>
                       </div>
                       
-                      {msg.content && <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>}
+                      {msg.content && <MessageText content={msg.content} />}
                       
                       {msg.file_url && (
                         <div className="mt-2 max-w-sm">
