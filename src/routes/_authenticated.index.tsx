@@ -1870,7 +1870,7 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.original.url)}
+                          onClick={() => sendGif(gif.images.fixed_height.url)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
