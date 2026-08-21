@@ -1961,7 +1961,7 @@ function DashboardComponent() {
                     <button 
                       type="submit" 
                       className="p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors"
-                      disabled={!newMessage.trim() && !isUploading}
+                      disabled={(!newMessage.trim() && !selectedFile) || isUploading}
                     >
                       <Send size={18} />
                     </button>
