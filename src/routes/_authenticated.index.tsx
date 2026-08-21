@@ -32,6 +32,7 @@ import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
+import { SettingsModal } from "@/components/ui/SettingsModal";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -168,6 +169,7 @@ function DashboardComponent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -1617,6 +1619,14 @@ function DashboardComponent() {
             </p>
           </div>
           
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+            title="Configurações"
+          >
+            <Settings size={16} />
+          </button>
+          
           <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 transition-colors">
             <LogOut size={16} />
           </button>
@@ -2210,7 +2220,18 @@ function DashboardComponent() {
       </div>
     </main>
 
-    {/* Modal de Edição de Perfil */}
+    {/* Settings Modal (Estilo Discord) */}
+    <SettingsModal 
+      isOpen={isSettingsOpen}
+      onClose={() => setIsSettingsOpen(false)}
+      userProfile={myProfile}
+      onProfileUpdate={(updated) => {
+        setDbProfile(updated);
+        setProfilesCache(prev => ({ ...prev, [updated.id]: updated }));
+      }}
+    />
+
+    {/* Modal de Edição de Perfil (DEPRECATED - REMOVE IF SAFE) */}
     <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
       <DialogContent className="bg-[#121214] border-white/10 text-white max-w-[480px] p-0 overflow-hidden rounded-2xl shadow-2xl">
         <DialogHeader className="p-6 pb-0">
