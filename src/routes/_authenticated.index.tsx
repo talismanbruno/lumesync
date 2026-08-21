@@ -1646,7 +1646,8 @@ function DashboardComponent() {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
                 // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
                 const userId = msg.user_id || msg.sender_id;
-                const currentAuthorStatus = userId ? (profilesCache[userId]?.status || profile?.status || 'offline') : (profile?.status || 'offline');
+                const authorProfile = userId ? (profilesCache[userId] || profile) : profile;
+                const currentAuthorStatus = authorProfile?.status || 'offline';
                 
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
