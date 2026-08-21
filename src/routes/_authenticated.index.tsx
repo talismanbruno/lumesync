@@ -811,23 +811,67 @@ function DashboardComponent() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() || !myProfile?.id) return;
+    if ((!newMessage.trim() && !selectedFile) || !myProfile?.id) return;
+    
     // Canal oficial somente leitura: nenhum envio permitido
     if (!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')) return;
     
     const content = newMessage;
+    const fileToUpload = selectedFile;
+    
     setNewMessage("");
+    setSelectedFile(null);
+    setAttachmentPreview(null);
 
-    if (activeChannel) {
-      const { error } = await supabase
-        .from("messages")
-        .insert({ channel_id: activeChannel.id, user_id: myProfile.id, content });
-      if (error) toast.error("Erro ao enviar mensagem");
-    } else if (activeDMFriend) {
-      const { error } = await supabase
-        .from("direct_messages")
-        .insert({ sender_id: myProfile.id, recipient_id: activeDMFriend.id, content });
-      if (error) toast.error("Erro ao enviar DM");
+    try {
+      let fileData = {
+        file_url: null as string | null,
+        file_type: null as string | null,
+        file_name: null as string | null
+      };
+
+      if (fileToUpload) {
+        const filePath = `${myProfile.id}/${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage
+          .from('chat-attachments')
+          .upload(filePath, fileToUpload);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+          
+        fileData = {
+          file_url: publicUrl,
+          file_type: fileToUpload.type,
+          file_name: fileToUpload.name
+        };
+      }
+
+      if (activeChannel) {
+        const { error } = await supabase
+          .from("messages")
+          .insert({ 
+            channel_id: activeChannel.id, 
+            user_id: myProfile.id, 
+            content,
+            ...fileData
+          });
+        if (error) toast.error("Erro ao enviar mensagem");
+      } else if (activeDMFriend) {
+        const { error } = await supabase
+          .from("direct_messages")
+          .insert({ 
+            sender_id: myProfile.id, 
+            recipient_id: activeDMFriend.id, 
+            content,
+            ...fileData
+          });
+        if (error) toast.error("Erro ao enviar DM");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao enviar: " + err.message);
     }
   };
 
