@@ -2195,6 +2195,7 @@ function DashboardComponent() {
     />
 
 
+    </div>
   </main>
-
+  );
 }
