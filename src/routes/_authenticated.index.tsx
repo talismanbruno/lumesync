@@ -884,8 +884,8 @@ function DashboardComponent() {
           const { error: broadcastError } = await supabase.rpc('broadcast_system_update', {
             update_text: content
           });
-          if (error) {
-            toast.error("Erro ao disparar broadcast: " + error.message);
+          if (broadcastError) {
+            toast.error("Erro ao disparar broadcast: " + broadcastError.message);
           } else {
             toast.success("Broadcast enviado com sucesso!");
           }
