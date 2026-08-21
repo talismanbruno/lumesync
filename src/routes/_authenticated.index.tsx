@@ -1,42 +1,4 @@
-AJUSTE GLOBAL DE CSS: DESESPREMER AVATARES EM TODAS AS TELAS
-
-As fotos de perfil estão esticadas/ovalizadas na lista de voz, nos cards da chamada e nas mensagens do chat. Padronize todos os avatares do app para manterem a proporção perfeita.
-
-1. PADRONIZAR O COMPONENTE UserAvatar.tsx (OU ONDE HOUVER FOTO DE USUÁRIO):
-Garanta que TODAS as tags <img> de foto de usuário no app usem as classes obrigatórias:
-
-codeTsx
-
-{/* Padrão Universal para Avatares do Lume */}
-<div className="relative rounded-full overflow-hidden shrink-0 aspect-square bg-zinc-800 flex items-center justify-center [TAMANHO_AQUI]">
-  {avatarUrl ? (
-    <img 
-      src={avatarUrl} 
-      alt={name} 
-      className="w-full h-full object-cover aspect-square block select-none" 
-    />
-  ) : (
-    <span className="font-bold text-white uppercase">{initials}</span>
-  )}
-  {/* Bolinha de status se houver */}
-</div>
-
-2. LOCAIS OBRIGATÓRIOS PARA APLICAR:
-
-Nos Cards da Sala de Voz (VoiceRoomUI.tsx): O avatar circular central dos participantes deve ser perfeitamente redondo (aspect-square object-cover).
-
-Na Lista de Membros da Voz na Barra Lateral (ChannelSidebar.tsx): Os mini-avatares abaixo de 🔊 Sala Principal.
-
-Nas Mensagens de Chat (MessageItem.tsx): O avatar ao lado do nome de quem enviou a mensagem (tanto em servidores quanto em DMs).
-
-VALIDAÇÃO OBRIGATÓRIA:
-
-Verifique o chat, a barra lateral e a tela da chamada de voz: todas as fotos de perfil devem aparecer em círculos perfeitos, sem esticar nem espremer a imagem horizontalmente.
-
-IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
-
 import { createFileRoute } from "@tanstack/react-router";
-
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2 } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
@@ -48,11 +10,6 @@ import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
