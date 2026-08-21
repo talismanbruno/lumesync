@@ -360,7 +360,10 @@ function DashboardComponent() {
               user_id: newMsg.user_id,
               content: newMsg.content,
               created_at: newMsg.created_at,
-              profile: profile
+              profile: profile,
+              file_url: newMsg.file_url,
+              file_type: newMsg.file_type,
+              file_name: newMsg.file_name
             };
             
             setMessages(prev => [...prev, hydratedMsg]);
@@ -402,7 +405,7 @@ function DashboardComponent() {
       const messageData = {
         content: newMessage || "",
         file_url: publicUrl,
-        file_type: file.type,
+        file_type: file.type || 'application/octet-stream',
         file_name: file.name,
       };
 
@@ -413,14 +416,21 @@ function DashboardComponent() {
           user_id: myProfile.id
         } as any);
       } else if (activeDMFriend) {
+        // Correção: Garantir que recipient_id e sender_id estejam corretos e usar nomes de colunas exatos
         await supabase.from("direct_messages").insert({
-          ...messageData,
+          content: messageData.content,
+          file_url: messageData.file_url,
+          file_type: messageData.file_type,
+          file_name: messageData.file_name,
           sender_id: myProfile.id,
-          recipient_id: activeDMFriend.id
+          recipient_id: activeDMFriend.id,
+          is_read: false
         } as any);
       }
 
       setNewMessage("");
+      setAttachmentPreview(null);
+      setSelectedFile(null);
       toast.success("Arquivo enviado!");
     } catch (error: any) {
       toast.error("Erro no upload: " + error.message);
@@ -438,11 +448,7 @@ function DashboardComponent() {
         const file = item.getAsFile();
         if (file) {
           setSelectedFile(file);
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setAttachmentPreview(reader.result as string);
-          };
-          reader.readAsDataURL(file);
+          setAttachmentPreview(URL.createObjectURL(file));
         }
       }
     }
@@ -450,7 +456,7 @@ function DashboardComponent() {
 
   const fetchGifs = async (query: string) => {
     try {
-      const apiKey = "sXpGFDGZs0Dv1mmNFvYaGUvYwKX0P4Ww";
+      const apiKey = "GlVGYHqc3SyCE12HN0SOMsO92g1UGOyK";
       const endpoint = query 
         ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
@@ -465,7 +471,7 @@ function DashboardComponent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (gifSearch) fetchGifs(gifSearch);
+      fetchGifs(gifSearch);
     }, 500);
     return () => clearTimeout(timer);
   }, [gifSearch]);
@@ -482,7 +488,15 @@ function DashboardComponent() {
     if (activeChannel) {
       await supabase.from("messages").insert({ ...messageData, channel_id: activeChannel.id, user_id: myProfile.id } as any);
     } else if (activeDMFriend) {
-      await supabase.from("direct_messages").insert({ ...messageData, sender_id: myProfile.id, recipient_id: activeDMFriend.id } as any);
+      await supabase.from("direct_messages").insert({ 
+        sender_id: myProfile.id, 
+        recipient_id: activeDMFriend.id, 
+        content: messageData.content,
+        file_url: messageData.file_url,
+        file_type: messageData.file_type,
+        file_name: messageData.file_name,
+        is_read: false
+      } as any);
     }
     setShowGifPicker(false);
     setGifSearch("");
@@ -844,7 +858,7 @@ function DashboardComponent() {
           
         fileData = {
           file_url: publicUrl,
-          file_type: fileToUpload.type,
+          file_type: fileToUpload.type || 'application/octet-stream',
           file_name: fileToUpload.name
         };
       }
@@ -870,7 +884,8 @@ function DashboardComponent() {
             content,
             file_url: fileData.file_url,
             file_type: fileData.file_type,
-            file_name: fileData.file_name
+            file_name: fileData.file_name,
+            is_read: false
           } as any);
         if (error) toast.error("Erro ao enviar DM");
       }
@@ -1328,7 +1343,7 @@ function DashboardComponent() {
                       <span className="font-semibold text-sm text-white truncate">Lume</span>
                       <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
                     </div>
-                    <span className="text-xs text-zinc-500 truncate">Canal de Avisos e Novidades</span>
+                    <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
                   </div>
                 </button>
 
@@ -1862,7 +1877,7 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.original.url)}
+                          onClick={() => sendGif(gif.images.fixed_height.url)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
@@ -1885,11 +1900,7 @@ function DashboardComponent() {
                   const file = e.target.files?.[0];
                   if (file) {
                     setSelectedFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setAttachmentPreview(reader.result as string);
-                    };
-                    reader.readAsDataURL(file);
+                    setAttachmentPreview(URL.createObjectURL(file));
                   }
                 }}
                 accept="image/*,video/*,.pdf,.zip,.doc,.docx"
@@ -2217,14 +2228,26 @@ function DashboardComponent() {
           ref={avatarUploadRef} 
           className="hidden" 
           accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'avatar')} 
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setAvatarPreview(URL.createObjectURL(file));
+              handleProfileImageUpload(file, 'avatar');
+            }
+          }} 
         />
         <input 
           type="file" 
           ref={bannerUploadRef} 
           className="hidden" 
           accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'banner')} 
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setBannerPreview(URL.createObjectURL(file));
+              handleProfileImageUpload(file, 'banner');
+            }
+          }} 
         />
 
         <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
