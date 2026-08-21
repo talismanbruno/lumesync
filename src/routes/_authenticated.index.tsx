@@ -1250,7 +1250,7 @@ function DashboardComponent() {
           {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
         </div>
         
-        <div className="flex-1 overflow-y-auto p-2 space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar">
           {!activeServer ? (
             <div className="space-y-4">
               <div className="space-y-0.5">
