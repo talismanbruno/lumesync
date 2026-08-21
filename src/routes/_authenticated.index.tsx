@@ -1812,6 +1812,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                           showStatus={true}
                           className="mt-0.5 border border-white/5 hover:opacity-90 transition-opacity"
                         />
+                      </UserProfileCard>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
