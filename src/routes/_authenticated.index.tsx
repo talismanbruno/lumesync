@@ -1269,6 +1269,7 @@ function DashboardComponent() {
       </div>
       </main>
     </div>
+
   );
 }
 
