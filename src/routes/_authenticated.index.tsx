@@ -1,31 +1,3 @@
-/*
-AJUSTE DE CSS: DESESPREMER AVATAR NO RODAPÉ DO USUÁRIO
-
-No componente do rodapé da barra lateral (onde fica o avatar, nome e status do usuário logado):
-
-Garanta que o avatar não fique distorcido ou esticado aplicando object-cover e aspect-square:
-
-codeTsx
-
-<div className="relative w-9 h-9 min-w-[36px] shrink-0 rounded-full overflow-hidden bg-zinc-800">
-  {profile?.avatar_url ? (
-    <img 
-      src={profile.avatar_url} 
-      alt="Avatar" 
-      className="w-full h-full object-cover aspect-square" 
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-zinc-700">
-      {profile?.display_name?.slice(0, 2).toUpperCase() || 'LM'}
-    </div>
-  )}
-  <StatusBadge status={profile?.status || 'online'} />
-</div>
-
-Confirme que a foto fica 100% redonda, proporcional e sem distorção.
-
-IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
-*/
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useState, useEffect, useRef } from "react";
