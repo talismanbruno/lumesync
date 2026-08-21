@@ -992,9 +992,6 @@ function DashboardComponent() {
     setShowStatusMenu(false);
   };
 
-  const openProfileEditor = () => {
-    setIsSettingsOpen(true);
-  };
 
 
   const copyInvite = () => {
@@ -1533,10 +1530,11 @@ function DashboardComponent() {
           <UserProfileCard
             user={myProfile}
             isMe={true}
-            onEditClick={openProfileEditor}
+            onEditClick={() => setIsSettingsOpen(true)}
           >
             <div className="hidden" /> 
           </UserProfileCard>
+
           
           <div 
             className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
@@ -1652,8 +1650,9 @@ function DashboardComponent() {
                     <UserProfileCard
                       user={activeDMFriend}
                       isMe={activeDMFriend.id === myProfile.id}
-                      onEditClick={activeDMFriend.id === myProfile.id ? openProfileEditor : undefined}
+                      onEditClick={activeDMFriend.id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
                     >
+
                       <div className="flex items-center gap-1.5 min-w-0 cursor-pointer">
                         <h3 className="text-sm font-bold text-white truncate">{activeDMFriend.display_name || activeDMFriend.username}</h3>
                         {activeDMFriend.is_verified && (
@@ -1697,7 +1696,7 @@ function DashboardComponent() {
                           status: currentAuthorStatus
                         }}
                         isMe={userId === myProfile.id}
-                        onEditClick={openProfileEditor}
+                        onEditClick={() => setIsSettingsOpen(true)}
                         onMessageClick={userId !== myProfile.id ? () => {
                           const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
                           if (friend) {
@@ -1736,7 +1735,8 @@ function DashboardComponent() {
                               status: currentAuthorStatus
                             }}
                             isMe={userId === myProfile.id}
-                            onEditClick={openProfileEditor}
+                        onEditClick={() => setIsSettingsOpen(true)}
+
                           >
                             <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
                               {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
