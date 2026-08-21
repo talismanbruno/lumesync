@@ -1066,7 +1066,7 @@ function DashboardComponent() {
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
             
             {/* 2. Lista de Servidores com o Botão + no final da lista */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto no-scrollbar overflow-x-hidden py-1">
+            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto custom-scrollbar overflow-x-hidden py-1">
               {servers.map((server) => (
                 <button
                   key={server.id}
