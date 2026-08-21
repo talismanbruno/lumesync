@@ -1305,12 +1305,26 @@ function DashboardComponent() {
                         }`}
                       >
                         <div className="relative">
-                          <Avatar className="h-8 w-8 border border-white/5">
-                            <AvatarImage src={friend.avatar_url || ""} />
-                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
-                              {friend.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserProfileCard
+                            user={{
+                              ...friend,
+                              status: friend.id === LUME_BOT_ID ? 'online' : friend.status
+                            }}
+                            isMe={false}
+                            onMessageClick={() => { 
+                              setActiveDMFriend(friend); 
+                              setActiveChannel(null); 
+                              setShowVoiceUI(false);
+                              markAsRead(friend.id);
+                            }}
+                          >
+                            <Avatar className="h-8 w-8 border border-white/5 hover:opacity-90 transition-opacity">
+                              <AvatarImage src={friend.avatar_url || ""} />
+                              <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
+                                {friend.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </UserProfileCard>
                           <StatusBadge 
                             status={isBot ? 'online' : friend.status} 
                             size="sm" 
