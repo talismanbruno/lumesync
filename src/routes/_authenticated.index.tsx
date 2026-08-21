@@ -1414,7 +1414,10 @@ function DashboardComponent() {
                       {msg.file_url && (
                         <div className="mt-2 max-w-sm">
                           {msg.file_type?.startsWith('image/') ? (
-                            <PhotoProvider>
+                            <PhotoProvider
+                              maskOpacity={0.8}
+                              loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
+                            >
                               <PhotoView src={msg.file_url}>
                                 <img 
                                   src={msg.file_url} 
