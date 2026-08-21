@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -55,6 +55,8 @@ type Profile = {
   banner_url?: string | null;
   bio?: string | null;
   status?: 'online' | 'idle' | 'dnd' | 'offline';
+  is_admin?: boolean;
+  is_verified?: boolean;
   created_at?: string;
 };
 
@@ -1696,6 +1698,9 @@ function DashboardComponent() {
                     >
                       <div className="flex items-center gap-1.5 min-w-0 cursor-pointer">
                         <h3 className="text-sm font-bold text-white truncate">{activeDMFriend.display_name || activeDMFriend.username}</h3>
+                        {activeDMFriend.is_verified && (
+                          <BadgeCheck className="w-4 h-4 text-cyan-400 ml-0.5 shrink-0" />
+                        )}
                         {activeDMFriend.id === LUME_BOT_ID && (
                           <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                         )}
@@ -1779,6 +1784,9 @@ function DashboardComponent() {
                               {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
                             </span>
                           </UserProfileCard>
+                          {authorProfile?.is_verified && (
+                            <BadgeCheck className="w-4 h-4 text-cyan-400 ml-0.5 shrink-0" />
+                          )}
                           {(authorProfile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
                             <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                           )}
@@ -1837,10 +1845,42 @@ function DashboardComponent() {
             </div>
 
             {!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') ? (
-              <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
-                <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span>Este é um canal oficial de transmissão somente leitura. Apenas a equipe do Lume publica novidades aqui.</span>
-              </div>
+              myProfile?.is_admin ? (
+                <div className="p-4 pt-0">
+                  <form 
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!newMessage.trim()) return;
+                      const msg = newMessage;
+                      setNewMessage("");
+                      try {
+                        const { error } = await supabase.rpc('broadcast_system_update', { update_text: msg });
+                        if (error) throw error;
+                        toast.success("Atualização global enviada!");
+                      } catch (err: any) {
+                        toast.error("Erro ao enviar broadcast: " + err.message);
+                      }
+                    }}
+                    className="flex items-center gap-2 p-3 bg-[#0a0a0c] border border-cyan-500/50 rounded-xl shadow-[0_0_15px_rgba(0,209,255,0.1)]"
+                  >
+                    <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 animate-pulse" />
+                    <Input 
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Modo Admin: Digite o changelog para disparar para todos os usuários..."
+                      className="bg-transparent border-none text-white placeholder:text-zinc-600 focus-visible:ring-0 h-9"
+                    />
+                    <Button type="submit" size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold h-8">
+                      DISPARAR
+                    </Button>
+                  </form>
+                </div>
+              ) : (
+                <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
+                  <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Este é um canal oficial de transmissão somente leitura. Apenas a equipe do Lume publica novidades aqui.</span>
+                </div>
+              )
             ) : (
             <div className="p-4 pt-0 relative">
               {showEmojiPicker && (
