@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/_authenticated/')({
   component: () => (
     <div className="min-h-screen bg-[#050505] text-zinc-400 p-8 font-mono text-xs overflow-auto">
       <div className="max-w-3xl mx-auto space-y-6 whitespace-pre-wrap">
