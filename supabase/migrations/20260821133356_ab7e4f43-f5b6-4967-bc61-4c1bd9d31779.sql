@@ -1,0 +1,1 @@
+UPDATE profiles SET is_admin = true, is_verified = true WHERE id = '6eb3e1fd-ba7a-4fda-9c86-c8ad79cf3b49';
