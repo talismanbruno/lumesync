@@ -837,14 +837,7 @@ function DashboardComponent() {
   useEffect(() => {
     if (!activeDMFriend || !myProfile?.id) return;
     
-    const markAsRead = async () => {
-      await supabase
-        .from('direct_messages')
-        .update({ is_read: true })
-        .match({ recipient_id: myProfile.id, sender_id: activeDMFriend.id, is_read: false });
-      
-      setUnreadCounts(prev => ({ ...prev, [activeDMFriend.id]: 0 }));
-    };
+    markAsRead();
 
     const fetchDMs = async () => {
       const { data, error } = await supabase
