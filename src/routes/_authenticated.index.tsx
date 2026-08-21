@@ -197,10 +197,9 @@ function DashboardComponent() {
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-zinc-300 selection:bg-[#00D1FF]/30">
 
-  useEffect(() => {
-    scrollToBottom();
   }, [messages]);
 
   // Fetch servers
@@ -2195,7 +2194,6 @@ function DashboardComponent() {
     />
 
 
-      </div>
-    </main>
+    </div>
   );
 }
