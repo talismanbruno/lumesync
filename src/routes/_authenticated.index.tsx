@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon } from "lucide-react";
+import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
+import { PhotoProvider, PhotoView } from 'react-photo-view';
+import 'react-photo-view/dist/react-photo-view.css';
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -73,6 +76,9 @@ type Message = {
   content: string;
   created_at: string;
   profile?: Profile | null;
+  file_url?: string | null;
+  file_type?: string | null;
+  file_name?: string | null;
 };
 
 type Friendship = {
@@ -121,6 +127,14 @@ function DashboardComponent() {
   const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
   const [isDeletingServer, setIsDeletingServer] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; server: Server } | null>(null);
+  
+  // Media State
+  const [isUploading, setIsUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifSearch, setGifSearch] = useState("");
+  const [gifs, setGifs] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Home / Friends state
   const [friendships, setFriendships] = useState<Friendship[]>([]);
@@ -344,6 +358,111 @@ function DashboardComponent() {
       supabase.removeChannel(channel);
     };
   }, [activeChannel?.id]);
+
+  const handleFileUpload = async (file: File) => {
+    if (!myProfile?.id) return;
+    
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Arquivo muito grande! O limite é 50MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
+    
+    try {
+      const { error: uploadError, data } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath);
+
+      const messageData = {
+        content: newMessage || "",
+        file_url: publicUrl,
+        file_type: file.type,
+        file_name: file.name,
+      };
+
+      if (activeChannel) {
+        await supabase.from("messages").insert({
+          ...messageData,
+          channel_id: activeChannel.id,
+          user_id: myProfile.id
+        } as any);
+      } else if (activeDMFriend) {
+        await supabase.from("direct_messages").insert({
+          ...messageData,
+          sender_id: myProfile.id,
+          recipient_id: activeDMFriend.id
+        } as any);
+      }
+
+      setNewMessage("");
+      toast.success("Arquivo enviado!");
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item && item.type && item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        if (file) handleFileUpload(file);
+      }
+    }
+  };
+
+  const fetchGifs = async (query: string) => {
+    if (!query) {
+      setGifs([]);
+      return;
+    }
+    // Using a public demo key for Giphy if none provided, but here we just mock or use a search logic
+    try {
+      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=10`);
+      const { data } = await res.json();
+      setGifs(data || []);
+    } catch (e) {
+      console.error("Giphy error", e);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (gifSearch) fetchGifs(gifSearch);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [gifSearch]);
+
+  const sendGif = async (url: string) => {
+    if (!myProfile?.id) return;
+    const messageData = {
+      content: "",
+      file_url: url,
+      file_type: "image/gif",
+      file_name: "gif"
+    };
+
+    if (activeChannel) {
+      await supabase.from("messages").insert({ ...messageData, channel_id: activeChannel.id, user_id: myProfile.id } as any);
+    } else if (activeDMFriend) {
+      await supabase.from("direct_messages").insert({ ...messageData, sender_id: myProfile.id, recipient_id: activeDMFriend.id } as any);
+    }
+    setShowGifPicker(false);
+    setGifSearch("");
+  };
 
   const handleCreateServer = async () => {
     if (!newServerName.trim() || !myProfile?.id) return;
@@ -1278,7 +1397,45 @@ function DashboardComponent() {
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>
+                      
+                      {msg.content && <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>}
+                      
+                      {msg.file_url && (
+                        <div className="mt-2 max-w-sm">
+                          {msg.file_type?.startsWith('image/') ? (
+                            <PhotoProvider>
+                              <PhotoView src={msg.file_url}>
+                                <img 
+                                  src={msg.file_url} 
+                                  alt={msg.file_name || "image"} 
+                                  className="max-h-80 w-auto rounded-xl border border-zinc-800 cursor-pointer hover:opacity-90 transition-opacity" 
+                                />
+                              </PhotoView>
+                            </PhotoProvider>
+                          ) : msg.file_type?.startsWith('video/') ? (
+                            <video controls className="max-h-80 rounded-xl border border-zinc-800 w-full bg-black">
+                              <source src={msg.file_url} type={msg.file_type} />
+                            </video>
+                          ) : (
+                            <a 
+                              href={msg.file_url} 
+                              download={msg.file_name}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-3 bg-[#121212] border border-zinc-800 rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
+                            >
+                              <div className="p-2 bg-zinc-900 rounded-lg group-hover/file:bg-zinc-800 transition-colors">
+                                <FileText className="w-6 h-6 text-[#00D1FF]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-zinc-200 truncate">{msg.file_name || "Arquivo"}</p>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">Clique para baixar</p>
+                              </div>
+                              <Download className="w-4 h-4 text-zinc-500 group-hover/file:text-[#00D1FF]" />
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1286,24 +1443,113 @@ function DashboardComponent() {
               <div ref={chatEndRef} />
             </div>
 
-            <div className="p-4 pt-0">
-              <form onSubmit={handleSendMessage} className="relative">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e as any);
-                    }
-                  }}
-                  placeholder={activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`}
-                  className="bg-[#121212] border-none focus-visible:ring-1 focus-visible:ring-[#00D1FF]/50 pr-12 h-11 text-sm text-white"
-                />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors">
-                  <Send size={18} />
+            <div className="p-4 pt-0 relative">
+              {showEmojiPicker && (
+                <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="fixed inset-0" onClick={() => setShowEmojiPicker(false)} />
+                  <div className="relative">
+                    <EmojiPicker 
+                      theme={Theme.DARK} 
+                      onEmojiClick={(emoji: EmojiClickData) => {
+                        setNewMessage(prev => prev + emoji.emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      lazyLoadEmojis
+                    />
+                  </div>
+                </div>
+              )}
+
+              {showGifPicker && (
+                <div className="absolute bottom-full left-4 mb-4 z-50 w-80 bg-[#121212] border border-zinc-800 rounded-xl p-3 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
+                  <div className="fixed inset-0" onClick={() => setShowGifPicker(false)} />
+                  <div className="relative flex flex-col gap-3">
+                    <div className="flex items-center gap-2 px-2 py-1 bg-[#050505] rounded-lg border border-white/5">
+                      <Search size={14} className="text-zinc-500" />
+                      <input 
+                        className="bg-transparent border-none outline-none text-xs text-white w-full h-8" 
+                        placeholder="Buscar GIFs..." 
+                        value={gifSearch}
+                        onChange={(e) => setGifSearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                      {gifs.length > 0 ? gifs.map(gif => (
+                        <button 
+                          key={gif.id} 
+                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
+                        >
+                          <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
+                        </button>
+                      )) : (
+                        <div className="col-span-2 py-8 text-center text-zinc-500 text-xs">
+                          {gifSearch ? "Nenhum GIF encontrado" : "Digite algo para buscar"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                accept="image/*,video/*,.pdf,.zip,.doc,.docx"
+              />
+
+              <div className="flex items-center gap-2 bg-[#121212] rounded-xl px-2 focus-within:ring-1 focus-within:ring-[#00D1FF]/50 transition-all">
+                <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 text-zinc-500 hover:text-white transition-colors"
+                  disabled={isUploading}
+                >
+                  <Paperclip size={20} className={isUploading ? "animate-pulse text-[#00D1FF]" : ""} />
                 </button>
-              </form>
+                
+                <form onSubmit={handleSendMessage} className="flex-1 flex items-center relative">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onPaste={handlePaste}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e as any);
+                      }
+                    }}
+                    placeholder={activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`}
+                    className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0"
+                  />
+                  <div className="flex items-center gap-1 pr-1">
+                    <button 
+                      type="button"
+                      onClick={() => setShowGifPicker(!showGifPicker)}
+                      className={`p-2 transition-colors ${showGifPicker ? "text-[#00D1FF]" : "text-zinc-500 hover:text-white"}`}
+                    >
+                      <Film size={20} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className={`p-2 transition-colors ${showEmojiPicker ? "text-[#00D1FF]" : "text-zinc-500 hover:text-white"}`}
+                    >
+                      <Smile size={20} />
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors"
+                      disabled={!newMessage.trim() && !isUploading}
+                    >
+                      <Send size={18} />
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </>
         ) : !activeServer ? (
