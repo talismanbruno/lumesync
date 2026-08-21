@@ -819,17 +819,16 @@ function DashboardComponent() {
     const targetId = userId || activeDMFriend?.id;
     if (!myProfile?.id || !targetId) return;
     
-    // Otimista
+    // 1. Zera no estado local
     setUnreadCounts(prev => ({ ...prev, [targetId]: 0 }));
     
+    // 2. Atualiza no banco de dados de forma definitiva
     await supabase
       .from('direct_messages')
       .update({ is_read: true })
       .eq('recipient_id', myProfile.id)
       .eq('sender_id', targetId)
       .eq('is_read', false);
-      
-    fetchUnreadCounts();
   };
 
   useEffect(() => {
