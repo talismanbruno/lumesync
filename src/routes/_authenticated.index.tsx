@@ -1812,20 +1812,19 @@ function DashboardComponent() {
                       
                       {msg.content && <MessageText content={msg.content} />}
                       
-                      {msg.file_url && (msg.file_type?.startsWith('image') || msg.file_url.includes('giphy.com') || msg.file_url.startsWith('data:image')) && (
-                        <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
-                          <PhotoProvider maskOpacity={0.8}>
-                            <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
-                              <img 
-                                src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
-                                alt="Mídia" 
-                                className="w-auto max-h-72 object-contain rounded-xl block cursor-zoom-in" 
-                                loading="lazy"
-                              />
-                            </PhotoView>
-                          </PhotoProvider>
-                        </div>
-                      )}
+                      {msg.file_url && (
+                        <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
+                          {msg.file_type?.startsWith('image') || msg.file_url.includes('giphy.com') || msg.file_url.startsWith('data:image') ? (
+                            <PhotoProvider maskOpacity={0.8}>
+                              <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
+                                <img 
+                                  src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
+                                  alt="Mídia" 
+                                  className="w-auto max-h-72 object-contain rounded-xl block cursor-zoom-in" 
+                                  loading="lazy"
+                                />
+                              </PhotoView>
+                            </PhotoProvider>
                           ) : msg.file_type?.startsWith('video/') ? (
                             <video controls className="max-h-80 rounded-xl w-full bg-black">
                               <source src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} type={msg.file_type} />
