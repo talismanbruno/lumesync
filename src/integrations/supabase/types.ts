@@ -269,8 +269,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_view_profile: { Args: { _profile_id: string }; Returns: boolean }
-      channel_server_id: { Args: { _channel_id: string }; Returns: string }
       create_server: { Args: { server_name: string }; Returns: string }
       find_profile_by_username: {
         Args: { p_username: string }
@@ -281,8 +279,6 @@ export type Database = {
           username: string
         }[]
       }
-      is_server_member: { Args: { _server_id: string }; Returns: boolean }
-      is_server_owner: { Args: { _server_id: string }; Returns: boolean }
       join_server_by_invite: { Args: { p_code: string }; Returns: string }
     }
     Enums: {
