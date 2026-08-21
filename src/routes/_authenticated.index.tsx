@@ -936,9 +936,12 @@ function DashboardComponent() {
             {/* 1. Botão Home / Lume Logo */}
             <button 
               onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 relative"
             >
               <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 rounded-xl object-contain" />
+              {Object.values(unreadCounts).some(count => count > 0) && (
+                <div className="absolute top-0 right-0 w-3 h-3 bg-[#00D1FF] rounded-full border-2 border-[#0a0a0c]" />
+              )}
             </button>
             
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
