@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
+import { toast } from 'sonner';
 
 interface VoiceRoomUIProps {
   participants: VoiceParticipant[];
@@ -33,7 +34,7 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   onDisconnect,
   onClose
 }) => {
-  const [activeWatchingStream, setActiveWatchingStream] = React.useState<{ userId: string; username: string; stream: MediaStream } | null>(null);
+  const [activeWatchingStream, setActiveWatchingStream] = useState<{ userId: string; username: string; stream: MediaStream } | null>(null);
 
   const activeParticipant = participants.find(p => p.id === activeWatchingStream?.userId);
   const displayedStream = activeWatchingStream?.userId === myProfile.id ? screenStream : activeWatchingStream?.stream;
@@ -169,8 +170,7 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                               stream: stream
                             });
                           } else {
-                            // Import toast if not available or just alert
-                            console.warn("Aguardando sinal de vídeo...");
+                            toast.info("Aguardando sinal de vídeo do participante...");
                           }
                         }}
                         className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 text-[10px] h-7 px-3 font-bold rounded-lg glow-sm"
