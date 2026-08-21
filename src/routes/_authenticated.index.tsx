@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
+import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import 'react-photo-view/dist/react-photo-view.css';
@@ -51,7 +52,10 @@ type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+  banner_url?: string | null;
+  bio?: string | null;
   status?: 'online' | 'idle' | 'dnd' | 'offline';
+  created_at?: string;
 };
 
 type Server = {
@@ -150,6 +154,13 @@ function DashboardComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(null);
+  const [editBannerUrl, setEditBannerUrl] = useState<string | null>(null);
+  const avatarUploadRef = useRef<HTMLInputElement>(null);
+  const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -903,6 +914,85 @@ function DashboardComponent() {
     setShowStatusMenu(false);
   };
 
+  const openProfileEditor = () => {
+    setEditDisplayName(myProfile.display_name || "");
+    setEditBio(myProfile.bio || "");
+    setEditAvatarUrl(myProfile.avatar_url);
+    setEditBannerUrl(myProfile.banner_url || null);
+    setIsEditingProfile(true);
+  };
+
+  const handleProfileImageUpload = async (file: File, type: 'avatar' | 'banner') => {
+    if (!myProfile?.id) return;
+    
+    setIsUploading(true);
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(b => b.name === 'chat-attachments')) {
+        await supabase.storage.createBucket('chat-attachments', { public: true });
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `profiles/${myProfile.id}/${type}_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath);
+
+      if (type === 'avatar') {
+        setEditAvatarUrl(publicUrl);
+      } else {
+        setEditBannerUrl(publicUrl);
+      }
+      toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!myProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: editDisplayName,
+          bio: editBio,
+          avatar_url: editAvatarUrl,
+          banner_url: editBannerUrl
+        })
+        .eq('id', myProfile.id);
+        
+      if (error) throw error;
+      
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditingProfile(false);
+      
+      // Update local state immediately
+      const updated = {
+        ...myProfile,
+        display_name: editDisplayName,
+        bio: editBio,
+        avatar_url: editAvatarUrl,
+        banner_url: editBannerUrl
+      };
+      setDbProfile(updated);
+      setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
+      
+    } catch (error: any) {
+      toast.error("Erro ao salvar perfil: " + error.message);
+    }
+  };
+
   const copyInvite = () => {
     if (!activeServer) return;
     navigator.clipboard.writeText(activeServer.invite_code);
@@ -1215,12 +1305,26 @@ function DashboardComponent() {
                         }`}
                       >
                         <div className="relative">
-                          <Avatar className="h-8 w-8 border border-white/5">
-                            <AvatarImage src={friend.avatar_url || ""} />
-                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
-                              {friend.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserProfileCard
+                            user={{
+                              ...friend,
+                              status: friend.id === LUME_BOT_ID ? 'online' : friend.status
+                            }}
+                            isMe={false}
+                            onMessageClick={() => { 
+                              setActiveDMFriend(friend); 
+                              setActiveChannel(null); 
+                              setShowVoiceUI(false);
+                              markAsRead(friend.id);
+                            }}
+                          >
+                            <Avatar className="h-8 w-8 border border-white/5 hover:opacity-90 transition-opacity">
+                              <AvatarImage src={friend.avatar_url || ""} />
+                              <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
+                                {friend.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </UserProfileCard>
                           <StatusBadge 
                             status={isBot ? 'online' : friend.status} 
                             size="sm" 
@@ -1403,20 +1507,25 @@ function DashboardComponent() {
             </>
           )}
           
-          <div 
-            className="relative cursor-pointer group"
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
+          <UserProfileCard
+            user={myProfile}
+            isMe={true}
+            onEditClick={openProfileEditor}
           >
-            <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
-              <AvatarImage src={myProfile?.avatar_url || ""} />
-              <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <StatusBadge 
-              status={myProfile.status} 
-              size="sm" 
-              className="absolute bottom-0 right-0 border-2 border-[#050505]" 
-            />
-          </div>
+            <div 
+              className="relative cursor-pointer group"
+            >
+              <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
+                <AvatarImage src={myProfile?.avatar_url || ""} />
+                <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <StatusBadge 
+                status={myProfile.status} 
+                size="sm" 
+                className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+              />
+            </div>
+          </UserProfileCard>
           
           <div 
             className="flex-1 min-w-0 text-white cursor-pointer"
@@ -1517,12 +1626,20 @@ function DashboardComponent() {
                       className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
                     />
                   </div>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="text-sm font-bold text-white truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
-                    {activeDMFriend?.id === LUME_BOT_ID && (
-                      <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                    )}
-                  </div>
+                  {activeDMFriend && (
+                    <UserProfileCard
+                      user={activeDMFriend}
+                      isMe={activeDMFriend.id === myProfile.id}
+                      onEditClick={activeDMFriend.id === myProfile.id ? openProfileEditor : undefined}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0 cursor-pointer">
+                        <h3 className="text-sm font-bold text-white truncate">{activeDMFriend.display_name || activeDMFriend.username}</h3>
+                        {activeDMFriend.id === LUME_BOT_ID && (
+                          <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                        )}
+                      </div>
+                    </UserProfileCard>
+                  )}
                 </>
               )}
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
@@ -1537,17 +1654,42 @@ function DashboardComponent() {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
                 // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
                 const userId = msg.user_id || msg.sender_id;
-                const currentAuthorStatus = userId ? (profilesCache[userId]?.status || profile?.status || 'offline') : (profile?.status || 'offline');
+                const authorProfile = userId ? (profilesCache[userId] || profile) : profile;
+                const currentAuthorStatus = authorProfile?.status || 'offline';
                 
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
                     <div className="relative h-fit">
-                      <Avatar className="h-10 w-10 mt-0.5 border border-white/5">
-                        <AvatarImage src={profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                          {(profile?.display_name || profile?.username || "?").substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserProfileCard 
+                        user={{
+                          id: userId || "",
+                          username: authorProfile?.username || "usuário",
+                          display_name: authorProfile?.display_name,
+                          avatar_url: authorProfile?.avatar_url,
+                          banner_url: authorProfile?.banner_url,
+                          bio: authorProfile?.bio,
+                          created_at: authorProfile?.created_at,
+                          status: currentAuthorStatus
+                        }}
+                        isMe={userId === myProfile.id}
+                        onEditClick={openProfileEditor}
+                        onMessageClick={userId !== myProfile.id ? () => {
+                          const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
+                          if (friend) {
+                            setActiveDMFriend(friend as Profile);
+                            setActiveChannel(null);
+                            setShowVoiceUI(false);
+                            markAsRead(userId);
+                          }
+                        } : undefined}
+                      >
+                        <Avatar className="h-10 w-10 mt-0.5 border border-white/5 hover:opacity-90 transition-opacity">
+                          <AvatarImage src={authorProfile?.avatar_url || ""} />
+                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                            {(authorProfile?.display_name || authorProfile?.username || "?").substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </UserProfileCard>
                       <StatusBadge 
                         status={currentAuthorStatus} 
                         size="md" 
@@ -1557,10 +1699,25 @@ function DashboardComponent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
-                            {profile?.display_name || profile?.username || "Membro do Lume"}
-                          </span>
-                          {(profile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
+                          <UserProfileCard
+                            user={{
+                              id: userId || "",
+                              username: authorProfile?.username || "usuário",
+                              display_name: authorProfile?.display_name,
+                              avatar_url: authorProfile?.avatar_url,
+                              banner_url: authorProfile?.banner_url,
+                              bio: authorProfile?.bio,
+                              created_at: authorProfile?.created_at,
+                              status: currentAuthorStatus
+                            }}
+                            isMe={userId === myProfile.id}
+                            onEditClick={openProfileEditor}
+                          >
+                            <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
+                              {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
+                            </span>
+                          </UserProfileCard>
+                          {(authorProfile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
                             <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
                           )}
                         </div>
@@ -1839,12 +1996,18 @@ function DashboardComponent() {
                   {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).map(f => (
                     <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
                       <div className="relative">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={f.friend_profile?.avatar_url || ""} />
-                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                            {f.friend_profile?.username.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserProfileCard
+                          user={f.friend_profile!}
+                          isMe={false}
+                          onMessageClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
+                        >
+                          <Avatar className="h-8 w-8 hover:opacity-90 transition-opacity cursor-pointer">
+                            <AvatarImage src={f.friend_profile?.avatar_url || ""} />
+                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                              {f.friend_profile?.username.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </UserProfileCard>
                         <StatusBadge 
                           status={f.friend_profile?.status} 
                           size="sm" 
@@ -1894,6 +2057,100 @@ function DashboardComponent() {
         )}
       </div>
     </main>
+
+    {/* Modal de Edição de Perfil */}
+    <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
+      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-[480px] p-0 overflow-hidden rounded-2xl shadow-2xl">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#00D1FF]" />
+            Editar Perfil
+          </DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            Personalize sua presença no Lume. GIFs são permitidos!
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="p-6 space-y-6">
+          {/* Preview do Banner/Avatar */}
+          <div className="relative group/banner cursor-pointer" onClick={() => bannerUploadRef.current?.click()}>
+            <div 
+              className="h-32 w-full rounded-xl bg-cover bg-center border border-white/5 relative overflow-hidden"
+              style={{ backgroundImage: editBannerUrl ? `url(${editBannerUrl})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
+            >
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            
+            <div 
+              className="absolute -bottom-6 left-6 group/avatar cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); avatarUploadRef.current?.click(); }}
+            >
+              <Avatar className="h-20 w-20 border-4 border-[#121214] shadow-xl">
+                <AvatarImage src={editAvatarUrl || ""} className="object-cover" />
+                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
+                  {myProfile.username.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Nome de Exibição</label>
+              <Input 
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                placeholder="Como você quer ser chamado?"
+                className="bg-[#050505] border-white/5 focus:border-[#00D1FF]/50 text-white h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Sobre Mim (Bio)</label>
+              <textarea 
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Conte um pouco sobre você..."
+                className="w-full bg-[#050505] border border-white/5 focus:border-[#00D1FF]/50 text-white rounded-md p-3 text-sm min-h-[100px] outline-none transition-colors resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <input 
+          type="file" 
+          ref={avatarUploadRef} 
+          className="hidden" 
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'avatar')} 
+        />
+        <input 
+          type="file" 
+          ref={bannerUploadRef} 
+          className="hidden" 
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'banner')} 
+        />
+
+        <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
+          <Button variant="ghost" onClick={() => setIsEditingProfile(false)} className="text-zinc-400 hover:text-white">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSaveProfile}
+            disabled={isUploading}
+            className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold px-8 glow-sm"
+          >
+            {isUploading ? "Enviando..." : "Salvar Alterações"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
   </div>
   );
