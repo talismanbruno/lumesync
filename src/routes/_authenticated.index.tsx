@@ -1352,11 +1352,11 @@ function DashboardComponent() {
                           setShowVoiceUI(false);
                           markAsRead(friend.id);
                         }}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors overflow-hidden ${
                           activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                         }`}
                       >
-                        <div className="relative">
+                        <div className="relative shrink-0">
                           <UserProfileCard
                             user={{
                               ...friend,
