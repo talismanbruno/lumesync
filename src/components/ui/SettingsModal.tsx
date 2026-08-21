@@ -8,7 +8,6 @@ import { ProfileSettingsTab } from "./ProfileSettingsTab";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // userProfile e onProfileUpdate are now handled via useAuth internally
   userProfile?: any;
   onProfileUpdate?: (updatedProfile: any) => void;
 }
