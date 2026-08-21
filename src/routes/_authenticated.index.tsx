@@ -488,11 +488,11 @@ function DashboardComponent() {
     return () => clearTimeout(timer);
   }, [gifSearch]);
 
-  const sendGif = async (url: string) => {
+   const sendGif = async (url: string, gifData?: any) => {
     if (!myProfile?.id) return;
     const messageData = {
       content: "",
-      file_url: gif.images.original?.url || gif.images.fixed_height?.url || url,
+      file_url: gifData?.images?.original?.url || gifData?.images?.fixed_height?.url || url,
       file_type: "image/gif",
       file_name: "gif"
     };
@@ -1812,21 +1812,20 @@ function DashboardComponent() {
                       
                       {msg.content && <MessageText content={msg.content} />}
                       
-                      {msg.file_url && (
-                        <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
-                          {msg.file_type?.startsWith('image/') || msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <PhotoProvider
-                              maskOpacity={0.8}
-                              loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
-                            >
-                              <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
-                                <img 
-                                  src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
-                                  alt={msg.file_name || "image"} 
-                                  className="w-auto max-h-80 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" 
-                                />
-                              </PhotoView>
-                            </PhotoProvider>
+                      {msg.file_url && (msg.file_type?.startsWith('image') || msg.file_url.includes('giphy.com') || msg.file_url.startsWith('data:image')) && (
+                        <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
+                          <PhotoProvider maskOpacity={0.8}>
+                            <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
+                              <img 
+                                src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
+                                alt="Mídia" 
+                                className="w-auto max-h-72 object-contain rounded-xl block cursor-zoom-in" 
+                                loading="lazy"
+                              />
+                            </PhotoView>
+                          </PhotoProvider>
+                        </div>
+                      )}
                           ) : msg.file_type?.startsWith('video/') ? (
                             <video controls className="max-h-80 rounded-xl w-full bg-black">
                               <source src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} type={msg.file_type} />
@@ -1931,7 +1930,7 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          onClick={() => sendGif(gif.images.fixed_height.url, gif)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
