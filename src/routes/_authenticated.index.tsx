@@ -1559,7 +1559,7 @@ function DashboardComponent() {
                 size="h-9 w-9"
                 status={myProfile?.status || 'online'}
                 showStatus={true}
-                className="cursor-pointer group"
+                className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 object-cover aspect-square"
               />
             </PopoverTrigger>
             <PopoverPortal>
