@@ -103,7 +103,7 @@ type Friendship = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
-  const { profile: globalProfile, user: authUser } = useAuth();
+  const { profile: globalProfile, user: authUser, signOut, updateProfile } = useAuth();
   
   // Local state as fallback/override if needed, but primary is from context
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
