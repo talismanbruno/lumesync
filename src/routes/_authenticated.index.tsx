@@ -1479,7 +1479,7 @@ function DashboardComponent() {
                       <Search size={14} className="text-zinc-500" />
                       <input 
                         className="bg-transparent border-none outline-none text-xs text-white w-full h-8" 
-                        placeholder="Buscar GIFs..." 
+                        placeholder="Buscar GIFs no GIPHY..." 
                         value={gifSearch}
                         onChange={(e) => setGifSearch(e.target.value)}
                         autoFocus
@@ -1489,14 +1489,14 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          onClick={() => sendGif(gif.images.original.url)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
                         </button>
                       )) : (
                         <div className="col-span-2 py-8 text-center text-zinc-500 text-xs">
-                          {gifSearch ? "Nenhum GIF encontrado" : "Digite algo para buscar"}
+                          {gifSearch ? "Nenhum GIF encontrado" : "Carregando GIFs..."}
                         </div>
                       )}
                     </div>
