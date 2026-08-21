@@ -1464,7 +1464,12 @@ function DashboardComponent() {
                       className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
                     />
                   </div>
-                  <h3 className="text-sm font-bold text-white">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <h3 className="text-sm font-bold text-white truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
+                    {activeDMFriend?.id === LUME_BOT_ID && (
+                      <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                    )}
+                  </div>
                 </>
               )}
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
