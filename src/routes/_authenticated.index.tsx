@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock } from "lucide-react";
+import { MessageText } from "@/components/ui/MessageText";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import 'react-photo-view/dist/react-photo-view.css';
@@ -797,6 +798,8 @@ function DashboardComponent() {
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !myProfile?.id) return;
+    // Canal oficial somente leitura: nenhum envio permitido
+    if (!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')) return;
     
     const content = newMessage;
     setNewMessage("");
@@ -1566,7 +1569,7 @@ function DashboardComponent() {
                         </span>
                       </div>
                       
-                      {msg.content && <p className="text-sm text-zinc-300 leading-relaxed break-words">{msg.content}</p>}
+                      {msg.content && <MessageText content={msg.content} />}
                       
                       {msg.file_url && (
                         <div className="mt-2 max-w-sm">
@@ -1614,6 +1617,12 @@ function DashboardComponent() {
               <div ref={chatEndRef} />
             </div>
 
+            {!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') ? (
+              <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
+                <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>Este é um canal oficial de transmissão somente leitura. Apenas a equipe do Lume publica novidades aqui.</span>
+              </div>
+            ) : (
             <div className="p-4 pt-0 relative">
               {showEmojiPicker && (
                 <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
@@ -1722,6 +1731,7 @@ function DashboardComponent() {
                 </form>
               </div>
             </div>
+            )}
           </>
         ) : !activeServer ? (
           <div className="flex flex-col h-full">
