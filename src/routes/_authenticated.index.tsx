@@ -394,13 +394,13 @@ function DashboardComponent() {
           ...messageData,
           channel_id: activeChannel.id,
           user_id: myProfile.id
-        });
+        } as any);
       } else if (activeDMFriend) {
         await supabase.from("direct_messages").insert({
           ...messageData,
           sender_id: myProfile.id,
           recipient_id: activeDMFriend.id
-        });
+        } as any);
       }
 
       setNewMessage("");
@@ -413,7 +413,8 @@ function DashboardComponent() {
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
-    const items = e.clipboardData.items;
+    const items = e.clipboardData?.items;
+    if (!items) return;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("image") !== -1) {
         const file = items[i].getAsFile();
@@ -454,9 +455,9 @@ function DashboardComponent() {
     };
 
     if (activeChannel) {
-      await supabase.from("messages").insert({ ...messageData, channel_id: activeChannel.id, user_id: myProfile.id });
+      await supabase.from("messages").insert({ ...messageData, channel_id: activeChannel.id, user_id: myProfile.id } as any);
     } else if (activeDMFriend) {
-      await supabase.from("direct_messages").insert({ ...messageData, sender_id: myProfile.id, recipient_id: activeDMFriend.id });
+      await supabase.from("direct_messages").insert({ ...messageData, sender_id: myProfile.id, recipient_id: activeDMFriend.id } as any);
     }
     setShowGifPicker(false);
     setGifSearch("");
