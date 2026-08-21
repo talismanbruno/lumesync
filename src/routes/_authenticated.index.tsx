@@ -448,11 +448,7 @@ function DashboardComponent() {
         const file = item.getAsFile();
         if (file) {
           setSelectedFile(file);
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setAttachmentPreview(reader.result as string);
-          };
-          reader.readAsDataURL(file);
+          setAttachmentPreview(URL.createObjectURL(file));
         }
       }
     }
