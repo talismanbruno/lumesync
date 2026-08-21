@@ -1695,8 +1695,11 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
 
 
 
+    const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
 
+    return (
       <div className="flex flex-1 flex-col overflow-hidden">
+
         {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
               participants={participants}
