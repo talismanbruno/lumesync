@@ -50,11 +50,13 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
     const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
     
     if (!updateError) {
+      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
       onProfileUpdate({
         ...userProfile,
-        [type === 'avatar' ? 'avatar_url' : 'banner_url']: publicUrl
+        ...updateData
       });
       toast.success(`${type === 'avatar' ? 'Foto' : 'Banner'} atualizado com sucesso!`);
+
     } else {
       toast.error(`Erro ao salvar ${type} no perfil`);
     }
