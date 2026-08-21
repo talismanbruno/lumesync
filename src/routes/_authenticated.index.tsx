@@ -135,6 +135,7 @@ function DashboardComponent() {
   const [serverModalTab, setServerModalTab] = useState<'create' | 'join'>('create');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   
@@ -509,6 +510,47 @@ function DashboardComponent() {
       .subscribe();
     return () => { supabase.removeChannel(sub); };
   }, [myProfile?.id]);
+
+  // Realtime Status for Profiles
+  useEffect(() => {
+    if (!myProfile?.id) return;
+
+    const channel = supabase
+      .channel('public_profiles_realtime')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles' 
+      }, async (payload) => {
+        const updated = payload.new as Profile;
+        
+        // Atualiza myProfile se for eu
+        if (updated.id === myProfile.id) {
+          setDbProfile(updated);
+        }
+        
+        // Atualiza cache de perfis
+        setProfilesCache(prev => ({ ...prev, [updated.id]: updated }));
+        
+        // Atualiza lista de amigos se necessário
+        setFriendships(prev => prev.map(f => {
+          if (f.friend_profile?.id === updated.id) {
+            return { ...f, friend_profile: updated };
+          }
+          return f;
+        }));
+        
+        // Atualiza DM ativa se for o amigo
+        if (activeDMFriend?.id === updated.id) {
+          setActiveDMFriend(updated);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [myProfile?.id, activeDMFriend?.id]);
 
   const handleSendFriendRequest = async () => {
     if (!addFriendUsername.trim() || !myProfile?.id) return;
