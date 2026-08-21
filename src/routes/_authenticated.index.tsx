@@ -838,6 +838,7 @@ function DashboardComponent() {
     };
     
     fetchDMs();
+    markAsRead();
     const sub = supabase
       .channel(`dms:${activeDMFriend.id}`)
       .on('postgres_changes', { 
