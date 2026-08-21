@@ -432,13 +432,13 @@ function DashboardComponent() {
   };
 
   const fetchGifs = async (query: string) => {
-    if (!query) {
-      setGifs([]);
-      return;
-    }
-    // Using a public demo key for Giphy if none provided, but here we just mock or use a search logic
     try {
-      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=10`);
+      const apiKey = "sXpGFDGZs0Dv1mmNFvYaGUvYwKX0P4Ww";
+      const endpoint = query 
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
+        
+      const res = await fetch(endpoint);
       const { data } = await res.json();
       setGifs(data || []);
     } catch (e) {
