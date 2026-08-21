@@ -815,14 +815,18 @@ function DashboardComponent() {
   };
 
   // Realtime DMs
-  const markAsRead = async () => {
-    if (!myProfile?.id || !activeDMFriend?.id) return;
+  const markAsRead = async (userId?: string) => {
+    const targetId = userId || activeDMFriend?.id;
+    if (!myProfile?.id || !targetId) return;
+    
+    // Otimista
+    setUnreadCounts(prev => ({ ...prev, [targetId]: 0 }));
     
     await supabase
       .from('direct_messages')
       .update({ is_read: true })
       .eq('recipient_id', myProfile.id)
-      .eq('sender_id', activeDMFriend.id)
+      .eq('sender_id', targetId)
       .eq('is_read', false);
       
     fetchUnreadCounts();
@@ -830,14 +834,14 @@ function DashboardComponent() {
 
   useEffect(() => {
     if (activeDMFriend?.id) {
-      markAsRead();
+      markAsRead(activeDMFriend.id);
     }
   }, [activeDMFriend?.id]);
 
   useEffect(() => {
     if (!activeDMFriend || !myProfile?.id) return;
     
-    markAsRead();
+    markAsRead(activeDMFriend.id);
 
     const fetchDMs = async () => {
       const { data, error } = await supabase
@@ -945,9 +949,6 @@ function DashboardComponent() {
               className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 relative"
             >
               <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 rounded-xl object-contain" />
-              {Object.values(unreadCounts).some(count => count > 0) && (
-                <div className="absolute top-0 right-0 w-3 h-3 bg-[#00D1FF] rounded-full border-2 border-[#0a0a0c]" />
-              )}
             </button>
             
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
@@ -1157,46 +1158,60 @@ function DashboardComponent() {
                   <span className="flex-1">Mensagens Diretas</span>
                   <Plus size={14} className="cursor-pointer hover:text-white" />
                 </div>
-                {friendships.filter(f => f.status === 'accepted').map(friendship => {
-                  const friend = friendship.friend_profile;
-                  if (!friend) return null;
-                  return (
-                    <button 
-                      key={friend.id}
-                      onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); setShowVoiceUI(false); }}
-                      className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                        activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                      }`}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-8 w-8 border border-white/5">
-                          <AvatarImage src={friend.avatar_url || ""} />
-                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
-                            {friend.username.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <StatusBadge 
-                          status={friend.status} 
-                          size="sm" 
-                          className="absolute bottom-0 right-0 border-2 border-[#121212]" 
-                        />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="font-medium">{friend.display_name || friend.username}</span>
-                          {friend.id === LUME_BOT_ID && (
-                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                          )}
+                {friendships
+                  .filter(f => f.status === 'accepted')
+                  .sort((a, b) => {
+                    if (a.friend_profile?.id === LUME_BOT_ID) return -1;
+                    if (b.friend_profile?.id === LUME_BOT_ID) return 1;
+                    return 0;
+                  })
+                  .map(friendship => {
+                    const friend = friendship.friend_profile;
+                    if (!friend) return null;
+                    const isBot = friend.id === LUME_BOT_ID;
+                    return (
+                      <button 
+                        key={friend.id}
+                        onClick={() => { 
+                          setActiveDMFriend(friend); 
+                          setActiveChannel(null); 
+                          setShowVoiceUI(false);
+                          markAsRead(friend.id);
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                          activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-8 w-8 border border-white/5">
+                            <AvatarImage src={friend.avatar_url || ""} />
+                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
+                              {friend.username.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <StatusBadge 
+                            status={isBot ? 'online' : friend.status} 
+                            size="sm" 
+                            className="absolute bottom-0 right-0 border-2 border-[#121212]" 
+                          />
                         </div>
-                      </div>
-                      {(unreadCounts[friend.id] || 0) > 0 && (
-                        <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
-                          {unreadCounts[friend.id]}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-medium">{friend.display_name || friend.username}</span>
+                            {isBot && (
+                              <span className="shrink-0 px-1 py-0.5 text-[9px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                            )}
+                          </div>
+                          {isBot && <p className="text-[10px] text-zinc-500 truncate">Canal de Novidades e Atualizações</p>}
+                        </div>
+                        {(unreadCounts[friend.id] || 0) > 0 && (
+                          <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                            {unreadCounts[friend.id]}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           ) : (
