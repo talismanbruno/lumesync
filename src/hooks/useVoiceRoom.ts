@@ -20,11 +20,13 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isDeafened, setIsDeafened] = useState(false);
+  const [remoteStreamsVersion, setRemoteStreamsVersion] = useState(0);
   
   const channelRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const remoteStreams = useRef<Map<string, MediaStream>>(new Map());
+  const remoteVideoStreams = useRef<Map<string, MediaStream>>(new Map());
   const remoteScreenStreams = useRef<Map<string, MediaStream>>(new Map());
 
   const cleanup = useCallback(async () => {
@@ -60,6 +62,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     peerConnections.current.forEach(pc => pc.close());
     peerConnections.current.clear();
     remoteStreams.current.clear();
+    remoteVideoStreams.current.clear();
     remoteScreenStreams.current.clear();
     
     setParticipants([]);
@@ -93,14 +96,14 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     };
 
     pc.ontrack = (event) => {
-      const stream: MediaStream | undefined = event.streams[0];
+      const [stream] = event.streams;
       if (!stream) return;
 
-      const isVideo = event.track.kind === 'video';
-      
-      if (isVideo) {
+      if (event.track.kind === 'video') {
+        remoteVideoStreams.current.set(userId, stream);
         remoteScreenStreams.current.set(userId, stream);
-      } else {
+        setRemoteStreamsVersion(v => v + 1);
+      } else if (event.track.kind === 'audio') {
         remoteStreams.current.set(userId, stream);
         const audio = new Audio();
         audio.srcObject = stream;
@@ -112,8 +115,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       setParticipants(prev => prev.map(p => 
         p.id === userId ? { 
           ...p, 
-          stream: (!isVideo ? stream : (p.stream || null)) as MediaStream | null,
-          screenStream: (isVideo ? stream : (p.screenStream || null)) as MediaStream | null
+          stream: (event.track.kind === 'audio' ? stream : (p.stream || null)) as MediaStream | null,
+          screenStream: (event.track.kind === 'video' ? stream : (p.screenStream || null)) as MediaStream | null
         } : p
       ));
     };
@@ -321,6 +324,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     participants,
     allParticipantsInRoom: participants,
     screenStream,
+    remoteVideoStreams,
     isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
     isDeafened,
     isSharingScreen: !!screenStream,

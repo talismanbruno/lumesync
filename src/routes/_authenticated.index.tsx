@@ -133,6 +133,7 @@ function DashboardComponent() {
     isMuted,
     isDeafened,
     isSharingScreen,
+    remoteVideoStreams,
     toggleMute,
     toggleDeafen,
     toggleScreenShare,
@@ -1063,6 +1064,7 @@ function DashboardComponent() {
               isDeafened={isDeafened}
               isSharingScreen={isSharingScreen}
               screenStream={screenStream}
+              remoteVideoStreams={remoteVideoStreams}
               toggleMute={toggleMute}
               toggleDeafen={toggleDeafen}
               toggleScreenShare={toggleScreenShare}
