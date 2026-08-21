@@ -151,6 +151,8 @@ function DashboardComponent() {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const LUME_BOT_ID = "00000000-0000-0000-0000-000000000001";
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   
@@ -620,27 +622,88 @@ function DashboardComponent() {
 
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
-    const { data, error } = await supabase
+    
+    // Garantir que o bot Lume esteja sempre na lista, mesmo que não haja "amizade"
+    const { data: friendshipsData, error } = await supabase
       .from('friendships')
       .select('*, requester:profiles!friendships_requester_id_fkey(*), addressee:profiles!friendships_addressee_id_fkey(*)')
       .or(`requester_id.eq.${myProfile.id},addressee_id.eq.${myProfile.id}`);
     
-    if (!error && data) {
-      const mapped = data.map((f: any) => ({
+    // Buscar perfil do bot
+    const { data: botProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', LUME_BOT_ID)
+      .maybeSingle();
+
+    if (!error && friendshipsData) {
+      const mapped = friendshipsData.map((f: any) => ({
         ...f,
         friend_profile: f.requester_id === myProfile.id ? f.addressee : f.requester
       }));
+
+      // Adicionar o bot se ele não estiver na lista (como accepted)
+      if (botProfile && !mapped.some(f => f.friend_profile?.id === LUME_BOT_ID)) {
+        mapped.unshift({
+          id: 'lume-bot-fixed',
+          requester_id: LUME_BOT_ID,
+          addressee_id: myProfile.id,
+          status: 'accepted',
+          created_at: new Date().toISOString(),
+          friend_profile: botProfile as Profile
+        });
+      }
+
       setFriendships(mapped);
+    }
+  };
+
+  const fetchUnreadCounts = async () => {
+    if (!myProfile?.id) return;
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('sender_id')
+      .eq('recipient_id', myProfile.id)
+      .eq('is_read', false);
+    
+    if (!error && data) {
+      const counts: Record<string, number> = {};
+      data.forEach(msg => {
+        counts[msg.sender_id] = (counts[msg.sender_id] || 0) + 1;
+      });
+      setUnreadCounts(counts);
     }
   };
 
   useEffect(() => {
     fetchFriendships();
-    const sub = supabase
+    fetchUnreadCounts();
+
+    const subFriends = supabase
       .channel('friendships_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, fetchFriendships)
       .subscribe();
-    return () => { supabase.removeChannel(sub); };
+
+    const subMessages = supabase
+      .channel('unread_messages_realtime')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${myProfile.id}`
+      }, fetchUnreadCounts)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${myProfile.id}`
+      }, fetchUnreadCounts)
+      .subscribe();
+
+    return () => { 
+      supabase.removeChannel(subFriends);
+      supabase.removeChannel(subMessages);
+    };
   }, [myProfile?.id]);
 
   // Realtime Status for Profiles
@@ -752,9 +815,30 @@ function DashboardComponent() {
   };
 
   // Realtime DMs
+  const markAsRead = async () => {
+    if (!myProfile?.id || !activeDMFriend?.id) return;
+    
+    await supabase
+      .from('direct_messages')
+      .update({ is_read: true })
+      .eq('recipient_id', myProfile.id)
+      .eq('sender_id', activeDMFriend.id)
+      .eq('is_read', false);
+      
+    fetchUnreadCounts();
+  };
+
+  useEffect(() => {
+    if (activeDMFriend?.id) {
+      markAsRead();
+    }
+  }, [activeDMFriend?.id]);
+
   useEffect(() => {
     if (!activeDMFriend || !myProfile?.id) return;
     
+    markAsRead();
+
     const fetchDMs = async () => {
       const { data, error } = await supabase
         .from('direct_messages')
@@ -766,19 +850,23 @@ function DashboardComponent() {
     };
     
     fetchDMs();
+    markAsRead();
     const sub = supabase
       .channel(`dms:${activeDMFriend.id}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
         table: 'direct_messages',
-        filter: `recipient_id=eq.${myProfile.id}` 
-      }, fetchDMs)
+        filter: `recipient_id=eq.${myProfile.id},sender_id=eq.${activeDMFriend.id}` 
+      }, () => {
+        fetchDMs();
+        markAsRead();
+      })
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
         table: 'direct_messages',
-        filter: `sender_id=eq.${myProfile.id}` 
+        filter: `recipient_id=eq.${activeDMFriend.id},sender_id=eq.${myProfile.id}` 
       }, fetchDMs)
       .subscribe();
       
@@ -854,9 +942,12 @@ function DashboardComponent() {
             {/* 1. Botão Home / Lume Logo */}
             <button 
               onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 relative"
             >
               <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 rounded-xl object-contain" />
+              {Object.values(unreadCounts).some(count => count > 0) && (
+                <div className="absolute top-0 right-0 w-3 h-3 bg-[#00D1FF] rounded-full border-2 border-[#0a0a0c]" />
+              )}
             </button>
             
             <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
@@ -1090,7 +1181,19 @@ function DashboardComponent() {
                           className="absolute bottom-0 right-0 border-2 border-[#121212]" 
                         />
                       </div>
-                      <span className="flex-1 text-left truncate font-medium">{friend.display_name || friend.username}</span>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="font-medium">{friend.display_name || friend.username}</span>
+                          {friend.id === LUME_BOT_ID && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
+                      </div>
+                      {(unreadCounts[friend.id] || 0) > 0 && (
+                        <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                          {unreadCounts[friend.id]}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -1367,7 +1470,12 @@ function DashboardComponent() {
                       className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
                     />
                   </div>
-                  <h3 className="text-sm font-bold text-white">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <h3 className="text-sm font-bold text-white truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</h3>
+                    {activeDMFriend?.id === LUME_BOT_ID && (
+                      <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                    )}
+                  </div>
                 </>
               )}
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
@@ -1401,9 +1509,14 @@ function DashboardComponent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-bold hover:underline cursor-pointer text-white">
-                          {profile?.display_name || profile?.username || "Membro do Lume"}
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
+                            {profile?.display_name || profile?.username || "Membro do Lume"}
+                          </span>
+                          {(profile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-zinc-500">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -1577,7 +1690,7 @@ function DashboardComponent() {
                   onClick={() => setFriendFilter('online')}
                   className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'online' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
                 >
-                  Disponível
+                  Disponível {friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length > 0 ? `— ${friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length}` : ''}
                 </button>
                 <button 
                   onClick={() => setFriendFilter('all')}
@@ -1685,7 +1798,12 @@ function DashboardComponent() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                          {f.friend_profile?.id === LUME_BOT_ID && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-zinc-500 capitalize">{f.friend_profile?.status || 'offline'}</p>
                       </div>
                       <div className="flex gap-2">
