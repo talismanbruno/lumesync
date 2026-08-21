@@ -1232,7 +1232,7 @@ function DashboardComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <StatusBadge 
-                      status={activeDMFriend?.status} 
+                      status={activeDMFriend?.id ? (profilesCache[activeDMFriend.id]?.status || activeDMFriend.status) : activeDMFriend?.status} 
                       size="sm" 
                       className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
                     />
