@@ -980,7 +980,8 @@ function DashboardComponent() {
           </div>
           <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500">
             <LogOut size={16} />
-          </div>
+          </button>
+
         </aside>
       </div>
     </div>
