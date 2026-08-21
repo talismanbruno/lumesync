@@ -834,14 +834,14 @@ function DashboardComponent() {
 
   useEffect(() => {
     if (activeDMFriend?.id) {
-      markAsRead();
+      markAsRead(activeDMFriend.id);
     }
   }, [activeDMFriend?.id]);
 
   useEffect(() => {
     if (!activeDMFriend || !myProfile?.id) return;
     
-    markAsRead();
+    markAsRead(activeDMFriend.id);
 
     const fetchDMs = async () => {
       const { data, error } = await supabase
