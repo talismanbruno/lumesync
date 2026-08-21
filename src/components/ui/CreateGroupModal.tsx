@@ -140,7 +140,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         <DialogFooter className="bg-[#18181b]/50 p-4 mt-2">
           <Button 
             onClick={handleCreate}
-            disabled={isLoading || selectedFriends.length === 0}
+            disabled={isLoading || selectedFriends.length < 1}
             className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold glow-sm border-none"
           >
             {isLoading ? "Criando..." : "Criar Grupo"}

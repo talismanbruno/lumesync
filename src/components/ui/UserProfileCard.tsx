@@ -110,13 +110,15 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
                   Editar Perfil
                 </Button>
               ) : (
-                <Button 
-                  onClick={onMessageClick}
-                  className="w-full bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black border-none h-9 text-xs font-bold gap-2 glow-sm"
-                >
-                  <MessageSquare size={14} />
-                  Enviar Mensagem
-                </Button>
+                !(user.username === 'lume' || user.id === '00000000-0000-0000-0000-000000000001') && (
+                  <Button 
+                    onClick={onMessageClick}
+                    className="w-full bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black border-none h-9 text-xs font-bold gap-2 glow-sm"
+                  >
+                    <MessageSquare size={14} />
+                    Enviar Mensagem
+                  </Button>
+                )
               )}
             </div>
           </div>

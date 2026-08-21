@@ -492,7 +492,7 @@ function DashboardComponent() {
     if (!myProfile?.id) return;
     const messageData = {
       content: "",
-      file_url: url,
+      file_url: gif.images.original?.url || gif.images.fixed_height?.url || url,
       file_type: "image/gif",
       file_name: "gif"
     };
