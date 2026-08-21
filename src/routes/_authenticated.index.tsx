@@ -881,8 +881,8 @@ function DashboardComponent() {
       } else if (activeDMFriend) {
         // Se for o bot e for admin, disparar broadcast
         if (isBotChat && myProfile.is_admin) {
-          const { error } = await supabase.rpc('broadcast_system_update', {
-            update_content: content
+          const { error: broadcastError } = await supabase.rpc('broadcast_system_update', {
+            update_text: content
           });
           if (error) {
             toast.error("Erro ao disparar broadcast: " + error.message);
@@ -1064,14 +1064,14 @@ function DashboardComponent() {
         banner_url: bannerPreview
       };
 
-      const { error } = await supabase.from('profiles').update({
+      const { error: profileUpdateError } = await supabase.from('profiles').update({
         display_name: editDisplayName,
         bio: editBio,
         avatar_url: avatarPreview,
         banner_url: bannerPreview
       }).eq('id', myProfile.id);
 
-      if (error) throw error;
+      if (profileUpdateError) throw profileUpdateError;
 
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
