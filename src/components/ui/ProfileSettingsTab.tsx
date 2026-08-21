@@ -69,10 +69,10 @@ export const ProfileSettingsTab = () => {
       const { data, error } = await supabase
         .from('profiles')
         .update({
-          display_name: name.trim() || profile?.username,
-          bio: bio.trim(),
-          avatar_url: avatarData,
-          banner_url: bannerData
+          display_name: name.trim() || profile?.username || null,
+          bio: bio.trim() || null,
+          avatar_url: avatarData || null,
+          banner_url: bannerData || null
         })
         .eq('id', user.id)
         .select()
