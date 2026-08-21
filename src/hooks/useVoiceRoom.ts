@@ -97,14 +97,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     };
 
     pc.ontrack = (event) => {
-      const [stream] = event.streams;
-      if (!stream) return;
-
+      // Fallback para WebRTC mobile que não preenche event.streams[0]
+      const stream = event.streams[0] || new MediaStream([event.track]);
+      
       if (event.track.kind === 'video') {
         // Salva o stream de vídeo remoto imediatamente
         remoteVideoStreams.current.set(userId, stream);
         remoteScreenStreams.current.set(userId, stream);
         setRemoteStreamsVersion(v => v + 1);
+        console.log(`[WebRTC] Vídeo recebido com sucesso de ${userId}`);
         toast.success("Transmissão de vídeo recebida!");
       } else if (event.track.kind === 'audio') {
         remoteStreams.current.set(userId, stream);
