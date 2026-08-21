@@ -2195,7 +2195,7 @@ function DashboardComponent() {
       onClose={() => setIsSettingsOpen(false)}
     />
 
-
     </div>
+
   );
 }
