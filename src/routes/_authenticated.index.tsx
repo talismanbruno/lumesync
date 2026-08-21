@@ -1344,7 +1344,7 @@ function DashboardComponent() {
                       <span className="font-semibold text-sm text-white truncate">Lume</span>
                       <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
                     </div>
-                    <span className="text-xs text-zinc-500 truncate">Canal de Avisos e Novidades</span>
+                    <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
                   </div>
                 </button>
 
