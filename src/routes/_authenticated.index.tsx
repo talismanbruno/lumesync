@@ -2082,11 +2082,12 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                       }
                     }}
                     placeholder={
-                      !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')
+                      isBotChat
+
                         ? (myProfile.is_admin ? "Disparar atualização oficial..." : "Canal oficial de transmissão somente leitura")
                         : (activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`)
                     }
-                    disabled={!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') && !myProfile.is_admin}
+                    disabled={isBotChat && !myProfile.is_admin}
                     className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0 disabled:opacity-50"
 
                   />
