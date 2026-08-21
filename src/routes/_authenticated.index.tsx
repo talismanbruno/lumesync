@@ -971,18 +971,21 @@ function DashboardComponent() {
     return () => { supabase.removeChannel(sub); };
   }, [activeDMFriend?.id, myProfile?.id]);
 
+  const { signOut, updateProfile } = useAuth();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate({ to: "/auth" });
   };
 
   const handleUpdateStatus = async (newStatus: 'online' | 'idle' | 'dnd' | 'offline') => {
     if (!myProfile?.id) return;
     
-    // Otimista
-    setDbProfile(prev => prev ? { ...prev, status: newStatus } : null);
+    // Use o updateProfile do contexto para garantir sincronia global
+    await updateProfile({ status: newStatus } as any);
     
     const { error } = await supabase
+
       .from('profiles')
       .update({ status: newStatus })
       .eq('id', myProfile.id);
