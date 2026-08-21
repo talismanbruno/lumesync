@@ -1265,7 +1265,7 @@ function DashboardComponent() {
                 </button>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 overflow-x-hidden">
                 <div className="flex items-center px-3 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Mensagens Diretas</span>
                   <Plus 
