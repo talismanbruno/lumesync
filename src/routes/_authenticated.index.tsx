@@ -1587,15 +1587,23 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
-              <div className="relative cursor-pointer group">
-                <Avatar className="h-8 w-8 border border-white/5 group-hover:border-[#00D1FF]/30 transition-colors">
-                  <AvatarImage src={myProfile?.avatar_url || ""} />
-                  <AvatarFallback className="bg-[#00D1FF]/10 text-[#00D1FF] text-[10px]">{(myProfile?.username || "LU").substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+              <div className="relative w-9 h-9 min-w-[36px] shrink-0 rounded-full overflow-hidden bg-zinc-800 group cursor-pointer">
+                {myProfile?.avatar_url ? (
+                  <img 
+                    src={myProfile.avatar_url} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover aspect-square" 
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-zinc-700">
+                    {myProfile?.display_name?.slice(0, 2).toUpperCase() || 'LM'}
+                  </div>
+                )}
+                {/* Bolinha de status */}
                 <StatusBadge 
-                  status={myProfile.status} 
+                  status={myProfile?.status || 'online'} 
                   size="sm" 
-                  className="absolute bottom-0 right-0 border-2 border-[#050505]" 
+                  className="absolute bottom-0 right-0 border-2 border-[#050505]"
                 />
               </div>
             </PopoverTrigger>
