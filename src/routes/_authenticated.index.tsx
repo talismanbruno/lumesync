@@ -219,13 +219,14 @@ function DashboardComponent() {
 
       if (!error && data) {
         const grouped: Record<string, any[]> = {};
-        (data as any[]).forEach((p) => {
+        (data as any[]).forEach((p: any) => {
+          const profile = p.profiles as any;
           if (!grouped[p.channel_id]) grouped[p.channel_id] = [];
           grouped[p.channel_id].push({
             user_id: p.user_id,
-            username: (p.profiles as any)?.username || 'Usuário',
-            display_name: (p.profiles as any)?.display_name,
-            avatar_url: (p.profiles as any)?.avatar_url
+            username: profile?.username || 'Usuário',
+            display_name: profile?.display_name,
+            avatar_url: profile?.avatar_url
           });
         });
         setVoiceParticipantsMap(grouped);
