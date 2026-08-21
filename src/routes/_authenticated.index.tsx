@@ -19,7 +19,6 @@ codeTsx
       {profile?.display_name?.slice(0, 2).toUpperCase() || 'LM'}
     </div>
   )}
-  {/* Bolinha de status */}
   <StatusBadge status={profile?.status || 'online'} />
 </div>
 
