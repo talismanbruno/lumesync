@@ -161,6 +161,8 @@ function DashboardComponent() {
   const [editBio, setEditBio] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
@@ -998,63 +1000,53 @@ function DashboardComponent() {
   const openProfileEditor = () => {
     setEditDisplayName(myProfile.display_name || "");
     setEditBio(myProfile.bio || "");
-    setAvatarPreview(myProfile.avatar_url);
+    setAvatarPreview(myProfile.avatar_url || null);
     setBannerPreview(myProfile.banner_url || null);
+    setAvatarFile(null);
+    setBannerFile(null);
     setIsEditingProfile(true);
   };
 
-  const handleProfileImageUpload = async (file: File, type: 'avatar' | 'banner') => {
-    if (!myProfile?.id) return;
-    
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const bucket = type === 'avatar' ? 'avatars' : 'banners';
-      
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      if (type === 'avatar') {
-        setAvatarPreview(publicUrl);
-      } else {
-        setBannerPreview(publicUrl);
-      }
-      toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
-    } catch (error: any) {
-      toast.error("Erro no upload: " + error.message);
-    } finally {
-      setIsUploading(false);
-    }
+  const uploadFile = async (file: File, bucket: 'avatars' | 'banners') => {
+    const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return publicUrl;
   };
 
   const handleSaveProfile = async () => {
     if (!myProfile?.id) return;
     
+    setIsUploading(true);
     try {
-      const updated = {
-        ...myProfile,
-        display_name: editDisplayName,
-        bio: editBio,
-        avatar_url: avatarPreview,
-        banner_url: bannerPreview
-      };
+      let finalAvatarUrl = avatarPreview;
+      let finalBannerUrl = bannerPreview;
+
+      if (avatarFile) {
+        finalAvatarUrl = await uploadFile(avatarFile, 'avatars');
+      }
+
+      if (bannerFile) {
+        finalBannerUrl = await uploadFile(bannerFile, 'banners');
+      }
 
       const { error: profileUpdateError } = await supabase.from('profiles').update({
         display_name: editDisplayName,
         bio: editBio,
-        avatar_url: avatarPreview,
-        banner_url: bannerPreview
+        avatar_url: finalAvatarUrl,
+        banner_url: finalBannerUrl
       }).eq('id', myProfile.id);
 
       if (profileUpdateError) throw profileUpdateError;
+
+      const updated = {
+        ...myProfile,
+        display_name: editDisplayName,
+        bio: editBio,
+        avatar_url: finalAvatarUrl,
+        banner_url: finalBannerUrl
+      };
 
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
@@ -1063,6 +1055,8 @@ function DashboardComponent() {
       
     } catch (error: any) {
       toast.error("Erro ao salvar perfil: " + error.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -2294,8 +2288,8 @@ function DashboardComponent() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
+              setAvatarFile(file);
               setAvatarPreview(URL.createObjectURL(file));
-              handleProfileImageUpload(file, 'avatar');
             }
           }} 
         />
@@ -2307,8 +2301,8 @@ function DashboardComponent() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
+              setBannerFile(file);
               setBannerPreview(URL.createObjectURL(file));
-              handleProfileImageUpload(file, 'banner');
             }
           }} 
         />
