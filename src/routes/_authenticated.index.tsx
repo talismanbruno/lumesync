@@ -829,8 +829,9 @@ function DashboardComponent() {
     if (e) e.preventDefault();
     if ((!newMessage.trim() && !selectedFile) || !myProfile?.id) return;
     
-    // Canal oficial somente leitura: nenhum envio permitido
-    if (!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')) return;
+    // Canal oficial somente leitura: somente Admins podem enviar
+    const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
+    if (isBotChat && !myProfile.is_admin) return;
     
     const content = newMessage;
     const fileToUpload = selectedFile;
@@ -878,18 +879,30 @@ function DashboardComponent() {
           } as any);
         if (error) toast.error("Erro ao enviar mensagem");
       } else if (activeDMFriend) {
-        const { error } = await supabase
-          .from("direct_messages")
-          .insert({ 
-            sender_id: myProfile.id, 
-            recipient_id: activeDMFriend.id, 
-            content,
-            file_url: fileData.file_url,
-            file_type: fileData.file_type,
-            file_name: fileData.file_name,
-            is_read: false
-          } as any);
-        if (error) toast.error("Erro ao enviar DM");
+        // Se for o bot e for admin, disparar broadcast
+        if (isBotChat && myProfile.is_admin) {
+          const { error } = await supabase.rpc('broadcast_system_update', {
+            update_content: content
+          });
+          if (error) {
+            toast.error("Erro ao disparar broadcast: " + error.message);
+          } else {
+            toast.success("Broadcast enviado com sucesso!");
+          }
+        } else {
+          const { error } = await supabase
+            .from("direct_messages")
+            .insert({ 
+              sender_id: myProfile.id, 
+              recipient_id: activeDMFriend.id, 
+              content,
+              file_url: fileData.file_url,
+              file_type: fileData.file_type,
+              file_name: fileData.file_name,
+              is_read: false
+            } as any);
+          if (error) toast.error("Erro ao enviar DM");
+        }
       }
     } catch (err: any) {
       toast.error("Erro ao enviar: " + err.message);
@@ -1042,6 +1055,7 @@ function DashboardComponent() {
       setIsEditingProfile(false);
       
       // Update local state immediately
+      // Salvar URL pública antes de salvar perfil para persistência imediata
       const updated = {
         ...myProfile,
         display_name: editDisplayName,
@@ -1049,8 +1063,20 @@ function DashboardComponent() {
         avatar_url: avatarPreview,
         banner_url: bannerPreview
       };
+
+      const { error } = await supabase.from('profiles').update({
+        display_name: editDisplayName,
+        bio: editBio,
+        avatar_url: avatarPreview,
+        banner_url: bannerPreview
+      }).eq('id', myProfile.id);
+
+      if (error) throw error;
+
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
+      setIsEditingProfile(false);
+      toast.success("Perfil atualizado!");
       
     } catch (error: any) {
       toast.error("Erro ao salvar perfil: " + error.message);
@@ -1068,35 +1094,7 @@ function DashboardComponent() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
       {/* PAINEL DE INSTRUÇÕES (DEBUG) */}
-      <div className="fixed top-4 right-4 z-[9999] bg-[#121212]/90 border border-[#00D1FF]/20 p-4 rounded-xl shadow-2xl max-w-xs animate-in fade-in slide-in-from-right-4 duration-500 backdrop-blur-md hidden md:block group hover:bg-[#121212] transition-colors">
-        <h3 className="text-[10px] font-black text-[#00D1FF] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#00D1FF] animate-pulse" />
-          Status do Sistema
-        </h3>
-        
-        <div className="space-y-4">
-          <div>
-            <p className="text-[11px] font-bold text-white mb-1">SINCRONIZAÇÃO DE ADMIN</p>
-            <p className="text-[10px] text-zinc-400 leading-relaxed">
-              Base de dados limpa. Use <span className="text-[#00D1FF]">admin@lume.com</span>. O app agora lê corretamente os privilégios <code className="bg-white/5 px-1 rounded">is_admin</code>.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-bold text-white mb-1">VERIFICAÇÃO VISUAL</p>
-            <p className="text-[10px] text-zinc-400 leading-relaxed">
-              O selo <span className="text-cyan-400 inline-flex items-center"><BadgeCheck className="w-3 h-3 ml-1" /></span> agora aparece em todas as instâncias para admins verificados.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-bold text-white mb-1">BROADCAST GLOBAL</p>
-            <p className="text-[10px] text-zinc-400 leading-relaxed">
-              Na DM do Lume Bot, o campo de input está liberado para Admins dispararem atualizações.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Debug Panel removed per UI requirements */}
 
       {/* Mobile Top Header */}
       <div className="fixed top-0 left-0 right-0 z-40 flex h-12 items-center justify-between border-b border-white/5 bg-[#050505] px-4 md:hidden">
@@ -2027,8 +2025,14 @@ function DashboardComponent() {
                         handleSendMessage(e as any);
                       }
                     }}
-                    placeholder={activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`}
-                    className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0"
+                    placeholder={
+                      !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')
+                        ? (myProfile.is_admin ? "Disparar atualização oficial..." : "Canal oficial de transmissão somente leitura")
+                        : (activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`)
+                    }
+                    disabled={!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') && !myProfile.is_admin}
+                    className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0 disabled:opacity-50"
+
                   />
                   <div className="flex items-center gap-1 pr-1">
                     <button 
