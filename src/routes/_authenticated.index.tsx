@@ -471,6 +471,10 @@ function DashboardComponent() {
     setGifSearch("");
   };
 
+  useEffect(() => {
+    fetchGifs(""); // Load trending on mount
+  }, []);
+
   const handleCreateServer = async () => {
     if (!newServerName.trim() || !myProfile?.id) return;
     
