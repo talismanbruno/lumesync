@@ -647,6 +647,8 @@ function DashboardComponent() {
             <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
           </button>
         ))}
+      </nav>
+
 
         {contextMenu && (
           <>
