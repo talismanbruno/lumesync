@@ -131,6 +131,16 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       toast.warning("Entrando como ouvinte.");
     }
 
+    // Register participant in the table
+    try {
+      await supabase.from('voice_participants').upsert({ 
+        channel_id: cid, 
+        user_id: myProfile.id 
+      });
+    } catch (err) {
+      console.error("Error registering voice participant:", err);
+    }
+
     const voiceChannel = supabase.channel(`voice-room-${cid}`, {
       config: { presence: { key: myProfile.id } }
     });
