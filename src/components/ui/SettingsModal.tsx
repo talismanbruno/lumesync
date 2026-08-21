@@ -104,10 +104,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       const { data: updatedProfile, error: dbError } = await supabase
         .from('profiles')
         .update({
-          display_name: name.trim() || profile?.username,
-          bio: bio.trim(),
+          display_name: name.trim() || profile?.username || null,
+          bio: bio.trim() || null,
           avatar_url: finalAvatarUrl,
           banner_url: finalBannerUrl
+
         })
         .eq('id', user.id)
         .select()
@@ -121,10 +122,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         // but here we should follow the exact request's setProfile logic if available.
         // The useAuth hook provides updateProfile which does setProfile.
         await updateProfile({
-          display_name: name.trim() || profile?.username,
-          bio: bio.trim(),
+          display_name: name.trim() || profile?.username || null,
+          bio: bio.trim() || null,
           avatar_url: finalAvatarUrl,
           banner_url: finalBannerUrl
+
         });
       }
       

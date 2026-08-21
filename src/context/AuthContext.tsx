@@ -8,8 +8,9 @@ export type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
-  banner_url?: string | null;
-  bio?: string | null;
+  banner_url: string | null;
+  bio: string | null;
+
   status?: 'online' | 'idle' | 'dnd' | 'offline';
   is_admin?: boolean;
   is_verified?: boolean;
@@ -20,7 +21,7 @@ type AuthContextType = {
   user: User | null;
   profile: Profile | null;
   isLoading: boolean;
-  updateProfile: (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => Promise<void>;
+  updateProfile: (updates: { display_name?: string | null; bio?: string | null; avatar_url?: string | null; banner_url?: string | null }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -83,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.id);
   };
 
-  const updateProfile = async (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => {
+  const updateProfile = async (updates: { display_name?: string | null; bio?: string | null; avatar_url?: string | null; banner_url?: string | null }) => {
     if (!user) return;
     
     // 1. Atualização Otimista Imediata no Estado Global (Todas as telas mudam na hora)
