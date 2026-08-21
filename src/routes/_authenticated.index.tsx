@@ -169,6 +169,7 @@ function DashboardComponent() {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
