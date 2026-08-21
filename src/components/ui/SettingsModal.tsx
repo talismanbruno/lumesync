@@ -27,6 +27,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [bannerPreview, setBannerPreview] = React.useState('');
   
   const [isSaving, setIsSaving] = React.useState(false);
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+  const [bannerFile, setBannerFile] = React.useState<File | null>(null);
+
 
   // Sincroniza os inputs ASSIM QUE o perfil carregar (evita o bug de virar "Usuário Lume")
   React.useEffect(() => {
