@@ -2210,7 +2210,7 @@ function DashboardComponent() {
         try {
           const { data: group, error: groupError } = await supabase
             .from('dm_groups')
-            .insert({ name, creator_id: myProfile.id })
+            .insert({ name, created_by: myProfile.id })
             .select()
             .single();
             
