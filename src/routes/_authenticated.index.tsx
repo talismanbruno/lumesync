@@ -815,6 +815,25 @@ function DashboardComponent() {
   };
 
   // Realtime DMs
+  const markAsRead = async () => {
+    if (!myProfile?.id || !activeDMFriend?.id) return;
+    
+    await supabase
+      .from('direct_messages')
+      .update({ is_read: true })
+      .eq('recipient_id', myProfile.id)
+      .eq('sender_id', activeDMFriend.id)
+      .eq('is_read', false);
+      
+    fetchUnreadCounts();
+  };
+
+  useEffect(() => {
+    if (activeDMFriend?.id) {
+      markAsRead();
+    }
+  }, [activeDMFriend?.id]);
+
   useEffect(() => {
     if (!activeDMFriend || !myProfile?.id) return;
     
