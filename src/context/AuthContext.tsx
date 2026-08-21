@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 
-type Profile = {
+export type Profile = {
   id: string;
   username: string;
   display_name: string | null;
@@ -22,6 +22,7 @@ type AuthContextType = {
   isLoading: boolean;
   updateProfile: (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,31 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -76,6 +52,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    // Listen for changes on auth state (logged in, signed out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+      } else {
+        setProfile(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const refreshProfile = async () => {
+    if (user) await fetchProfile(user.id);
+  };
+
   const updateProfile = async (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => {
     if (!user) return;
     
@@ -93,6 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) {
       console.error("Erro ao salvar perfil:", error);
       toast.error("Erro ao salvar dados no banco");
+      // Rollback optimistic update if needed or refetch
+      refreshProfile();
       return;
     }
     
@@ -109,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, isLoading, updateProfile, signOut }}>
+    <AuthContext.Provider value={{ user, profile, isLoading, updateProfile, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
