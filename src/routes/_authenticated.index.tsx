@@ -1550,7 +1550,7 @@ function DashboardComponent() {
         )}
 
         {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
+        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
               <UserAvatar 
