@@ -202,38 +202,53 @@ function DashboardComponent() {
     fetchChannels();
   }, [activeServer]);
 
-  // Background Presence for Sidebar
+  // Background Presence and Realtime for Sidebar Voice Participants
   useEffect(() => {
     if (!channels.length) return;
     
     const voiceChannels = channels.filter(c => c.type === 'voice');
-    const channelsToSubscribe = voiceChannels.map(vc => {
-      const channel = supabase.channel(`voice-room-${vc.id}`, {
-        config: { presence: { key: myProfile.id } }
-      });
-      
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState();
-          const users = Object.values(state).flat().map((p: any) => ({
-            user_id: p.user_id,
-            username: p.username,
-            display_name: p.display_name,
-            avatar_url: p.avatar_url,
-            isMuted: p.isMuted,
-            isDeafened: p.isDeafened
-          }));
-          setVoiceParticipantsMap(prev => ({ ...prev, [vc.id]: users }));
-        })
-        .subscribe();
-        
-      return channel;
-    });
     
-    return () => {
-      channelsToSubscribe.forEach(c => supabase.removeChannel(c));
+    const fetchAllParticipants = async () => {
+      const channelIds = voiceChannels.map(vc => vc.id);
+      if (channelIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('voice_participants')
+        .select('user_id, channel_id, profiles(*)')
+        .in('channel_id', channelIds);
+
+      if (!error && data) {
+        const grouped: Record<string, any[]> = {};
+        data.forEach((p: any) => {
+          if (!grouped[p.channel_id]) grouped[p.channel_id] = [];
+          grouped[p.channel_id].push({
+            user_id: p.user_id,
+            username: p.profiles?.username || 'Usuário',
+            display_name: p.profiles?.display_name,
+            avatar_url: p.profiles?.avatar_url
+          });
+        });
+        setVoiceParticipantsMap(grouped);
+      }
     };
-  }, [channels, myProfile.id]);
+
+    fetchAllParticipants();
+
+    const channel = supabase
+      .channel('voice_participants_global')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'voice_participants' 
+      }, () => {
+        fetchAllParticipants();
+      })
+      .subscribe();
+        
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [channels]);
 
   // Fetch messages and setup realtime
   useEffect(() => {
