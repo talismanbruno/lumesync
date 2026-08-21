@@ -19,8 +19,8 @@ interface UserProfileCardProps {
     status?: 'online' | 'idle' | 'dnd' | 'offline' | undefined;
   };
   isMe?: boolean;
-  onEditClick?: () => void;
-  onMessageClick?: () => void;
+  onEditClick?: (() => void) | undefined;
+  onMessageClick?: (() => void) | undefined;
   children: React.ReactNode;
 }
 
