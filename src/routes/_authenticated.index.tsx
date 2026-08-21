@@ -318,6 +318,9 @@ function DashboardComponent() {
               profile = data as Profile;
               setProfilesCache(prev => ({ ...prev, [newMsg.user_id]: profile as Profile }));
             }
+          } else {
+            // Ensure the profilesCache is used for the message mapping
+            setProfilesCache(prev => ({ ...prev, [newMsg.user_id]: profile as Profile }));
           }
           
           if (isSubscribed) {
@@ -1229,7 +1232,7 @@ function DashboardComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <StatusBadge 
-                      status={activeDMFriend?.status} 
+                      status={activeDMFriend?.id ? (profilesCache[activeDMFriend.id]?.status || activeDMFriend.status) : activeDMFriend?.status} 
                       size="sm" 
                       className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
                     />
@@ -1247,6 +1250,10 @@ function DashboardComponent() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, index) => {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
+                // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
+                const userId = msg.user_id || msg.sender_id;
+                const currentAuthorStatus = userId ? (profilesCache[userId]?.status || profile?.status || 'offline') : (profile?.status || 'offline');
+                
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
                     <div className="relative h-fit">
@@ -1257,7 +1264,7 @@ function DashboardComponent() {
                         </AvatarFallback>
                       </Avatar>
                       <StatusBadge 
-                        status={profile?.status} 
+                        status={currentAuthorStatus} 
                         size="md" 
                         className="absolute bottom-0 right-0 border-2 border-[#0e0e11]" 
                       />
