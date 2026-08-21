@@ -2123,8 +2123,11 @@ function DashboardComponent() {
           <div className="relative group/banner cursor-pointer" onClick={() => bannerUploadRef.current?.click()}>
             <div 
               className="h-32 w-full rounded-xl bg-cover bg-center border border-white/5 relative overflow-hidden"
-              style={{ backgroundImage: editBannerUrl ? `url(${editBannerUrl})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
+              style={{ backgroundImage: bannerPreview ? `url(${bannerPreview})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
             >
+              {bannerPreview && (
+                <img src={bannerPreview} className="w-full h-full object-cover" alt="Banner preview" />
+              )}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera className="w-8 h-8 text-white" />
               </div>
@@ -2135,10 +2138,16 @@ function DashboardComponent() {
               onClick={(e) => { e.stopPropagation(); avatarUploadRef.current?.click(); }}
             >
               <Avatar className="h-20 w-20 border-4 border-[#121214] shadow-xl">
-                <AvatarImage src={editAvatarUrl || ""} className="object-cover" />
-                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
-                  {myProfile.username.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
+                {avatarPreview ? (
+                  <img src={avatarPreview} className="w-full h-full object-cover rounded-full" alt="Avatar preview" />
+                ) : (
+                  <>
+                    <AvatarImage src={myProfile.avatar_url || ""} className="object-cover" />
+                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
+                      {myProfile.username.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </>
+                )}
               </Avatar>
               <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent">
                 <Camera className="w-6 h-6 text-white" />
