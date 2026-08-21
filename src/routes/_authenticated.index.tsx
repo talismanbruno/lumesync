@@ -815,14 +815,18 @@ function DashboardComponent() {
   };
 
   // Realtime DMs
-  const markAsRead = async () => {
-    if (!myProfile?.id || !activeDMFriend?.id) return;
+  const markAsRead = async (userId?: string) => {
+    const targetId = userId || activeDMFriend?.id;
+    if (!myProfile?.id || !targetId) return;
+    
+    // Otimista
+    setUnreadCounts(prev => ({ ...prev, [targetId]: 0 }));
     
     await supabase
       .from('direct_messages')
       .update({ is_read: true })
       .eq('recipient_id', myProfile.id)
-      .eq('sender_id', activeDMFriend.id)
+      .eq('sender_id', targetId)
       .eq('is_read', false);
       
     fetchUnreadCounts();
