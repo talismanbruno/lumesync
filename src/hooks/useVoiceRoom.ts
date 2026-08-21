@@ -28,6 +28,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   const remoteStreams = useRef<Map<string, MediaStream>>(new Map());
   const remoteVideoStreams = useRef<Map<string, MediaStream>>(new Map());
   const remoteScreenStreams = useRef<Map<string, MediaStream>>(new Map());
+  const voiceChannelRef = useRef<any>(null);
 
   const cleanup = useCallback(async () => {
     if (localStreamRef.current) {
@@ -100,9 +101,11 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       if (!stream) return;
 
       if (event.track.kind === 'video') {
+        // Salva o stream de vídeo remoto imediatamente
         remoteVideoStreams.current.set(userId, stream);
         remoteScreenStreams.current.set(userId, stream);
         setRemoteStreamsVersion(v => v + 1);
+        toast.success("Transmissão de vídeo recebida!");
       } else if (event.track.kind === 'audio') {
         remoteStreams.current.set(userId, stream);
         const audio = new Audio();
@@ -210,6 +213,28 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         const pc = peerConnections.current.get(payload.from);
         if (pc) await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
       })
+      .on('broadcast', { event: 'screen-offer' }, async ({ payload }) => {
+        if (payload.toUserId !== myProfile.id) return;
+        const pc = peerConnections.current.get(payload.fromUserId);
+        if (!pc) return;
+        
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        
+        // Responde com o answer de volta
+        voiceChannel.send({
+          type: 'broadcast',
+          event: 'screen-answer',
+          payload: { fromUserId: myProfile.id, toUserId: payload.fromUserId, sdp: answer }
+        });
+      })
+      .on('broadcast', { event: 'screen-answer' }, async ({ payload }) => {
+        if (payload.toUserId !== myProfile.id) return;
+        const pc = peerConnections.current.get(payload.fromUserId);
+        if (!pc) return;
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await voiceChannel.track({
@@ -225,6 +250,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       });
 
     channelRef.current = voiceChannel;
+    voiceChannelRef.current = voiceChannel;
   }, [myProfile, createPeerConnection]);
 
   useEffect(() => {
@@ -238,13 +264,23 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       setScreenStream(stream);
       
-      // Add track to all active peer connections
-      const videoTrackToShare = stream.getVideoTracks()[0];
-      if (videoTrackToShare) {
-        peerConnections.current.forEach(pc => {
-          pc.addTrack(videoTrackToShare, stream);
+      // 1. Adiciona a faixa de vídeo em todas as conexões peer ativas
+      peerConnections.current.forEach(async (pc, peerId) => {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (!videoTrack) return;
+        pc.addTrack(videoTrack, stream);
+        
+        // 2. CRIA UM NOVO OFFER DE RENEGOCIAÇÃO
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        
+        // 3. Envia o novo offer via broadcast
+        voiceChannelRef.current?.send({
+          type: 'broadcast',
+          event: 'screen-offer',
+          payload: { fromUserId: myProfile.id, toUserId: peerId, sdp: offer }
         });
-      }
+      });
       
       if (channelRef.current) {
         channelRef.current.track({
