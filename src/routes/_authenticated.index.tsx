@@ -851,7 +851,7 @@ function DashboardComponent() {
           
         fileData = {
           file_url: publicUrl,
-          file_type: fileToUpload.type,
+          file_type: fileToUpload.type || 'application/octet-stream',
           file_name: fileToUpload.name
         };
       }
@@ -877,7 +877,8 @@ function DashboardComponent() {
             content,
             file_url: fileData.file_url,
             file_type: fileData.file_type,
-            file_name: fileData.file_name
+            file_name: fileData.file_name,
+            is_read: false
           } as any);
         if (error) toast.error("Erro ao enviar DM");
       }
