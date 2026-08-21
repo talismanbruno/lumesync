@@ -1599,7 +1599,7 @@ function DashboardComponent() {
             isMe={true}
             onEditClick={openProfileEditor}
           >
-            <div className="h-8 w-8 invisible" /> {/* Spacer replaced by Popover above */}
+            <div className="hidden" /> 
           </UserProfileCard>
           
           <div 
