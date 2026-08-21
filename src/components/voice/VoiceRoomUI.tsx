@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff } from 'lucide-react';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
@@ -35,6 +35,15 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   onClose
 }) => {
   const [activeWatchingStream, setActiveWatchingStream] = useState<{ userId: string; username: string; stream: MediaStream } | null>(null);
+  const [volume, setVolume] = useState(1);
+  const [isMutedStream, setIsMutedStream] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = isMutedStream ? 0 : volume;
+    }
+  }, [volume, isMutedStream]);
 
   const activeParticipant = participants.find(p => p.id === activeWatchingStream?.userId);
   const displayedStream = activeWatchingStream?.userId === myProfile.id ? screenStream : activeWatchingStream?.stream;
@@ -54,20 +63,25 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
       <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">
         {/* Stage Area for Screen Sharing */}
         {activeWatchingStream ? (
-          <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300">
-            <div className="w-full max-w-5xl relative group aspect-video bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)]">
-              <video
-                ref={(el) => {
-                  if (el && activeWatchingStream.stream && el.srcObject !== activeWatchingStream.stream) {
-                    el.srcObject = activeWatchingStream.stream;
-                    el.play().catch(console.warn);
-                  }
-                }}
-                autoPlay
-                playsInline
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 w-full h-full max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)] relative group">
+            <video
+              ref={(el) => {
+                // @ts-ignore
+                videoRef.current = el;
+                if (el && activeWatchingStream.stream && el.srcObject !== activeWatchingStream.stream) {
+                  el.srcObject = activeWatchingStream.stream;
+                  el.play().catch(console.warn);
+                }
+              }}
+              autoPlay
+              playsInline
+              muted={activeWatchingStream.userId === myProfile.id}
+              className="w-full h-full object-contain mx-auto"
+            />
+            
+            {/* Header / Top Controls */}
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                 <Avatar className="h-5 w-5 border border-white/10">
                   <AvatarImage src={participants.find(p => p.id === activeWatchingStream.userId)?.avatar_url || ""} />
                   <AvatarFallback className="text-[8px] bg-zinc-800">
@@ -75,20 +89,46 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs font-medium text-white">
-                  {activeWatchingStream.userId === myProfile.id ? "Você está compartilhando a tela" : `Assistindo ${activeWatchingStream.username}`}
+                  {activeWatchingStream.userId === myProfile.id ? "Sua Transmissão" : `Transmissão de ${activeWatchingStream.username}`}
                 </span>
                 <div className="flex items-center gap-1 bg-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold text-white ml-2">
                   AO VIVO
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActiveWatchingStream(null)}
-                className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full border border-white/10"
-              >
-                Parar de Assistir
-              </Button>
+
+              <div className="flex items-center gap-2">
+                {activeWatchingStream.userId !== myProfile.id && (
+                  <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                    <button 
+                      onClick={() => setIsMutedStream(!isMutedStream)}
+                      className="text-zinc-400 hover:text-white transition-colors"
+                    >
+                      {isMutedStream || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    </button>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.01" 
+                      value={isMutedStream ? 0 : volume}
+                      onChange={(e) => {
+                        setVolume(parseFloat(e.target.value));
+                        if (parseFloat(e.target.value) > 0) setIsMutedStream(false);
+                      }}
+                      className="w-20 h-1 bg-zinc-600 rounded-lg appearance-none cursor-pointer accent-[#00D1FF]"
+                    />
+                  </div>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setActiveWatchingStream(null)}
+                  className="bg-black/60 hover:bg-black/80 text-white rounded-full border border-white/10 px-3 h-8"
+                >
+                  Parar de Assistir
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
