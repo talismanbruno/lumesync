@@ -1,5 +1,5 @@
 import React from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "./button";
@@ -40,7 +40,13 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
           {children}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0 bg-[#121214] border-white/10 shadow-2xl overflow-hidden rounded-xl animate-in fade-in zoom-in-95 duration-200">
+      <PopoverPortal>
+        <PopoverContent 
+          side="right" 
+          align="start" 
+          sideOffset={12} 
+          className="z-50 w-72 bg-[#121214] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl p-0 animate-in fade-in zoom-in-95 duration-200"
+        >
         {/* Banner */}
         <div 
           className="h-[100px] w-full relative bg-cover bg-center"
@@ -113,7 +119,8 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
             </div>
           </div>
         </div>
-      </PopoverContent>
+        </PopoverContent>
+      </PopoverPortal>
     </Popover>
   );
 };

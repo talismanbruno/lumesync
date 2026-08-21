@@ -384,14 +384,8 @@ function DashboardComponent() {
     setIsUploading(true);
     
     try {
-      // Auto-criação do bucket se necessário
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(b => b.name === 'chat-attachments')) {
-        await supabase.storage.createBucket('chat-attachments', { public: true });
-      }
-
       const fileExt = file.name.split('.').pop();
-      const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
+      const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
       const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
@@ -927,22 +921,18 @@ function DashboardComponent() {
     
     setIsUploading(true);
     try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(b => b.name === 'chat-attachments')) {
-        await supabase.storage.createBucket('chat-attachments', { public: true });
-      }
-
       const fileExt = file.name.split('.').pop();
-      const filePath = `profiles/${myProfile.id}/${type}_${Date.now()}.${fileExt}`;
+      const filePath = `${myProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const bucket = type === 'avatar' ? 'avatars' : 'banners';
       
       const { error: uploadError } = await supabase.storage
-        .from('chat-attachments')
+        .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('chat-attachments')
+        .from(bucket)
         .getPublicUrl(filePath);
 
       if (type === 'avatar') {
