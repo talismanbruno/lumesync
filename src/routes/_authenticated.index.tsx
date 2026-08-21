@@ -1684,7 +1684,7 @@ function DashboardComponent() {
                   onClick={() => setFriendFilter('online')}
                   className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'online' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
                 >
-                  Disponível {friendships.filter(f => f.status === 'accepted' && f.friend_profile && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length > 0 ? `— ${friendships.filter(f => f.status === 'accepted' && f.friend_profile && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length}` : ''}
+                  Disponível {friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length > 0 ? `— ${friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length}` : ''}
                 </button>
                 <button 
                   onClick={() => setFriendFilter('all')}
