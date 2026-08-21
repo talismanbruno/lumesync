@@ -1614,6 +1614,12 @@ function DashboardComponent() {
               <div ref={chatEndRef} />
             </div>
 
+            {!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') ? (
+              <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
+                <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>Este é um canal oficial de transmissão somente leitura. Apenas a equipe do Lume publica novidades aqui.</span>
+              </div>
+            ) : (
             <div className="p-4 pt-0 relative">
               {showEmojiPicker && (
                 <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
