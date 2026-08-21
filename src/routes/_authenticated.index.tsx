@@ -489,7 +489,15 @@ function DashboardComponent() {
     if (activeChannel) {
       await supabase.from("messages").insert({ ...messageData, channel_id: activeChannel.id, user_id: myProfile.id } as any);
     } else if (activeDMFriend) {
-      await supabase.from("direct_messages").insert({ ...messageData, sender_id: myProfile.id, recipient_id: activeDMFriend.id } as any);
+      await supabase.from("direct_messages").insert({ 
+        sender_id: myProfile.id, 
+        recipient_id: activeDMFriend.id, 
+        content: messageData.content,
+        file_url: messageData.file_url,
+        file_type: messageData.file_type,
+        file_name: messageData.file_name,
+        is_read: false
+      } as any);
     }
     setShowGifPicker(false);
     setGifSearch("");
