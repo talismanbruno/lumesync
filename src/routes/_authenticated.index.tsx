@@ -154,6 +154,13 @@ function DashboardComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(null);
+  const [editBannerUrl, setEditBannerUrl] = useState<string | null>(null);
+  const avatarUploadRef = useRef<HTMLInputElement>(null);
+  const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
