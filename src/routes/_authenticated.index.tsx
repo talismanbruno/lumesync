@@ -1972,12 +1972,18 @@ function DashboardComponent() {
                   {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).map(f => (
                     <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
                       <div className="relative">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={f.friend_profile?.avatar_url || ""} />
-                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                            {f.friend_profile?.username.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserProfileCard
+                          user={f.friend_profile!}
+                          isMe={false}
+                          onMessageClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
+                        >
+                          <Avatar className="h-8 w-8 hover:opacity-90 transition-opacity cursor-pointer">
+                            <AvatarImage src={f.friend_profile?.avatar_url || ""} />
+                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                              {f.friend_profile?.username.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </UserProfileCard>
                         <StatusBadge 
                           status={f.friend_profile?.status} 
                           size="sm" 
