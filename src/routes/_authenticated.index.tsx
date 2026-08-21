@@ -1700,9 +1700,7 @@ function DashboardComponent() {
                       ? `group-call:${activeChannel.id}` 
                       : `dm-call:${[myProfile.id, activeDMFriend?.id].sort().join('_')}`;
                     
-                    // Em um app real, isso abriria a UI de voz no canal específico
-                    // Simulando o início da chamada
-                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' });
+                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' } as any);
                     setShowVoiceUI(true);
                   }}
                   className="p-1 hover:text-white transition-colors"
