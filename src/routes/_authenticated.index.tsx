@@ -1881,9 +1881,43 @@ function DashboardComponent() {
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setSelectedFile(file);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setAttachmentPreview(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
                 accept="image/*,video/*,.pdf,.zip,.doc,.docx"
               />
+
+              {attachmentPreview && (
+                <div className="absolute bottom-full left-4 mb-2 animate-in fade-in slide-in-from-bottom-2 z-10">
+                  <div className="relative group bg-zinc-900 border border-zinc-800 rounded-xl p-2 shadow-2xl overflow-hidden">
+                    {selectedFile?.type.startsWith('image/') ? (
+                      <img src={attachmentPreview} className="max-h-32 rounded-lg object-contain" alt="Preview" />
+                    ) : (
+                      <div className="flex items-center gap-2 px-2 py-4 text-xs text-zinc-300">
+                        <FileText className="w-8 h-8 text-[#00D1FF]" />
+                        <span className="truncate max-w-[150px]">{selectedFile?.name}</span>
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => {
+                        setAttachmentPreview(null);
+                        setSelectedFile(null);
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 bg-[#121212] rounded-xl px-2 focus-within:ring-1 focus-within:ring-[#00D1FF]/50 transition-all">
                 <button 
