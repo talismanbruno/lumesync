@@ -857,23 +857,17 @@ function DashboardComponent() {
         event: 'INSERT', 
         schema: 'public', 
         table: 'direct_messages',
-        filter: `recipient_id=eq.${myProfile.id}` 
-      }, fetchDMs)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'direct_messages',
-        filter: `sender_id=eq.${myProfile.id}` 
-      }, fetchDMs)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'direct_messages',
-        filter: `recipient_id=eq.${myProfile.id}` 
+        filter: `recipient_id=eq.${myProfile.id},sender_id=eq.${activeDMFriend.id}` 
       }, () => {
         fetchDMs();
-        if (activeDMFriend?.id) markAsRead();
+        markAsRead();
       })
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${activeDMFriend.id},sender_id=eq.${myProfile.id}` 
+      }, fetchDMs)
       .subscribe();
       
     return () => { supabase.removeChannel(sub); };
