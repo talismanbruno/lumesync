@@ -2201,6 +2201,40 @@ function DashboardComponent() {
       onClose={() => setIsSettingsOpen(false)}
     />
 
+    <CreateGroupModal 
+      isOpen={isCreateGroupOpen}
+      onClose={() => setIsCreateGroupOpen(false)}
+      myProfile={myProfile}
+      friendships={friendships}
+      onCreateGroup={async (memberIds, name) => {
+        try {
+          const { data: group, error: groupError } = await supabase
+            .from('dm_groups')
+            .insert({ name, creator_id: myProfile.id })
+            .select()
+            .single();
+            
+          if (groupError) throw groupError;
+          
+          const memberInserts = [myProfile.id, ...memberIds].map(uid => ({
+            group_id: group.id,
+            user_id: uid
+          }));
+          
+          const { error: membersError } = await supabase
+            .from('dm_group_members')
+            .insert(memberInserts);
+            
+          if (membersError) throw membersError;
+          
+          toast.success("Grupo criado com sucesso!");
+          // Opcional: navegar ou abrir o grupo
+        } catch (err: any) {
+          toast.error("Erro ao criar grupo: " + err.message);
+        }
+      }}
+    />
+
     </div>
   );
 
