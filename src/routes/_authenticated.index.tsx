@@ -1555,7 +1555,7 @@ function DashboardComponent() {
                 className="fixed inset-0 z-40" 
                 onClick={() => setShowStatusMenu(false)} 
               />
-              <div className="absolute bottom-full left-2 mb-2 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-50 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="fixed bottom-12 left-2 mb-2 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[100] animate-in slide-in-from-bottom-2 duration-200">
                 <div className="px-2 py-1.5 mb-1 border-b border-white/5">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
                 </div>
@@ -2221,48 +2221,44 @@ function DashboardComponent() {
         </DialogHeader>
 
         <div className="p-6 space-y-6">
-          {/* Preview do Banner/Avatar */}
-          <div className="relative w-full h-32 bg-zinc-800 rounded-lg overflow-hidden group cursor-pointer border border-zinc-700 hover:border-cyan-500 transition-colors">
-            {bannerPreview ? (
-              <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-zinc-500">Clique para adicionar banner</div>
-            )}
-            <input 
-              type="file" 
-              accept="image/*,.gif" 
-              className="absolute inset-0 opacity-0 cursor-pointer" 
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
+          <div className="relative w-full mb-8">
+            {/* Área do Banner */}
+            <div className="relative w-full h-32 bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden group cursor-pointer hover:border-cyan-500 transition-colors">
+              {bannerPreview ? (
+                <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 group-hover:text-cyan-400">
+                  <ImageIcon className="w-6 h-6 mb-2" />
+                  <span className="text-xs font-medium">Alterar Banner</span>
+                </div>
+              )}
+              {/* Input invisível cobrindo todo o banner */}
+              <input type="file" accept="image/*,.gif" onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0];
                   setBannerFile(file);
                   setBannerPreview(URL.createObjectURL(file));
                 }
-              }} 
-            />
-            
-            {/* Avatar Sobreposto */}
-            <div className="absolute -bottom-6 left-4 w-20 h-20 rounded-full border-4 border-[#121214] bg-zinc-900 overflow-hidden cursor-pointer group/avatar relative">
+              }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title=" " />
+            </div>
+
+            {/* Área do Avatar Sobreposto */}
+            <div className="absolute -bottom-6 left-4 w-20 h-20 rounded-full border-4 border-[#121214] bg-zinc-800 overflow-hidden cursor-pointer group hover:ring-2 hover:ring-cyan-500 transition-all z-20">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold">ADD</div>
+                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 group-hover:text-cyan-400 bg-zinc-900">
+                  <Camera className="w-6 h-6" />
+                </div>
               )}
-              <input 
-                type="file" 
-                accept="image/*,.gif" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setAvatarFile(file);
-                    setAvatarPreview(URL.createObjectURL(file));
-                  }
-                }} 
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <Camera className="w-6 h-6 text-white" />
-              </div>
+              {/* Input invisível cobrindo todo o avatar */}
+              <input type="file" accept="image/*,.gif" onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0];
+                  setAvatarFile(file);
+                  setAvatarPreview(URL.createObjectURL(file));
+                }
+              }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" title=" " />
             </div>
           </div>
 
