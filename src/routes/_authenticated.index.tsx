@@ -27,6 +27,17 @@ import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 
 export const Route = createFileRoute("/_authenticated/")({
+  head: () => ({
+    meta: [
+      { title: "Lume" },
+      { name: "description", content: "Lume" },
+      { property: "og:title", content: "Lume" },
+      { property: "og:description", content: "Lume" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "icon", type: "image/png", href: "https://i.ibb.co/99YTNvGS/image.png" }],
+  }),
   component: DashboardComponent,
 });
 
