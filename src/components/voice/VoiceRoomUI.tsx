@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
@@ -13,6 +13,7 @@ interface VoiceRoomUIProps {
   isSharingScreen: boolean;
   screenStream: MediaStream | null;
   remoteVideoStreams: React.MutableRefObject<Map<string, MediaStream>>;
+  peerConnections: React.MutableRefObject<Map<string, RTCPeerConnection>>;
   toggleMute: () => void;
   toggleDeafen: () => void;
   toggleScreenShare: () => void;
@@ -28,6 +29,7 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   isSharingScreen,
   screenStream,
   remoteVideoStreams,
+  peerConnections,
   toggleMute,
   toggleDeafen,
   toggleScreenShare,
@@ -37,7 +39,23 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   const [activeWatchingStream, setActiveWatchingStream] = useState<{ userId: string; username: string; stream: MediaStream } | null>(null);
   const [volume, setVolume] = useState(1);
   const [isMutedStream, setIsMutedStream] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const stageContainerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      stageContainerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(console.warn);
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.warn);
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -63,7 +81,10 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
       <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">
         {/* Stage Area for Screen Sharing */}
         {activeWatchingStream ? (
-          <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 w-full h-full max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)] relative group">
+          <div 
+            ref={stageContainerRef}
+            className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 w-full h-full max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)] relative group"
+          >
             {/* Player de Vídeo com suporte a Mobile Autoplay */}
             <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center bg-black rounded-2xl overflow-hidden">
               <video
@@ -138,14 +159,22 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                   </div>
                 )}
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActiveWatchingStream(null)}
-                  className="bg-black/60 hover:bg-black/80 text-white rounded-full border border-white/10 px-3 h-8"
-                >
-                  Parar de Assistir
-                </Button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={toggleFullscreen}
+                    className="p-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs transition-colors cursor-pointer"
+                    title={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
+                  >
+                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
+                  
+                  <button 
+                    onClick={() => setActiveWatchingStream(null)}
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border border-red-500/30 rounded-lg text-xs transition-colors cursor-pointer font-medium"
+                  >
+                    Parar de Assistir
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -220,15 +249,30 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                       </div>
                       <Button
                         onClick={() => {
-                          const stream = remoteVideoStreams.current.get(p.id);
-                          if (stream) {
+                          const participantId = p.id;
+                          const participantName = p.display_name || p.username;
+                          
+                          // 1. Tenta pegar do mapa de streams
+                          let stream = remoteVideoStreams.current?.get(participantId);
+                          
+                          // 2. FALLBACK INFALÍVEL: Extrai direto da RTCPeerConnection ativa
+                          if (!stream) {
+                            const pc = peerConnections.current?.get(participantId);
+                            const videoReceiver = pc?.getReceivers().find(r => r.track && r.track.kind === 'video');
+                            if (videoReceiver && videoReceiver.track) {
+                              stream = new MediaStream([videoReceiver.track]);
+                              remoteVideoStreams.current.set(participantId, stream);
+                            }
+                          }
+                          
+                          if (stream && stream.getVideoTracks().length > 0) {
                             setActiveWatchingStream({
-                              userId: p.id,
-                              username: p.display_name || p.username,
+                              userId: participantId,
+                              username: participantName,
                               stream: stream
                             });
                           } else {
-                            toast.info("Aguardando sinal de vídeo do participante...");
+                            toast.info("Aguardando início da transmissão de vídeo...");
                           }
                         }}
                         className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 text-[10px] h-7 px-3 font-bold rounded-lg glow-sm"
