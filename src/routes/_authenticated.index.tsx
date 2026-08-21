@@ -1157,13 +1157,43 @@ function DashboardComponent() {
                   <span className="flex-1">Mensagens Diretas</span>
                   <Plus size={14} className="cursor-pointer hover:text-white" />
                 </div>
+                {/* CHAT FIXO DO BOT OFICIAL */}
+                <button
+                  onClick={() => {
+                    setActiveDMFriend({
+                      id: LUME_BOT_ID,
+                      username: 'lume',
+                      display_name: 'Lume',
+                      avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                      status: 'online'
+                    });
+                    setActiveChannel(null);
+                    setShowVoiceUI(false);
+                    markAsRead(LUME_BOT_ID);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
+                    activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <img 
+                      src="https://i.ibb.co/99YTNvGS/image.png" 
+                      alt="Lume" 
+                      className="w-8 h-8 rounded-xl object-contain" 
+                    />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#00D1FF] ring-2 ring-[#121214]" />
+                  </div>
+                  <div className="flex flex-col items-start flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 w-full">
+                      <span className="font-semibold text-sm text-white truncate">Lume</span>
+                      <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
+                    </div>
+                    <span className="text-xs text-zinc-500 truncate">Canal de Avisos e Novidades</span>
+                  </div>
+                </button>
+
                 {friendships
-                  .filter(f => f.status === 'accepted')
-                  .sort((a, b) => {
-                    if (a.friend_profile?.id === LUME_BOT_ID) return -1;
-                    if (b.friend_profile?.id === LUME_BOT_ID) return 1;
-                    return 0;
-                  })
+                  .filter(f => f.status === 'accepted' && f.friend_profile?.id !== LUME_BOT_ID)
                   .map(friendship => {
                     const friend = friendship.friend_profile;
                     if (!friend) return null;
