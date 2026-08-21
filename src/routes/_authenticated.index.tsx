@@ -368,11 +368,18 @@ function DashboardComponent() {
     }
 
     setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
     
     try {
-      const { error: uploadError, data } = await supabase.storage
+      // Auto-criação do bucket se necessário
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(b => b.name === 'chat-attachments')) {
+        await supabase.storage.createBucket('chat-attachments', { public: true });
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(filePath, file);
 
