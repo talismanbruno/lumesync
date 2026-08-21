@@ -1797,31 +1797,31 @@ function DashboardComponent() {
                       {msg.content && <MessageText content={msg.content} />}
                       
                       {msg.file_url && (
-                        <div className="mt-2 max-w-sm">
-                          {msg.file_type?.startsWith('image/') ? (
+                        <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
+                          {msg.file_type?.startsWith('image/') || msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                             <PhotoProvider
                               maskOpacity={0.8}
                               loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
                             >
-                              <PhotoView src={msg.file_url}>
+                              <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
                                 <img 
-                                  src={msg.file_url} 
+                                  src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
                                   alt={msg.file_name || "image"} 
-                                  className="max-h-80 w-auto rounded-xl border border-zinc-800 cursor-pointer hover:opacity-90 transition-opacity" 
+                                  className="w-auto max-h-80 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" 
                                 />
                               </PhotoView>
                             </PhotoProvider>
                           ) : msg.file_type?.startsWith('video/') ? (
-                            <video controls className="max-h-80 rounded-xl border border-zinc-800 w-full bg-black">
-                              <source src={msg.file_url} type={msg.file_type} />
+                            <video controls className="max-h-80 rounded-xl w-full bg-black">
+                              <source src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} type={msg.file_type} />
                             </video>
                           ) : (
                             <a 
-                              href={msg.file_url} 
+                              href={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
                               download={msg.file_name}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-3 bg-[#121212] border border-zinc-800 rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
+                              className="flex items-center gap-3 p-3 bg-[#121212] rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
                             >
                               <div className="p-2 bg-zinc-900 rounded-lg group-hover/file:bg-zinc-800 transition-colors">
                                 <FileText className="w-6 h-6 text-[#00D1FF]" />
