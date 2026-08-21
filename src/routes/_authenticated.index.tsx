@@ -436,7 +436,14 @@ function DashboardComponent() {
       const item = items[i];
       if (item && item.type && item.type.indexOf("image") !== -1) {
         const file = item.getAsFile();
-        if (file) handleFileUpload(file);
+        if (file) {
+          setSelectedFile(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setAttachmentPreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
       }
     }
   };
