@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -15,17 +16,30 @@ interface SettingsModalProps {
   onProfileUpdate: (updatedProfile: any) => void;
 }
 
-export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  const { profile, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
-  const [editDisplayName, setEditDisplayName] = React.useState(userProfile?.display_name || "");
-  const [editBio, setEditBio] = React.useState(userProfile?.bio || "");
-  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(userProfile?.avatar_url || null);
-  const [bannerPreview, setBannerPreview] = React.useState<string | null>(userProfile?.banner_url || null);
+  
+  const [name, setName] = React.useState('');
+  const [bio, setBio] = React.useState('');
+  const [avatarPreview, setAvatarPreview] = React.useState('');
+  const [bannerPreview, setBannerPreview] = React.useState('');
+  
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // Sincroniza os inputs ASSIM QUE o perfil carregar (evita o bug de virar "Usuário Lume")
+  React.useEffect(() => {
+    if (profile) {
+      setName(profile.display_name || profile.username || '');
+      setBio(profile.bio || '');
+      setAvatarPreview(profile.avatar_url || '');
+      setBannerPreview(profile.banner_url || '');
+    }
+  }, [profile]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !profile) return;
     
     // 1. Preview Instantâneo (URL Local)
     const localUrl = URL.createObjectURL(file);
@@ -33,7 +47,7 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
     if (type === 'banner') setBannerPreview(localUrl);
 
     // 2. Upload Automático Imediato
-    const filePath = `${userProfile.id}/${Date.now()}_${type}`;
+    const filePath = `${profile.id}/${Date.now()}_${type}`;
     const { error } = await supabase.storage.from('chat-attachments').upload(filePath, file);
     
     if (error) {
@@ -44,49 +58,22 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
     // 3. Pegar URL Pública e Salvar no Banco
     const { data: { publicUrl } } = supabase.storage.from('chat-attachments').getPublicUrl(filePath);
     
-    const updateData: any = {};
-    updateData[type === 'avatar' ? 'avatar_url' : 'banner_url'] = publicUrl;
-
-    const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
-    
-    if (!updateError) {
-      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
-      onProfileUpdate({
-        ...userProfile,
-        ...updateData
-      });
-      toast.success(`${type === 'avatar' ? 'Foto' : 'Banner'} atualizado com sucesso!`);
-
-    } else {
-      toast.error(`Erro ao salvar ${type} no perfil`);
-    }
+    const updates = type === 'avatar' ? { avatar_url: publicUrl } : { banner_url: publicUrl };
+    await updateProfile(updates);
   };
 
-  const handleSaveInfo = async () => {
+  const handleSave = async () => {
+    if (!profile) return;
     setIsSaving(true);
-    try {
-      const updateData = {
-        display_name: editDisplayName,
-        bio: editBio
-      };
-
-      const { error } = await supabase.from('profiles').update(updateData).eq('id', userProfile.id);
-
-      if (error) throw error;
-      
-      // OBRIGATÓRIO: Atualize o estado do contexto de autenticação/perfil imediatamente!
-      onProfileUpdate({
-        ...userProfile,
-        ...updateData
-      });
-      toast.success("Perfil atualizado!");
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + err.message);
-    } finally {
-      setIsSaving(false);
-    }
+    await updateProfile({
+      display_name: name.trim() || profile?.username,
+      bio: bio.trim(),
+      avatar_url: avatarPreview,
+      banner_url: bannerPreview
+    });
+    setIsSaving(false);
+    onClose(); // Fecha o modal
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -180,11 +167,11 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
                       </div>
                       
                       <div className="flex items-center gap-1 mt-1">
-                        <h3 className="font-bold text-white text-lg">{editDisplayName || userProfile?.username || 'Seu Nome'}</h3>
-                        {userProfile?.is_verified && <BadgeCheck className="w-4 h-4 text-cyan-400" />}
+                        <h3 className="font-bold text-white text-lg">{name || profile?.username || 'Seu Nome'}</h3>
+                        {profile?.is_verified && <BadgeCheck className="w-4 h-4 text-cyan-400" />}
                       </div>
                       <div className="text-sm text-zinc-400 mt-1 line-clamp-3 min-h-[1.25rem]">
-                        {editBio || "Este usuário não possui bio."}
+                        {bio || "Este usuário não possui bio."}
                       </div>
                     </div>
                   </div>
@@ -220,8 +207,8 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Nome de Exibição</label>
                     <Input 
-                      value={editDisplayName}
-                      onChange={(e) => setEditDisplayName(e.target.value)}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       placeholder="Como você quer ser chamado?"
                       className="bg-[#050505] border-white/5 focus:border-[#00D1FF]/50 text-white h-11"
                     />
@@ -230,15 +217,15 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Sobre Mim (Bio)</label>
                     <textarea 
-                      value={editBio}
-                      onChange={(e) => setEditBio(e.target.value)}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
                       placeholder="Conte um pouco sobre você..."
                       className="w-full bg-[#050505] border border-white/5 focus:border-[#00D1FF]/50 text-white rounded-md p-3 text-sm min-h-[100px] outline-none transition-colors resize-none"
                     />
                   </div>
 
                   <Button 
-                    onClick={handleSaveInfo}
+                    onClick={handleSave}
                     disabled={isSaving}
                     className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold px-8 glow-sm h-11"
                   >
@@ -258,7 +245,7 @@ export function SettingsModal({ isOpen, onClose, userProfile, onProfileUpdate }:
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">E-mail</p>
-                      <p className="text-white">{userProfile?.email || "..."}</p>
+                      <p className="text-white">{profile?.email || "..."}</p>
                     </div>
                   </div>
                 </div>

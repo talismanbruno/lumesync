@@ -232,8 +232,11 @@ function RootComponent() {
   // No static loading block here; rendering immediately.
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-center" theme="dark" richColors />
+      <AuthProvider>
+        <Outlet />
+        <Toaster position="top-center" theme="dark" richColors />
+      </AuthProvider>
     </QueryClientProvider>
+
   );
 }
