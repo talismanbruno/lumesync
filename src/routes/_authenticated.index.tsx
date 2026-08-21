@@ -1183,11 +1183,11 @@ function DashboardComponent() {
                           )}
                         </div>
                       </div>
-                      {unreadCounts[friend.id] > 0 && (
+                      {unreadCounts[friend.id] && unreadCounts[friend.id] > 0 ? (
                         <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
                           {unreadCounts[friend.id]}
                         </span>
-                      )}
+                      ) : null}
                     </button>
                   );
                 })}
