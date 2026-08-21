@@ -213,6 +213,8 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           id: string
+          is_admin: boolean | null
+          is_verified: boolean | null
           status: string | null
           updated_at: string | null
           username: string | null
@@ -224,6 +226,8 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id: string
+          is_admin?: boolean | null
+          is_verified?: boolean | null
           status?: string | null
           updated_at?: string | null
           username?: string | null
@@ -235,6 +239,8 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id?: string
+          is_admin?: boolean | null
+          is_verified?: boolean | null
           status?: string | null
           updated_at?: string | null
           username?: string | null

@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/compon
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "./button";
-import { MessageSquare, Calendar, Edit3 } from "lucide-react";
+import { MessageSquare, Calendar, Edit3, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,6 +17,7 @@ interface UserProfileCardProps {
     bio?: string | null | undefined;
     created_at?: string | undefined;
     status?: 'online' | 'idle' | 'dnd' | 'offline' | undefined;
+    is_verified?: boolean;
   };
   isMe?: boolean;
   onEditClick?: (() => void) | undefined;
@@ -75,8 +76,9 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         {/* Conteúdo */}
         <div className="pt-10 px-4 pb-4 space-y-4">
           <div>
-            <h3 className="text-lg font-bold text-white leading-tight">
+            <h3 className="text-lg font-bold text-white leading-tight flex items-center gap-1">
               {user.display_name || user.username}
+              {user.is_verified && <BadgeCheck className="w-5 h-5 text-cyan-400 shrink-0" />}
             </h3>
             <p className="text-sm text-zinc-400 font-medium">@{user.username}</p>
           </div>
