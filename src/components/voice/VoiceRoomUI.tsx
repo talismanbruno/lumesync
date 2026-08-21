@@ -26,6 +26,7 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   isDeafened,
   isSharingScreen,
   screenStream,
+  remoteVideoStreams,
   toggleMute,
   toggleDeafen,
   toggleScreenShare,
