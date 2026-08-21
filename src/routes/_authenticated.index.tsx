@@ -1792,7 +1792,12 @@ function DashboardComponent() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                          {f.friend_profile?.id === LUME_BOT_ID && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-zinc-500 capitalize">{f.friend_profile?.status || 'offline'}</p>
                       </div>
                       <div className="flex gap-2">
