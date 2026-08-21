@@ -368,11 +368,18 @@ function DashboardComponent() {
     }
 
     setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
     
     try {
-      const { error: uploadError, data } = await supabase.storage
+      // Auto-criação do bucket se necessário
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(b => b.name === 'chat-attachments')) {
+        await supabase.storage.createBucket('chat-attachments', { public: true });
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${myProfile.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(filePath, file);
 
@@ -425,13 +432,13 @@ function DashboardComponent() {
   };
 
   const fetchGifs = async (query: string) => {
-    if (!query) {
-      setGifs([]);
-      return;
-    }
-    // Using a public demo key for Giphy if none provided, but here we just mock or use a search logic
     try {
-      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=10`);
+      const apiKey = "sXpGFDGZs0Dv1mmNFvYaGUvYwKX0P4Ww";
+      const endpoint = query 
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
+        
+      const res = await fetch(endpoint);
       const { data } = await res.json();
       setGifs(data || []);
     } catch (e) {
@@ -463,6 +470,10 @@ function DashboardComponent() {
     setShowGifPicker(false);
     setGifSearch("");
   };
+
+  useEffect(() => {
+    fetchGifs(""); // Load trending on mount
+  }, []);
 
   const handleCreateServer = async () => {
     if (!newServerName.trim() || !myProfile?.id) return;
@@ -1403,7 +1414,10 @@ function DashboardComponent() {
                       {msg.file_url && (
                         <div className="mt-2 max-w-sm">
                           {msg.file_type?.startsWith('image/') ? (
-                            <PhotoProvider>
+                            <PhotoProvider
+                              maskOpacity={0.8}
+                              loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
+                            >
                               <PhotoView src={msg.file_url}>
                                 <img 
                                   src={msg.file_url} 
@@ -1468,7 +1482,7 @@ function DashboardComponent() {
                       <Search size={14} className="text-zinc-500" />
                       <input 
                         className="bg-transparent border-none outline-none text-xs text-white w-full h-8" 
-                        placeholder="Buscar GIFs..." 
+                        placeholder="Buscar GIFs no GIPHY..." 
                         value={gifSearch}
                         onChange={(e) => setGifSearch(e.target.value)}
                         autoFocus
@@ -1478,14 +1492,14 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          onClick={() => sendGif(gif.images.original.url)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
                         </button>
                       )) : (
                         <div className="col-span-2 py-8 text-center text-zinc-500 text-xs">
-                          {gifSearch ? "Nenhum GIF encontrado" : "Digite algo para buscar"}
+                          {gifSearch ? "Nenhum GIF encontrado" : "Carregando GIFs..."}
                         </div>
                       )}
                     </div>
