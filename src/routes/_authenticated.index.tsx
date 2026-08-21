@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp } from "lucide-react";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,7 +46,7 @@ type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
-  status?: string;
+  status?: 'online' | 'idle' | 'dnd' | 'offline';
 };
 
 type Server = {
@@ -87,6 +87,7 @@ function DashboardComponent() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -105,7 +106,8 @@ function DashboardComponent() {
     id: currentUser?.id || "",
     username: currentUser?.email?.split('@')[0] || "usuário",
     display_name: currentUser?.email?.split('@')[0] || "Usuário Lume",
-    avatar_url: null
+    avatar_url: null,
+    status: 'online'
   };
   
   const [servers, setServers] = useState<Server[]>([]);
@@ -611,6 +613,25 @@ function DashboardComponent() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
+  };
+
+  const handleUpdateStatus = async (newStatus: 'online' | 'idle' | 'dnd' | 'offline') => {
+    if (!myProfile?.id) return;
+    
+    // Otimista
+    setDbProfile(prev => prev ? { ...prev, status: newStatus } : null);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: newStatus })
+      .eq('id', myProfile.id);
+      
+    if (error) {
+      toast.error("Erro ao atualizar status");
+    } else {
+      toast.success(`Status: ${newStatus}`);
+    }
+    setShowStatusMenu(false);
   };
 
   const copyInvite = () => {
