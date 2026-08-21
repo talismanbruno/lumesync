@@ -113,8 +113,12 @@ function DashboardComponent() {
         .select("*")
         .eq("id", session.user.id)
         .maybeSingle();
-      if (data) setDbProfile(data as Profile);
+      if (data) {
+        setDbProfile(data as Profile);
+        setProfilesCache(prev => ({ ...prev, [data.id]: data as Profile }));
+      }
     });
+
   }, []);
 
   const myProfile: Profile = dbProfile ?? {
