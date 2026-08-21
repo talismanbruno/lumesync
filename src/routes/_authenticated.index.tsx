@@ -994,8 +994,8 @@ function DashboardComponent() {
         </div>
       </aside>
     </div>
-  </div>
-)
+    </div>
+
 
 
   {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
