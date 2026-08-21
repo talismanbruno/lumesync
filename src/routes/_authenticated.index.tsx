@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/_authenticated/")({
   }),
   component: DashboardComponent,
 });
+
 
 type Profile = {
   id: string;
@@ -101,33 +103,30 @@ type Friendship = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
+  const { profile: globalProfile, user: authUser } = useAuth();
+  
+  // Local state as fallback/override if needed, but primary is from context
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.user) return;
-      setCurrentUser({ id: session.user.id, email: session.user.email });
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      if (data) {
-        setDbProfile(data as Profile);
-        setProfilesCache(prev => ({ ...prev, [data.id]: data as Profile }));
-      }
-    });
+    if (authUser) {
+      setCurrentUser({ id: authUser.id, email: authUser.email });
+    }
+    if (globalProfile) {
+      setDbProfile(globalProfile as Profile);
+      setProfilesCache(prev => ({ ...prev, [globalProfile.id]: globalProfile as Profile }));
+    }
+  }, [authUser, globalProfile]);
 
-  }, []);
-
-  const myProfile: Profile = dbProfile ?? {
-    id: currentUser?.id || "",
-    username: currentUser?.email?.split('@')[0] || "usuário",
-    display_name: currentUser?.email?.split('@')[0] || "Usuário Lume",
+  const myProfile: Profile = (globalProfile as Profile) ?? dbProfile ?? {
+    id: authUser?.id || "",
+    username: authUser?.email?.split('@')[0] || "usuário",
+    display_name: authUser?.email?.split('@')[0] || "Usuário Lume",
     avatar_url: null,
     status: 'online'
   };
+
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
@@ -1682,8 +1681,14 @@ function DashboardComponent() {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
                 // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
                 const userId = msg.user_id || msg.sender_id;
-                const authorProfile = userId ? (profilesCache[userId] || profile) : profile;
+                
+                // Se message.user_id === user.id, renderize profile.avatar_url e profile.display_name
+                const authorProfile = userId === authUser?.id 
+                  ? myProfile 
+                  : (userId ? (profilesCache[userId] || profile) : profile);
+                  
                 const currentAuthorStatus = authorProfile?.status || 'offline';
+
                 
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
@@ -2162,12 +2167,8 @@ function DashboardComponent() {
     <SettingsModal 
       isOpen={isSettingsOpen}
       onClose={() => setIsSettingsOpen(false)}
-      userProfile={myProfile}
-      onProfileUpdate={(updated) => {
-        setDbProfile(updated);
-        setProfilesCache(prev => ({ ...prev, [updated.id]: updated }));
-      }}
     />
+
 
   </div>
   );
