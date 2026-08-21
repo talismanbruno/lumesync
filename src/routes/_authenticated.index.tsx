@@ -1503,9 +1503,14 @@ function DashboardComponent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-bold hover:underline cursor-pointer text-white">
-                          {profile?.display_name || profile?.username || "Membro do Lume"}
-                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
+                            {profile?.display_name || profile?.username || "Membro do Lume"}
+                          </span>
+                          {(profile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-zinc-500">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
