@@ -362,6 +362,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     allParticipantsInRoom: participants,
     screenStream,
     remoteVideoStreams,
+    peerConnections,
     isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
     isDeafened,
     isSharingScreen: !!screenStream,
