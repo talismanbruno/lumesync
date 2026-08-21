@@ -2,13 +2,13 @@ import React from 'react';
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
-  avatarUrl?: string | null;
-  name?: string;
-  initials?: string;
-  size?: string;
-  className?: string;
-  status?: 'online' | 'idle' | 'dnd' | 'offline' | string | null;
-  showStatus?: boolean;
+  avatarUrl?: string | null | undefined;
+  name?: string | undefined;
+  initials?: string | undefined;
+  size?: string | undefined;
+  className?: string | undefined;
+  status?: 'online' | 'idle' | 'dnd' | 'offline' | string | null | undefined;
+  showStatus?: boolean | undefined;
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({
