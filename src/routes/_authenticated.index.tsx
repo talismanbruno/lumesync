@@ -592,9 +592,9 @@ function DashboardComponent() {
 // Removed the blocking "Sincronizando Perfil..." interface.
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#050505] text-foreground font-sans md:flex-row">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
       {/* Mobile Top Header */}
-      <div className="flex h-12 w-full items-center justify-between border-b border-white/5 bg-[#050505] px-4 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-12 items-center justify-between border-b border-white/5 bg-[#050505] px-4 md:hidden">
         <div className="flex items-center gap-2">
           <Button 
             variant="ghost" 
@@ -609,7 +609,7 @@ function DashboardComponent() {
         <h1 className="text-sm font-bold text-white truncate max-w-[150px]">
           {activeServer?.name || activeDMFriend?.display_name || activeDMFriend?.username || "Amigos"}
         </h1>
-        <div className="w-8" /> {/* Spacer for centering */}
+        <div className="w-8" />
       </div>
 
       {/* Mobile Menu Backdrop */}
@@ -620,14 +620,12 @@ function DashboardComponent() {
         />
       )}
 
-      {/* Sidebar Wrapper */}
-      <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      {/* Sidebar Wrapper (Columns 1 & 2) */}
+      <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 md:w-auto md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full w-full">
+          {/* COLUNA 1: SERVIDORES (LARGURA FIXA E NUNCA ESMAGA) */}
+          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 overflow-y-auto overflow-x-hidden">
 
-
-
-        {/* Column 1: Server List */}
-      <div className="flex w-[72px] flex-col items-center gap-3 border-r border-white/5 bg-[#050505] py-3 overflow-y-auto overflow-x-hidden">
         <div onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 mb-2">
           <LumeLogo variant="icon" />
         </div>
