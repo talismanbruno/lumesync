@@ -648,6 +648,9 @@ function DashboardComponent() {
           </button>
         ))}
       </nav>
+      {/* Moved context menu and dialogs outside the nav but inside the wrapper if needed, 
+          or just ensured the wrapper is closed correctly */}
+
 
 
         {contextMenu && (
