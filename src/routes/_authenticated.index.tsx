@@ -1,3 +1,40 @@
+AJUSTE GLOBAL DE CSS: DESESPREMER AVATARES EM TODAS AS TELAS
+
+As fotos de perfil estão esticadas/ovalizadas na lista de voz, nos cards da chamada e nas mensagens do chat. Padronize todos os avatares do app para manterem a proporção perfeita.
+
+1. PADRONIZAR O COMPONENTE UserAvatar.tsx (OU ONDE HOUVER FOTO DE USUÁRIO):
+Garanta que TODAS as tags <img> de foto de usuário no app usem as classes obrigatórias:
+
+codeTsx
+
+{/* Padrão Universal para Avatares do Lume */}
+<div className="relative rounded-full overflow-hidden shrink-0 aspect-square bg-zinc-800 flex items-center justify-center [TAMANHO_AQUI]">
+  {avatarUrl ? (
+    <img 
+      src={avatarUrl} 
+      alt={name} 
+      className="w-full h-full object-cover aspect-square block select-none" 
+    />
+  ) : (
+    <span className="font-bold text-white uppercase">{initials}</span>
+  )}
+  {/* Bolinha de status se houver */}
+</div>
+
+2. LOCAIS OBRIGATÓRIOS PARA APLICAR:
+
+Nos Cards da Sala de Voz (VoiceRoomUI.tsx): O avatar circular central dos participantes deve ser perfeitamente redondo (aspect-square object-cover).
+
+Na Lista de Membros da Voz na Barra Lateral (ChannelSidebar.tsx): Os mini-avatares abaixo de 🔊 Sala Principal.
+
+Nas Mensagens de Chat (MessageItem.tsx): O avatar ao lado do nome de quem enviou a mensagem (tanto em servidores quanto em DMs).
+
+VALIDAÇÃO OBRIGATÓRIA:
+
+Verifique o chat, a barra lateral e a tela da chamada de voz: todas as fotos de perfil devem aparecer em círculos perfeitos, sem esticar nem espremer a imagem horizontalmente.
+
+IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
+
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useState, useEffect, useRef } from "react";
@@ -10,6 +47,12 @@ import 'react-photo-view/dist/react-photo-view.css';
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
@@ -1506,16 +1549,13 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                       {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
                         <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group">
                           <div className="relative">
-                            <Avatar className="h-5 w-5 border border-white/10 group-hover:border-[#00D1FF]/30">
-                              <AvatarImage src={p.avatar_url || ""} />
-                              <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-500">
-                                {p.username.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <StatusBadge 
-                              status={p.profiles?.status} 
-                              size="sm" 
-                              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border-[1px] border-[#121214]" 
+                            <UserAvatar 
+                              avatarUrl={p.avatar_url}
+                              name={p.display_name || p.username}
+                              size="h-5 w-5"
+                              status={p.profiles?.status}
+                              showStatus={true}
+                              className="group-hover:border-[#00D1FF]/30 border border-white/10"
                             />
                           </div>
                           <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
@@ -1585,25 +1625,14 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-x-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
-              <div className="relative w-9 h-9 min-w-[36px] shrink-0 rounded-full overflow-hidden bg-zinc-800 group cursor-pointer">
-                {myProfile?.avatar_url ? (
-                  <img 
-                    src={myProfile.avatar_url} 
-                    alt="Avatar" 
-                    className="w-full h-full object-cover aspect-square" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-zinc-700">
-                    {myProfile?.display_name?.slice(0, 2).toUpperCase() || 'LM'}
-                  </div>
-                )}
-                {/* Bolinha de status */}
-                <StatusBadge 
-                  status={myProfile?.status || 'online'} 
-                  size="sm" 
-                  className="absolute bottom-0 right-0 border-2 border-[#050505]"
-                />
-              </div>
+              <UserAvatar 
+                avatarUrl={myProfile?.avatar_url}
+                name={myProfile?.display_name || myProfile?.username}
+                size="h-9 w-9"
+                status={myProfile?.status || 'online'}
+                showStatus={true}
+                className="cursor-pointer group"
+              />
             </PopoverTrigger>
             <PopoverPortal>
               <PopoverContent 
@@ -1742,16 +1771,13 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
               ) : (
                 <>
                   <div className="relative mr-2">
-                    <Avatar className="h-6 w-6 border border-white/5">
-                      <AvatarImage src={activeDMFriend?.avatar_url || ""} />
-                      <AvatarFallback className="text-[8px] bg-zinc-800 text-zinc-400">
-                        {activeDMFriend?.username.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <StatusBadge 
-                      status={activeDMFriend?.id ? (profilesCache[activeDMFriend.id]?.status || activeDMFriend.status) : activeDMFriend?.status} 
-                      size="sm" 
-                      className="absolute -bottom-0.5 -right-0.5 border-[1px] border-[#0e0e11]" 
+                    <UserAvatar 
+                      avatarUrl={activeDMFriend?.avatar_url}
+                      name={activeDMFriend?.display_name || activeDMFriend?.username}
+                      size="h-6 w-6"
+                      status={activeDMFriend?.id ? (profilesCache[activeDMFriend.id]?.status || activeDMFriend.status) : activeDMFriend?.status}
+                      showStatus={true}
+                      className="border border-white/5"
                     />
                   </div>
                   {activeDMFriend && (
@@ -1821,18 +1847,14 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                           }
                         } : undefined}
                       >
-                        <Avatar className="h-10 w-10 mt-0.5 border border-white/5 hover:opacity-90 transition-opacity">
-                          <AvatarImage src={authorProfile?.avatar_url || ""} />
-                          <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                            {(authorProfile?.display_name || authorProfile?.username || "?").substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </UserProfileCard>
-                      <StatusBadge 
-                        status={currentAuthorStatus} 
-                        size="md" 
-                        className="absolute bottom-0 right-0 border-2 border-[#0e0e11]" 
-                      />
+                        <UserAvatar 
+                          avatarUrl={authorProfile?.avatar_url}
+                          name={authorProfile?.display_name || authorProfile?.username}
+                          size="h-10 w-10"
+                          status={currentAuthorStatus}
+                          showStatus={true}
+                          className="mt-0.5 border border-white/5 hover:opacity-90 transition-opacity"
+                        />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
