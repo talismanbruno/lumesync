@@ -856,8 +856,10 @@ function DashboardComponent() {
             channel_id: activeChannel.id, 
             user_id: myProfile.id, 
             content,
-            ...fileData
-          });
+            file_url: fileData.file_url,
+            file_type: fileData.file_type,
+            file_name: fileData.file_name
+          } as any);
         if (error) toast.error("Erro ao enviar mensagem");
       } else if (activeDMFriend) {
         const { error } = await supabase
@@ -866,8 +868,10 @@ function DashboardComponent() {
             sender_id: myProfile.id, 
             recipient_id: activeDMFriend.id, 
             content,
-            ...fileData
-          });
+            file_url: fileData.file_url,
+            file_type: fileData.file_type,
+            file_name: fileData.file_name
+          } as any);
         if (error) toast.error("Erro ao enviar DM");
       }
     } catch (err: any) {
