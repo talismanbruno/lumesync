@@ -41,48 +41,103 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }, [profile]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
-    if (!file || !profile) return;
+    if (!file) return;
     
     // 1. Preview Instantâneo (URL Local)
     const localUrl = URL.createObjectURL(file);
-    if (type === 'avatar') setAvatarPreview(localUrl);
-    if (type === 'banner') setBannerPreview(localUrl);
-
-    // 2. Upload Automático Imediato
-    const filePath = `${profile.id}/${Date.now()}_${type}`;
-    const { error } = await supabase.storage.from('chat-attachments').upload(filePath, file);
-    
-    if (error) {
-      toast.error(`Erro ao subir ${type}`);
-      return;
+    if (type === 'avatar') {
+      setAvatarPreview(localUrl);
+      setAvatarFile(file);
+    } else {
+      setBannerPreview(localUrl);
+      setBannerFile(file);
     }
-    
-    // 3. Pegar URL Pública e Salvar no Banco
-    const { data: { publicUrl } } = supabase.storage.from('chat-attachments').getPublicUrl(filePath);
-    
-    const updates = type === 'avatar' ? { avatar_url: publicUrl } : { banner_url: publicUrl };
-    await updateProfile(updates);
   };
 
   const handleSave = async () => {
-    if (!profile) return;
+    if (!user) return;
     setIsSaving(true);
+    
     try {
-      await updateProfile({
-        display_name: name.trim() || profile.username,
-        bio: bio.trim(),
-        avatar_url: avatarPreview,
-        banner_url: bannerPreview
-      });
-      onClose(); // Fecha o modal
-    } catch (err) {
-      console.error(err);
+      let finalAvatarUrl = profile?.avatar_url || null;
+      let finalBannerUrl = profile?.banner_url || null;
+
+      // 1. UPLOAD REAL DO AVATAR (SE O USUÁRIO SELECIONOU UM NOVO ARQUIVO)
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop() || 'png';
+        const filePath = `${user.id}/avatar_${Date.now()}.${fileExt}`;
+        
+        const { error: uploadErr } = await supabase.storage
+          .from('chat-attachments')
+          .upload(filePath, avatarFile, { upsert: true });
+          
+        if (uploadErr) throw new Error("Falha no upload do avatar: " + uploadErr.message);
+        
+        const { data } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+          
+        finalAvatarUrl = data.publicUrl;
+      }
+
+      // 2. UPLOAD REAL DO BANNER (SE O USUÁRIO SELECIONOU UM NOVO ARQUIVO)
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop() || 'png';
+        const filePath = `${user.id}/banner_${Date.now()}.${fileExt}`;
+        
+        const { error: uploadBannerErr } = await supabase.storage
+          .from('chat-attachments')
+          .upload(filePath, bannerFile, { upsert: true });
+          
+        if (uploadBannerErr) throw new Error("Falha no upload do banner: " + uploadBannerErr.message);
+        
+        const { data } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+          
+        finalBannerUrl = data.publicUrl;
+      }
+
+      // 3. ATUALIZAÇÃO NO BANCO COM AS URLS PÚBLICAS REAIS (NUNCA USAR BLOB:)
+      const { data: updatedProfile, error: dbError } = await supabase
+        .from('profiles')
+        .update({
+          display_name: name.trim() || profile?.username,
+          bio: bio.trim(),
+          avatar_url: finalAvatarUrl,
+          banner_url: finalBannerUrl
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      // 4. ATUALIZAÇÃO DO ESTADO GLOBAL COM OS DADOS REAIS DO BANCO
+      if (updatedProfile) {
+        // We use setProfile from context indirectly via updateProfile or direct update if needed
+        // but here we should follow the exact request's setProfile logic if available.
+        // The useAuth hook provides updateProfile which does setProfile.
+        await updateProfile({
+          display_name: name.trim() || profile?.username,
+          bio: bio.trim(),
+          avatar_url: finalAvatarUrl,
+          banner_url: finalBannerUrl
+        });
+      }
+      
+      toast.success("Perfil salvo com sucesso!");
+      onClose();
+    } catch (err: any) {
+      console.error("[Save Profile Error]:", err);
+      toast.error(err.message || "Erro ao salvar perfil");
     } finally {
       setIsSaving(false);
     }
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
