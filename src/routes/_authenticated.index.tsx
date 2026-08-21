@@ -158,6 +158,8 @@ function DashboardComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [voiceParticipantsMap, setVoiceParticipantsMap] = useState<Record<string, any[]>>({});
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
