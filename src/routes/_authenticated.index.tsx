@@ -35,6 +35,7 @@ import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { SettingsModal } from "@/components/ui/SettingsModal";
+import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
