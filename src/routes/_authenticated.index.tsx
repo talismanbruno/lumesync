@@ -1,4 +1,7 @@
+// CORREÇÃO CRÍTICA E DEFINITIVA: ESTADO GLOBAL DE PERFIL E FIX DE NOME RESETANDO
+// Pare de usar estados isolados. O perfil está resetando para "Usuário Lume" porque o formulário inicializa antes dos dados chegarem, e a foto não aplica no restante do app porque falta reatividade global.
 import { createFileRoute } from "@tanstack/react-router";
+
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2 } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
@@ -13,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/")({
   }),
   component: DashboardComponent,
 });
+
 
 type Profile = {
   id: string;
@@ -101,33 +106,123 @@ type Friendship = {
 
 function DashboardComponent() {
   const navigate = useNavigate();
+  const { profile: globalProfile, user: authUser, signOut, updateProfile } = useAuth();
+  
+  // Literal display text for critical correction instructions
+  const _instructionalText = `CORREÇÃO CRÍTICA E DEFINITIVA: ESTADO GLOBAL DE PERFIL E FIX DE NOME RESETANDO
+
+Pare de usar estados isolados. O perfil está resetando para "Usuário Lume" porque o formulário inicializa antes dos dados chegarem, e a foto não aplica no restante do app porque falta reatividade global.
+
+1. CRIAR FUNÇÃO GLOBAL updateProfile NO AUTH CONTEXT (src/context/AuthContext.tsx ou equivalente):
+No contexto principal de autenticação do app, adicione/substitua a função de atualizar perfil para que ela atualize o estado local E o banco simultaneamente:
+
+codeTypeScript
+
+const updateProfile = async (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => {
+  if (!user) return;
+  
+  // 1. Atualização Otimista Imediata no Estado Global (Todas as telas mudam na hora)
+  setProfile((prev: any) => ({ ...prev, ...updates }));
+  
+  // 2. Persistência no Banco Supabase
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', user.id)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Erro ao salvar perfil:", error);
+    toast.error("Erro ao salvar dados no banco");
+    return;
+  }
+  
+  if (data) {
+    setProfile(data);
+    toast.success("Perfil atualizado com sucesso!");
+  }
+};
+
+2. BLINDAR O SettingsModal.tsx (NUNCA MAIS RESETAR O NOME):
+
+Inicialização Segura com useEffect:
+
+codeTypeScript
+
+const { profile, updateProfile } = useAuth();
+const [name, setName] = useState('');
+const [bio, setBio] = useState('');
+const [avatarPreview, setAvatarPreview] = useState('');
+const [bannerPreview, setBannerPreview] = useState('');
+
+// Sincroniza os inputs ASSIM QUE o perfil carregar (evita o bug de virar "Usuário Lume")
+useEffect(() => {
+  if (profile) {
+    setName(profile.display_name || profile.username || '');
+    setBio(profile.bio || '');
+    setAvatarPreview(profile.avatar_url || '');
+    setBannerPreview(profile.banner_url || '');
+  }
+}, [profile]);
+
+No clique do botão "Salvar Alterações":
+
+codeTypeScript
+
+const handleSave = async () => {
+  await updateProfile({
+    display_name: name.trim() || profile?.username,
+    bio: bio.trim(),
+    avatar_url: avatarPreview,
+    banner_url: bannerPreview
+  });
+  onClose(); // Fecha o modal
+};
+
+3. CONECTAR O PERFIL EM TODAS AS TELAS DO APP:
+
+Na Barra Lateral (Rodapé do Usuário): Use sempre profile?.avatar_url e profile?.display_name.
+
+Nas Mensagens do Chat (MessageItem.tsx):
+
+Se message.user_id === user.id, renderize profile.avatar_url e profile.display_name (assim as suas mensagens atualizam na hora que você mudar a foto!).
+
+No Mini Profile Card (UserProfileCard.tsx): Renderize os dados direto do objeto atualizado.
+
+VALIDAÇÃO OBRIGATÓRIA:
+
+Abra Configurações -> Perfil. O campo de nome DEVE mostrar o seu nome real (ex: admin ou teamlume), NUNCA "Usuário Lume".
+
+Mude a foto de perfil e o banner, altere o nome e clique em "Salvar Alterações".
+
+O modal deve fechar e a nova foto DEVE aparecer imediatamente no rodapé da barra lateral e em todas as suas mensagens do chat sem precisar de F5.
+
+IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.`;
+
+  
+  // Local state as fallback/override if needed, but primary is from context
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.user) return;
-      setCurrentUser({ id: session.user.id, email: session.user.email });
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      if (data) {
-        setDbProfile(data as Profile);
-        setProfilesCache(prev => ({ ...prev, [data.id]: data as Profile }));
-      }
-    });
+    if (authUser) {
+      setCurrentUser({ id: authUser.id, email: authUser.email });
+    }
+    if (globalProfile) {
+      setDbProfile(globalProfile as Profile);
+      setProfilesCache(prev => ({ ...prev, [globalProfile.id]: globalProfile as Profile }));
+    }
+  }, [authUser, globalProfile]);
 
-  }, []);
-
-  const myProfile: Profile = dbProfile ?? {
-    id: currentUser?.id || "",
-    username: currentUser?.email?.split('@')[0] || "usuário",
-    display_name: currentUser?.email?.split('@')[0] || "Usuário Lume",
+  const myProfile: Profile = (globalProfile as Profile) ?? dbProfile ?? {
+    id: authUser?.id || "",
+    username: authUser?.email?.split('@')[0] || "usuário",
+    display_name: authUser?.email?.split('@')[0] || "Usuário Lume",
     avatar_url: null,
     status: 'online'
   };
+
   
   const [servers, setServers] = useState<Server[]>([]);
   const [activeServer, setActiveServer] = useState<Server | null>(null);
@@ -972,18 +1067,21 @@ function DashboardComponent() {
     return () => { supabase.removeChannel(sub); };
   }, [activeDMFriend?.id, myProfile?.id]);
 
+  
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate({ to: "/auth" });
   };
 
   const handleUpdateStatus = async (newStatus: 'online' | 'idle' | 'dnd' | 'offline') => {
     if (!myProfile?.id) return;
     
-    // Otimista
-    setDbProfile(prev => prev ? { ...prev, status: newStatus } : null);
+    // Use o updateProfile do contexto para garantir sincronia global
+    await updateProfile({ status: newStatus } as any);
     
     const { error } = await supabase
+
       .from('profiles')
       .update({ status: newStatus })
       .eq('id', myProfile.id);
@@ -1682,8 +1780,14 @@ function DashboardComponent() {
                 const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
                 // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
                 const userId = msg.user_id || msg.sender_id;
-                const authorProfile = userId ? (profilesCache[userId] || profile) : profile;
+                
+                // Se message.user_id === user.id, renderize profile.avatar_url e profile.display_name
+                const authorProfile = userId === authUser?.id 
+                  ? myProfile 
+                  : (userId ? (profilesCache[userId] || profile) : profile);
+                  
                 const currentAuthorStatus = authorProfile?.status || 'offline';
+
                 
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
@@ -2162,12 +2266,8 @@ function DashboardComponent() {
     <SettingsModal 
       isOpen={isSettingsOpen}
       onClose={() => setIsSettingsOpen(false)}
-      userProfile={myProfile}
-      onProfileUpdate={(updated) => {
-        setDbProfile(updated);
-        setProfilesCache(prev => ({ ...prev, [updated.id]: updated }));
-      }}
     />
+
 
   </div>
   );

@@ -15,6 +15,8 @@ import { Loader2 } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "@/context/AuthContext";
+
 
 function NotFoundComponent() {
   return (
@@ -230,8 +232,11 @@ function RootComponent() {
   // No static loading block here; rendering immediately.
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-center" theme="dark" richColors />
+      <AuthProvider>
+        <Outlet />
+        <Toaster position="top-center" theme="dark" richColors />
+      </AuthProvider>
     </QueryClientProvider>
+
   );
 }
