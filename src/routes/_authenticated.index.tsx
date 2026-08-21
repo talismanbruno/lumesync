@@ -457,7 +457,7 @@ function DashboardComponent() {
 
   const fetchGifs = async (query: string) => {
     try {
-      const apiKey = "sXpGFDGZs0Dv1mmNFvYaGUvYwKX0P4Ww";
+      const apiKey = "GlVGYHqc3SyCE12HN0SOMsO92g1UGOyK";
       const endpoint = query 
         ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
