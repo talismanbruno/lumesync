@@ -2224,14 +2224,26 @@ function DashboardComponent() {
           ref={avatarUploadRef} 
           className="hidden" 
           accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'avatar')} 
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setAvatarPreview(URL.createObjectURL(file));
+              handleProfileImageUpload(file, 'avatar');
+            }
+          }} 
         />
         <input 
           type="file" 
           ref={bannerUploadRef} 
           className="hidden" 
           accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'banner')} 
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setBannerPreview(URL.createObjectURL(file));
+              handleProfileImageUpload(file, 'banner');
+            }
+          }} 
         />
 
         <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
