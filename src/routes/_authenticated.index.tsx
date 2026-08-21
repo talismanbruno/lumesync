@@ -1694,6 +1694,22 @@ function DashboardComponent() {
                 </>
               )}
               <div className="ml-auto flex items-center gap-4 text-zinc-500">
+                <button
+                  onClick={() => {
+                    const roomId = activeChannel 
+                      ? `group-call:${activeChannel.id}` 
+                      : `dm-call:${[myProfile.id, activeDMFriend?.id].sort().join('_')}`;
+                    
+                    // Em um app real, isso abriria a UI de voz no canal específico
+                    // Simulando o início da chamada
+                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' });
+                    setShowVoiceUI(true);
+                  }}
+                  className="p-1 hover:text-white transition-colors"
+                  title="Iniciar Chamada"
+                >
+                  <PhoneOff className="w-5 h-5 rotate-[135deg] text-emerald-500 hover:text-emerald-400" />
+                </button>
                 <Search size={18} className="cursor-pointer hover:text-white" />
                 <Settings size={18} className="cursor-pointer hover:text-white" />
                 <User size={18} className="cursor-pointer hover:text-white" />
