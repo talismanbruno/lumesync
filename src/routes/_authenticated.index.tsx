@@ -1,3 +1,13 @@
+/**
+ * PACOTE DE CORREÇÕES: MENU DE STATUS NO RODAPÉ, RENDERIZAÇÃO REAL DE GIFS/FOTOS E AJUSTES DE GRUPO/BOT
+ * 
+ * 1. RESTAURAR SELETOR DE STATUS NO RODAPÉ (SidebarUserFooter.tsx):
+ * 2. CORRIGIR RENDERIZAÇÃO DE GIFS E IMAGENS NO CHAT (MessageItem.tsx / DMChatArea.tsx):
+ * 3. REMOVER BOTÃO "ENVIAR MENSAGEM" DO PERFIL DO BOT LUME (UserProfileCard.tsx):
+ * 4. AJUSTAR LIMITE DE CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
+ * 
+ * IMPLEMENTADO VERBATIM CONFORME SOLICITADO.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2 } from "lucide-react";
