@@ -971,7 +971,7 @@ function DashboardComponent() {
     return () => { supabase.removeChannel(sub); };
   }, [activeDMFriend?.id, myProfile?.id]);
 
-  const { signOut, updateProfile } = useAuth();
+  
 
   const handleSignOut = async () => {
     await signOut();
