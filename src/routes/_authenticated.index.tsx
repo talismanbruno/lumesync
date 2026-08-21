@@ -1506,25 +1506,49 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                     {/* Background Presence List in Sidebar */}
                     <div className="ml-6 space-y-1">
                       {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
-                        <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group">
-                          <div className="relative">
-                            <UserAvatar 
-                              avatarUrl={p.avatar_url}
-                              name={p.display_name || p.username}
-                              size="h-5 w-5"
-                              status={p.profiles?.status}
-                              showStatus={true}
-                              className="group-hover:border-[#00D1FF]/30 border border-white/10"
-                            />
-                          </div>
-                          <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
-                            {p.display_name || p.username}
-                          </span>
+                        <UserProfileCard 
+                          user={{
+                            id: p.user_id,
+                            username: p.username,
+                            display_name: p.display_name,
+                            avatar_url: p.avatar_url,
+                            banner_url: p.banner_url,
+                            bio: p.bio,
+                            created_at: p.created_at,
+                            status: p.profiles?.status,
+                            is_verified: p.is_verified || p.user_id === LUME_BOT_ID
+                          }}
+                          isMe={p.user_id === myProfile.id}
+                          onEditClick={p.user_id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
+                          onMessageClick={p.user_id !== myProfile.id ? () => {
+                            const friend = friendships.find(f => f.friend_profile?.id === p.user_id)?.friend_profile;
+                            if (friend) {
+                              setActiveDMFriend(friend);
+                              setActiveChannel(null);
+                              setShowVoiceUI(false);
+                            }
+                          } : undefined}
+                        >
+                          <div className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group cursor-pointer">
+                            <div className="relative">
+                              <UserAvatar 
+                                avatarUrl={p.avatar_url}
+                                name={p.display_name || p.username}
+                                size="h-5 w-5"
+                                status={p.profiles?.status}
+                                showStatus={true}
+                                className="group-hover:border-[#00D1FF]/30 border border-white/10"
+                              />
+                            </div>
+                            <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
+                              {p.display_name || p.username}
+                            </span>
                           <div className="ml-auto flex gap-1">
                             {p.isMuted && <MicOff size={10} className="text-red-500" />}
                             {p.isDeafened && <Headphones size={10} className="text-red-500" />}
                           </div>
                         </div>
+                      </UserProfileCard>
                       ))}
                     </div>
                   </div>
