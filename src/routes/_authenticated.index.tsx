@@ -106,97 +106,8 @@ function DashboardComponent() {
   const navigate = useNavigate();
   const { profile: globalProfile, user: authUser, signOut, updateProfile } = useAuth();
   
-  // Literal display text for critical correction instructions
-  const _instructionalText = `CORREÇÃO CRÍTICA E DEFINITIVA: ESTADO GLOBAL DE PERFIL E FIX DE NOME RESETANDO
+  const LUME_BOT_ID = '00000000-0000-0000-0000-000000000001';
 
-Pare de usar estados isolados. O perfil está resetando para "Usuário Lume" porque o formulário inicializa antes dos dados chegarem, e a foto não aplica no restante do app porque falta reatividade global.
-
-1. CRIAR FUNÇÃO GLOBAL updateProfile NO AUTH CONTEXT (src/context/AuthContext.tsx ou equivalente):
-No contexto principal de autenticação do app, adicione/substitua a função de atualizar perfil para que ela atualize o estado local E o banco simultaneamente:
-
-codeTypeScript
-
-const updateProfile = async (updates: { display_name?: string; bio?: string; avatar_url?: string; banner_url?: string }) => {
-  if (!user) return;
-  
-  // 1. Atualização Otimista Imediata no Estado Global (Todas as telas mudam na hora)
-  setProfile((prev: any) => ({ ...prev, ...updates }));
-  
-  // 2. Persistência no Banco Supabase
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(updates)
-    .eq('id', user.id)
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Erro ao salvar perfil:", error);
-    toast.error("Erro ao salvar dados no banco");
-    return;
-  }
-  
-  if (data) {
-    setProfile(data);
-    toast.success("Perfil atualizado com sucesso!");
-  }
-};
-
-2. BLINDAR O SettingsModal.tsx (NUNCA MAIS RESETAR O NOME):
-
-Inicialização Segura com useEffect:
-
-codeTypeScript
-
-const { profile, updateProfile } = useAuth();
-const [name, setName] = useState('');
-const [bio, setBio] = useState('');
-const [avatarPreview, setAvatarPreview] = useState('');
-const [bannerPreview, setBannerPreview] = useState('');
-
-// Sincroniza os inputs ASSIM QUE o perfil carregar (evita o bug de virar "Usuário Lume")
-useEffect(() => {
-  if (profile) {
-    setName(profile.display_name || profile.username || '');
-    setBio(profile.bio || '');
-    setAvatarPreview(profile.avatar_url || '');
-    setBannerPreview(profile.banner_url || '');
-  }
-}, [profile]);
-
-No clique do botão "Salvar Alterações":
-
-codeTypeScript
-
-const handleSave = async () => {
-  await updateProfile({
-    display_name: name.trim() || profile?.username,
-    bio: bio.trim(),
-    avatar_url: avatarPreview,
-    banner_url: bannerPreview
-  });
-  onClose(); // Fecha o modal
-};
-
-3. CONECTAR O PERFIL EM TODAS AS TELAS DO APP:
-
-Na Barra Lateral (Rodapé do Usuário): Use sempre profile?.avatar_url e profile?.display_name.
-
-Nas Mensagens do Chat (MessageItem.tsx):
-
-Se message.user_id === user.id, renderize profile.avatar_url e profile.display_name (assim as suas mensagens atualizam na hora que você mudar a foto!).
-
-No Mini Profile Card (UserProfileCard.tsx): Renderize os dados direto do objeto atualizado.
-
-VALIDAÇÃO OBRIGATÓRIA:
-
-Abra Configurações -> Perfil. O campo de nome DEVE mostrar o seu nome real (ex: admin ou teamlume), NUNCA "Usuário Lume".
-
-Mude a foto de perfil e o banner, altere o nome e clique em "Salvar Alterações".
-
-O modal deve fechar e a nova foto DEVE aparecer imediatamente no rodapé da barra lateral e em todas as suas mensagens do chat sem precisar de F5.
-
-IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.`;
 
   
   // Local state as fallback/override if needed, but primary is from context
@@ -262,9 +173,11 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const LUME_BOT_ID = "00000000-0000-0000-0000-000000000001";
+  
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
+
   
   const {
     participants,
@@ -289,6 +202,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
 
   // Fetch servers
   useEffect(() => {
@@ -1355,23 +1269,49 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                   <Plus size={14} className="cursor-pointer hover:text-white" />
                 </div>
                 {/* CHAT FIXO DO BOT OFICIAL */}
-                <button
-                  onClick={() => {
+                <UserProfileCard
+                  user={{
+                    id: LUME_BOT_ID,
+                    username: 'lume',
+                    display_name: 'Lume',
+                    avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                    status: 'online',
+                    is_verified: true,
+                    bio: 'Bot oficial do Lume. Aqui você recebe as últimas novidades e atualizações da plataforma.'
+                  }}
+                  isMe={false}
+                  onMessageClick={() => {
                     setActiveDMFriend({
                       id: LUME_BOT_ID,
                       username: 'lume',
                       display_name: 'Lume',
                       avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
-                      status: 'online'
-                    });
+                      status: 'online',
+                      is_verified: true
+                    } as Profile);
                     setActiveChannel(null);
                     setShowVoiceUI(false);
                     markAsRead(LUME_BOT_ID);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
-                    activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                  }`}
                 >
+                  <button
+                    onClick={() => {
+                      setActiveDMFriend({
+                        id: LUME_BOT_ID,
+                        username: 'lume',
+                        display_name: 'Lume',
+                        avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                        status: 'online',
+                        is_verified: true
+                      } as Profile);
+                      setActiveChannel(null);
+                      setShowVoiceUI(false);
+                      markAsRead(LUME_BOT_ID);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
+                      activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    }`}
+                  >
                   <div className="relative shrink-0">
                     <img 
                       src="https://i.ibb.co/99YTNvGS/image.png" 
@@ -1388,7 +1328,8 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                     </div>
                     <span className="text-xs text-zinc-500 truncate">Canal de Novidades e Atualizações</span>
                   </div>
-                </button>
+                  </button>
+                </UserProfileCard>
 
                 {friendships
                   .filter(f => f.status === 'accepted' && f.friend_profile?.id !== LUME_BOT_ID)
@@ -1504,25 +1445,49 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                     {/* Background Presence List in Sidebar */}
                     <div className="ml-6 space-y-1">
                       {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
-                        <div key={p.user_id} className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group">
-                          <div className="relative">
-                            <UserAvatar 
-                              avatarUrl={p.avatar_url}
-                              name={p.display_name || p.username}
-                              size="h-5 w-5"
-                              status={p.profiles?.status}
-                              showStatus={true}
-                              className="group-hover:border-[#00D1FF]/30 border border-white/10"
-                            />
-                          </div>
-                          <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
-                            {p.display_name || p.username}
-                          </span>
+                        <UserProfileCard 
+                          user={{
+                            id: p.user_id,
+                            username: p.username,
+                            display_name: p.display_name,
+                            avatar_url: p.avatar_url,
+                            banner_url: p.banner_url,
+                            bio: p.bio,
+                            created_at: p.created_at,
+                            status: p.profiles?.status,
+                            is_verified: p.is_verified || p.user_id === LUME_BOT_ID
+                          }}
+                          isMe={p.user_id === myProfile.id}
+                          onEditClick={p.user_id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
+                          onMessageClick={p.user_id !== myProfile.id ? () => {
+                            const friend = friendships.find(f => f.friend_profile?.id === p.user_id)?.friend_profile;
+                            if (friend) {
+                              setActiveDMFriend(friend);
+                              setActiveChannel(null);
+                              setShowVoiceUI(false);
+                            }
+                          } : undefined}
+                        >
+                          <div className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group cursor-pointer">
+                            <div className="relative">
+                              <UserAvatar 
+                                avatarUrl={p.avatar_url}
+                                name={p.display_name || p.username}
+                                size="h-5 w-5"
+                                status={p.profiles?.status}
+                                showStatus={true}
+                                className="group-hover:border-[#00D1FF]/30 border border-white/10"
+                              />
+                            </div>
+                            <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
+                              {p.display_name || p.username}
+                            </span>
                           <div className="ml-auto flex gap-1">
                             {p.isMuted && <MicOff size={10} className="text-red-500" />}
                             {p.isDeafened && <Headphones size={10} className="text-red-500" />}
                           </div>
                         </div>
+                      </UserProfileCard>
                       ))}
                     </div>
                   </div>
@@ -1626,24 +1591,20 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
             isMe={true}
             onEditClick={() => setIsSettingsOpen(true)}
           >
-            <div className="hidden" /> 
-          </UserProfileCard>
-
-          
-          <div 
-            className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
-          >
-            <div className="flex items-center gap-1 w-full min-w-0">
-              <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-              {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+            <div 
+              className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
+            >
+              <div className="flex items-center gap-1 w-full min-w-0">
+                <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+                {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+              </div>
+              <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
+                {myProfile.status === 'online' ? 'Disponível' : 
+                 myProfile.status === 'idle' ? 'Ausente' : 
+                 myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
+              </p>
             </div>
-            <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-              {myProfile.status === 'online' ? 'Disponível' : 
-               myProfile.status === 'idle' ? 'Ausente' : 
-               myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-            </p>
-          </div>
+          </UserProfileCard>
           
           <button 
             onClick={() => setIsSettingsOpen(true)}
@@ -1663,40 +1624,9 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
 
   {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
   <main className="flex-1 min-w-0 h-full bg-[#0e0e11] flex flex-col relative overflow-hidden pt-12 md:pt-0">
+    <div className="flex flex-1 flex-col overflow-hidden">
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <div className="flex flex-1 flex-col overflow-hidden">
         {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
               participants={participants}
@@ -1781,7 +1711,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                 return (
                   <div key={msg.id || index} className="flex gap-4 group">
                     <div className="relative h-fit">
-                      <UserProfileCard 
+                      <UserProfileCard
                         user={{
                           id: userId || "",
                           username: authorProfile?.username || "usuário",
@@ -1790,10 +1720,11 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                           banner_url: authorProfile?.banner_url,
                           bio: authorProfile?.bio,
                           created_at: authorProfile?.created_at,
-                          status: currentAuthorStatus
+                          status: currentAuthorStatus,
+                          is_verified: authorProfile?.is_verified || authorProfile?.id === LUME_BOT_ID
                         }}
                         isMe={userId === myProfile.id}
-                        onEditClick={() => setIsSettingsOpen(true)}
+                        onEditClick={userId === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
                         onMessageClick={userId !== myProfile.id ? () => {
                           const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
                           if (friend) {
@@ -1826,11 +1757,20 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                               banner_url: authorProfile?.banner_url,
                               bio: authorProfile?.bio,
                               created_at: authorProfile?.created_at,
-                              status: currentAuthorStatus
+                              status: currentAuthorStatus,
+                              is_verified: authorProfile?.is_verified || authorProfile?.id === LUME_BOT_ID
                             }}
                             isMe={userId === myProfile.id}
-                        onEditClick={() => setIsSettingsOpen(true)}
-
+                            onEditClick={userId === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
+                            onMessageClick={userId !== myProfile.id ? () => {
+                              const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
+                              if (friend) {
+                                setActiveDMFriend(friend as Profile);
+                                setActiveChannel(null);
+                                setShowVoiceUI(false);
+                                markAsRead(userId);
+                              }
+                            } : undefined}
                           >
                             <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
                               {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
@@ -1896,7 +1836,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
               <div ref={chatEndRef} />
             </div>
 
-            {!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') ? (
+            {isBotChat ? (
               myProfile?.is_admin ? (
                 <div className="p-4 pt-0">
                   <form 
@@ -2044,11 +1984,12 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                       }
                     }}
                     placeholder={
-                      !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')
+                      isBotChat
+
                         ? (myProfile.is_admin ? "Disparar atualização oficial..." : "Canal oficial de transmissão somente leitura")
                         : (activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`)
                     }
-                    disabled={!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') && !myProfile.is_admin}
+                    disabled={isBotChat && !myProfile.is_admin}
                     className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0 disabled:opacity-50"
 
                   />
@@ -2254,7 +2195,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
       onClose={() => setIsSettingsOpen(false)}
     />
 
-
-  </div>
+    </div>
   );
+
 }
