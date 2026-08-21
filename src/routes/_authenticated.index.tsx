@@ -2023,6 +2023,100 @@ function DashboardComponent() {
       </div>
     </main>
 
+    {/* Modal de Edição de Perfil */}
+    <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
+      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-[480px] p-0 overflow-hidden rounded-2xl shadow-2xl">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#00D1FF]" />
+            Editar Perfil
+          </DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            Personalize sua presença no Lume. GIFs são permitidos!
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="p-6 space-y-6">
+          {/* Preview do Banner/Avatar */}
+          <div className="relative group/banner cursor-pointer" onClick={() => bannerUploadRef.current?.click()}>
+            <div 
+              className="h-32 w-full rounded-xl bg-cover bg-center border border-white/5 relative overflow-hidden"
+              style={{ backgroundImage: editBannerUrl ? `url(${editBannerUrl})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
+            >
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            
+            <div 
+              className="absolute -bottom-6 left-6 group/avatar cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); avatarUploadRef.current?.click(); }}
+            >
+              <Avatar className="h-20 w-20 border-4 border-[#121214] shadow-xl">
+                <AvatarImage src={editAvatarUrl || ""} className="object-cover" />
+                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
+                  {myProfile.username.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Nome de Exibição</label>
+              <Input 
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                placeholder="Como você quer ser chamado?"
+                className="bg-[#050505] border-white/5 focus:border-[#00D1FF]/50 text-white h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-zinc-500 tracking-widest">Sobre Mim (Bio)</label>
+              <textarea 
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Conte um pouco sobre você..."
+                className="w-full bg-[#050505] border border-white/5 focus:border-[#00D1FF]/50 text-white rounded-md p-3 text-sm min-h-[100px] outline-none transition-colors resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <input 
+          type="file" 
+          ref={avatarUploadRef} 
+          className="hidden" 
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'avatar')} 
+        />
+        <input 
+          type="file" 
+          ref={bannerUploadRef} 
+          className="hidden" 
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && handleProfileImageUpload(e.target.files[0], 'banner')} 
+        />
+
+        <DialogFooter className="p-6 bg-[#0a0a0c] border-t border-white/5">
+          <Button variant="ghost" onClick={() => setIsEditingProfile(false)} className="text-zinc-400 hover:text-white">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSaveProfile}
+            disabled={isUploading}
+            className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold px-8 glow-sm"
+          >
+            {isUploading ? "Enviando..." : "Salvar Alterações"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
   </div>
   );
 }
