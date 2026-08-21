@@ -182,6 +182,9 @@ function RootComponent() {
           if (!upsertError && newProfile) {
             profile = newProfile;
           }
+        } else if (profile.status !== 'offline' && profile.status !== 'dnd' && profile.status !== 'idle') {
+          // AUTO-ONLINE ON LOGIN: If profile exists and not invisible/dnd/idle, set to online
+          await supabase.from('profiles').update({ status: 'online' }).eq('id', session.user.id);
         }
 
         if (!mounted) return;
