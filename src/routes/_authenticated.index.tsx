@@ -1175,7 +1175,19 @@ function DashboardComponent() {
                           className="absolute bottom-0 right-0 border-2 border-[#121212]" 
                         />
                       </div>
-                      <span className="flex-1 text-left truncate font-medium">{friend.display_name || friend.username}</span>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="font-medium">{friend.display_name || friend.username}</span>
+                          {friend.id === LUME_BOT_ID && (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
+                          )}
+                        </div>
+                      </div>
+                      {unreadCounts[friend.id] > 0 && (
+                        <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                          {unreadCounts[friend.id]}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
