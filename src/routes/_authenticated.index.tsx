@@ -1896,7 +1896,7 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
               <div ref={chatEndRef} />
             </div>
 
-            {!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume') ? (
+            {isBotChat ? (
               myProfile?.is_admin ? (
                 <div className="p-4 pt-0">
                   <form 
