@@ -797,6 +797,8 @@ function DashboardComponent() {
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !myProfile?.id) return;
+    // Canal oficial somente leitura: nenhum envio permitido
+    if (!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')) return;
     
     const content = newMessage;
     setNewMessage("");
