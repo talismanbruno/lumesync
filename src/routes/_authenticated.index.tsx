@@ -157,8 +157,10 @@ function DashboardComponent() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editBio, setEditBio] = useState("");
-  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(null);
-  const [editBannerUrl, setEditBannerUrl] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
@@ -434,7 +436,14 @@ function DashboardComponent() {
       const item = items[i];
       if (item && item.type && item.type.indexOf("image") !== -1) {
         const file = item.getAsFile();
-        if (file) handleFileUpload(file);
+        if (file) {
+          setSelectedFile(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setAttachmentPreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
       }
     }
   };
@@ -802,23 +811,71 @@ function DashboardComponent() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() || !myProfile?.id) return;
+    if ((!newMessage.trim() && !selectedFile) || !myProfile?.id) return;
+    
     // Canal oficial somente leitura: nenhum envio permitido
     if (!activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume')) return;
     
     const content = newMessage;
+    const fileToUpload = selectedFile;
+    
     setNewMessage("");
+    setSelectedFile(null);
+    setAttachmentPreview(null);
 
-    if (activeChannel) {
-      const { error } = await supabase
-        .from("messages")
-        .insert({ channel_id: activeChannel.id, user_id: myProfile.id, content });
-      if (error) toast.error("Erro ao enviar mensagem");
-    } else if (activeDMFriend) {
-      const { error } = await supabase
-        .from("direct_messages")
-        .insert({ sender_id: myProfile.id, recipient_id: activeDMFriend.id, content });
-      if (error) toast.error("Erro ao enviar DM");
+    try {
+      let fileData = {
+        file_url: null as string | null,
+        file_type: null as string | null,
+        file_name: null as string | null
+      };
+
+      if (fileToUpload) {
+        const filePath = `${myProfile.id}/${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage
+          .from('chat-attachments')
+          .upload(filePath, fileToUpload);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+          
+        fileData = {
+          file_url: publicUrl,
+          file_type: fileToUpload.type,
+          file_name: fileToUpload.name
+        };
+      }
+
+      if (activeChannel) {
+        const { error } = await supabase
+          .from("messages")
+          .insert({ 
+            channel_id: activeChannel.id, 
+            user_id: myProfile.id, 
+            content,
+            file_url: fileData.file_url,
+            file_type: fileData.file_type,
+            file_name: fileData.file_name
+          } as any);
+        if (error) toast.error("Erro ao enviar mensagem");
+      } else if (activeDMFriend) {
+        const { error } = await supabase
+          .from("direct_messages")
+          .insert({ 
+            sender_id: myProfile.id, 
+            recipient_id: activeDMFriend.id, 
+            content,
+            file_url: fileData.file_url,
+            file_type: fileData.file_type,
+            file_name: fileData.file_name
+          } as any);
+        if (error) toast.error("Erro ao enviar DM");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao enviar: " + err.message);
     }
   };
 
@@ -911,8 +968,8 @@ function DashboardComponent() {
   const openProfileEditor = () => {
     setEditDisplayName(myProfile.display_name || "");
     setEditBio(myProfile.bio || "");
-    setEditAvatarUrl(myProfile.avatar_url);
-    setEditBannerUrl(myProfile.banner_url || null);
+    setAvatarPreview(myProfile.avatar_url);
+    setBannerPreview(myProfile.banner_url || null);
     setIsEditingProfile(true);
   };
 
@@ -936,9 +993,9 @@ function DashboardComponent() {
         .getPublicUrl(filePath);
 
       if (type === 'avatar') {
-        setEditAvatarUrl(publicUrl);
+        setAvatarPreview(publicUrl);
       } else {
-        setEditBannerUrl(publicUrl);
+        setBannerPreview(publicUrl);
       }
       toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
     } catch (error: any) {
@@ -957,9 +1014,9 @@ function DashboardComponent() {
         .update({
           display_name: editDisplayName,
           bio: editBio,
-          avatar_url: editAvatarUrl,
-          banner_url: editBannerUrl
-        })
+          avatar_url: avatarPreview,
+          banner_url: bannerPreview
+        } as any)
         .eq('id', myProfile.id);
         
       if (error) throw error;
@@ -972,8 +1029,8 @@ function DashboardComponent() {
         ...myProfile,
         display_name: editDisplayName,
         bio: editBio,
-        avatar_url: editAvatarUrl,
-        banner_url: editBannerUrl
+        avatar_url: avatarPreview,
+        banner_url: bannerPreview
       };
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
@@ -1824,9 +1881,43 @@ function DashboardComponent() {
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setSelectedFile(file);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setAttachmentPreview(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
                 accept="image/*,video/*,.pdf,.zip,.doc,.docx"
               />
+
+              {attachmentPreview && (
+                <div className="absolute bottom-full left-4 mb-2 animate-in fade-in slide-in-from-bottom-2 z-10">
+                  <div className="relative group bg-zinc-900 border border-zinc-800 rounded-xl p-2 shadow-2xl overflow-hidden">
+                    {selectedFile?.type.startsWith('image/') ? (
+                      <img src={attachmentPreview} className="max-h-32 rounded-lg object-contain" alt="Preview" />
+                    ) : (
+                      <div className="flex items-center gap-2 px-2 py-4 text-xs text-zinc-300">
+                        <FileText className="w-8 h-8 text-[#00D1FF]" />
+                        <span className="truncate max-w-[150px]">{selectedFile?.name}</span>
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => {
+                        setAttachmentPreview(null);
+                        setSelectedFile(null);
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 bg-[#121212] rounded-xl px-2 focus-within:ring-1 focus-within:ring-[#00D1FF]/50 transition-all">
                 <button 
@@ -1870,7 +1961,7 @@ function DashboardComponent() {
                     <button 
                       type="submit" 
                       className="p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors"
-                      disabled={!newMessage.trim() && !isUploading}
+                      disabled={(!newMessage.trim() && !selectedFile) || isUploading}
                     >
                       <Send size={18} />
                     </button>
@@ -2066,8 +2157,11 @@ function DashboardComponent() {
           <div className="relative group/banner cursor-pointer" onClick={() => bannerUploadRef.current?.click()}>
             <div 
               className="h-32 w-full rounded-xl bg-cover bg-center border border-white/5 relative overflow-hidden"
-              style={{ backgroundImage: editBannerUrl ? `url(${editBannerUrl})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
+              style={{ backgroundImage: bannerPreview ? `url(${bannerPreview})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))' }}
             >
+              {bannerPreview && (
+                <img src={bannerPreview} className="w-full h-full object-cover" alt="Banner preview" />
+              )}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera className="w-8 h-8 text-white" />
               </div>
@@ -2078,10 +2172,16 @@ function DashboardComponent() {
               onClick={(e) => { e.stopPropagation(); avatarUploadRef.current?.click(); }}
             >
               <Avatar className="h-20 w-20 border-4 border-[#121214] shadow-xl">
-                <AvatarImage src={editAvatarUrl || ""} className="object-cover" />
-                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
-                  {myProfile.username.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
+                {avatarPreview ? (
+                  <img src={avatarPreview} className="w-full h-full object-cover rounded-full" alt="Avatar preview" />
+                ) : (
+                  <>
+                    <AvatarImage src={myProfile.avatar_url || ""} className="object-cover" />
+                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl font-bold">
+                      {myProfile.username.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </>
+                )}
               </Avatar>
               <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center border-4 border-transparent">
                 <Camera className="w-6 h-6 text-white" />
