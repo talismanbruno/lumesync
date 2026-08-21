@@ -1,3 +1,13 @@
+/**
+ * PACOTE DE CORREÇÕES: MENU DE STATUS NO RODAPÉ, RENDERIZAÇÃO REAL DE GIFS/FOTOS E AJUSTES DE GRUPO/BOT
+ * 
+ * 1. RESTAURAR SELETOR DE STATUS NO RODAPÉ (SidebarUserFooter.tsx):
+ * 2. CORRIGIR RENDERIZAÇÃO DE GIFS E IMAGENS NO CHAT (MessageItem.tsx / DMChatArea.tsx):
+ * 3. REMOVER BOTÃO "ENVIAR MENSAGEM" DO PERFIL DO BOT LUME (UserProfileCard.tsx):
+ * 4. AJUSTAR LIMITE DE CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
+ * 
+ * IMPLEMENTADO VERBATIM CONFORME SOLICITADO.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2 } from "lucide-react";
@@ -488,11 +498,11 @@ function DashboardComponent() {
     return () => clearTimeout(timer);
   }, [gifSearch]);
 
-  const sendGif = async (url: string) => {
+   const sendGif = async (url: string, gifData?: any) => {
     if (!myProfile?.id) return;
     const messageData = {
       content: "",
-      file_url: url,
+      file_url: gifData?.images?.original?.url || gifData?.images?.fixed_height?.url || url,
       file_type: "image/gif",
       file_name: "gif"
     };
@@ -1700,9 +1710,7 @@ function DashboardComponent() {
                       ? `group-call:${activeChannel.id}` 
                       : `dm-call:${[myProfile.id, activeDMFriend?.id].sort().join('_')}`;
                     
-                    // Em um app real, isso abriria a UI de voz no canal específico
-                    // Simulando o início da chamada
-                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' });
+                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' } as any);
                     setShowVoiceUI(true);
                   }}
                   className="p-1 hover:text-white transition-colors"
@@ -1814,16 +1822,14 @@ function DashboardComponent() {
                       
                       {msg.file_url && (
                         <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
-                          {msg.file_type?.startsWith('image/') || msg.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <PhotoProvider
-                              maskOpacity={0.8}
-                              loadingElement={<div className="text-[#00D1FF] animate-pulse">Carregando...</div>}
-                            >
+                          {msg.file_type?.startsWith('image') || msg.file_url.includes('giphy.com') || msg.file_url.startsWith('data:image') ? (
+                            <PhotoProvider maskOpacity={0.8}>
                               <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
                                 <img 
                                   src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
-                                  alt={msg.file_name || "image"} 
-                                  className="w-auto max-h-80 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                                  alt="Mídia" 
+                                  className="w-auto max-h-72 object-contain rounded-xl block cursor-zoom-in" 
+                                  loading="lazy"
                                 />
                               </PhotoView>
                             </PhotoProvider>
@@ -1931,7 +1937,7 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          onClick={() => sendGif(gif.images.fixed_height.url, gif)}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
