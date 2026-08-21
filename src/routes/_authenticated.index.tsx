@@ -472,7 +472,7 @@ function DashboardComponent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (gifSearch) fetchGifs(gifSearch);
+      fetchGifs(gifSearch);
     }, 500);
     return () => clearTimeout(timer);
   }, [gifSearch]);
