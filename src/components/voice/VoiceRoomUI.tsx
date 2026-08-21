@@ -10,7 +10,8 @@ interface VoiceRoomUIProps {
   isMuted: boolean;
   isDeafened: boolean;
   isSharingScreen: boolean;
-  screenStream: MediaStream | null; // Added screenStream prop
+  screenStream: MediaStream | null;
+  remoteVideoStreams: React.MutableRefObject<Map<string, MediaStream>>;
   toggleMute: () => void;
   toggleDeafen: () => void;
   toggleScreenShare: () => void;
@@ -50,24 +51,29 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">
         {/* Stage Area for Screen Sharing */}
-        {displayedStream ? (
+        {activeWatchingStream ? (
           <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300">
             <div className="w-full max-w-5xl relative group aspect-video bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)]">
               <video
-                ref={(el) => { if (el) el.srcObject = displayedStream; }}
+                ref={(el) => {
+                  if (el && activeWatchingStream.stream && el.srcObject !== activeWatchingStream.stream) {
+                    el.srcObject = activeWatchingStream.stream;
+                    el.play().catch(console.warn);
+                  }
+                }}
                 autoPlay
                 playsInline
                 className="w-full h-full object-contain"
               />
               <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                 <Avatar className="h-5 w-5 border border-white/10">
-                  <AvatarImage src={(activeStreamId === myProfile.id ? myProfile : activeParticipant)?.avatar_url || ""} />
+                  <AvatarImage src={participants.find(p => p.id === activeWatchingStream.userId)?.avatar_url || ""} />
                   <AvatarFallback className="text-[8px] bg-zinc-800">
-                    {(activeStreamId === myProfile.id ? myProfile : activeParticipant)?.username?.substring(0, 2).toUpperCase()}
+                    {activeWatchingStream.username.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs font-medium text-white">
-                  {activeStreamId === myProfile.id ? "Você está compartilhando a tela" : `Assistindo ${activeParticipant?.display_name || activeParticipant?.username}`}
+                  {activeWatchingStream.userId === myProfile.id ? "Você está compartilhando a tela" : `Assistindo ${activeWatchingStream.username}`}
                 </span>
                 <div className="flex items-center gap-1 bg-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold text-white ml-2">
                   AO VIVO
@@ -76,7 +82,7 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveStreamId(null)}
+                onClick={() => setActiveWatchingStream(null)}
                 className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full border border-white/10"
               >
                 Parar de Assistir
@@ -106,7 +112,15 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setActiveStreamId(myProfile.id)}
+                    onClick={() => {
+                      if (screenStream) {
+                        setActiveWatchingStream({
+                          userId: myProfile.id,
+                          username: myProfile.display_name || myProfile.username,
+                          stream: screenStream
+                        });
+                      }
+                    }}
                     className="h-8 w-8 bg-zinc-800/80 hover:bg-[#00D1FF] text-zinc-400 hover:text-black rounded-lg transition-all"
                   >
                     <Eye size={14} />
@@ -145,7 +159,19 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                         AO VIVO
                       </div>
                       <Button
-                        onClick={() => setActiveStreamId(p.id)}
+                        onClick={() => {
+                          const stream = remoteVideoStreams.current.get(p.id);
+                          if (stream) {
+                            setActiveWatchingStream({
+                              userId: p.id,
+                              username: p.display_name || p.username,
+                              stream: stream
+                            });
+                          } else {
+                            // Import toast if not available or just alert
+                            console.warn("Aguardando sinal de vídeo...");
+                          }
+                        }}
                         className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 text-[10px] h-7 px-3 font-bold rounded-lg glow-sm"
                       >
                         <Eye size={12} className="mr-1" />
