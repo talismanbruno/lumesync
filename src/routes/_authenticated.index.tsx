@@ -1039,23 +1039,6 @@ function DashboardComponent() {
     if (!myProfile?.id) return;
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          display_name: editDisplayName,
-          bio: editBio,
-          avatar_url: avatarPreview,
-          banner_url: bannerPreview
-        } as any)
-        .eq('id', myProfile.id);
-        
-      if (error) throw error;
-      
-      toast.success("Perfil atualizado com sucesso!");
-      setIsEditingProfile(false);
-      
-      // Update local state immediately
-      // Salvar URL pública antes de salvar perfil para persistência imediata
       const updated = {
         ...myProfile,
         display_name: editDisplayName,
