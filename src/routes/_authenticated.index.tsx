@@ -1925,7 +1925,8 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                     <Button type="submit" size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold h-8">
                       DISPARAR
                     </Button>
-                  </form>
+              </form>
+            )}
                 </div>
               ) : (
                 <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
