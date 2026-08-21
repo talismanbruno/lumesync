@@ -964,8 +964,8 @@ function DashboardComponent() {
   const openProfileEditor = () => {
     setEditDisplayName(myProfile.display_name || "");
     setEditBio(myProfile.bio || "");
-    setEditAvatarUrl(myProfile.avatar_url);
-    setEditBannerUrl(myProfile.banner_url || null);
+    setAvatarPreview(myProfile.avatar_url);
+    setBannerPreview(myProfile.banner_url || null);
     setIsEditingProfile(true);
   };
 
@@ -989,9 +989,9 @@ function DashboardComponent() {
         .getPublicUrl(filePath);
 
       if (type === 'avatar') {
-        setEditAvatarUrl(publicUrl);
+        setAvatarPreview(publicUrl);
       } else {
-        setEditBannerUrl(publicUrl);
+        setBannerPreview(publicUrl);
       }
       toast.success(`${type === 'avatar' ? 'Avatar' : 'Banner'} carregado!`);
     } catch (error: any) {
@@ -1010,9 +1010,9 @@ function DashboardComponent() {
         .update({
           display_name: editDisplayName,
           bio: editBio,
-          avatar_url: editAvatarUrl,
-          banner_url: editBannerUrl
-        })
+          avatar_url: avatarPreview,
+          banner_url: bannerPreview
+        } as any)
         .eq('id', myProfile.id);
         
       if (error) throw error;
@@ -1025,8 +1025,8 @@ function DashboardComponent() {
         ...myProfile,
         display_name: editDisplayName,
         bio: editBio,
-        avatar_url: editAvatarUrl,
-        banner_url: editBannerUrl
+        avatar_url: avatarPreview,
+        banner_url: bannerPreview
       };
       setDbProfile(updated);
       setProfilesCache(prev => ({ ...prev, [myProfile.id]: updated }));
