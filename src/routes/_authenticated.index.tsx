@@ -1846,8 +1846,6 @@ IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não i
                               }
                             } : undefined}
                           >
-
-                          >
                             <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
                               {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
                             </span>
