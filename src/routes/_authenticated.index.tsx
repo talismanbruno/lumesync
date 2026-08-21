@@ -1016,7 +1016,7 @@ function DashboardComponent() {
 
 
 
-      <div className="flex flex-1 flex-col bg-[#050505] overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
               participants={participants}
