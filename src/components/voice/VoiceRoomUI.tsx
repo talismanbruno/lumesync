@@ -64,20 +64,38 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
         {/* Stage Area for Screen Sharing */}
         {activeWatchingStream ? (
           <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 w-full h-full max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_30px_rgba(0,209,255,0.1)] relative group">
-            <video
-              ref={(el) => {
-                // @ts-ignore
-                videoRef.current = el;
-                if (el && activeWatchingStream.stream && el.srcObject !== activeWatchingStream.stream) {
-                  el.srcObject = activeWatchingStream.stream;
-                  el.play().catch(console.warn);
-                }
-              }}
-              autoPlay
-              playsInline
-              muted={activeWatchingStream.userId === myProfile.id}
-              className="w-full h-full object-contain mx-auto"
-            />
+            {/* Player de Vídeo com suporte a Mobile Autoplay */}
+            <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center bg-black rounded-2xl overflow-hidden">
+              <video
+                ref={(el) => {
+                  // @ts-ignore
+                  videoRef.current = el;
+                  if (el && activeWatchingStream.stream) {
+                    el.srcObject = activeWatchingStream.stream;
+                    el.play().catch((err) => console.warn("Video play error:", err));
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted // OBRIGATÓRIO PARA NÃO FICAR TELA PRETA NO MOBILE
+                className="w-full h-full max-h-[80vh] object-contain mx-auto"
+              />
+              
+              {/* Áudio da transmissão separado */}
+              <audio
+                ref={(el) => {
+                  if (el && activeWatchingStream.stream) {
+                    const audioTracks = activeWatchingStream.stream.getAudioTracks();
+                    if (audioTracks.length > 0) {
+                      el.srcObject = new MediaStream(audioTracks);
+                      el.play().catch((err) => console.warn("Audio play error:", err));
+                    }
+                  }
+                }}
+                autoPlay
+                playsInline
+              />
+            </div>
             
             {/* Header / Top Controls */}
             <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
