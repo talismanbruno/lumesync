@@ -35,6 +35,18 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       screenStream.getTracks().forEach(t => t.stop());
     }
     
+    // Remove participant from the table
+    if (channelId && myProfile?.id) {
+      try {
+        await supabase.from('voice_participants').delete().match({ 
+          channel_id: channelId, 
+          user_id: myProfile.id 
+        });
+      } catch (err) {
+        console.error("Error removing voice participant:", err);
+      }
+    }
+
     if (channelRef.current) {
       try {
         await channelRef.current.untrack();
@@ -52,7 +64,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     
     setParticipants([]);
     setScreenStream(null);
-  }, [screenStream]);
+  }, [screenStream, channelId, myProfile?.id]);
 
   const createPeerConnection = useCallback((userId: string, isInitiator: boolean, voiceChannel: any) => {
     if (peerConnections.current.has(userId)) return peerConnections.current.get(userId)!;
