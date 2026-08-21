@@ -1212,7 +1212,6 @@ function DashboardComponent() {
                       </button>
                     );
                   })}
-                })}
               </div>
             </div>
           ) : (
