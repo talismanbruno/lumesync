@@ -910,7 +910,7 @@ function DashboardComponent() {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'voice_calls',
+        table: 'voice_calls' as any,
         filter: `recipient_id=eq.${myProfile.id}`
       }, (payload: any) => {
         const call = payload.new;
@@ -925,9 +925,9 @@ function DashboardComponent() {
               label: "Atender",
               onClick: async () => {
                 await supabase
-                  .from('voice_calls')
+                  .from('voice_calls' as any)
                   .update({ status: 'active' } as any)
-                  .eq('id', call.id);
+                  .eq('id' as any, call.id);
                 
                 setActiveVoiceChannel({ 
                   id: call.room_key, 
@@ -942,9 +942,9 @@ function DashboardComponent() {
               label: "Recusar",
               onClick: async () => {
                 await supabase
-                  .from('voice_calls')
+                  .from('voice_calls' as any)
                   .update({ status: 'ended' } as any)
-                  .eq('id', call.id);
+                  .eq('id' as any, call.id);
               }
             },
             duration: 30000, // 30 segundos tocando
