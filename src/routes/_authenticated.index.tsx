@@ -179,6 +179,8 @@ function DashboardComponent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [dmGroups, setDmGroups] = useState<any[]>([]);
+  const [activeDMGroup, setActiveDMGroup] = useState<any | null>(null);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
@@ -669,6 +671,20 @@ function DashboardComponent() {
     }
   };
 
+  const fetchConversations = async () => {
+    if (!myProfile?.id) return;
+    
+    // Fetch Group DMs
+    const { data: groupsData, error: groupsError } = await supabase
+      .from('dm_groups')
+      .select('*, dm_group_members!inner(*)')
+      .eq('dm_group_members.user_id', myProfile.id);
+      
+    if (!groupsError && groupsData) {
+      setDmGroups(groupsData);
+    }
+  };
+
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
     
@@ -726,6 +742,7 @@ function DashboardComponent() {
 
   useEffect(() => {
     fetchFriendships();
+    fetchConversations();
     fetchUnreadCounts();
 
     const subFriends = supabase
@@ -2209,6 +2226,7 @@ function DashboardComponent() {
           
           toast.success("Grupo criado com sucesso!");
           await fetchConversations();
+          // We don't have setActiveDMGroup in state yet, but I'll add it
           setActiveDMGroup(group);
           setActiveDMFriend(null);
           setActiveChannel(null);
