@@ -340,15 +340,27 @@ function AuthPage() {
                   
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Senha</label>
-                    <Input 
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700"
-                      placeholder="No mínimo 8 caracteres"
-                      required
-                      minLength={8}
-                    />
+                    <div className="relative">
+                      <Input 
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pr-10"
+                        placeholder="No mínimo 8 caracteres"
+                        required
+                        minLength={8}
+                      />
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                          input.type = input.type === "password" ? "text" : "password";
+                        }}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </div>
                     <p className="text-[9px] text-zinc-600 px-1 pt-1 italic">
                       Use letras, números e símbolos para maior segurança.
                     </p>
