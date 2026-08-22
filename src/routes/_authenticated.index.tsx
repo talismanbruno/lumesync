@@ -1405,8 +1405,15 @@ function DashboardComponent() {
     const isImage = !!fileUrl && (msg.file_type?.startsWith('image') || fileUrl.startsWith('data:image'));
     const isVideo = !!fileUrl && (msg.file_type?.startsWith('video') || fileUrl.startsWith('data:video'));
 
+    const isRecent = new Date(msg.created_at).getTime() > Date.now() - 3000;
+
     return (
-      <div key={msg.id} className="flex gap-3 px-6 py-2 hover:bg-white/[0.02] transition-colors group">
+      <div 
+        key={msg.id} 
+        className={`flex gap-3 px-6 py-2 hover:bg-white/[0.02] transition-colors group ${
+          isRecent ? "animate-in fade-in slide-in-from-bottom-1 duration-260 motion-reduce:animate-none" : ""
+        }`}
+      >
         <UserProfileCard user={(author || { id: '', username: '?' }) as any} isMe={author?.id === myProfile.id}>
           <div className="shrink-0 cursor-pointer">
             <UserAvatar

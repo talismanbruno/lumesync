@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --animate-in: animate-in 0.2s var(--easing-lume);
+  --animate-out: animate-out 0.2s var(--easing-lume);
+  
+  --easing-lume: cubic-bezier(0.22, 1, 0.36, 1);
+  
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 260ms;
+}
+
 @layer base {
   :root {
     --background: 0 0% 2%;
