@@ -1686,10 +1686,11 @@ function DashboardComponent() {
                                   size="h-5 w-5" 
                                   className="rounded-full shrink-0 border border-white/5" 
                                 />
-                                <span className="text-[12px] text-zinc-400 group-hover:text-zinc-300 truncate transition-colors">
-                                  {participant.display_name || participant.username}
+                                <span className="text-[12px] text-zinc-400 group-hover:text-zinc-300 transition-colors flex items-center gap-1 min-w-0">
+                                  <span className="truncate">{participant.display_name || participant.username}</span>
+                                  <AdminVerifiedBadge isAdmin={participant.is_admin} size={10} />
                                   {participant.user_id === myProfile.id && (
-                                    <span className="ml-1 text-[10px] text-cyan-500/60">(Você)</span>
+                                    <span className="ml-1 text-[10px] text-cyan-500/60 shrink-0">(Você)</span>
                                   )}
                                 </span>
                               </div>
