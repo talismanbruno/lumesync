@@ -229,7 +229,11 @@ function DashboardComponent() {
   
   
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
+  const isOfficialLumeConversation = (profile: Profile | null) => {
+    if (!profile) return false;
+    return profile.id === LUME_BOT_ID || profile.username === 'lume';
+  };
+  const isBotChat = !activeChannel && isOfficialLumeConversation(activeDMFriend);
 
   
   const {
@@ -1025,7 +1029,7 @@ function DashboardComponent() {
     if ((!newMessage.trim() && !selectedFile) || !myProfile?.id) return;
     
     // Canal oficial somente leitura: somente Admins podem enviar
-    const isBotChat = !activeChannel && (activeDMFriend?.id === LUME_BOT_ID || activeDMFriend?.username === 'lume');
+    const isBotChat = !activeChannel && isOfficialLumeConversation(activeDMFriend);
     if (isBotChat && !myProfile.is_admin) return;
     
     const content = newMessage;
@@ -1842,7 +1846,7 @@ function DashboardComponent() {
               <div ref={chatEndRef} />
             </div>
 
-            {isReadOnly || !dmGroups.some(g => g.id === activeDMGroup?.id && g.dm_group_members?.some((m: any) => m.user_id === myProfile.id)) ? (
+            {isReadOnly || (activeDMGroup && !activeDMGroup.dm_group_members?.some((m: any) => m.user_id === myProfile.id)) ? (
               <div className="px-6 pb-6 pt-2 shrink-0">
                 <div className="flex items-center justify-center gap-2 bg-[#121212] border border-white/5 rounded-2xl py-3 text-xs text-zinc-600">
                   <Lock size={14} /> Canal somente leitura
