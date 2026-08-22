@@ -1097,7 +1097,7 @@ function DashboardComponent() {
 // Removed the blocking "Sincronizando Perfil..." interface.
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
+    <div className="flex h-full w-full overflow-hidden bg-transparent">
       {/* PAINEL DE INSTRUÇÕES (DEBUG) */}
       {/* Debug Panel removed per UI requirements */}
 
