@@ -16,7 +16,7 @@ export interface VoiceParticipant {
   screenStream?: MediaStream | null;
 }
 
-export function useVoiceRoom(channelId: string | null, myProfile: any) {
+export function useVoiceRoom(roomKey: string | null, myProfile: any) {
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isDeafened, setIsDeafened] = useState(false);
@@ -39,10 +39,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     }
     
     // Remove participant from the table
-    if (channelId && myProfile?.id) {
+    if (roomKey && myProfile?.id) {
       try {
         await supabase.from('voice_participants').delete().match({ 
-          channel_id: channelId, 
+          room_key: roomKey, 
           user_id: myProfile.id 
         });
       } catch (err) {
@@ -68,7 +68,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     
     setParticipants([]);
     setScreenStream(null);
-  }, [screenStream, channelId, myProfile?.id]);
+  }, [screenStream, roomKey, myProfile?.id]);
 
   const createPeerConnection = useCallback((userId: string, isInitiator: boolean, voiceChannel: any) => {
     if (peerConnections.current.has(userId)) return peerConnections.current.get(userId)!;
@@ -138,8 +138,8 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     return pc;
   }, [myProfile.id]);
 
-  const joinVoiceChannel = useCallback(async (cid: string) => {
-    if (!cid || !myProfile?.id) return;
+  const joinVoiceChannel = useCallback(async (rk: string) => {
+    if (!rk || !myProfile?.id) return;
     if (channelRef.current) return;
     
     let stream: MediaStream | null = null;
@@ -154,15 +154,15 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     // Register participant in the table
     try {
       await supabase.from('voice_participants').upsert({ 
-        channel_id: cid, 
+        room_key: rk, 
         user_id: myProfile.id 
       });
     } catch (err) {
       console.error("Error registering voice participant:", err);
     }
 
-    console.log(`[Lume Voice Room] Identidade: user.id=${myProfile.id}, channelId=${cid}`);
-    const voiceChannel = supabase.channel(`voice-room-${cid}`, {
+    console.log(`[Lume Voice Room] Identidade: user.id=${myProfile.id}, roomKey=${rk}`);
+    const voiceChannel = supabase.channel(`voice-room-${rk}`, {
       config: { presence: { key: myProfile.id } }
     });
 
@@ -266,10 +266,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
   }, [myProfile, createPeerConnection]);
 
   useEffect(() => {
-    if (channelId) {
-      joinVoiceChannel(channelId);
+    if (roomKey) {
+      joinVoiceChannel(roomKey);
     }
-  }, [channelId, joinVoiceChannel]);
+  }, [roomKey, joinVoiceChannel]);
 
   const handleShareScreen = async () => {
     try {
