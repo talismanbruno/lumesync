@@ -44,6 +44,44 @@ function AuthPage() {
     }
   }, [user, profile, navigate, isAuthChecking]);
 
+  const validateUsername = (val: string) => {
+    let normalized = val.replace(/^@/, "").toLowerCase();
+    normalized = normalized.replace(/[^a-z0-9_]/g, "");
+    setUsername(normalized);
+
+    if (normalized.length > 0 && normalized.length < 3) {
+      setUsernameError("Mínimo 3 caracteres");
+    } else if (normalized.length > 20) {
+      setUsernameError("Máximo 20 caracteres");
+    } else {
+      setUsernameError("");
+    }
+  };
+
+  useEffect(() => {
+    if (username.length >= 3 && !isLogin) {
+      const timeoutId = setTimeout(async () => {
+        setIsCheckingUsername(true);
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("username", username)
+            .maybeSingle();
+          
+          if (data) {
+            setUsernameError("Este username já está em uso");
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsCheckingUsername(false);
+        }
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [username, isLogin]);
+
   useEffect(() => {
     let timer: any;
     if (resendCooldown > 0) {
