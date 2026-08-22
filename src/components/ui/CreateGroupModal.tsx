@@ -86,10 +86,15 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
       toast.success("Grupo criado com sucesso!");
       onClose();
+      
+      // Auto-open the new group
+      if (onCreateGroup) {
+        onCreateGroup([myProfile.id, ...selectedFriends], groupName.trim() || `Grupo com ${selectedFriends.length + 1} membros`);
+      }
+      
       if ((window as any).refreshConversations) {
         (window as any).refreshConversations();
       }
-      // Aqui assumimos que quem chama o modal cuida da seleção do grupo se necessário
       setSelectedFriends([]);
       setGroupName("");
     } catch (err: any) {
