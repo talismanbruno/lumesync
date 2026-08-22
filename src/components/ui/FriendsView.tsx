@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from './button';
 import { Input } from './input';
 import { toast } from 'sonner';
+import { AdminVerifiedBadge } from './AdminVerifiedBadge';
 
 interface FriendsViewProps {
   activeSubTab: 'online' | 'all' | 'pending' | 'add';
@@ -94,7 +95,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         className="rounded-xl"
                       />
                       <div>
-                        <p className="text-sm font-bold text-white">{friend.display_name || friend.username}</p>
+                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {friend.display_name || friend.username}
+                          <AdminVerifiedBadge isAdmin={friend.is_admin} size={14} />
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -136,7 +140,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       className="rounded-xl"
                     />
                     <div>
-                      <p className="text-sm font-bold text-white">{friend.display_name || friend.username}</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                        {friend.display_name || friend.username}
+                        <AdminVerifiedBadge isAdmin={friend.is_admin} size={14} />
+                      </p>
                     </div>
                   </div>
                   <button 
@@ -165,7 +172,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       className="rounded-xl"
                     />
                     <div>
-                      <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                        {f.friend_profile?.display_name || f.friend_profile?.username}
+                        <AdminVerifiedBadge isAdmin={f.friend_profile?.is_admin} size={14} />
+                      </p>
                       <p className="text-[10px] text-zinc-500 font-medium">Enviou um pedido de amizade</p>
                     </div>
                   </div>

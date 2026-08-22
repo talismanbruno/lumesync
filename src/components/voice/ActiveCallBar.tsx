@@ -4,6 +4,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant, ConnectionStatus } from '@/hooks/useVoiceRoom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AdminVerifiedBadge } from '@/components/ui/AdminVerifiedBadge';
 
 interface ActiveCallBarProps {
   participants: VoiceParticipant[];
@@ -59,9 +60,9 @@ export const ActiveCallBar: React.FC<ActiveCallBarProps> = ({
             )}
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-              {roomName}
-              <Maximize2 size={10} className="text-zinc-500 group-hover:text-[#00D1FF] transition-colors" />
+            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 max-w-[150px]">
+              <span className="truncate">{roomName}</span>
+              <Maximize2 size={10} className="text-zinc-500 group-hover:text-[#00D1FF] transition-colors shrink-0" />
             </span>
             <span className="text-[10px] text-zinc-500 font-medium lowercase">
               {connectionStatus} • {participants.length} participante{participants.length !== 1 ? 's' : ''}

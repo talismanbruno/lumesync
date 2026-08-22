@@ -1,7 +1,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone, ShieldCheck } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -40,6 +40,7 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/compon
 import { SettingsModal } from "@/components/ui/SettingsModal";
 import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
 import { FriendsView } from "@/components/ui/FriendsView";
+import { AdminVerifiedBadge } from "@/components/ui/AdminVerifiedBadge";
 
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -1329,8 +1330,9 @@ function DashboardComponent() {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-bold text-zinc-100 truncate">
+            <span className="text-sm font-bold text-zinc-100 flex items-center gap-1.5 truncate">
               {author?.display_name || author?.username || "Usuário"}
+              <AdminVerifiedBadge isAdmin={author?.is_admin} size={12} />
             </span>
             {isBotAuthor && (
               <span className="text-[9px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-400 px-1.5 py-0.5 rounded">
@@ -1805,9 +1807,9 @@ function DashboardComponent() {
               ) : activeDMGroup ? (
                 <>
                   <Users size={18} className="text-cyan-400 shrink-0" />
-                  <span className="text-sm font-bold truncate">
-                    {getGroupTitle(activeDMGroup, myProfile.id)}
-                  </span>
+                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{getGroupTitle(activeDMGroup, myProfile.id)}</span>
+                  </h2>
                   <div className="ml-auto flex items-center gap-2">
                     <button 
                       onClick={() => {
@@ -1850,10 +1852,13 @@ function DashboardComponent() {
                                     className="rounded-lg"
                                   />
                                   <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-medium text-zinc-200 truncate">
-                                      {getDisplayName(member.profiles)}
-                                      {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500">(Você)</span>}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <span className="text-xs font-bold text-zinc-200 group-hover:text-white transition-colors truncate">
+                                        {getDisplayName(member.profiles)}
+                                      </span>
+                                      <AdminVerifiedBadge isAdmin={member.profiles?.is_admin} size={10} />
+                                      {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500 shrink-0">(Você)</span>}
+                                    </div>
                                     {member.profiles?.status && (
                                       <span className="text-[10px] text-zinc-500 truncate capitalize">{member.profiles.status}</span>
                                     )}
@@ -1885,8 +1890,11 @@ function DashboardComponent() {
                     size="h-7 w-7"
                     className="rounded-lg"
                   />
-                  <span className="text-sm font-bold truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
-                  {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
+                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
+                    <AdminVerifiedBadge isAdmin={activeDMFriend?.is_admin} size={12} />
+                    {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
+                  </h2>
                   {!isBotChat && activeDMFriend && (
                     <div className="ml-auto flex items-center gap-2">
                       <button 

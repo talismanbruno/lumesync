@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Camera, ImageIcon, User, BadgeCheck } from 'lucide-react';
+import { Camera, ImageIcon, User, BadgeCheck, ShieldCheck } from 'lucide-react';
+import { AdminVerifiedBadge } from './AdminVerifiedBadge';
 
 // Função utilitária para converter arquivo para Base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -141,9 +142,10 @@ export const ProfileSettingsTab = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-1 mt-1">
+          <div className="flex items-center gap-1.5 mt-1">
             <h3 className="font-bold text-white text-lg">{name || 'Usuário'}</h3>
-            {profile?.is_verified && <BadgeCheck className="w-4 h-4 text-cyan-400" />}
+            <AdminVerifiedBadge isAdmin={profile?.is_admin} size={16} />
+            {profile?.is_verified && !profile?.is_admin && <BadgeCheck className="w-4 h-4 text-cyan-400" />}
           </div>
           <p className="text-sm text-zinc-400 mt-1 line-clamp-3 min-h-[1.25rem]">
             {bio || 'Este usuário não possui bio.'}

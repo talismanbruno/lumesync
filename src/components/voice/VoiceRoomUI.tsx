@@ -4,6 +4,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
 import { toast } from 'sonner';
+import { AdminVerifiedBadge } from '@/components/ui/AdminVerifiedBadge';
 
 interface VoiceRoomUIProps {
   participants: VoiceParticipant[];
@@ -131,8 +132,9 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                   size="h-5 w-5"
                   className="border border-white/10"
                 />
-                <span className="text-xs font-medium text-white">
+                <span className="text-xs font-medium text-white flex items-center gap-1.5">
                   {activeWatchingStream.userId === myProfile.id ? "Sua Transmissão" : `Transmissão de ${activeWatchingStream.username}`}
+                  <AdminVerifiedBadge isAdmin={participants.find(p => p.id === activeWatchingStream.userId)?.is_admin} size={12} />
                 </span>
                 <div className="flex items-center gap-1 bg-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold text-white ml-2">
                   AO VIVO
@@ -195,8 +197,9 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                 size="h-20 w-20"
                 className="border-2 border-white/10"
               />
-              <span className="mt-4 text-sm font-medium text-zinc-200">
+              <span className="mt-4 text-sm font-medium text-zinc-200 flex items-center gap-1.5">
                 {myProfile?.display_name || myProfile?.username} (Você)
+                <AdminVerifiedBadge isAdmin={myProfile?.is_admin} size={12} />
               </span>
               <div className="absolute top-3 right-3 flex gap-2">
                 {isMuted && <MicOff size={16} className="text-red-500" />}
@@ -238,8 +241,9 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                     size="h-20 w-20"
                     className="border-2 border-white/10"
                   />
-                  <span className="mt-4 text-sm font-medium text-zinc-200">
+                  <span className="mt-4 text-sm font-medium text-zinc-200 flex items-center gap-1.5">
                     {p.display_name || p.username}
+                    <AdminVerifiedBadge isAdmin={p.is_admin} size={12} />
                   </span>
                   <div className="absolute top-3 right-3 flex gap-2">
                     {p.isMuted && <MicOff size={16} className="text-red-500" />}

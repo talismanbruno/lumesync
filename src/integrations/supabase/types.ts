@@ -456,6 +456,8 @@ export type Database = {
           avatar_url: string
           display_name: string
           id: string
+          is_admin: boolean
+          is_verified: boolean
           username: string
         }[]
       }
