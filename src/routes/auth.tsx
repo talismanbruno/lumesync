@@ -170,7 +170,7 @@ function AuthPage() {
     }
   };
 
-  if (isAuthChecking) {
+  if (isAuthChecking || (user && !profile?.username)) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -180,7 +180,9 @@ function AuthPage() {
         <div className="flex flex-col items-center space-y-6 z-10 animate-in fade-in duration-700">
           <LumeLogo variant="icon" className="h-20 w-20 animate-pulse opacity-80 shadow-[0_0_40px_rgba(0,209,255,0.2)]" />
           <div className="flex flex-col items-center space-y-2">
-            <p className="text-cyan-400 text-xs font-bold uppercase tracking-[0.4em] animate-pulse">Sincronizando sua sessão...</p>
+            <p className="text-cyan-400 text-xs font-bold uppercase tracking-[0.4em] animate-pulse">
+              {user ? "Redirecionando..." : "Sincronizando sua sessão..."}
+            </p>
             <div className="flex gap-1 justify-center">
               {[0, 1, 2].map((i) => (
                 <div 
