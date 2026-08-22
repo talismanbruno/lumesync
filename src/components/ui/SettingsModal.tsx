@@ -67,8 +67,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Área Principal Direita */}
         <main className="flex-1 bg-[#121214] flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-y-auto p-10">
-
-          <div className="flex-1 overflow-y-auto p-10">
             {activeTab === 'profile' && (
               <ProfileSettingsTab />
             )}
