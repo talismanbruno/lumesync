@@ -1513,18 +1513,6 @@ function DashboardComponent() {
 
       {/* COLUNA 2 — CANAIS OU DMs (240px) */}
       <aside className="w-[240px] shrink-0 bg-[#0a0a0b] border-r border-white/5 flex flex-col overflow-x-hidden">
-        {activeVoiceChannel && (
-          <OrbitalConnectionPanel 
-            myProfile={myProfile}
-            connectionStatus={connectionStatus}
-            isMuted={isMuted}
-            isDeafened={isDeafened}
-            onToggleMute={toggleMute}
-            onToggleDeafen={toggleDeafen}
-            onDisconnect={disconnect}
-            onOpenSettings={() => toast.info("Configurações de áudio em breve")}
-          />
-        )}
 
         <header className="h-14 px-4 flex items-center justify-between border-b border-white/5 shrink-0 overflow-hidden">
           <span className="text-sm font-bold truncate text-zinc-100">
