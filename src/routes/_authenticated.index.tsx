@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/context-menu";
 import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
+import { ActiveCallBar } from "@/components/voice/ActiveCallBar";
+import { OrbitalConnectionPanel } from "@/components/voice/OrbitalConnectionPanel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { SettingsModal } from "@/components/ui/SettingsModal";
