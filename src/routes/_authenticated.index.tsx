@@ -1631,30 +1631,43 @@ function DashboardComponent() {
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
-              <UserAvatar 
-                avatarUrl={myProfile?.avatar_url}
-                name={myProfile?.display_name || myProfile?.username}
-                size="h-9 w-9"
-                status={myProfile?.status || 'online'}
-                showStatus={true}
-                className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 object-cover aspect-square"
-              />
+              <div className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors flex-1 min-w-0">
+                <UserAvatar 
+                  avatarUrl={myProfile?.avatar_url}
+                  name={myProfile?.display_name || myProfile?.username}
+                  size="h-9 w-9"
+                  status={myProfile?.status || 'online'}
+                  showStatus={true}
+                  className="shrink-0 object-cover aspect-square"
+                />
+                <div className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white">
+                  <div className="flex items-center gap-1 w-full min-w-0">
+                    <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+                    {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                  </div>
+                  <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
+                    {myProfile.status === 'online' ? 'Disponível' : 
+                     myProfile.status === 'idle' ? 'Ausente' : 
+                     myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
+                  </p>
+                </div>
+              </div>
             </PopoverTrigger>
             <PopoverPortal>
               <PopoverContent 
                 side="top" 
                 align="start" 
                 sideOffset={12}
-                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[100] animate-in slide-in-from-bottom-2 duration-200"
+                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[50] animate-in slide-in-from-bottom-2 duration-200"
               >
                 <div className="px-2 py-1.5 mb-1 border-b border-white/5">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
                 </div>
                 {[
-                  { id: 'online', label: 'Disponível', color: '#00D1FF' },
-                  { id: 'idle', label: 'Ausente', color: '#F59E0B' },
-                  { id: 'dnd', label: 'Não Perturbe', color: '#EF4444' },
-                  { id: 'offline', label: 'Invisível', color: '#71717A' }
+                  { id: 'online', label: 'Disponível 🟢', color: '#00D1FF' },
+                  { id: 'idle', label: 'Ausente 🟡', color: '#F59E0B' },
+                  { id: 'dnd', label: 'Não Perturbe 🔴', color: '#EF4444' },
+                  { id: 'offline', label: 'Invisível ⚪', color: '#71717A' }
                 ].map((s) => (
                   <button
                     key={s.id}
@@ -1669,26 +1682,6 @@ function DashboardComponent() {
               </PopoverContent>
             </PopoverPortal>
           </Popover>
-          
-          <UserProfileCard
-            user={myProfile}
-            isMe={true}
-            onEditClick={() => setIsSettingsOpen(true)}
-          >
-            <div 
-              className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
-            >
-              <div className="flex items-center gap-1 w-full min-w-0">
-                <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-                {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-              </div>
-              <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-                {myProfile.status === 'online' ? 'Disponível' : 
-                 myProfile.status === 'idle' ? 'Ausente' : 
-                 myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-              </p>
-            </div>
-          </UserProfileCard>
           
           <button 
             onClick={() => setIsSettingsOpen(true)}
