@@ -1,21 +1,56 @@
-# Relatório de Diagnóstico e Plano de Implementação: Salas de Voz LUME
+# Plan: Group DM Improvements
 
-O diagnóstico inicial focou na estabilização do hook `useVoiceRoom.ts` para capturar logs determinísticos e corrigir a regra do iniciador WebRTC.
+Improve the identification and visualization of Group DM members in LUME, including automatic title generation, a member list popover, and optimized data fetching.
 
-## Diagnóstico Técnico
-- **Causa Raiz Comprovada (Parcial)**: A regra de sinalização anterior era "o último a entrar inicia", o que falhava em casos de concorrência ou reconexão. Implementada a **Regra do Iniciador Léxico** (comparação de UUIDs) para garantir que apenas um par inicie a oferta, independentemente da ordem de entrada.
-- **Identidade Estável**: Adicionados logs para validar `channelId` e `user.id`. A inscrição agora é bloqueada até que ambos os valores estejam presentes.
-- **Presença**: O hook agora registra o `presenceState` bruto para depurar por que usuários não se viam.
+## User Review Required
+> [!IMPORTANT]
+> - Group DM titles will automatically update based on the member list if no custom name is set.
+> - The new "Members" button in the chat header will show a full list of participants.
+> - Data fetching for members will be integrated into the existing `dm_groups` fetch to avoid extra queries.
 
-## Alterações Realizadas (`src/hooks/useVoiceRoom.ts`)
-1.  **Bloqueio de Inscrição Inválida**: `joinVoiceChannel` agora valida `cid` e `myProfile.id` antes de criar o canal.
-2.  **Logs de Diagnóstico**: Inseridos logs em `sync`, `status` e `identidade` para rastreamento em tempo real no console do desenvolvedor.
-3.  **Iniciador Determinístico**: Implementada lógica `myProfile.id.toLowerCase() < u.id.toLowerCase()` para decidir quem envia o `offer`.
-4.  **Correção de Tipagem**: Resolvido erro de referência circular no `useCallback` do `createPeerConnection`.
+## Proposed Changes
 
-## Próximos Passos (Implementação da Solução)
-1.  **Normalização de Presença**: Refatorar o mapeamento do `sync` para garantir que o payload contenha `display_name` e `avatar_url` persistentes.
-2.  **Unificação do Contador**: Alterar a sidebar em `src/routes/_authenticated.index.tsx` para usar a lista de `participants` do hook, removendo a dependência da tabela `voice_participants` para a sala ativa.
-3.  **Validação Final**: Teste manual com duas janelas (anônima e normal) para confirmar áudio bidirecional e Stage funcional.
+### Database & Types
+- Ensure `dm_group_members` includes profiles in queries.
+- No schema changes required as the structure already supports this.
 
-O diagnóstico está ativo e a base para a correção definitiva foi estabelecida.
+### Logic & Helpers
+- Create a centralized helper `getGroupTitle(group, currentUserId)` to generate group names:
+  - Return custom name if it exists.
+  - Return "Felipe e Ana" for 2 other members.
+  - Return "Felipe, Ana +2" for 3+ other members.
+  - Return "Grupo com X membros" while loading.
+- Create a helper `getGroupMembers(group)` to return sorted members (current user first).
+
+### Components
+
+#### `src/routes/_authenticated.index.tsx`
+- Update `fetchConversations` to include `profiles` in `dm_group_members`.
+- Implement `renderGroupHeader` with the new "Members" popover.
+- The popover will display:
+  - Member avatars (with initials fallback).
+  - Display name/Username.
+  - "(Você)" tag for the local user.
+- Update `renderComposer` placeholder for groups.
+- Update the sidebar group list to use the generated title.
+
+#### `src/components/ui/CreateGroupModal.tsx`
+- Ensure group creation follows the new naming fallback logic (empty name = fallback title).
+
+## Technical Details
+- **Data Source**: The `dm_groups` object in state will now include a `members` array containing profiles.
+- **Naming Rule**:
+  - `others = members.filter(m => m.user_id !== currentUserId)`
+  - If `others.length === 1`: `others[0].name`
+  - If `others.length === 2`: `others[0].name e others[1].name`
+  - If `others.length > 2`: `others[0].name, others[1].name + (others.length - 2)`
+- **Popover**: Use `radix-ui` `Popover` (already available via shadcn/ui).
+- **Optimization**: Use existing `profilesCache` where possible to avoid redundant data.
+
+## Validation Plan
+- [ ] Create a group with 2 members -> Title shows "Name1".
+- [ ] Create a group with 3 members -> Title shows "Name1 e Name2".
+- [ ] Create a group with 4+ members -> Title shows "Name1, Name2 +X".
+- [ ] Verify local user is excluded from title but present in member list with "(Você)".
+- [ ] Test truncation for long names in sidebar.
+- [ ] Verify individual DMs and Lume Bot remain unchanged.
