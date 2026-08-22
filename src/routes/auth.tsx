@@ -30,10 +30,11 @@ function AuthPage() {
   }, [user, profile, navigate, isAuthChecking]);
 
   useEffect(() => {
+    let timer: any;
     if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
     }
+    return () => clearTimeout(timer);
   }, [resendCooldown]);
 
   const handleAuth = async (e: React.FormEvent) => {
