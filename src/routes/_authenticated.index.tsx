@@ -240,7 +240,19 @@ function DashboardComponent() {
         const serverList = (data as any[] || []).map(item => item.servers).filter(Boolean) as Server[];
         setServers(serverList || []);
         if (serverList.length > 0 && !activeServer) {
-          setActiveServer(serverList[0] || null);
+          const firstServer = serverList[0];
+          setActiveServer(firstServer);
+          
+          // Auto-select #geral for the first server
+          const { data: channelsData } = await supabase
+            .from("channels")
+            .select("*")
+            .eq("server_id", firstServer.id)
+            .order("created_at", { ascending: true });
+            
+          if (channelsData && channelsData.length > 0) {
+            setActiveChannel(channelsData[0] as Channel);
+          }
         }
       } catch (err) {
         console.error("[Lume Servers Catch]:", err);
@@ -1431,17 +1443,24 @@ function DashboardComponent() {
                       <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
                         <div className="shrink-0 cursor-pointer">
                           <UserAvatar 
-                            avatarUrl={msg.profile?.avatar_url}
+                            avatarUrl={(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? "https://i.ibb.co/99YTNvGS/image.png" : msg.profile?.avatar_url}
                             name={msg.profile?.display_name || msg.profile?.username}
                             size="h-10 w-10"
                             className="rounded-xl border border-white/5 shadow-lg"
+                            initials={(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? "LM" : undefined}
                           />
                         </div>
                       </UserProfileCard>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-baseline gap-2">
                           <span className="text-sm font-bold text-white hover:underline cursor-pointer">
-                            {msg.profile?.display_name || msg.profile?.username || 'Usuário'}
+                            {(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? (
+                              <span className="flex items-center gap-1.5">
+                                Lume <span className="text-[9px] bg-cyan-500 text-black px-1 rounded font-black tracking-tighter">[OFICIAL]</span>
+                              </span>
+                            ) : (
+                              msg.profile?.display_name || msg.profile?.username || 'Usuário'
+                            )}
                           </span>
                           <span className="text-[10px] text-zinc-600 font-medium">
                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1575,17 +1594,24 @@ function DashboardComponent() {
                       <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
                         <div className="shrink-0 cursor-pointer">
                           <UserAvatar 
-                            avatarUrl={msg.profile?.avatar_url}
+                            avatarUrl={(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? "https://i.ibb.co/99YTNvGS/image.png" : msg.profile?.avatar_url}
                             name={msg.profile?.display_name || msg.profile?.username}
                             size="h-10 w-10"
                             className="rounded-xl border border-white/5 shadow-lg"
+                            initials={(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? "LM" : undefined}
                           />
                         </div>
                       </UserProfileCard>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-baseline gap-2">
                           <span className="text-sm font-bold text-white hover:underline cursor-pointer">
-                            {msg.profile?.display_name || msg.profile?.username || 'Usuário'}
+                            {(msg.user_id === LUME_BOT_ID || msg.profile?.username === 'lume') ? (
+                              <span className="flex items-center gap-1.5">
+                                Lume <span className="text-[9px] bg-cyan-500 text-black px-1 rounded font-black tracking-tighter">[OFICIAL]</span>
+                              </span>
+                            ) : (
+                              msg.profile?.display_name || msg.profile?.username || 'Usuário'
+                            )}
                           </span>
                           <span className="text-[10px] text-zinc-600 font-medium">
                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
