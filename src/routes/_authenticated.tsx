@@ -248,7 +248,7 @@ function AuthenticatedLayout() {
 
       <Outlet />
 
-      <SettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
         <DialogContent className="bg-[#0d0d11]/95 backdrop-blur-2xl border border-white/5 text-white rounded-3xl">
