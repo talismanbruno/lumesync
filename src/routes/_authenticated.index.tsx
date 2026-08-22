@@ -727,20 +727,33 @@ function DashboardComponent() {
     if (!myProfile?.id) return;
     
     // Fetch Group DMs with detailed members
-    const { data: groupsData, error: groupsError } = await supabase
-      .from('dm_groups')
-      .select('*, dm_group_members!inner(*, profiles(*))')
-      .eq('dm_group_members.user_id', myProfile.id);
+    const { data: membersData, error: membersError } = await supabase
+      .from('dm_group_members')
+      .select('group_id')
+      .eq('user_id', myProfile.id);
+
+    if (!membersError && membersData) {
+      const groupIds = membersData.map(m => m.group_id);
       
-    if (!groupsError && groupsData) {
-      setDmGroups(groupsData);
-      
-      // Update active group if it exists
-      if (activeDMGroup) {
-        const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
-        if (updatedActive) setActiveDMGroup(updatedActive);
+      if (groupIds.length > 0) {
+        const { data: groupsData, error: groupsError } = await supabase
+          .from('dm_groups')
+          .select('*, dm_group_members(*, profiles(*))')
+          .in('id', groupIds);
+          
+        if (!groupsError && groupsData) {
+          setDmGroups(groupsData);
+          
+          if (activeDMGroup) {
+            const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
+            if (updatedActive) setActiveDMGroup(updatedActive);
+          }
+        }
+      } else {
+        setDmGroups([]);
       }
     }
+
   };
 
 
