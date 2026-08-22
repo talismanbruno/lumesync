@@ -7,6 +7,7 @@ import { Input } from './input';
 import { toast } from 'sonner';
 import { AdminVerifiedBadge } from './AdminVerifiedBadge';
 import { FriendActionButtons } from './FriendActionButtons';
+import { FriendRow } from './FriendRow';
 
 interface FriendsViewProps {
   activeSubTab: 'online' | 'all' | 'pending' | 'add';

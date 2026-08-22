@@ -130,7 +130,7 @@ export const OrbitalConnectionPanel: React.FC<OrbitalConnectionPanelProps> = ({
           variant="ghost"
           size="icon"
           onClick={onDisconnect}
-          className="h-8 w-8 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+          className="h-8 w-8 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-100"
         >
           <PhoneOff size={16} />
         </Button>

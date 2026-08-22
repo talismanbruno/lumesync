@@ -168,7 +168,7 @@ export const ActiveCallBar: React.FC<ActiveCallBarProps> = ({
             variant="ghost"
             size="icon"
             onClick={onDisconnect}
-            className="h-9 w-9 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all ml-2"
+            className="h-9 w-9 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all ml-2 active:scale-100"
           >
             <PhoneOff size={18} />
           </Button>
