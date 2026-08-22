@@ -21,7 +21,7 @@ interface CreateGroupModalProps {
   onClose: () => void;
   myProfile: Profile;
   friendships: any[];
-  onCreateGroup: (memberIds: string[], name?: string) => void;
+  onCreateGroup: (memberIds: string[], name?: string | null) => void;
 }
 
 export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
