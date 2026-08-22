@@ -59,8 +59,9 @@ function AuthPage() {
   };
 
   useEffect(() => {
+    let timeoutId: any;
     if (username.length >= 3 && !isLogin) {
-      const timeoutId = setTimeout(async () => {
+      timeoutId = setTimeout(async () => {
         setIsCheckingUsername(true);
         try {
           const { data, error } = await supabase
@@ -78,8 +79,10 @@ function AuthPage() {
           setIsCheckingUsername(false);
         }
       }, 500);
-      return () => clearTimeout(timeoutId);
     }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [username, isLogin]);
 
   useEffect(() => {
