@@ -879,10 +879,10 @@ function DashboardComponent() {
         event: '*', 
         schema: 'public', 
         table: 'dm_group_members' 
-      }, (payload) => {
+      }, (payload: any) => {
         console.log("[Realtime] dm_group_members change:", payload);
         
-        if (payload.event === 'DELETE') {
+        if (payload.eventType === 'DELETE') {
           const { group_id, user_id } = payload.old as any;
           if (group_id && user_id) {
             // Se eu fui removido, recarrego tudo (para sumir da sidebar)
@@ -901,7 +901,7 @@ function DashboardComponent() {
               }));
 
               // Atualizo o activeDMGroup se ele for o grupo afetado
-              setActiveDMGroup(current => {
+              setActiveDMGroup((current: any) => {
                 if (current?.id === group_id) {
                   return {
                     ...current,
