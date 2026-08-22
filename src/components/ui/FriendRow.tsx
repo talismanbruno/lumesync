@@ -13,6 +13,7 @@ interface FriendRowProps {
   onDeclineRequest?: (id: string) => void;
   friendshipId?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const FriendRow: React.FC<FriendRowProps> = ({
@@ -24,13 +25,15 @@ export const FriendRow: React.FC<FriendRowProps> = ({
   onAcceptRequest,
   onDeclineRequest,
   friendshipId,
-  className = ""
+  className = "",
+  style
 }) => {
   if (!friend) return null;
 
   return (
     <div 
       className={`flex items-center justify-between px-3 h-[64px] sm:h-[72px] rounded-xl bg-[#121212] border border-white/5 group transition-all duration-200 hover:bg-white/[0.03] hover:border-cyan-500/20 ${className}`}
+      style={style}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className="shrink-0">
