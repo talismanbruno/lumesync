@@ -1626,7 +1626,7 @@ function DashboardComponent() {
                   onClick={() => { markAsRead(LUME_BOT_ID); openDM({ id: LUME_BOT_ID, username: 'lume', display_name: 'Lume', avatar_url: '/brand/lume-mark.png' } as Profile); }}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMFriend?.id === LUME_BOT_ID ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 >
-                  <UserAvatar avatarUrl="https://i.ibb.co/99YTNvGS/image.png" name="Lume" size="h-8 w-8" className="rounded-lg" />
+                  <UserAvatar avatarUrl="/brand/lume-mark.png" name="Lume" size="h-8 w-8" className="rounded-lg" />
                   <span className="truncate text-sm text-zinc-200">Lume</span>
                   <span className="ml-auto text-[9px] font-bold text-cyan-400 shrink-0">OFICIAL</span>
                 </button>
