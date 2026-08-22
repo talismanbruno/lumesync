@@ -1318,364 +1318,10 @@ function DashboardComponent() {
         </div>
       </div>
 
-
-
-
-
-
-
-
-        <div className="flex h-14 items-center justify-between px-2 mb-4">
-          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white uppercase">{activeServer?.name || "LUME"}</h2>
-          {activeServer && (
-            <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors">
-              <UserPlus size={16} />
-            </button>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar">
-          {!activeServer ? (
-            <div className="space-y-4">
-              <div className="space-y-0.5">
-                <button 
-                  onClick={() => setActiveDMFriend(null)}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                    !activeDMFriend ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                  }`}
-                >
-                  <Users size={20} className={!activeDMFriend ? "text-white" : "text-zinc-500"} />
-                  <span className="font-medium">Amigos</span>
-                </button>
-              </div>
-
-              <div className="space-y-1 overflow-x-hidden">
-                <div className="flex items-center px-3 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-                  <span className="flex-1">Mensagens Diretas</span>
-                  <Plus 
-                    size={14} 
-                    className="cursor-pointer hover:text-white transition-colors" 
-                    onClick={() => setIsCreateGroupOpen(true)}
-                  />
-                </div>
-                {/* CHAT FIXO DO BOT OFICIAL */}
-                <UserProfileCard
-                  user={{
-                    id: LUME_BOT_ID,
-                    username: 'lume',
-                    display_name: 'Lume',
-                    avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
-                    status: 'online',
-                    is_verified: true,
-                    bio: 'Bot oficial do Lume. Aqui você recebe as últimas novidades e atualizações da plataforma.'
-                  }}
-                  isMe={false}
-                  onMessageClick={() => {
-                    setActiveDMFriend({
-                      id: LUME_BOT_ID,
-                      username: 'lume',
-                      display_name: 'Lume',
-                      avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
-                      status: 'online',
-                      is_verified: true
-                    } as Profile);
-                    setActiveChannel(null);
-                    setShowVoiceUI(false);
-                    markAsRead(LUME_BOT_ID);
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      setActiveDMFriend({
-                        id: LUME_BOT_ID,
-                        username: 'lume',
-                        display_name: 'Lume',
-                        avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
-                        status: 'online',
-                        is_verified: true
-                      } as Profile);
-                      setActiveChannel(null);
-                      setShowVoiceUI(false);
-                      markAsRead(LUME_BOT_ID);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all mb-1 ${
-                      activeDMFriend?.id === LUME_BOT_ID ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                    }`}
-                  >
-                  <div className="relative shrink-0">
-                    <img 
-                      src="https://i.ibb.co/99YTNvGS/image.png" 
-                      alt="Lume" 
-                      className="w-8 h-8 rounded-xl object-contain" 
-                    />
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#00D1FF] ring-2 ring-[#121214]" />
-                  </div>
-                  <div className="flex flex-col items-start flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 w-full">
-                      <span className="font-semibold text-sm text-white truncate">Lume</span>
-                      <BadgeCheck className="w-4 h-4 text-cyan-400 shrink-0" />
-                      <span className="px-1 py-0.2 text-[9px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
-                    </div>
-                    
-                  </div>
-                  </button>
-                </UserProfileCard>
-
-                {friendships
-                  .filter(f => f.status === 'accepted' && f.friend_profile?.id !== LUME_BOT_ID)
-                  .map(friendship => {
-                    const friend = friendship.friend_profile;
-                    if (!friend) return null;
-                    const isBot = friend.id === LUME_BOT_ID;
-                    return (
-                      <button 
-                        key={friend.id}
-                        onClick={() => { 
-                          setActiveDMFriend(friend); 
-                          setActiveChannel(null); 
-                          setShowVoiceUI(false);
-                          markAsRead(friend.id);
-                        }}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors overflow-hidden ${
-                          activeDMFriend?.id === friend.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                        }`}
-                      >
-                        <div className="relative shrink-0">
-                          <UserProfileCard
-                            user={{
-                              ...friend,
-                              status: friend.id === LUME_BOT_ID ? 'online' : friend.status
-                            }}
-                            isMe={false}
-                            onMessageClick={() => { 
-                              setActiveDMFriend(friend); 
-                              setActiveChannel(null); 
-                              setShowVoiceUI(false);
-                              markAsRead(friend.id);
-                            }}
-                          >
-                            <Avatar className="h-8 w-8 border border-white/5 hover:opacity-90 transition-opacity">
-                              <AvatarImage src={friend.avatar_url || ""} />
-                              <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
-                                {friend.username.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                          </UserProfileCard>
-                          <StatusBadge 
-                            status={isBot ? 'online' : friend.status} 
-                            size="sm" 
-                            className="absolute bottom-0 right-0 border-2 border-[#121212]" 
-                          />
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className="font-medium">{friend.display_name || friend.username}</span>
-                            {friend.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-                            {isBot && (
-                              <span className="shrink-0 px-1 py-0.5 text-[9px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                            )}
-                          </div>
-                          
-                        </div>
-                        {(unreadCounts[friend.id] || 0) > 0 && (
-                          <span className="w-4 h-4 bg-[#00D1FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
-                            {unreadCounts[friend.id]}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-0.5">
-                <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-                  <span className="flex-1">Canais de Texto</span>
-                  {activeServer?.owner_id === myProfile.id && (
-                    <Plus size={14} className="cursor-pointer hover:text-white" />
-                  )}
-                </div>
-                {channels.filter(c => c.type === 'text').map(channel => (
-                  <button 
-                    key={channel.id} 
-                    onClick={() => { setActiveChannel(channel); setActiveDMFriend(null); setShowVoiceUI(false); }}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                      activeChannel?.id === channel.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                    }`}
-                  >
-                    <Hash size={16} className="text-zinc-500" />
-                    <span>{channel.name}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-0.5">
-                <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
-                  <span className="flex-1">Canais de Voz</span>
-                  {activeServer?.owner_id === myProfile.id && (
-                    <Plus size={14} className="cursor-pointer hover:text-white" />
-                  )}
-                </div>
-                {channels.filter(c => c.type === 'voice').map(channel => (
-                  <div key={channel.id} className="space-y-1">
-                    <button 
-                      onClick={() => {
-                        setActiveVoiceChannel(channel);
-                        setShowVoiceUI(true);
-                      }}
-                      className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors ${
-                        activeVoiceChannel?.id === channel.id ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                      }`}
-                    >
-                      <Volume2 size={18} className="text-zinc-500" />
-                      <span className="flex-1 text-left font-medium">{channel.name}</span>
-                    </button>
-                    
-                    {/* Background Presence List in Sidebar */}
-                    <div className="ml-6 space-y-1">
-                      {(voiceParticipantsMap[channel.id] || []).map((p: any) => (
-                        <UserProfileCard 
-                          user={{
-                            id: p.user_id,
-                            username: p.username,
-                            display_name: p.display_name,
-                            avatar_url: p.avatar_url,
-                            banner_url: p.banner_url,
-                            bio: p.bio,
-                            created_at: p.created_at,
-                            status: p.profiles?.status,
-                            is_verified: p.is_verified || p.user_id === LUME_BOT_ID
-                          }}
-                          isMe={p.user_id === myProfile.id}
-                          onEditClick={p.user_id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
-                          onMessageClick={p.user_id !== myProfile.id ? () => {
-                            const friend = friendships.find(f => f.friend_profile?.id === p.user_id)?.friend_profile;
-                            if (friend) {
-                              setActiveDMFriend(friend);
-                              setActiveChannel(null);
-                              setShowVoiceUI(false);
-                            }
-                          } : undefined}
-                        >
-                          <div className="flex items-center gap-2 px-2 py-1 rounded-md text-xs text-zinc-400 hover:bg-white/5 transition-colors group cursor-pointer">
-                            <div className="relative">
-                              <UserAvatar 
-                                avatarUrl={p.avatar_url}
-                                name={p.display_name || p.username}
-                                size="h-5 w-5"
-                                status={p.profiles?.status}
-                                showStatus={true}
-                                className="group-hover:border-[#00D1FF]/30 border border-white/10"
-                              />
-                            </div>
-                            <span className={`truncate ${p.user_id === myProfile.id ? "text-[#00D1FF] font-medium" : ""}`}>
-                              {p.display_name || p.username}
-                            </span>
-                          <div className="ml-auto flex gap-1">
-                            {p.isMuted && <MicOff size={10} className="text-red-500" />}
-                            {p.isDeafened && <Headphones size={10} className="text-red-500" />}
-                          </div>
-                        </div>
-                      </UserProfileCard>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Voice Connection Widget */}
-        {activeVoiceChannel && (
-          <div className="mx-2 mb-2 flex flex-col rounded-md bg-[#050505] p-2 border border-[#00D1FF]/20 shadow-[0_0_10px_rgba(0,209,255,0.05)] animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Voz Conectada</span>
-                  <span className="text-[11px] text-zinc-300 truncate font-medium">{activeVoiceChannel.name}</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowVoiceUI(true)}
-                className="p-1 text-zinc-400 hover:text-white transition-colors"
-                title="Abrir Tela da Chamada"
-              >
-                <Monitor size={14} />
-              </button>
-            </div>
-            <div className="flex items-center justify-around bg-white/5 rounded p-1">
-              <button 
-                onClick={toggleMute} 
-                className={`p-1.5 rounded transition-colors ${isMuted ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-              </button>
-              <button 
-                onClick={toggleDeafen} 
-                className={`p-1.5 rounded transition-colors ${isDeafened ? "text-red-500 hover:bg-red-500/10" : "text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                {isDeafened ? <Headphones size={16} className="text-red-500" /> : <Headphones size={16} />}
-              </button>
-              <button 
-                onClick={() => {
-                  disconnect();
-                  setActiveVoiceChannel(null);
-                  setShowVoiceUI(false);
-                }} 
-                className="p-1.5 rounded text-red-500 hover:bg-red-500/10 transition-colors"
-              >
-                <PhoneOff size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Widget de Voz (Se Conectado) */}
-        {activeVoiceChannel && (
-          <div className="mt-auto mb-4 bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col gap-3">
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-zinc-400 truncate uppercase tracking-widest">Voz Conectada</span>
-                </div>
-                <button 
-                  onClick={() => {
-                    disconnect();
-                    setActiveVoiceChannel(null);
-                    setShowVoiceUI(false);
-                  }}
-                  className="text-zinc-500 hover:text-red-500 transition-colors"
-                >
-                  <PhoneOff size={14} />
-                </button>
-             </div>
-             <div className="flex items-center gap-3">
-               <button onClick={toggleMute} className={`p-2 rounded-xl transition-colors ${isMuted ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
-                 {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-               </button>
-               <button onClick={toggleDeafen} className={`p-2 rounded-xl transition-colors ${isDeafened ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
-                 {isDeafened ? <Headphones size={16} /> : <Headphones size={16} />}
-               </button>
-               <button onClick={toggleScreenShare} className={`p-2 rounded-xl transition-colors ${isSharingScreen ? 'bg-cyan-500/10 text-cyan-400' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
-                 <Monitor size={16} />
-               </button>
-             </div>
-          </div>
-        )}
-      </aside>
-    </div>
-  </div>
-
-  {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
-  <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden">
-
-    <div className="flex flex-1 flex-col overflow-hidden">
-
-
-        {activeVoiceChannel && showVoiceUI ? (
+      {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
+      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
               participants={participants}
               myProfile={myProfile}
@@ -1695,608 +1341,236 @@ function DashboardComponent() {
               }}
               onClose={() => setShowVoiceUI(false)}
             />
-        ) : activeChannel || activeDMFriend ? (
-          <>
-            <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
-              <div className="flex items-center gap-2 text-sm text-zinc-300">
-                <span className="text-zinc-500 font-medium">Lume</span>
-                <span className="text-zinc-600">✦</span>
-                <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
-                {activeChannel && activeChannel.name !== 'geral' && activeChannel.name !== 'Sala de Voz' && (
-                  <>
-                    <span className="text-zinc-600">✦</span>
-                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                      {activeChannel.type === 'voice' ? '🔊' : '#'} {activeChannel.name}
-                    </span>
-                  </>
-                )}
-                {activeDMFriend && (
-                  <>
-                    <span className="text-zinc-600">✦</span>
-                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                      @ {activeDMFriend.display_name || activeDMFriend.username}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {activeChannel ? (
-                <>
-                  <Hash size={20} className="mr-2 text-zinc-500" />
-                  <h3 className="text-sm font-bold text-white">{activeChannel.name}</h3>
-                </>
-              ) : (
-                <>
-                  <div className="relative mr-2">
-                    <UserAvatar 
-                      avatarUrl={activeDMFriend?.avatar_url}
-                      name={activeDMFriend?.display_name || activeDMFriend?.username}
-                      size="h-6 w-6"
-                      status={activeDMFriend?.id ? (profilesCache[activeDMFriend.id]?.status || activeDMFriend.status) : activeDMFriend?.status}
-                      showStatus={true}
-                      className="border border-white/5"
-                    />
-                  </div>
-                  {activeDMFriend && (
-                    <UserProfileCard
-                      user={activeDMFriend}
-                      isMe={activeDMFriend.id === myProfile.id}
-                      onEditClick={activeDMFriend.id === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
-                    >
-
-                      <div className="flex items-center gap-1.5 min-w-0 cursor-pointer">
-                        <h3 className="text-sm font-bold text-white truncate">{activeDMFriend.display_name || activeDMFriend.username}</h3>
-                        {activeDMFriend.is_verified && (
-                          <BadgeCheck className="w-4 h-4 text-cyan-400 ml-0.5 shrink-0" />
-                        )}
-                        {activeDMFriend.id === LUME_BOT_ID && (
-                          <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                        )}
-                      </div>
-                    </UserProfileCard>
+          ) : activeChannel || activeDMFriend ? (
+            <>
+              <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
+                <div className="flex items-center gap-2 text-sm text-zinc-300">
+                  <span className="text-zinc-500 font-medium">Lume</span>
+                  <span className="text-zinc-600">✦</span>
+                  <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
+                  {activeChannel && activeChannel.name !== 'geral' && activeChannel.name !== 'Sala de Voz' && (
+                    <>
+                      <span className="text-zinc-600">✦</span>
+                      <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                        {activeChannel.type === 'voice' ? '🔊' : '#'} {activeChannel.name}
+                      </span>
+                    </>
                   )}
-                </>
-              )}
-              <div className="ml-auto flex items-center gap-4 text-zinc-500">
-                <button
-                  onClick={() => {
-                    const roomId = activeChannel 
-                      ? `group-call:${activeChannel.id}` 
-                      : `dm-call:${[myProfile.id, activeDMFriend?.id].sort().join('_')}`;
-                    
-                    setActiveVoiceChannel({ id: roomId, name: activeChannel?.name || activeDMFriend?.display_name || 'Chamada', type: 'voice', server_id: activeServer?.id || 'dm' } as any);
-                    setShowVoiceUI(true);
-                  }}
-                  className="p-1 hover:text-white transition-colors"
-                  title="Iniciar Chamada"
-                >
-                  <PhoneOff className="w-5 h-5 rotate-[135deg] text-emerald-500 hover:text-emerald-400" />
-                </button>
-                <Search size={18} className="cursor-pointer hover:text-white" />
-                <Settings size={18} className="cursor-pointer hover:text-white" />
-                <User size={18} className="cursor-pointer hover:text-white" />
-              </div>
-            </header>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((msg, index) => {
-                const profile = msg.profile || (msg.sender_id === activeDMFriend?.id ? activeDMFriend : myProfile);
-                // STATUS DINÂMICO EM TODAS AS MENSAGENS DO CHAT: Use profilesCache for real-time status
-                const userId = msg.user_id || msg.sender_id;
+                  {activeDMFriend && (
+                    <>
+                      <span className="text-zinc-600">✦</span>
+                      <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                        @ {activeDMFriend.display_name || activeDMFriend.username}
+                      </span>
+                    </>
+                  )}
+                </div>
                 
-                // Se message.user_id === user.id, renderize profile.avatar_url e profile.display_name
-                const authorProfile = userId === authUser?.id 
-                  ? myProfile 
-                  : (userId ? (profilesCache[userId] || profile) : profile);
-                  
-                const currentAuthorStatus = authorProfile?.status || 'offline';
+                {activeServer && (
+                  <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <UserPlus size={14} />
+                    <span>Convidar</span>
+                  </button>
+                )}
+              </header>
 
-                
-                return (
-                  <div key={msg.id || index} className="flex gap-4 group">
-                    <div className="relative h-fit">
-                      <UserProfileCard
-                        user={{
-                          id: userId || "",
-                          username: authorProfile?.username || "usuário",
-                          display_name: authorProfile?.display_name,
-                          avatar_url: authorProfile?.avatar_url,
-                          banner_url: authorProfile?.banner_url,
-                          bio: authorProfile?.bio,
-                          created_at: authorProfile?.created_at,
-                          status: currentAuthorStatus,
-                          is_verified: authorProfile?.is_verified || authorProfile?.id === LUME_BOT_ID
-                        }}
-                        isMe={userId === myProfile.id}
-                        onEditClick={userId === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
-                        onMessageClick={userId !== myProfile.id ? () => {
-                          const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
-                          if (friend) {
-                            setActiveDMFriend(friend as Profile);
-                            setActiveChannel(null);
-                            setShowVoiceUI(false);
-                            markAsRead(userId);
-                          }
-                        } : undefined}
-                      >
-                        <UserAvatar 
-                          avatarUrl={authorProfile?.avatar_url}
-                          name={authorProfile?.display_name || authorProfile?.username}
-                          size="h-10 w-10"
-                          status={currentAuthorStatus}
-                          showStatus={true}
-                          className="mt-0.5 border border-white/5 hover:opacity-90 transition-opacity"
-                        />
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  {messages.map((msg, idx) => (
+                    <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
+                        <div className="shrink-0 cursor-pointer">
+                          <UserAvatar 
+                            avatarUrl={msg.profile?.avatar_url}
+                            name={msg.profile?.display_name || msg.profile?.username}
+                            size="h-10 w-10"
+                            className="rounded-xl border border-white/5 shadow-lg"
+                          />
+                        </div>
                       </UserProfileCard>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <UserProfileCard
-                            user={{
-                              id: userId || "",
-                              username: authorProfile?.username || "usuário",
-                              display_name: authorProfile?.display_name,
-                              avatar_url: authorProfile?.avatar_url,
-                              banner_url: authorProfile?.banner_url,
-                              bio: authorProfile?.bio,
-                              created_at: authorProfile?.created_at,
-                              status: currentAuthorStatus,
-                              is_verified: authorProfile?.is_verified || authorProfile?.id === LUME_BOT_ID
-                            }}
-                            isMe={userId === myProfile.id}
-                            onEditClick={userId === myProfile.id ? () => setIsSettingsOpen(true) : undefined}
-                            onMessageClick={userId !== myProfile.id ? () => {
-                              const friend = friendships.find(f => f.friend_profile?.id === userId)?.friend_profile || authorProfile;
-                              if (friend) {
-                                setActiveDMFriend(friend as Profile);
-                                setActiveChannel(null);
-                                setShowVoiceUI(false);
-                                markAsRead(userId);
-                              }
-                            } : undefined}
-                          >
-                            <span className="text-sm font-bold hover:underline cursor-pointer text-white truncate">
-                              {authorProfile?.display_name || authorProfile?.username || "Membro do Lume"}
-                            </span>
-                          </UserProfileCard>
-                          {authorProfile?.is_verified && (
-                            <BadgeCheck className="w-4 h-4 text-cyan-400 ml-0.5 shrink-0" />
-                          )}
-                          {(authorProfile?.id === LUME_BOT_ID || msg.sender_id === LUME_BOT_ID || msg.user_id === LUME_BOT_ID) && (
-                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                          )}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-bold text-white hover:underline cursor-pointer">
+                            {msg.profile?.display_name || msg.profile?.username || 'Usuário'}
+                          </span>
+                          <span className="text-[10px] text-zinc-600 font-medium">
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-zinc-500">
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        <div className="text-sm text-zinc-300 leading-relaxed break-words">
+                          <MessageText content={msg.content} />
+                        </div>
+                        {msg.file_url && (
+                          <div className="mt-2 rounded-2xl overflow-hidden border border-white/5 bg-black/20 max-w-sm">
+                            {msg.file_type?.startsWith('image/') ? (
+                              <PhotoProvider>
+                                <PhotoView src={msg.file_url}>
+                                  <img src={msg.file_url} alt="Attachment" className="w-full h-auto cursor-zoom-in hover:opacity-90 transition-opacity" />
+                                </PhotoView>
+                              </PhotoProvider>
+                            ) : msg.file_type?.startsWith('video/') ? (
+                              <video src={msg.file_url} controls className="w-full h-auto" />
+                            ) : (
+                              <div className="p-4 flex items-center gap-3">
+                                <FileText className="text-cyan-400" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-white truncate">{msg.file_name || 'Arquivo'}</p>
+                                  <a href={msg.file_url} download className="text-[10px] text-cyan-400 hover:underline">Download</a>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      
-                      {msg.content && <MessageText content={msg.content} />}
-                      
-                      {msg.file_url && msg.file_url.startsWith('http') && (
-                        <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
-                          <PhotoProvider maskOpacity={0.8}>
-                            <PhotoView src={msg.file_url}>
-                              <img 
-                                src={msg.file_url} 
-                                alt="Imagem anexada" 
-                                className="w-auto max-h-80 object-contain rounded-xl block cursor-zoom-in" 
-                                loading="lazy" 
-                              />
-                            </PhotoView>
-                          </PhotoProvider>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+              </div>
 
-            {isBotChat ? (
-              myProfile?.is_admin ? (
-                <div className="p-4 pt-0">
+              {/* Message Input */}
+              <div className="p-6 bg-gradient-to-t from-[#050505] to-transparent">
+                <div className="max-w-4xl mx-auto relative group">
+                  {attachmentPreview && (
+                    <div className="absolute bottom-full left-0 mb-4 p-2 bg-[#121214] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2">
+                      <div className="relative">
+                        <img src={attachmentPreview} alt="Preview" className="h-32 w-auto rounded-xl object-cover" />
+                        <button onClick={() => { setAttachmentPreview(null); setSelectedFile(null); }} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full shadow-lg">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
                   <form 
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!newMessage.trim()) return;
-                      const msg = newMessage;
-                      setNewMessage("");
-                      try {
-                        const { error } = await supabase.rpc('broadcast_system_update', { update_text: msg });
-                        if (error) throw error;
-                        toast.success("Atualização global enviada!");
-                      } catch (err: any) {
-                        toast.error("Erro ao enviar broadcast: " + err.message);
-                      }
-                    }}
-                    className="flex items-center gap-2 p-3 bg-[#0a0a0c] border border-cyan-500/50 rounded-xl shadow-[0_0_15px_rgba(0,209,255,0.1)]"
+                    onSubmit={handleSendMessage}
+                    className="flex items-end gap-2 bg-[#121214] border border-white/5 rounded-2xl p-2 focus-within:border-cyan-500/30 transition-all shadow-2xl"
                   >
-                    <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 animate-pulse" />
-                    <Input 
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-2.5 text-zinc-500 hover:text-white transition-colors"
+                    >
+                      <Plus size={20} />
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSelectedFile(file);
+                          if (file.type.startsWith('image/')) setAttachmentPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Modo Admin: Digite o changelog para disparar para todos os usuários..."
-                      className="bg-transparent border-none text-white placeholder:text-zinc-600 focus-visible:ring-0 h-9"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e as any);
+                        }
+                      }}
+                      placeholder={isBotChat ? "Canal oficial (somente leitura)" : `Conversar em ${activeChannel ? '#' + activeChannel.name : '@' + (activeDMFriend?.display_name || activeDMFriend?.username)}`}
+                      disabled={isBotChat && !myProfile.is_admin}
+                      className="flex-1 bg-transparent border-none text-sm text-white py-2.5 px-2 resize-none max-h-32 focus:ring-0 placeholder:text-zinc-600 custom-scrollbar"
+                      rows={1}
                     />
-                    <Button type="submit" size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold h-8">
-                      DISPARAR
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        type="button"
+                        onClick={() => setShowGifPicker(!showGifPicker)}
+                        className={`p-2 transition-colors ${showGifPicker ? "text-cyan-400" : "text-zinc-500 hover:text-white"}`}
+                      >
+                        <Film size={20} />
+                      </button>
+                      <button 
+                        type="submit"
+                        disabled={(!newMessage.trim() && !selectedFile) || isUploading}
+                        className="p-2.5 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(0,209,255,0.2)] disabled:opacity-50"
+                      >
+                        <Send size={18} />
+                      </button>
+                    </div>
                   </form>
                 </div>
-              ) : (
-                <div className="p-3.5 mx-4 mb-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center gap-2 text-zinc-400 text-xs font-medium select-none shadow-lg">
-                  <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Este é um canal oficial de transmissão somente leitura. Apenas a equipe do Lume publica novidades aqui.</span>
-                </div>
-              )
-            ) : (
-            <div className="p-4 pt-0">
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-[#14141a]/90 border border-white/10 shadow-lg focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(0,209,255,0.15)] transition-all relative">
-              {showEmojiPicker && (
-                <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="fixed inset-0" onClick={() => setShowEmojiPicker(false)} />
-                  <div className="relative">
-                    <EmojiPicker 
-                      theme={Theme.DARK} 
-                      onEmojiClick={(emoji: EmojiClickData) => {
-                        setNewMessage(prev => prev + emoji.emoji);
-                        setShowEmojiPicker(false);
-                      }}
-                      lazyLoadEmojis
-                    />
-                  </div>
-                </div>
-              )}
-
-              {showGifPicker && (
-                <div className="absolute bottom-full left-4 mb-4 z-50 w-80 bg-[#121212] border border-zinc-800 rounded-xl p-3 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
-                  <div className="fixed inset-0" onClick={() => setShowGifPicker(false)} />
-                  <div className="relative flex flex-col gap-3">
-                    <div className="flex items-center gap-2 px-2 py-1 bg-[#050505] rounded-lg border border-white/5">
-                      <Search size={14} className="text-zinc-500" />
-                      <input 
-                        className="bg-transparent border-none outline-none text-xs text-white w-full h-8" 
-                        placeholder="Buscar GIFs no GIPHY..." 
-                        value={gifSearch}
-                        onChange={(e) => setGifSearch(e.target.value)}
-                        autoFocus
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                      {gifs.length > 0 ? gifs.map(gif => (
-                        <button 
-                          key={gif.id} 
-                          onClick={() => {
-                            const gifUrl = gif.images?.original?.url || gif.images?.fixed_height?.url;
-                            sendGif(gifUrl, gif);
-                          }}
-                          className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
-                        >
-                          <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
-                        </button>
-                      )) : (
-                        <div className="col-span-2 py-8 text-center text-zinc-500 text-xs">
-                          {gifSearch ? "Nenhum GIF encontrado" : "Carregando GIFs..."}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setSelectedFile(file);
-                    setAttachmentPreview(URL.createObjectURL(file));
-                  }
-                }}
-                accept="image/*,video/*,.pdf,.zip,.doc,.docx"
-              />
-
-              {attachmentPreview && (
-                <div className="absolute bottom-full left-4 mb-2 animate-in fade-in slide-in-from-bottom-2 z-10">
-                  <div className="relative group bg-zinc-900 border border-zinc-800 rounded-xl p-2 shadow-2xl overflow-hidden">
-                    {selectedFile?.type.startsWith('image/') ? (
-                      <img src={attachmentPreview} className="max-h-32 rounded-lg object-contain" alt="Preview" />
-                    ) : (
-                      <div className="flex items-center gap-2 px-2 py-4 text-xs text-zinc-300">
-                        <FileText className="w-8 h-8 text-[#00D1FF]" />
-                        <span className="truncate max-w-[150px]">{selectedFile?.name}</span>
-                      </div>
-                    )}
-                    <button 
-                      onClick={() => {
-                        setAttachmentPreview(null);
-                        setSelectedFile(null);
-                      }}
-                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex-1 flex items-center gap-2">
-                <button 
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-zinc-500 hover:text-white transition-colors"
-                  disabled={isUploading}
-                >
-                  <Paperclip size={20} className={isUploading ? "animate-pulse text-[#00D1FF]" : ""} />
-                </button>
-                
-                <form onSubmit={handleSendMessage} className="flex-1 flex items-center relative">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onPaste={handlePaste}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e as any);
-                      }
-                    }}
-                    placeholder={
-                      isBotChat
-
-                        ? (myProfile.is_admin ? "Disparar atualização oficial..." : "Canal oficial de transmissão somente leitura")
-                        : (activeChannel ? `Conversar em #${activeChannel.name}` : `Conversar com @${activeDMFriend?.username}`)
-                    }
-                    disabled={isBotChat && !myProfile.is_admin}
-                    className="bg-transparent border-none shadow-none focus-visible:ring-0 h-11 text-sm text-white px-0 disabled:opacity-50"
-
-                  />
-                  <div className="flex items-center gap-1 pr-1">
-                    <button 
-                      type="button"
-                      onClick={() => setShowGifPicker(!showGifPicker)}
-                      className={`p-2 transition-colors ${showGifPicker ? "text-[#00D1FF]" : "text-zinc-500 hover:text-white"}`}
-                    >
-                      <Film size={20} />
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className={`p-2 transition-colors ${showEmojiPicker ? "text-[#00D1FF]" : "text-zinc-500 hover:text-white"}`}
-                    >
-                      <Smile size={20} />
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="p-2 text-zinc-500 hover:text-[#00D1FF] transition-colors"
-                      disabled={(!newMessage.trim() && !selectedFile) || isUploading}
-                    >
-                      <Send size={18} />
-                    </button>
-                  </div>
-                </form>
-                </div>
               </div>
-            </div>
-            )}
-          </>
-        ) : !activeServer ? (
-          <div className="flex flex-col h-full">
-            <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
-              <Users size={20} className="mr-2 text-zinc-500" />
-              <h3 className="text-sm font-bold text-white mr-4">Amigos</h3>
-              <div className="h-6 w-[1px] bg-white/10 mx-2" />
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setFriendFilter('online')}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'online' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
-                >
-                  Disponível {friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length > 0 ? `— ${friendships.filter(f => f.status === 'accepted' && f.friend_profile && f.friend_profile.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)).length}` : ''}
-                </button>
-                <button 
-                  onClick={() => setFriendFilter('all')}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${friendFilter === 'all' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
-                >
-                  Todos
-                </button>
-                <button 
-                  onClick={() => setFriendFilter('pending')}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors relative ${friendFilter === 'pending' ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5"}`}
-                >
-                  Pendentes
-                  {friendships.filter(f => f.status === 'pending' && f.addressee_id === myProfile.id).length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white">
-                      {friendships.filter(f => f.status === 'pending' && f.addressee_id === myProfile.id).length}
-                    </span>
-                  )}
-                </button>
-                <button 
-                  onClick={() => setFriendFilter('add')}
-                  className={`px-3 py-1 text-xs rounded-md font-bold transition-colors ${friendFilter === 'add' ? "text-[#00D1FF]" : "bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90"}`}
-                >
-                  Adicionar Amigo
-                </button>
-              </div>
-            </div>
-            
-            <div className="flex-1 p-6 overflow-y-auto">
-              {friendFilter === 'add' ? (
-                <div className="max-w-xl space-y-4">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Adicionar Amigo</h4>
-                    <p className="text-xs text-zinc-400">Você pode adicionar amigos com o nome de usuário do Lume.</p>
-                  </div>
-                  <div className="relative group">
-                    <Input 
-                      value={addFriendUsername}
-                      onChange={(e) => setAddFriendUsername(e.target.value)}
-                      placeholder="Insira o nome de usuário..."
-                      className="bg-[#121212] border border-[#121212] focus:border-[#00D1FF]/50 text-white h-12 pr-40"
-                    />
-                    <Button 
-                      onClick={handleSendFriendRequest}
-                      disabled={!addFriendUsername.trim()}
-                      className="absolute right-1 top-1 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 h-10 px-4"
-                    >
-                      Enviar pedido
-                    </Button>
-                  </div>
-                </div>
-              ) : friendFilter === 'pending' ? (
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">
-                    Pedidos de Amizade — {friendships.filter(f => f.status === 'pending').length}
-                  </h4>
-                  {friendships.filter(f => f.status === 'pending').map(f => (
-                    <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={f.friend_profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                          {f.friend_profile?.username.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
-                        <p className="text-[10px] text-zinc-500">{f.requester_id === myProfile.id ? "Pedido enviado" : "Pedido recebido"}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        {f.addressee_id === myProfile.id ? (
-                          <>
-                            <button onClick={() => handleAcceptFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all">
-                              <Check size={18} />
-                            </button>
-                            <button onClick={() => handleDeclineFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                              <X size={18} />
-                            </button>
-                          </>
-                        ) : (
-                          <button onClick={() => handleDeclineFriendRequest(f.id)} className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-red-500 hover:text-white transition-all">
-                            <X size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">
-                    Amigos — {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).length}
-                  </h4>
-                  {friendships.filter(f => f.status === 'accepted' && (friendFilter === 'all' || (f.friend_profile?.status && ['online', 'idle', 'dnd'].includes(f.friend_profile.status)))).map(f => (
-                    <div key={f.id} className="flex items-center gap-3 px-3 py-2 border-t border-white/5 group hover:bg-white/5 rounded-md transition-colors">
-                      <div className="relative">
-                        <UserProfileCard
-                          user={f.friend_profile!}
-                          isMe={false}
-                          onMessageClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
-                        >
-                          <Avatar className="h-8 w-8 hover:opacity-90 transition-opacity cursor-pointer">
-                            <AvatarImage src={f.friend_profile?.avatar_url || ""} />
-                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                              {f.friend_profile?.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </UserProfileCard>
-                        <StatusBadge 
-                          status={f.friend_profile?.status} 
-                          size="sm" 
-                          className="absolute bottom-0 right-0 border-2 border-[#050505]" 
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
-                          {f.friend_profile?.id === LUME_BOT_ID && (
-                            <span className="shrink-0 px-1.5 py-0.5 text-[8px] bg-[#00D1FF]/20 text-[#00D1FF] font-bold rounded uppercase">OFICIAL</span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-zinc-500 capitalize">{f.friend_profile?.status || 'offline'}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => { setActiveDMFriend(f.friend_profile!); setActiveChannel(null); setShowVoiceUI(false); }}
-                          className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-[#00D1FF] hover:text-black transition-all"
-                        >
-                          <MessageSquare size={16} />
-                        </button>
-                        <button className="h-8 w-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 transition-all">
-                          <Sparkles size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-center text-white">
-            <div className="max-w-md space-y-6 flex flex-col items-center">
-              <div className="flex justify-center items-center my-4">
-                <LumeLogo variant="full" />
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-6">
+              <div className="w-24 h-24 rounded-3xl bg-zinc-900 flex items-center justify-center border border-white/5 shadow-2xl animate-pulse">
+                <LumeLogo variant="icon" />
               </div>
               <div className="space-y-2">
-                <p className="text-sm text-zinc-500 font-medium tracking-wide">Plataforma de comunicação minimalista. Comece criando seu primeiro servidor.</p>
+                <h2 className="text-xl font-bold text-white tracking-tight">Bem-vindo ao Lume</h2>
+                <p className="text-sm text-zinc-500 max-w-xs mx-auto">Selecione uma conversa ou servidor no painel esquerdo para começar.</p>
               </div>
-              <Button onClick={() => setIsCreatingServer(true)} className="mt-4 bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold h-12 px-8">
-                Criar meu primeiro Servidor
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => setActiveTab('servidores')} 
+                  variant="outline" 
+                  className="rounded-xl border-white/5 hover:bg-white/5 text-zinc-400"
+                >
+                  Explorar Servidores
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('amigos')} 
+                  className="bg-cyan-500 text-black hover:bg-cyan-400 rounded-xl font-bold px-6 shadow-[0_0_20px_rgba(0,209,255,0.1)]"
+                >
+                  Adicionar Amigos
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </main>
+          )}
+        </div>
+      </main>
 
-    {/* Settings Modal (Estilo Discord) */}
-    <SettingsModal 
-      isOpen={isSettingsOpen}
-      onClose={() => setIsSettingsOpen(false)}
-    />
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
-    <CreateGroupModal 
-      isOpen={isCreateGroupOpen}
-      onClose={() => setIsCreateGroupOpen(false)}
-      myProfile={myProfile}
-      friendships={friendships}
-      onCreateGroup={async (memberIds, name) => {
-        try {
-          const { data: group, error: groupError } = await supabase
-            .from('dm_groups')
-            .insert({ name: name || null, created_by: myProfile.id })
-            .select()
-            .single();
+      <CreateGroupModal 
+        isOpen={isCreateGroupOpen}
+        onClose={() => setIsCreateGroupOpen(false)}
+        myProfile={myProfile}
+        friendships={friendships}
+        onCreateGroup={async (memberIds, name) => {
+          try {
+            const { data: group, error: groupError } = await supabase
+              .from('dm_groups')
+              .insert({ name: name || null, created_by: myProfile.id })
+              .select()
+              .single();
+              
+            if (groupError) throw groupError;
             
-          if (groupError) throw groupError;
-          
-          const memberInserts = [myProfile.id, ...memberIds].map(uid => ({
-            group_id: group.id,
-            user_id: uid
-          }));
-          
-          const { error: membersError } = await supabase
-            .from('dm_group_members')
-            .insert(memberInserts);
+            const memberInserts = [myProfile.id, ...memberIds].map(uid => ({
+              group_id: group.id,
+              user_id: uid
+            }));
             
-          if (membersError) throw membersError;
-          
-          toast.success("Grupo criado com sucesso!");
-          await fetchConversations();
-          // We don't have setActiveDMGroup in state yet, but I'll add it
-          setActiveDMGroup(group);
-          setActiveDMFriend(null);
-          setActiveChannel(null);
-          setActiveServer(null);
-        } catch (err: any) {
-          toast.error("Erro ao criar grupo: " + err.message);
-        }
-      }}
-    />
+            const { error: membersError } = await supabase
+              .from('dm_group_members')
+              .insert(memberInserts);
+              
+            if (membersError) throw membersError;
+            
+            toast.success("Grupo criado com sucesso!");
+            await fetchConversations();
+            setActiveDMGroup(group);
+            setActiveDMFriend(null);
+            setActiveChannel(null);
+            setActiveServer(null);
+            setActiveTab('conversas');
+          } catch (err: any) {
+            toast.error("Erro ao criar grupo: " + err.message);
+          }
+        }}
+      />
     </div>
   );
 }
