@@ -1898,12 +1898,7 @@ function DashboardComponent() {
                   {!isBotChat && activeDMFriend && (
                     <div className="ml-auto flex items-center gap-2">
                       <button 
-                        onClick={() => {
-                          const ids = [myProfile.id, activeDMFriend.id].sort();
-                          const roomKey = `dm-1to1-${ids[0]}-${ids[1]}`;
-                          setActiveVoiceChannel({ id: roomKey, name: getDisplayName(activeDMFriend), type: 'voice', server_id: 'dm' });
-                          setShowVoiceUI(true);
-                        }}
+                        onClick={() => handleStartVoiceCall(activeDMFriend)}
                         className="p-2 text-zinc-400 hover:text-cyan-400 transition-colors"
                         title="Chamada de voz"
                       >
@@ -1951,6 +1946,7 @@ function DashboardComponent() {
             onAcceptRequest={handleAcceptFriendRequest}
             onDeclineRequest={handleDeclineFriendRequest}
             onSendRequest={handleSendFriendRequest}
+            onStartCall={handleStartVoiceCall}
           />
         )}
       </main>
