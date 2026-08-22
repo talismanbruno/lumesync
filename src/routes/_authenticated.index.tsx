@@ -1889,8 +1889,11 @@ function DashboardComponent() {
                     size="h-7 w-7"
                     className="rounded-lg"
                   />
-                  <span className="text-sm font-bold truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
-                  {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-sm font-bold truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
+                    <AdminVerifiedBadge isAdmin={activeDMFriend?.is_admin} size={12} />
+                    {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
+                  </div>
                   {!isBotChat && activeDMFriend && (
                     <div className="ml-auto flex items-center gap-2">
                       <button 
