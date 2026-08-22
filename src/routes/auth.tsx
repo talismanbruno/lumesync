@@ -170,10 +170,25 @@ function AuthPage() {
 
   if (isAuthChecking) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <LumeLogo variant="icon" className="h-16 w-16 animate-pulse opacity-50" />
-          <p className="text-cyan-500/50 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Sincronizando Lume...</p>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-cyan-500/10 rounded-full animate-[spin_60s_linear_infinite] motion-reduce:animate-none" />
+        </div>
+        <div className="flex flex-col items-center space-y-6 z-10 animate-in fade-in duration-700">
+          <LumeLogo variant="icon" className="h-20 w-20 animate-pulse opacity-80 shadow-[0_0_40px_rgba(0,209,255,0.2)]" />
+          <div className="flex flex-col items-center space-y-2">
+            <p className="text-cyan-400 text-xs font-bold uppercase tracking-[0.4em] animate-pulse">Sincronizando sua sessão...</p>
+            <div className="flex gap-1 justify-center">
+              {[0, 1, 2].map((i) => (
+                <div 
+                  key={i} 
+                  className="w-1 h-1 rounded-full bg-cyan-500/40 animate-bounce motion-reduce:animate-none" 
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
