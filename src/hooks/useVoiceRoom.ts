@@ -244,10 +244,11 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         if (!pc) return;
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
       })
-      .subscribe(async (status) => {
-        console.log(`[Lume Voice Room] Status da inscrição: ${status}`);
+      .subscribe(async (status, err) => {
+        console.log(`[Lume Voice Room] Status da inscrição: ${status}`, err || "");
         if (status === 'SUBSCRIBED') {
-          await voiceChannel.track({
+          console.log(`[Lume Voice Room] Iniciando track para ${myProfile.id}`);
+          const trackResult = await voiceChannel.track({
             user_id: myProfile.id,
             username: myProfile?.username || 'Usuário',
             display_name: myProfile?.display_name || 'Usuário',
@@ -256,6 +257,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
             isDeafened: false,
             isSharingScreen: false
           });
+          console.log(`[Lume Voice Room] Resultado do track:`, trackResult);
         }
       });
 
