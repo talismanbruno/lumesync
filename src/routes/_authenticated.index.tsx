@@ -1761,7 +1761,7 @@ function DashboardComponent() {
         onClose={() => setIsCreateGroupOpen(false)}
         myProfile={myProfile}
         friendships={friendships}
-        onCreateGroup={async (memberIds: string[], name?: string) => {
+        onCreateGroup={async (memberIds: string[], name?: string | null) => {
           try {
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
