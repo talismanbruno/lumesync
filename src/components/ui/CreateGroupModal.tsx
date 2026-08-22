@@ -105,7 +105,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
       <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px] p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-bold">Criar Grupo</DialogTitle>
-          <p className="text-xs text-zinc-400">Você pode adicionar mais {9 - selectedFriends.length} amigos.</p>
+          <p className="text-xs text-zinc-400">Você pode adicionar amigos para criar um grupo.</p>
         </DialogHeader>
 
         <div className="px-6 py-2 space-y-4">

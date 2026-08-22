@@ -1198,7 +1198,12 @@ function DashboardComponent() {
                     return (
                       <button 
                         key={friend.id}
-                        onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); setShowVoiceUI(false); markAsRead(friend.id); }}
+                        onClick={() => { 
+                          setActiveDMFriend(friend); 
+                          setActiveChannel(null); 
+                          setShowVoiceUI(false); 
+                          markAsRead(friend.id); 
+                        }}
                         className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm transition-colors overflow-hidden ${
                           activeDMFriend?.id === friend.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                         }`}
@@ -1238,17 +1243,47 @@ function DashboardComponent() {
                   </div>
                   <div className="grid grid-cols-1 gap-1">
                     {servers.map(server => (
-                      <button 
-                        key={server.id}
-                        onClick={() => setActiveServer(server)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${activeServer?.id === server.id ? "bg-white/10 text-white shadow-sm border border-white/5" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
-                      >
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${activeServer?.id === server.id ? "bg-cyan-500 text-black shadow-[0_0_15px_rgba(0,209,255,0.3)]" : "bg-zinc-800 text-zinc-400"}`}>
-                          {server.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <span className="font-medium truncate flex-1 text-left">{server.name}</span>
-                        {activeServer?.id === server.id && <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,209,255,0.8)]" />}
-                      </button>
+                      <ContextMenu key={server.id}>
+                        <ContextMenuTrigger asChild>
+                          <button 
+                            onClick={async () => {
+                              setActiveServer(server);
+                              
+                              // Auto-select #geral on click
+                              const { data: channelsData } = await supabase
+                                .from("channels")
+                                .select("*")
+                                .eq("server_id", server.id)
+                                .order("created_at", { ascending: true });
+                                
+                              if (channelsData && channelsData.length > 0) {
+                                setActiveChannel(channelsData[0] as Channel);
+                              }
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${activeServer?.id === server.id ? "bg-white/10 text-white shadow-sm border border-white/5" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
+                          >
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${activeServer?.id === server.id ? "bg-cyan-500 text-black shadow-[0_0_15px_rgba(0,209,255,0.3)]" : "bg-zinc-800 text-zinc-400"}`}>
+                              {server.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="font-medium truncate flex-1 text-left">{server.name}</span>
+                            {activeServer?.id === server.id && <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,209,255,0.8)]" />}
+                          </button>
+                        </ContextMenuTrigger>
+                        {server.owner_id === myProfile.id && (
+                          <ContextMenuContent className="bg-[#121214] border border-white/5 rounded-xl p-1 shadow-2xl z-[100] min-w-[160px]">
+                            <ContextMenuItem 
+                              onClick={() => {
+                                setServerToDelete(server);
+                                setIsDeletingServer(true);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={16} />
+                              Excluir Servidor
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        )}
+                      </ContextMenu>
                     ))}
                   </div>
                 </div>
@@ -1438,7 +1473,7 @@ function DashboardComponent() {
                 </div>
               </header>
 
-              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent [scrollbar-width:thin]">
                 <div className="space-y-6">
                   {messages.map((msg, idx) => (
                     <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -1589,7 +1624,7 @@ function DashboardComponent() {
                 )}
               </header>
 
-              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent [scrollbar-width:thin]">
                 <div className="space-y-6">
                   {messages.map((msg, idx) => (
                     <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
