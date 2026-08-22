@@ -23,6 +23,8 @@ export const AdminVerifiedBadge: React.FC<AdminVerifiedBadgeProps> = ({
   className,
   size = 14,
 }) => {
+  // Garantir que undefined vire null/false para agradar o TS se necessário, 
+  // mas aqui o tipo já é boolean | null.
   if (!isAdmin) return null;
 
   return (

@@ -8,6 +8,7 @@ export interface LumeProfile {
   avatar_url: string | null;
   display_name: string | null;
   status?: string | null;
+  is_admin?: boolean | null;
 }
 
 export interface VoiceParticipant {
@@ -15,6 +16,7 @@ export interface VoiceParticipant {
   username: string;
   avatar_url: string | null;
   display_name: string | null;
+  is_admin?: boolean | null;
   isMuted: boolean;
   isDeafened?: boolean;
   isSharingScreen?: boolean;
@@ -322,6 +324,7 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
             isMuted: p.isMuted ?? false,
             isDeafened: p.isDeafened ?? false,
             isSharingScreen: p.isSharingScreen ?? false,
+            is_admin: p.is_admin ?? false,
             isSpeaking: false,
             stream: remoteStreams.current.get(p.user_id || key) || null,
             screenStream: remoteScreenStreams.current.get(p.user_id || key) || null
@@ -373,7 +376,8 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
             avatar_url: myProfile?.avatar_url,
             isMuted: false,
             isDeafened: false,
-            isSharingScreen: false
+            isSharingScreen: false,
+            is_admin: myProfile.is_admin ?? false
           });
         }
       });

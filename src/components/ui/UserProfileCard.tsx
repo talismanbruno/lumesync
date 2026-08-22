@@ -19,6 +19,7 @@ interface UserProfileCardProps {
     created_at?: string | undefined;
     status?: 'online' | 'idle' | 'dnd' | 'offline' | undefined;
     is_verified?: boolean;
+    is_admin?: boolean | null;
   };
   isMe?: boolean;
   onEditClick?: (() => void) | undefined;

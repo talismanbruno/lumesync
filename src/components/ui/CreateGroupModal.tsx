@@ -15,6 +15,7 @@ interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   status?: 'online' | 'idle' | 'dnd' | 'offline';
+  is_admin?: boolean | null;
 }
 
 interface CreateGroupModalProps {
