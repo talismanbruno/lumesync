@@ -90,6 +90,7 @@ function AuthPage() {
       toast.error(error.message || "Erro na autenticação");
       setAuthState("idle");
     }
+    return undefined; // Garante retorno explícito
   };
 
   const handleResendEmail = async () => {
