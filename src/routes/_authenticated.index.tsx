@@ -1169,7 +1169,7 @@ function DashboardComponent() {
 
     return (
       <div key={msg.id} className="flex gap-3 px-6 py-2 hover:bg-white/[0.02] transition-colors group">
-        <UserProfileCard profile={author as any} myProfile={myProfile}>
+        <UserProfileCard user={(author || { id: '', username: '?' }) as any} isMe={author?.id === myProfile.id}>
           <div className="shrink-0 cursor-pointer">
             <UserAvatar
               avatarUrl={author?.avatar_url}
