@@ -80,14 +80,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Área Principal Direita */}
         <main className="flex-1 bg-[#121214] flex flex-col overflow-hidden relative">
           {/* Botão de Fechar Único e Acessível */}
-          <button 
-            type="button"
-            onClick={onClose}
+          <DialogClose 
+            asChild
             className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-50 group cursor-pointer"
             aria-label="Fechar configurações"
           >
-            <X size={20} className="group-hover:scale-110 transition-transform" />
-          </button>
+            <button type="button">
+              <X size={20} className="group-hover:scale-110 transition-transform" />
+            </button>
+          </DialogClose>
 
           <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
             {activeTab === 'profile' && (
