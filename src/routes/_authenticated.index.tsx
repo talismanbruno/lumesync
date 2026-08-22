@@ -833,11 +833,13 @@ function DashboardComponent() {
     };
   }, [myProfile?.id, activeDMFriend?.id]);
 
-  const handleSendFriendRequest = async () => {
-    if (!addFriendUsername.trim() || !myProfile?.id) return;
+  const handleSendFriendRequest = async (usernameArg?: string) => {
+    const uname = (usernameArg ?? addFriendUsername).trim();
+    if (!uname || !myProfile?.id) return;
     const { data: found, error: searchError } = await supabase.rpc("find_profile_by_username", {
-      p_username: addFriendUsername.trim(),
+      p_username: uname,
     });
+
 
     const targetProfile = Array.isArray(found) ? found[0] : found;
 
