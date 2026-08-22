@@ -236,9 +236,9 @@ function AuthenticatedLayout() {
             className="flex items-center gap-2.5 overflow-hidden cursor-pointer flex-1 min-w-0 p-1 hover:bg-white/5 rounded-lg transition-colors"
           >
             <div className="relative shrink-0">
-              <UserAvatar src={myProfile.avatar_url} name={myProfile.display_name || myProfile.username} size="sm" />
+              <UserAvatar avatarUrl={myProfile.avatar_url} name={myProfile.display_name || myProfile.username} size="h-8 w-8" />
               <div className="absolute -bottom-0.5 -right-0.5">
-                <StatusBadge status={myProfile.status} size="sm" showLabel={false} />
+                <StatusBadge status={myProfile.status} size="sm" />
               </div>
             </div>
             
