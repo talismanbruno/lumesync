@@ -1610,8 +1610,9 @@ function DashboardComponent() {
     </div>
   </div>
 
-  {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
-  <main className="flex-1 min-w-0 h-full rounded-3xl bg-[#0f0f14]/90 backdrop-blur-2xl border border-white/5 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
+  {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
+  <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden">
+
     <div className="flex flex-1 flex-col overflow-hidden">
 
 
