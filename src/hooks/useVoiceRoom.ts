@@ -404,22 +404,27 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         });
       });
       
-      if (channelRef.current) {
+      const myPart = participants.find(p => p.id === myProfile?.id);
+      if (channelRef.current && myPart) {
         channelRef.current.track({
-          ...participants.find(p => p.id === myProfile?.id),
+          ...myPart,
           isSharingScreen: true
         });
       }
 
-      stream.getVideoTracks()[0].onended = () => {
-        setScreenStream(null);
-        if (channelRef.current) {
-          channelRef.current.track({
-            ...participants.find(p => p.id === myProfile?.id),
-            isSharingScreen: false
-          });
-        }
-      };
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
+          setScreenStream(null);
+          const currentMyPart = participants.find(p => p.id === myProfile?.id);
+          if (channelRef.current && currentMyPart) {
+            channelRef.current.track({
+              ...currentMyPart,
+              isSharingScreen: false
+            });
+          }
+        };
+      }
     } catch (err) {
       console.log("Compartilhamento cancelado");
     }
