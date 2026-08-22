@@ -1739,6 +1739,24 @@ function DashboardComponent() {
             <Settings size={18} />
           </button>
         </div>
+
+        {/* Órbita de Voz: Conexão Orbital (Persistente no Rodapé) */}
+        {activeVoiceChannel && (
+          <OrbitalConnectionPanel 
+            myProfile={myProfile}
+            connectionStatus={connectionStatus}
+            isMuted={isMuted}
+            isDeafened={isDeafened}
+            onToggleMute={toggleMute}
+            onToggleDeafen={toggleDeafen}
+            onDisconnect={() => {
+              disconnect();
+              setActiveVoiceChannel(null);
+              setShowVoiceUI(false);
+            }}
+            onOpenSettings={() => toast.info("Configurações de áudio em breve")}
+          />
+        )}
       </aside>
 
       {/* COLUNA 3 — CANVAS PRINCIPAL */}
@@ -1781,7 +1799,11 @@ function DashboardComponent() {
                   onToggleDeafen={toggleDeafen}
                   onToggleScreenShare={toggleScreenShare}
                   onToggleNoiseSuppression={toggleNoiseSuppression}
-                  onDisconnect={disconnect}
+                  onDisconnect={() => {
+                    disconnect();
+                    setActiveVoiceChannel(null);
+                    setShowVoiceUI(false);
+                  }}
                   onOpenStage={() => setShowVoiceUI(true)}
                 />
               )}
