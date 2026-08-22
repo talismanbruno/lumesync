@@ -1,12 +1,84 @@
 /**
- * PACOTE DE CORREÇÕES: MENU DE STATUS NO RODAPÉ, RENDERIZAÇÃO REAL DE GIFS/FOTOS E AJUSTES DE GRUPO/BOT
+ * CORREÇÕES OBRIGATÓRIAS: IMAGENS NO CHAT, CRIAÇÃO DIRETA DE GRUPOS E STATUS NO RODAPÉ
  * 
- * 1. RESTAURAR SELETOR DE STATUS NO RODAPÉ (SidebarUserFooter.tsx):
- * 2. CORRIGIR RENDERIZAÇÃO DE GIFS E IMAGENS NO CHAT (MessageItem.tsx / DMChatArea.tsx):
- * 3. REMOVER BOTÃO "ENVIAR MENSAGEM" DO PERFIL DO BOT LUME (UserProfileCard.tsx):
- * 4. AJUSTAR LIMITE DE CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
+ * 1. CORRIGIR ENVIO E RENDERIZAÇÃO DE IMAGENS/GIFS NO CHAT (MessageInput.tsx e MessageItem.tsx):
  * 
- * IMPLEMENTADO VERBATIM CONFORME SOLICITADO.
+ * Problema: As mensagens estão aparecendo como um botão quebrado com o texto "Mídia" porque o file_url está sendo enviado vazio ou undefined.
+ * 
+ * Ao Enviar GIF do GIPHY:
+ * Certifique-se de extrair a URL direta: const gifUrl = gif.images?.original?.url || gif.images?.fixed_height?.url;
+ * OBRIGATÓRIO: O file_url no insert da mensagem DEVE ser essa string gifUrl (começando com https://media.giphy.com/...).
+ * 
+ * Ao Enviar Imagem/Anexo do Computador:
+ * Converta o arquivo selecionado para Base64 usando FileReader (ou suba para o Supabase Storage e pegue a publicUrl). O file_url DEVE ser uma URL válida (começando com https:// ou data:image/).
+ * 
+ * Na Renderização (MessageItem.tsx):
+ * NUNCA renderize a tag <img> se file_url for nulo, vazio ou "undefined".
+ * 
+ * Se file_url for uma URL válida:
+ * {message.file_url && message.file_url.startsWith('http') && (
+ *   <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
+ *     <img 
+ *       src={message.file_url} 
+ *       alt="Imagem anexada" 
+ *       className="w-auto max-h-80 object-contain rounded-xl block" 
+ *       loading="lazy" 
+ *     />
+ *   </div>
+ * )}
+ * 
+ * 2. CORRIGIR CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
+ * Substitua a lógica de criação de grupo por inserção direta à prova de falhas:
+ * 
+ * const handleCreateGroup = async () => {
+ *   if (selectedFriendIds.length === 0) {
+ *     toast.error("Selecione pelo menos 1 amigo para criar o grupo!");
+ *     return;
+ *   }
+ *   setIsLoading(true);
+ *   try {
+ *     const { data: newGroup, error: groupError } = await supabase
+ *       .from('dm_groups')
+ *       .insert({
+ *         name: groupName.trim() || `Grupo com ${selectedFriendIds.length + 1} membros`,
+ *         created_by: user.id
+ *       })
+ *       .select()
+ *       .single();
+ *       
+ *     if (groupError) throw groupError;
+ *     const membersToInsert = [
+ *       { group_id: newGroup.id, user_id: user.id },
+ *       ...selectedFriendIds.map(friendId => ({ group_id: newGroup.id, user_id: friendId }))
+ *     ];
+ *     const { error: membersError } = await supabase
+ *       .from('dm_group_members')
+ *       .insert(membersToInsert);
+ *     if (membersError) throw membersError;
+ *     toast.success("Grupo criado com sucesso!");
+ *     onClose();
+ *     await fetchConversations();
+ *     onSelectGroup(newGroup.id);
+ *   } catch (err: any) {
+ *     console.error("Erro ao criar grupo:", err);
+ *     toast.error(err.message || "Erro ao criar grupo");
+ *   } finally {
+ *     setIsLoading(false);
+ *   }
+ * };
+ * 
+ * 3. RESTAURAR O SELETOR DE STATUS NO RODAPÉ ESQUERDO (SidebarUserFooter.tsx):
+ * Ao clicar no avatar ou no nome teamlume no rodapé da barra lateral:
+ * NÃO ABRA O USERPROFILECARD.
+ * Abra o Menu Dropdown de Status (Disponível 🟢, Ausente 🟡, Não Perturbe 🔴, Invisível ⚪).
+ * Use <DropdownMenuPortal> com z-50 abrindo para cima (side="top"), para que o menu flutue livremente sem quebrar o layout da barra lateral.
+ * 
+ * VALIDAÇÃO OBRIGATÓRIA:
+ * Envie um GIF do menu de GIFs: o GIF animado DEVE carregar e ficar visível na conversa (sem a caixa cinza com texto "Mídia").
+ * Clique no + de Mensagens Diretas, selecione um amigo e clique em "Criar Grupo": o modal DEVE fechar e o grupo deve aparecer na lista de conversas.
+ * Clique no seu nome no rodapé esquerdo: o menu com as opções de status (Disponível, Ausente, etc.) DEVE abrir.
+ * 
+ * IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -868,19 +940,15 @@ function DashboardComponent() {
       };
 
       if (fileToUpload) {
-        const filePath = `${myProfile.id}/${Date.now()}-${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const { error: uploadError } = await supabase.storage
-          .from('chat-attachments')
-          .upload(filePath, fileToUpload);
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(fileToUpload);
+        });
+        const base64String = await base64Promise;
 
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('chat-attachments')
-          .getPublicUrl(filePath);
-          
         fileData = {
-          file_url: publicUrl,
+          file_url: base64String,
           file_type: fileToUpload.type || 'application/octet-stream',
           file_name: fileToUpload.name
         };
@@ -1563,30 +1631,43 @@ function DashboardComponent() {
         <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
           <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
             <PopoverTrigger asChild>
-              <UserAvatar 
-                avatarUrl={myProfile?.avatar_url}
-                name={myProfile?.display_name || myProfile?.username}
-                size="h-9 w-9"
-                status={myProfile?.status || 'online'}
-                showStatus={true}
-                className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 object-cover aspect-square"
-              />
+              <div className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors flex-1 min-w-0">
+                <UserAvatar 
+                  avatarUrl={myProfile?.avatar_url}
+                  name={myProfile?.display_name || myProfile?.username}
+                  size="h-9 w-9"
+                  status={myProfile?.status || 'online'}
+                  showStatus={true}
+                  className="shrink-0 object-cover aspect-square"
+                />
+                <div className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white">
+                  <div className="flex items-center gap-1 w-full min-w-0">
+                    <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
+                    {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                  </div>
+                  <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
+                    {myProfile.status === 'online' ? 'Disponível' : 
+                     myProfile.status === 'idle' ? 'Ausente' : 
+                     myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
+                  </p>
+                </div>
+              </div>
             </PopoverTrigger>
             <PopoverPortal>
               <PopoverContent 
                 side="top" 
                 align="start" 
                 sideOffset={12}
-                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[100] animate-in slide-in-from-bottom-2 duration-200"
+                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[50] animate-in slide-in-from-bottom-2 duration-200"
               >
                 <div className="px-2 py-1.5 mb-1 border-b border-white/5">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
                 </div>
                 {[
-                  { id: 'online', label: 'Disponível', color: '#00D1FF' },
-                  { id: 'idle', label: 'Ausente', color: '#F59E0B' },
-                  { id: 'dnd', label: 'Não Perturbe', color: '#EF4444' },
-                  { id: 'offline', label: 'Invisível', color: '#71717A' }
+                  { id: 'online', label: 'Disponível 🟢', color: '#00D1FF' },
+                  { id: 'idle', label: 'Ausente 🟡', color: '#F59E0B' },
+                  { id: 'dnd', label: 'Não Perturbe 🔴', color: '#EF4444' },
+                  { id: 'offline', label: 'Invisível ⚪', color: '#71717A' }
                 ].map((s) => (
                   <button
                     key={s.id}
@@ -1601,26 +1682,6 @@ function DashboardComponent() {
               </PopoverContent>
             </PopoverPortal>
           </Popover>
-          
-          <UserProfileCard
-            user={myProfile}
-            isMe={true}
-            onEditClick={() => setIsSettingsOpen(true)}
-          >
-            <div 
-              className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white cursor-pointer"
-            >
-              <div className="flex items-center gap-1 w-full min-w-0">
-                <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-                {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-              </div>
-              <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-                {myProfile.status === 'online' ? 'Disponível' : 
-                 myProfile.status === 'idle' ? 'Ausente' : 
-                 myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-              </p>
-            </div>
-          </UserProfileCard>
           
           <button 
             onClick={() => setIsSettingsOpen(true)}
@@ -1820,41 +1881,18 @@ function DashboardComponent() {
                       
                       {msg.content && <MessageText content={msg.content} />}
                       
-                      {msg.file_url && (
-                        <div className="mt-2 max-w-md rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950/60 p-1">
-                          {msg.file_type?.startsWith('image') || msg.file_url.includes('giphy.com') || msg.file_url.startsWith('data:image') ? (
-                            <PhotoProvider maskOpacity={0.8}>
-                              <PhotoView src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl}>
-                                <img 
-                                  src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
-                                  alt="Mídia" 
-                                  className="w-auto max-h-72 object-contain rounded-xl block cursor-zoom-in" 
-                                  loading="lazy"
-                                />
-                              </PhotoView>
-                            </PhotoProvider>
-                          ) : msg.file_type?.startsWith('video/') ? (
-                            <video controls className="max-h-80 rounded-xl w-full bg-black">
-                              <source src={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} type={msg.file_type} />
-                            </video>
-                          ) : (
-                            <a 
-                              href={msg.file_url.startsWith('http') ? msg.file_url : supabase.storage.from('chat-attachments').getPublicUrl(msg.file_url).data.publicUrl} 
-                              download={msg.file_name}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-3 p-3 bg-[#121212] rounded-xl hover:bg-zinc-800/50 transition-colors group/file"
-                            >
-                              <div className="p-2 bg-zinc-900 rounded-lg group-hover/file:bg-zinc-800 transition-colors">
-                                <FileText className="w-6 h-6 text-[#00D1FF]" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-zinc-200 truncate">{msg.file_name || "Arquivo"}</p>
-                                <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">Clique para baixar</p>
-                              </div>
-                              <Download className="w-4 h-4 text-zinc-500 group-hover/file:text-[#00D1FF]" />
-                            </a>
-                          )}
+                      {msg.file_url && msg.file_url.startsWith('http') && (
+                        <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
+                          <PhotoProvider maskOpacity={0.8}>
+                            <PhotoView src={msg.file_url}>
+                              <img 
+                                src={msg.file_url} 
+                                alt="Imagem anexada" 
+                                className="w-auto max-h-80 object-contain rounded-xl block cursor-zoom-in" 
+                                loading="lazy" 
+                              />
+                            </PhotoView>
+                          </PhotoProvider>
                         </div>
                       )}
                     </div>
@@ -1937,7 +1975,10 @@ function DashboardComponent() {
                       {gifs.length > 0 ? gifs.map(gif => (
                         <button 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url, gif)}
+                          onClick={() => {
+                            const gifUrl = gif.images?.original?.url || gif.images?.fixed_height?.url;
+                            sendGif(gifUrl, gif);
+                          }}
                           className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity h-24"
                         >
                           <img src={gif.images.fixed_height.url} className="w-full h-full object-cover" alt="gif" />
