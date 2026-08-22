@@ -321,11 +321,23 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
           <Button
             variant="ghost"
             size="icon"
+            onClick={toggleNoiseSuppression}
+            className={`h-12 w-12 rounded-xl transition-all p-3 cursor-pointer ${
+              isNoiseSuppressionEnabled ? "bg-[#00D1FF]/10 text-[#00D1FF] hover:bg-[#00D1FF]/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <ShieldCheck size={22} />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleScreenShare}
             className={`h-12 w-12 rounded-xl transition-all p-3 cursor-pointer ${
               isSharingScreen ? "bg-[#00D1FF]/10 text-[#00D1FF] hover:bg-[#00D1FF]/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
           >
+
             <Monitor size={22} />
           </Button>
 
