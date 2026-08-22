@@ -31,7 +31,9 @@ export const Route = createFileRoute("/auth")({
           const { error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) throw error;
           toast.success("Bem-vindo de volta!");
-          window.location.href = '/';
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
           return;
 
         } else {

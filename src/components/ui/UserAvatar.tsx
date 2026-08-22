@@ -32,7 +32,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         <img 
           src={avatarUrl} 
           alt={name} 
-          className="w-full h-full object-cover aspect-square block select-none" 
+          className="w-full h-full object-cover aspect-square block select-none shrink-0" 
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
           }}
