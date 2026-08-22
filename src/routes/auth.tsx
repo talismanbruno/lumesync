@@ -389,30 +389,32 @@ function AuthPage() {
 
               <form onSubmit={handleAuth} className="space-y-6">
                 <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Nome de usuário</label>
-                    <div className="relative">
-                      <Input 
-                        type="text" 
-                        value={username}
-                        onChange={(e) => validateUsername(e.target.value)}
-                        className={`bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10 ${usernameError ? 'border-red-500/50' : ''}`} 
-                        placeholder="seu_username"
-                        required
-                        minLength={3}
-                        maxLength={20}
-                      />
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600 text-sm font-bold">@</span>
-                      {isCheckingUsername && (
-                        <RefreshCcw className="absolute right-3.5 top-1/2 -translate-y-1/2 h-3 w-3 text-cyan-500/50 animate-spin" />
-                      )}
+                  {!isLogin && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Nome de usuário</label>
+                      <div className="relative">
+                        <Input 
+                          type="text" 
+                          value={username}
+                          onChange={(e) => validateUsername(e.target.value)}
+                          className={`bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10 ${usernameError ? 'border-red-500/50' : ''}`} 
+                          placeholder="seu_username"
+                          required
+                          minLength={3}
+                          maxLength={20}
+                        />
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600 text-sm font-bold">@</span>
+                        {isCheckingUsername && (
+                          <RefreshCcw className="absolute right-3.5 top-1/2 -translate-y-1/2 h-3 w-3 text-cyan-500/50 animate-spin" />
+                        )}
+                      </div>
+                      {usernameError ? (
+                        <p className="text-[9px] text-red-400 px-1 font-medium">{usernameError}</p>
+                      ) : username.length >= 3 && !isCheckingUsername ? (
+                        <p className="text-[9px] text-cyan-500/50 px-1 font-medium italic">Seu identificador será @{username}</p>
+                      ) : null}
                     </div>
-                    {usernameError ? (
-                      <p className="text-[9px] text-red-400 px-1 font-medium">{usernameError}</p>
-                    ) : username.length >= 3 && !isCheckingUsername ? (
-                      <p className="text-[9px] text-cyan-500/50 px-1 font-medium italic">Seu identificador será @{username}</p>
-                    ) : null}
-                  </div>
+                  )}
 
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">E-mail</label>
