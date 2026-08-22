@@ -1,78 +1,41 @@
-# Implementação de Controles de Chamada Ativa (Revisado)
+# Implementação de Controles de Chamada Ativa (Revisado v2)
 
-Este plano detalha a implementação da interface de controle de chamadas ("Órbita Ativa" e "Conexão Orbital"), garantindo persistência da conexão e integridade dos estados WebRTC.
+Este plano detalha a implementação da interface de controle de chamadas ("Órbita Ativa" e "Conexão Orbital"), garantindo persistência da conexão e integridade dos estados WebRTC, seguindo os ajustes obrigatórios de tipos, lógica de status e detecção de fala.
 
 ## Persistência e Visibilidade
-Para evitar que a chamada caia ao fechar a interface, o hook `useVoiceRoom` será mantido no componente pai (`DashboardComponent` em `_authenticated.index.tsx`).
+Para evitar que a chamada caia ao fechar a interface, o hook `useVoiceRoom` será mantido no componente pai (`DashboardComponent` em `src/routes/_authenticated.index.tsx`).
 - O estado `showVoiceUI` controlará apenas a visibilidade do `VoiceRoomUI` (Stage).
-- Fechar o Stage (minimizar) não chamará `disconnect()`. A chamada só encerra ao clicar explicitamente no botão de desconectar.
+- Minimizar o Stage (botão X) apenas esconde a UI; a desconexão real ocorre apenas no cleanup/leave explícito.
 
-## Fonte Única de Estado
-Todos os componentes consumirão o estado retornado por uma única instância de `useVoiceRoom`:
-- **Participantes:** `participants` sincronizados via Presence.
-- **Mídia:** `isMuted`, `isDeafened`, `isSharingScreen`.
-- **Status de Conexão:** Mapeamento em tempo real (veja abaixo).
+## Fonte Única de Estado e Tipagem
+Todos os componentes consumirão o estado de uma única instância do hook.
+- **Tipos Reais:** Substituição de `any` por `LumeProfile` e `ConnectionStatus`.
+- **ConnectionStatus:** `connecting | connected | reconnecting | unstable | failed`.
 
-## Mapeamento de Status de Conexão
-Criaremos um estado derivado `connectionStatus` baseado em:
-1. **Conectando:** Supabase Channel status é 'joining' ou `localStream` ainda não obtido.
-2. **Conectado:** Channel status é 'SUBSCRIBED' e `localStream` ativo.
-3. **Reconectando:** Eventos de 'system' indicando reconexão do socket.
-4. **Conexão instável:** `iceConnectionState` de algum peer em 'disconnected' ou 'failed' por > 5s.
-5. **Falha na conexão:** Channel erro fatal ou todos os peers desconectados.
+## Lógica de Status de Conexão
+- **Connected:** Canal subscrito, mesmo com 0 peers remotos (aguardando entrada).
+- **Unstable:** Pelo menos um peer falhou ou desconectou por > 5s (timer limpo no cleanup).
+- **Failed:** Erro fatal no canal ou todos os peers ativos em estado de falha (se peers > 0).
+- Agregação de estados: Um peer falho em chamada de grupo não derruba os outros.
 
-## Detecção de Fala (Voz)
-Implementaremos detecção real de áudio local usando `AudioContext` e `AnalyserNode` no stream do microfone.
-- O nível de volume será enviado via `broadcast` Realtime (throttled) para atualizar o `isSpeaking` dos outros participantes.
-- Se a latência for alta, o indicador será removido conforme solicitado.
+## Detecção de Fala (Voice Activity Detection - VAD)
+- **Cálculo Local:** Uso de `AudioContext` e `AnalyserNode` apenas localmente.
+- **Sinalização Eficiente:** Transmissão apenas do booleano `speaking: true/false` via broadcast.
+- **Throttle:** Evento disparado apenas na transição de estado, com limite de frequência.
+- **Silêncio:** Quando o usuário está mutado, `speaking` é forçado para `false`.
+- **Cleanup:** Destruição completa de contextos de áudio e timers ao desconectar.
 
 ## Supressão de Ruído
-Adicionaremos um toggle que aplica `noiseSuppression: true` nas `MediaTrackConstraints` do microfone.
-- Verificação via `navigator.mediaDevices.getSupportedConstraints()`.
-- Tooltip de erro se o hardware/browser não suportar.
+- Verificação de suporte via `navigator.mediaDevices.getSupportedConstraints()`.
+- Aplicação dinâmica de constraints na track ativa com verificação via `track.getSettings()`.
+- Fallback visual caso a aplicação falhe.
 
-## Props dos Componentes
-
-### `ActiveCallBar` (Topo do Chat)
-```typescript
-interface ActiveCallBarProps {
-  roomName: string;
-  participants: VoiceParticipant[];
-  myProfile: any;
-  isMuted: boolean;
-  isDeafened: boolean;
-  isSharingScreen: boolean;
-  connectionStatus: string;
-  onOpenStage: () => void;
-  onToggleMute: () => void;
-  onToggleDeafen: () => void;
-  onToggleScreenShare: () => void;
-  onDisconnect: () => void;
-}
-```
-
-### `OrbitalConnectionPanel` (Sidebar)
-```typescript
-interface OrbitalConnectionPanelProps {
-  status: string;
-  roomName: string;
-  contextName: string;
-  participantCount: number;
-  isMuted: boolean;
-  isDeafened: boolean;
-  isSharingScreen: boolean;
-  isNoiseSuppressionEnabled: boolean;
-  onOpenStage: () => void;
-  onToggleMute: () => void;
-  onToggleDeafen: () => void;
-  onToggleScreenShare: () => void;
-  onToggleNoiseSuppression: () => void;
-  onDisconnect: () => void;
-}
-```
+## Acessibilidade e Mobile
+- Implementação de `aria-label`, `aria-pressed`, suporte a foco por teclado e `prefers-reduced-motion`.
+- Layouts compactos e responsivos para dispositivos móveis.
 
 ## Plano de Execução
-1. Modificar `useVoiceRoom.ts` para incluir detecção de voz real e status de conexão WebRTC.
-2. Atualizar as definições de interface em `src/components/voice/`.
-3. Injetar o hook no topo do `DashboardComponent`.
-4. Renderizar condicionais para a Barra e o Painel.
+1. Atualizar `useVoiceRoom.ts` com a nova lógica de status, VAD e supressão de ruído.
+2. Refinar `ActiveCallBar.tsx` e `OrbitalConnectionPanel.tsx` com as props e interfaces finais.
+3. Integrar no `DashboardComponent` elevando o estado do hook.
+4. Validar fluxos de entrada/saída, minimização e sincronia de controles.
