@@ -1258,8 +1258,9 @@ function DashboardComponent() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
-      <aside className="w-64 min-w-[256px] max-w-[256px] shrink-0 h-full rounded-3xl bg-[#0d0d11]/80 backdrop-blur-2xl border border-white/5 flex flex-col justify-between p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-20 overflow-hidden">
+    {/* Barra Lateral Única (Canais do Servidor ou Lista de DMs - 240px) */}
+    <aside className="w-60 min-w-[240px] max-w-[240px] h-full bg-[#0d0d10] border-r border-white/5 flex flex-col justify-between p-3 shrink-0">
+
 
 
 
@@ -1610,8 +1611,9 @@ function DashboardComponent() {
     </div>
   </div>
 
-  {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
-  <main className="flex-1 min-w-0 h-full rounded-3xl bg-[#0f0f14]/90 backdrop-blur-2xl border border-white/5 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
+  {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
+  <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden">
+
     <div className="flex flex-1 flex-col overflow-hidden">
 
 
@@ -1642,7 +1644,7 @@ function DashboardComponent() {
                 <span className="text-zinc-500 font-medium">Lume</span>
                 <span className="text-zinc-600">✦</span>
                 <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
-                {activeChannel && (
+                {activeChannel && activeChannel.name !== 'geral' && activeChannel.name !== 'Sala de Voz' && (
                   <>
                     <span className="text-zinc-600">✦</span>
                     <span className="text-cyan-400 font-bold flex items-center gap-1.5">
@@ -1659,6 +1661,7 @@ function DashboardComponent() {
                   </>
                 )}
               </div>
+
               {activeChannel ? (
                 <>
                   <Hash size={20} className="mr-2 text-zinc-500" />
