@@ -879,7 +879,47 @@ function DashboardComponent() {
         event: '*', 
         schema: 'public', 
         table: 'dm_group_members' 
-      }, fetchConversations)
+      }, (payload) => {
+        console.log("[Realtime] dm_group_members change:", payload);
+        
+        if (payload.event === 'DELETE') {
+          const { group_id, user_id } = payload.old as any;
+          if (group_id && user_id) {
+            // Se eu fui removido, recarrego tudo (para sumir da sidebar)
+            if (user_id === myProfile.id) {
+              fetchConversations();
+            } else {
+              // Se outro saiu, atualizo imutavelmente o estado local dos grupos
+              setDmGroups(prev => prev.map(group => {
+                if (group.id === group_id) {
+                  return {
+                    ...group,
+                    dm_group_members: (group.dm_group_members || []).filter((m: any) => m.user_id !== user_id)
+                  };
+                }
+                return group;
+              }));
+
+              // Atualizo o activeDMGroup se ele for o grupo afetado
+              setActiveDMGroup(current => {
+                if (current?.id === group_id) {
+                  return {
+                    ...current,
+                    dm_group_members: (current.dm_group_members || []).filter((m: any) => m.user_id !== user_id)
+                  };
+                }
+                return current;
+              });
+            }
+          } else {
+            // Fallback se o payload for incompleto
+            fetchConversations();
+          }
+        } else {
+          // INSERT ou UPDATE
+          fetchConversations();
+        }
+      })
       .subscribe();
 
     return () => { 
