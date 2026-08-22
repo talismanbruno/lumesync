@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { UserAvatar } from './UserAvatar';
-import { MessageSquare, Phone, UserPlus, Clock, Users, Plus, X, Search, Check } from 'lucide-react';
+import { MessageSquare, Phone, UserPlus, Clock, Users, Plus, X, Search, Check, BadgeCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
 import { Button } from './button';
 import { Input } from './input';
 import { toast } from 'sonner';
 import { AdminVerifiedBadge } from './AdminVerifiedBadge';
+import { FriendActionButtons } from './FriendActionButtons';
 
 interface FriendsViewProps {
   activeSubTab: 'online' | 'all' | 'pending' | 'add';
@@ -16,6 +16,7 @@ interface FriendsViewProps {
   onSelectDM: (friend: any) => void;
   onAcceptRequest: (id: string) => void;
   onDeclineRequest: (id: string) => void;
+  onStartCall: (friend: any) => void;
   onSendRequest?: (username: string) => void;
 }
 
@@ -34,6 +35,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   onSelectDM,
   onAcceptRequest,
   onDeclineRequest,
+  onStartCall,
   onSendRequest
 }) => {
   const [addUsername, setAddUsername] = useState("");
@@ -101,17 +103,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => onSelectDM(friend)}
-                        className="p-2.5 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-cyan-500 hover:text-black transition-all"
-                      >
-                        <MessageSquare size={18} />
-                      </button>
-                      <button className="p-2.5 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-green-500 hover:text-black transition-all">
-                        <Phone size={18} />
-                      </button>
-                    </div>
+                    <FriendActionButtons 
+                      friend={friend}
+                      onSelectDM={onSelectDM}
+                      onStartCall={onStartCall}
+                      isBot={friend.id === 'lume-bot-fixed' || friend.username === 'lume'}
+                      isSelf={friend.id === myProfile.id}
+                    />
                   </div>
                 ))}
               </div>
@@ -146,12 +144,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       </p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => onSelectDM(friend)}
-                    className="p-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-cyan-500 hover:text-black transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <MessageSquare size={16} />
-                  </button>
+                  <FriendActionButtons 
+                    friend={friend}
+                    onSelectDM={onSelectDM}
+                    onStartCall={onStartCall}
+                    isBot={friend.id === 'lume-bot-fixed' || friend.username === 'lume'}
+                    isSelf={friend.id === myProfile.id}
+                  />
                 </div>
               ))}
             </div>
