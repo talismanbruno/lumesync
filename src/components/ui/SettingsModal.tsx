@@ -4,7 +4,7 @@ import { X, User, Settings, Volume2, Palette, Sparkles, LogOut } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-import { Dialog, DialogContent, DialogClose, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 
@@ -19,13 +19,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
 
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => { 
+        if (open === false) {
+          handleClose(); 
+        }
+      }}
+    >
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[100]">
-          <DialogPrimitive.Close className="hidden" />
-
+        <DialogContent 
+          showCloseButton={false}
+          onEscapeKeyDown={(event) => {
+            event.preventDefault();
+            handleClose();
+          }}
+          className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[100]"
+        >
         {/* Sidebar Esquerda */}
         <aside className="w-60 bg-[#0A0A0C] flex flex-col p-4 border-r border-white/5 shrink-0">
           <div className="space-y-6">
@@ -73,16 +89,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Área Principal Direita */}
         <main className="flex-1 bg-[#121214] flex flex-col overflow-hidden relative">
-          {/* Botão de Fechar Único e Acessível */}
-          <DialogClose asChild>
-            <button 
-              type="button"
-              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-50 group cursor-pointer"
-              aria-label="Fechar configurações"
-            >
-              <X size={20} className="group-hover:scale-110 transition-transform" />
-            </button>
-          </DialogClose>
+          {/* Botão de Fechar Único e Direto */}
+          <button 
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              handleClose();
+            }}
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-[100] cursor-pointer"
+            aria-label="Fechar configurações"
+          >
+            <X size={20} />
+          </button>
 
           <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
             {activeTab === 'profile' && (
