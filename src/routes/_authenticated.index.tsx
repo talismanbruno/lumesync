@@ -1837,47 +1837,55 @@ function DashboardComponent() {
           if (isCreatingGroup) return;
           setIsCreatingGroup(true);
           try {
-            console.log("[CreateGroup] Iniciando criação:", { memberIds, name });
+            console.log("[CreateGroup] Tentando criar grupo com:", memberIds);
             
+            const creatorId = dbProfile?.id || authUser?.id;
+            if (!creatorId) throw new Error("Usuário não autenticado");
+
+            // 1. Criar o grupo
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
-              .insert({ name: name || null, created_by: dbProfile?.id || authUser?.id || '' })
+              .insert({ 
+                name: (name && name.trim()) ? name.trim() : null, 
+                created_by: creatorId 
+              })
               .select()
               .single();
 
-            if (groupError) {
-              console.error("[CreateGroup] Erro ao criar grupo:", groupError);
-              throw groupError;
-            }
+            if (groupError) throw groupError;
 
-            console.log("[CreateGroup] Grupo criado:", group.id);
-
-            const memberInserts = Array.from(new Set(memberIds)).map(uid => ({
+            // 2. Preparar membros (garantir que o criador está incluído e IDs são únicos)
+            const allMemberIds = Array.from(new Set([creatorId, ...memberIds]));
+            const memberInserts = allMemberIds.map(uid => ({
               group_id: group.id,
               user_id: uid,
             }));
 
-            console.log("[CreateGroup] Inserindo membros:", memberInserts);
+            console.log("[CreateGroup] Inserindo membros efetivos:", memberInserts);
 
             const { error: membersError } = await supabase
               .from('dm_group_members')
               .insert(memberInserts);
 
-            if (membersError) {
-              console.error("[CreateGroup] Erro ao inserir membros:", membersError);
-              throw membersError;
-            }
+            if (membersError) throw membersError;
 
             toast.success("Grupo criado com sucesso!");
+            
+            // 3. Forçar atualização e abrir
+            if (typeof fetchConversations === 'function') {
+              await fetchConversations();
+            }
+            
             openGroup(group);
             setIsCreateGroupOpen(false);
-            if (typeof fetchConversations === 'function') fetchConversations();
           } catch (err: any) {
+            console.error("[CreateGroup] Falha crítica:", err);
             toast.error("Erro ao criar grupo: " + err.message);
           } finally {
             setIsCreatingGroup(false);
           }
         }}
+
 
       />
     </div>
