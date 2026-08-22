@@ -186,113 +186,13 @@ function AuthenticatedLayout() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#050505] text-zinc-100 overflow-hidden font-sans select-none">
+    <div className="flex h-screen w-screen bg-[#050505] text-zinc-100 overflow-hidden font-sans select-none">
+      <Outlet />
       
-      {/* 1. BARRA SUPERIOR HORIZONTAL (TOP NAVIGATION BAR - 60px) */}
-      <header className="h-16 px-6 bg-[#0a0a0d] border-b border-white/5 flex items-center justify-between shrink-0 z-40">
-        
-        {/* Logo Oficial Lume à Esquerda */}
-        <div className="flex items-center gap-3">
-          <img src="https://i.ibb.co/C3h465Sr/image.png" alt="Lume" className="h-7 w-auto object-contain" />
-        </div>
-
-        {/* Seletor Horizontal de Servidores e Home (Cápsulas Centrais) */}
-        <div className="flex items-center gap-2 overflow-x-auto max-w-[60%] py-1 scrollbar-none">
-          {/* Botão Home / Mensagens Diretas */}
-          <button
-            onClick={handleGoHome}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-              selectedServerId === null 
-                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_12px_rgba(0,209,255,0.2)]' 
-                : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'
-            }`}
-          >
-            <span>🏠 Mensagens Diretas</span>
-          </button>
-
-          {/* Lista Horizontal de Servidores */}
-          {servers.map((server) => (
-            <button
-              key={server.id}
-              onClick={() => handleSelectServer(server.id)}
-              onContextMenu={(e) => handleServerContextMenu(e, server)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-                selectedServerId === server.id 
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_12px_rgba(0,209,255,0.2)]' 
-                  : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${selectedServerId === server.id ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,209,255,0.6)]' : 'bg-zinc-600'}`} />
-              <span>{server.name}</span>
-            </button>
-          ))}
-
-          {/* Botão + Criar Servidor */}
-          <button
-            onClick={() => setIsCreatingServer(true)}
-            className="p-2 rounded-xl bg-zinc-900/40 hover:bg-cyan-500/10 hover:text-cyan-400 border border-dashed border-zinc-700 hover:border-cyan-500/40 text-zinc-400 transition-all shrink-0"
-            title="Criar Servidor"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Perfil do Usuário e Configurações à Direita */}
-        <div className="flex items-center gap-3">
-          {/* Widget de Perfil com Avatar e Status */}
-          <Popover open={isStatusDropdownOpen} onOpenChange={setIsStatusDropdownOpen}>
-            <PopoverTrigger asChild>
-              <div 
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-zinc-700 transition-all cursor-pointer"
-              >
-                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800">
-                  <img src={myProfile?.avatar_url || ""} alt="Avatar" className="w-full h-full object-cover" />
-                  <StatusBadge status={myProfile?.status || 'online'} />
-                </div>
-                <span className="text-xs font-semibold text-white">{myProfile?.display_name || 'Usuário'}</span>
-                {myProfile?.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400" />}
-              </div>
-            </PopoverTrigger>
-            <PopoverPortal>
-              <PopoverContent side="bottom" align="end" sideOffset={8} className="w-48 bg-[#0d0d11] border border-white/5 rounded-2xl p-1.5 shadow-2xl z-50 backdrop-blur-xl">
-                {['online', 'idle', 'dnd', 'offline'].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleUpdateStatus(s as any)}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-left"
-                  >
-                    <StatusBadge status={s as any} size="sm" />
-                    <span className="capitalize">{s === 'offline' ? 'Invisível' : s === 'dnd' ? 'Não Perturbe' : s === 'idle' ? 'Ausente' : 'Disponível'}</span>
-                  </button>
-                ))}
-                <div className="h-[1px] bg-white/5 my-1" />
-                <button 
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-400/5 rounded-xl transition-colors text-left"
-                >
-                  <LogOut size={16} />
-                  <span>Sair</span>
-                </button>
-              </PopoverContent>
-            </PopoverPortal>
-          </Popover>
-
-          {/* Botão de Configurações ⚙️ */}
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2 rounded-xl bg-zinc-900/60 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* 2. CORPO PRINCIPAL (2 COLUNAS: CANAIS/DMS + CHAT/VOZ WIDESCREEN) */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <Outlet />
-      </div>
-
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
 
       <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
         <DialogContent className="bg-[#0d0d11]/95 backdrop-blur-2xl border border-white/5 text-white rounded-3xl">
@@ -303,19 +203,49 @@ function AuthenticatedLayout() {
           </DialogHeader>
           
           <div className="flex gap-2 p-1 bg-black/40 rounded-xl mb-4 border border-white/5">
-            <button onClick={() => setServerModalTab('create')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${serverModalTab === 'create' ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>Criar</button>
-            <button onClick={() => setServerModalTab('join')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${serverModalTab === 'join' ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>Entrar</button>
+            <button 
+              onClick={() => setServerModalTab('create')} 
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${serverModalTab === 'create' ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+            >
+              Criar
+            </button>
+            <button 
+              onClick={() => setServerModalTab('join')} 
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${serverModalTab === 'join' ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+            >
+              Entrar
+            </button>
           </div>
 
           {serverModalTab === 'create' ? (
             <div className="space-y-4 py-2">
-              <Input value={newServerName} onChange={(e) => setNewServerName(e.target.value)} placeholder="Nome do servidor..." className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-[#00D1FF]/50 transition-all" />
-              <Button onClick={handleCreateServer} className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold h-12 rounded-xl">Criar Servidor</Button>
+              <Input 
+                value={newServerName} 
+                onChange={(e) => setNewServerName(e.target.value)} 
+                placeholder="Nome do servidor..." 
+                className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-[#00D1FF]/50 transition-all" 
+              />
+              <Button 
+                onClick={handleCreateServer} 
+                className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold h-12 rounded-xl"
+              >
+                Criar Servidor
+              </Button>
             </div>
           ) : (
             <div className="space-y-4 py-2">
-              <Input value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} placeholder="Código de convite..." className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-[#00D1FF]/50 transition-all" />
-              <Button onClick={handleJoinServer} className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold h-12 rounded-xl">Entrar</Button>
+              <Input 
+                value={inviteCodeInput} 
+                onChange={(e) => setInviteCodeInput(e.target.value)} 
+                placeholder="Código de convite..." 
+                className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-[#00D1FF]/50 transition-all" 
+              />
+              <Button 
+                onClick={handleJoinServer} 
+                className="w-full bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 font-bold h-12 rounded-xl"
+              >
+                Entrar
+              </Button>
             </div>
           )}
         </DialogContent>
