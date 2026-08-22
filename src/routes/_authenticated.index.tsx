@@ -1150,38 +1150,8 @@ function DashboardComponent() {
     if (error) toast.error("Erro ao enviar mensagem no grupo");
   };
 
-  const getDisplayName = (profile: any) => {
-    if (!profile) return "Usuário";
-    const name = (profile.display_name || profile.username || "").trim();
-    return name || "Usuário";
-  };
-
-  const getGroupTitle = (group: any, currentUserId: string) => {
-    if (!group) return "Grupo";
-    if (group.name && group.name.trim()) return group.name;
-
-    const members = group.dm_group_members || [];
-    if (members.length === 0) return "Carregando...";
-
-    const others = members
-      .filter((m: any) => m.user_id !== currentUserId)
-      .sort((a: any, b: any) => {
-        const dateA = new Date(a.joined_at || a.created_at || 0).getTime();
-        const dateB = new Date(b.joined_at || b.created_at || 0).getTime();
-        if (dateA !== dateB) return dateA - dateB;
-        return a.user_id.localeCompare(b.user_id);
-      });
-
-    if (others.length === 0) return "Grupo Vazio";
-
-    const names = others.map((m: any) => getDisplayName(m.profiles));
-
-    if (others.length === 1) return names[0];
-    if (others.length === 2) return `${names[0]} e ${names[1]}`;
-    return `${names[0]}, ${names[1]} +${others.length - 2}`;
-  };
-
   // ===== Navegação =====
+
   const clearChats = () => {
     setActiveChannel(null);
     setActiveDMFriend(null);
