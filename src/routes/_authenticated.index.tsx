@@ -1702,17 +1702,17 @@ function DashboardComponent() {
               </div>
             </>
           ) : (
-            <>
+            <div className="flex-1 flex flex-col min-h-0">
               <button
                 onClick={goHome}
-                className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all overflow-hidden ${!inChat ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
+                className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-all overflow-hidden shrink-0 ${!inChat ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
               >
                 <Users size={16} className="shrink-0" />
                 <span className="truncate font-semibold">Amigos</span>
               </button>
 
-              <div className="space-y-1">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Conversas</p>
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 mt-1">
+                <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1">Conversas</p>
 
                 {/* Canal oficial fixado */}
                 <button
@@ -1757,15 +1757,20 @@ function DashboardComponent() {
                     onClick={() => { markAsRead(friend.id); openDM(friend); }}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMFriend?.id === friend.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   >
-                    <UserAvatar
-                      avatarUrl={friend.avatar_url}
-                      name={friend.display_name || friend.username}
-                      status={friend.status}
-                      showStatus
-                      size="h-8 w-8"
-                      className="rounded-lg"
-                    />
-                    <span className="truncate text-sm text-zinc-300">{friend.display_name || friend.username}</span>
+                    <div className="relative shrink-0">
+                      <UserAvatar
+                        avatarUrl={friend.avatar_url}
+                        name={friend.display_name || friend.username}
+                        status={friend.status}
+                        showStatus
+                        size="h-8 w-8"
+                        className="rounded-lg"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span className="truncate text-sm text-zinc-300 font-medium">{friend.display_name || friend.username}</span>
+                      <AdminVerifiedBadge isAdmin={friend.is_admin} size={12} />
+                    </div>
                     {(unreadCounts[friend.id] || 0) > 0 && (
                       <span className="ml-auto shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-cyan-500 text-black text-[10px] font-bold flex items-center justify-center">
                         {unreadCounts[friend.id]}
@@ -1774,9 +1779,29 @@ function DashboardComponent() {
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
+
+        {/* Órbita de Voz: Conexão Orbital (Persistente no Rodapé) */}
+        {activeVoiceChannel && (
+          <div className="shrink-0">
+            <OrbitalConnectionPanel 
+              myProfile={myProfile}
+              connectionStatus={connectionStatus}
+              isMuted={isMuted}
+              isDeafened={isDeafened}
+              onToggleMute={toggleMute}
+              onToggleDeafen={toggleDeafen}
+              onDisconnect={() => {
+                disconnect();
+                setActiveVoiceChannel(null);
+                setShowVoiceUI(false);
+              }}
+              onOpenSettings={() => toast.info("Configurações de áudio em breve")}
+            />
+          </div>
+        )}
 
         {/* RODAPÉ DO PERFIL */}
         <div className="p-2 bg-[#070708] border-t border-white/5 flex items-center gap-2 overflow-hidden shrink-0">
@@ -1789,8 +1814,11 @@ function DashboardComponent() {
                     <StatusBadge status={myProfile.status} size="sm" />
                   </div>
                 </div>
-                <div className="flex flex-col min-w-0 text-left">
-                  <span className="text-xs font-bold truncate text-zinc-100">{myProfile.display_name || myProfile.username}</span>
+                <div className="flex flex-col min-w-0 text-left flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs font-bold truncate text-zinc-100">{myProfile.display_name || myProfile.username}</span>
+                    <AdminVerifiedBadge isAdmin={myProfile.is_admin} size={12} />
+                  </div>
                   <span className="text-[10px] text-zinc-600 truncate">@{myProfile.username}</span>
                 </div>
               </button>
@@ -1819,24 +1847,6 @@ function DashboardComponent() {
             <Settings size={18} />
           </button>
         </div>
-
-        {/* Órbita de Voz: Conexão Orbital (Persistente no Rodapé) */}
-        {activeVoiceChannel && (
-          <OrbitalConnectionPanel 
-            myProfile={myProfile}
-            connectionStatus={connectionStatus}
-            isMuted={isMuted}
-            isDeafened={isDeafened}
-            onToggleMute={toggleMute}
-            onToggleDeafen={toggleDeafen}
-            onDisconnect={() => {
-              disconnect();
-              setActiveVoiceChannel(null);
-              setShowVoiceUI(false);
-            }}
-            onOpenSettings={() => toast.info("Configurações de áudio em breve")}
-          />
-        )}
       </aside>
 
       {/* COLUNA 3 — CANVAS PRINCIPAL */}
