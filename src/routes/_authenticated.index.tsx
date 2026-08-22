@@ -1472,7 +1472,7 @@ function DashboardComponent() {
           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 ${!activeServer ? 'bg-cyan-500/15 border border-cyan-500/40 rounded-xl' : 'bg-[#121212] hover:rounded-xl'}`}
           title="Início"
         >
-          <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Início" className="w-7 h-7 object-contain" />
+          <img src="/brand/lume-mark.png" alt="Início" className="w-7 h-7 object-contain" />
         </button>
 
         <div className="w-8 h-[2px] bg-white/5 rounded-full my-1 shrink-0" />
