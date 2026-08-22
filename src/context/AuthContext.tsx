@@ -47,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data) {
         setProfile(data as Profile);
+      } else {
+        // Fallback for when trigger hasn't run yet or profile doesn't exist
+        console.log("[Lume Auth] Profile not found, will retry or wait for trigger");
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
