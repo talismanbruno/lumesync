@@ -32,7 +32,8 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onMessageClick,
   children
 }) => {
-  const joinDate = user.created_at ? format(new Date(user.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Recentemente";
+  const safeUsername = user?.username || "usuario";
+  const joinDate = user?.created_at ? format(new Date(user.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Recentemente";
 
   return (
     <Popover>
@@ -52,20 +53,20 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         <div 
           className="h-[100px] w-full relative bg-cover bg-center"
           style={{ 
-            backgroundImage: user.banner_url ? `url(${user.banner_url})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))'
+            backgroundImage: user?.banner_url ? `url(${user.banner_url})` : 'linear-gradient(to bottom right, #121214, rgba(0, 209, 255, 0.2))'
           }}
         >
           {/* Avatar sobreposto */}
           <div className="absolute -bottom-8 left-4">
             <div className="relative">
               <Avatar className="h-20 w-20 border-[6px] border-[#121214] bg-[#121214]">
-                <AvatarImage src={user.avatar_url || ""} className="object-cover" />
+                <AvatarImage src={user?.avatar_url || ""} className="object-cover" />
                 <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xl">
-                  {user.username.substring(0, 2).toUpperCase()}
+                  {safeUsername.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <StatusBadge 
-                status={user.status} 
+                status={user?.status} 
                 size="lg" 
                 className="absolute bottom-1 right-1 border-[4px] border-[#121214] w-6 h-6" 
               />
@@ -77,10 +78,10 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         <div className="pt-10 px-4 pb-4 space-y-4">
           <div>
             <h3 className="text-lg font-bold text-white leading-tight flex items-center gap-1">
-              {user.display_name || user.username}
+              {user.display_name || safeUsername}
               {user.is_verified && <BadgeCheck className="w-5 h-5 text-cyan-400 shrink-0" />}
             </h3>
-            <p className="text-sm text-zinc-400 font-medium">@{user.username}</p>
+            <p className="text-sm text-zinc-400 font-medium">@{safeUsername}</p>
           </div>
 
           {user.bio ? (
