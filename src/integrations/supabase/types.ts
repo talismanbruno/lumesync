@@ -409,31 +409,24 @@ export type Database = {
       }
       voice_participants: {
         Row: {
-          channel_id: string
           id: string
           joined_at: string | null
+          room_key: string
           user_id: string
         }
         Insert: {
-          channel_id: string
           id?: string
           joined_at?: string | null
+          room_key: string
           user_id: string
         }
         Update: {
-          channel_id?: string
           id?: string
           joined_at?: string | null
+          room_key?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "voice_participants_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "voice_participants_user_id_fkey"
             columns: ["user_id"]
