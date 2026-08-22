@@ -21,6 +21,7 @@ type AuthContextType = {
   user: User | null;
   profile: Profile | null;
   isLoading: boolean;
+  isAuthChecking: boolean;
   updateProfile: (updates: { display_name?: string | null; bio?: string | null; avatar_url?: string | null; banner_url?: string | null }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -50,34 +52,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error fetching profile:", error);
     } finally {
       setIsLoading(false);
+      setIsAuthChecking(false);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
         fetchProfile(currentUser.id);
       } else {
         setIsLoading(false);
+        setIsAuthChecking(false);
       }
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id);
-      } else {
+
+      if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && currentUser)) {
+        if (currentUser) {
+          fetchProfile(currentUser.id);
+        }
+      } else if (event === 'SIGNED_OUT') {
         setProfile(null);
         setIsLoading(false);
+        setIsAuthChecking(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refreshProfile = async () => {
@@ -119,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, isLoading, updateProfile, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, isLoading, isAuthChecking, updateProfile, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -131,6 +147,7 @@ const fallbackAuth: AuthContextType = {
   user: null,
   profile: null,
   isLoading: true,
+  isAuthChecking: true,
   updateProfile: async (updates) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;

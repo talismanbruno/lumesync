@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/auth")({
   component: () => {
-    const { profile, user } = useAuth();
+    const { profile, user, isAuthChecking } = useAuth();
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState("");
@@ -18,10 +18,10 @@ export const Route = createFileRoute("/auth")({
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-      if (user && profile?.username) {
-        navigate({ to: "/" });
+      if (!isAuthChecking && user && profile?.username) {
+        navigate({ to: "/", replace: true });
       }
-    }, [user, profile, navigate]);
+    }, [user, profile, navigate, isAuthChecking]);
 
     const handleAuth = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -47,6 +47,17 @@ export const Route = createFileRoute("/auth")({
         setIsLoading(false);
       }
     };
+
+    if (isAuthChecking) {
+      return (
+        <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <LumeLogo variant="icon" className="h-16 w-16 animate-pulse opacity-50" />
+            <p className="text-cyan-500/50 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Sincronizando Lume...</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30">
@@ -90,7 +101,7 @@ export const Route = createFileRoute("/auth")({
                 disabled={isLoading}
                 className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50"
               >
-                {isLoading ? "Processando..." : (isLogin ? "Entrar" : "Criar Conta")}
+                {isLoading ? "Entrando..." : (isLogin ? "Entrar" : "Criar Conta")}
               </Button>
             </form>
 

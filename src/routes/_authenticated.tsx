@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, redirect, isRedirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { LumeLogo } from "@/components/ui/LumeLogo";
 
 export const Route = createFileRoute("/_authenticated")({
   loader: async () => {
@@ -43,6 +45,19 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const { isAuthChecking, user, profile } = useAuth();
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <LumeLogo variant="icon" className="h-16 w-16 animate-pulse opacity-50" />
+          <p className="text-cyan-500/50 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Sincronizando Lume...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#050505] text-zinc-100">
       <Outlet />
