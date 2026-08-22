@@ -216,14 +216,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   }
                   
                   try {
-                    // 1. Busca perfil pelo username
-                    const { data: targetProfile, error: profileError } = await supabase
-                      .from('profiles')
-                      .select('id, username')
-                      .eq('username', input)
-                      .maybeSingle();
+                    // Use the secure RPC for case-insensitive search
+                    const { data: results, error: rpcError } = await supabase
+                      .rpc('find_profile_by_username', { p_username: input });
 
-                    if (profileError) throw profileError;
+                    if (rpcError) throw rpcError;
+                    
+                    const targetProfile = results && results.length > 0 ? results[0] : null;
                     
                     if (!targetProfile) {
                       toast.error("Este usuário não existe!");

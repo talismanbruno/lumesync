@@ -14,11 +14,15 @@ export const Route = createFileRoute("/_authenticated")({
         throw redirect({ to: "/auth" });
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .maybeSingle();
+
+      if (profileError) {
+        console.error("[Auth Loader] Profile fetch error:", profileError);
+      }
 
       if (!profile?.username) {
         throw redirect({ to: "/onboarding" });
