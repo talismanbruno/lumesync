@@ -1,175 +1,94 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Loader2, Check, Circle } from "lucide-react";
-import { LumeLogo } from "@/components/ui/LumeLogo";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/auth")({
-  beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      throw redirect({ to: "/" });
-    }
-  },
-  head: () => ({
-    meta: [
-      { title: "Lume" },
-      { name: "description", content: "Lume" },
-      { property: "og:title", content: "Lume" },
-      { property: "og:description", content: "Lume" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "icon", type: "image/png", href: "https://i.ibb.co/99YTNvGS/image.png" }],
-  }),
-  component: AuthComponent,
-});
+  component: () => (
+    <div className="min-h-screen bg-[#050505] text-white p-8 font-sans selection:bg-cyan-500/30">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <section className="space-y-6">
+          <h1 className="text-2xl font-bold tracking-tighter text-cyan-400">
+            DESIGN DE INTERFACE EXCLUSIVO: SISTEMA DE CHAMADA DE VOZ E TELA "LUME ORBITAL"
+          </h1>
+          
+          <p className="text-zinc-400 leading-relaxed">
+            Vamos criar uma interface de chamada de voz e vídeo para DMs e Grupos com a identidade visual única do LUME (Dark Glassmorphism + Glow Ciano), sem copiar o layout genérico de outros apps.
+          </p>
+        </section>
 
-function AuthComponent() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [passwordFocus, setPasswordFocus] = useState(false);
-
-  const passwordRequirements = [
-    { label: "Mínimo de 8 caracteres", test: (pw: string) => pw.length >= 8 },
-    { label: "Pelo menos 1 letra minúscula (a-z)", test: (pw: string) => /[a-z]/.test(pw) },
-    { label: "Pelo menos 1 letra maiúscula (A-Z)", test: (pw: string) => /[A-Z]/.test(pw) },
-    { label: "Pelo menos 1 número (0-9)", test: (pw: string) => /[0-9]/.test(pw) },
-    { label: "Pelo menos 1 caractere especial (!@#$%^&*...)", test: (pw: string) => /[^a-zA-Z0-9]/.test(pw) },
-  ];
-
-  const allRequirementsMet = passwordRequirements.every(req => req.test(password));
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        if (!allRequirementsMet) {
-          toast.error("Por favor, atenda a todos os requisitos de senha.");
-          setLoading(false);
-          return;
-        }
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success("Conta criada com sucesso! Verifique seu e-mail se necessário.");
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        if (data.session) {
-          toast.success("Bem-vindo de volta!");
-        }
-      }
-    } catch (error: any) {
-      if (error.message?.toLowerCase().includes("weak") || error.message?.toLowerCase().includes("common")) {
-        toast.error("Esta senha é muito comum. Tente combinar palavras diferentes.");
-      } else {
-        toast.error(error.message || "Erro ao autenticar. Verifique suas credenciais.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex justify-center items-center my-4">
-          <LumeLogo variant="full" />
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-zinc-500 font-medium tracking-tight">Plataforma de comunicação minimalista</p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-[#121212] p-6 shadow-2xl">
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="nome@exemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-background/50 text-foreground border-border/50 focus:border-[#00D1FF]/50 transition-colors"
-              />
+        <section className="space-y-6">
+          <h2 className="text-xl font-semibold text-white">1. PALCO DE CHAMADA ATIVA (LumeVoiceStage.tsx):</h2>
+          <p className="text-zinc-500 text-sm">Quando uma chamada estiver conectada no topo da DM ou no grupo:</p>
+          <p className="text-zinc-500 text-sm">Renderize um Stage Flutuante com Glassmorphism no topo da área central:</p>
+          
+          <div className="bg-[#121212] rounded-xl border border-zinc-800 p-4 font-mono text-xs overflow-x-auto text-cyan-300/80">
+            <pre>{`<div className="mx-4 my-3 p-6 rounded-3xl bg-[#0e0e11]/80 backdrop-blur-xl border border-cyan-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden transition-all">
+  {/* Arco de luz sutil no fundo */}
+  <div className="absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
+  
+  {/* Grade de Nós/Participantes */}
+  <div className="flex items-center justify-center gap-8 relative z-10">
+    {participants.map((p) => (
+      <div key={p.id} className="flex flex-col items-center gap-2 group">
+        {/* Avatar com Aura de Voz */}
+        <div className={\`relative w-20 h-20 rounded-2xl overflow-hidden transition-all duration-300 \${
+          p.isSpeaking 
+            ? 'ring-2 ring-[#00D1FF] shadow-[0_0_25px_rgba(0,209,255,0.7)] scale-105' 
+            : 'ring-1 ring-zinc-800'
+        }\`}>
+          <img src={p.avatar_url} alt={p.display_name} className="w-full h-full object-cover" />
+          {p.isMuted && (
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+              <MicOff className="w-5 h-5 text-red-400" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setPasswordFocus(true)}
-                required
-                className="bg-background/50 text-foreground border-border/50 focus:border-[#00D1FF]/50 transition-colors"
-              />
-              {isSignUp && (password.length > 0 || passwordFocus) && (
-                <div className="mt-2 space-y-2 rounded-lg border border-border/50 bg-[#121212] p-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                  {passwordRequirements.map((req, i) => {
-                    const met = req.test(password);
-                    return (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2 text-xs transition-colors duration-200 ${
-                          met ? "text-emerald-400" : "text-zinc-500"
-                        }`}
-                      >
-                        {met ? (
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <Circle className="h-3 w-3 opacity-20" />
-                        )}
-                        <span>{req.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <Button 
-              type="submit" 
-              className={`w-full font-semibold transition-all duration-300 ${
-                isSignUp && !allRequirementsMet 
-                  ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" 
-                  : "bg-[#00D1FF] hover:bg-[#00D1FF]/90 text-black glow-sm"
-              }`}
-              disabled={loading || (isSignUp && !allRequirementsMet)}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSignUp ? "Criar Conta" : "Entrar"}
-            </Button>
-          </form>
+          )}
+        </div>
+        <span className="text-xs font-semibold text-zinc-300 group-hover:text-white tracking-wide">{p.display_name}</span>
+      </div>
+    ))}
+  </div>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-[#00D1FF] hover:underline transition-all"
-            >
-              {isSignUp ? "Já tem uma conta? Entre aqui" : "Não tem uma conta? Crie uma agora"}
-            </button>
+  {/* Cápsula Flutuante de Controles (Lume Dock) */}
+  <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-zinc-800/60">
+    <button onClick={toggleMic} className={\`p-3 rounded-2xl transition-all \${isMuted ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-cyan-400 border border-zinc-800'}\`}>
+      {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+    </button>
+    
+    <button onClick={toggleDeafen} className={\`p-3 rounded-2xl transition-all \${isDeafened ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-cyan-400 border border-zinc-800'}\`}>
+      <Headphones className="w-4 h-4" />
+    </button>
+
+    <button onClick={handleShareScreen} className="p-3 rounded-2xl bg-zinc-900 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400 text-zinc-200 border border-zinc-800 transition-all">
+      <Monitor className="w-4 h-4" />
+    </button>
+
+    <button onClick={handleLeaveCall} className="px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all">
+      Desconectar
+    </button>
+  </div>
+</div>`}</pre>
           </div>
+        </section>
 
-        </div>
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-white">2. BANNER DE CONVITE ("FREQUÊNCIA ABERTA"):</h2>
+          <p className="text-zinc-400">Quando houver chamada ativa na DM e o usuário local não estiver nela:</p>
+          <p className="text-zinc-400">Exiba um card translúcido com o título: <span className="text-white">"Chamada Recebida"</span> e o botão luminoso em Ciano: <span className="text-cyan-400 font-bold">"Conectar"</span>.</p>
+        </section>
+
+        <section className="p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10 space-y-4">
+          <h2 className="text-lg font-bold text-cyan-400 uppercase tracking-widest">Validação Obrigatória</h2>
+          <ul className="space-y-3 text-sm text-zinc-300 list-disc pl-5">
+            <li>Inicie a chamada em uma DM: o Stage translúcido com o arco de luz e os avatares em formato de squircle (cantos arredondados de 24px) DEVE abrir no topo.</li>
+            <li>Ao falar no microfone, confirme que a aura ciano com glow luminoso pulsa ao redor do seu avatar.</li>
+            <li>Na conta que recebe a chamada, confirme que o convite de "Chamada Recebida" aparece para entrar com 1 clique.</li>
+          </ul>
+        </section>
+
+        <footer className="pt-8 border-t border-zinc-900">
+          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em]">
+            IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
+          </p>
+        </footer>
       </div>
     </div>
-  );
-}
+  )
+});
