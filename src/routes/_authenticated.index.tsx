@@ -1901,6 +1901,8 @@ function DashboardComponent() {
                 </>
               )}
             </header>
+          </div>
+
 
             <div className="flex-1 overflow-y-auto custom-scrollbar py-4">
               {messages.length === 0 && (
