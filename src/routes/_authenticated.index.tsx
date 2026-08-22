@@ -1398,19 +1398,64 @@ function DashboardComponent() {
 
               <div className="space-y-1">
                 <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Canais de Voz</p>
-                {channels.filter(c => c.type === 'voice').map(channel => (
-                  <button
-                    key={channel.id}
-                    onClick={() => { setActiveVoiceChannel(channel); setShowVoiceUI(true); }}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all overflow-hidden ${activeVoiceChannel?.id === channel.id ? 'bg-white/10 text-white' : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-200'}`}
-                  >
-                    <Volume2 size={15} className="shrink-0" />
-                    <span className="truncate">{channel.name}</span>
-                    {(voiceParticipantsMap[channel.id]?.length || 0) > 0 && (
-                      <span className="ml-auto text-[10px] text-cyan-400 shrink-0">{voiceParticipantsMap[channel.id]?.length}</span>
-                    )}
-                  </button>
-                ))}
+                {channels.filter(c => c.type === 'voice').map(channel => {
+                  const isCallActive = activeVoiceChannel?.id === channel.id;
+                  // Usamos participants do hook para a sala ativa, e voiceParticipantsMap para as outras
+                  const roomParticipants = isCallActive && participants.length > 0 
+                    ? participants.map(p => ({
+                        user_id: p.id,
+                        username: p.username,
+                        display_name: p.display_name,
+                        avatar_url: p.avatar_url
+                      }))
+                    : (voiceParticipantsMap[channel.id] || []);
+
+                  return (
+                    <div key={channel.id} className="space-y-0.5">
+                      <button
+                        onClick={() => { setActiveVoiceChannel(channel); setShowVoiceUI(true); }}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all overflow-hidden ${isCallActive ? 'bg-white/10 text-white' : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-200'}`}
+                      >
+                        <Volume2 size={15} className="shrink-0" />
+                        <span className="truncate">{channel.name}</span>
+                        {roomParticipants.length > 0 && (
+                          <span className="ml-auto text-[10px] text-cyan-400 shrink-0">{roomParticipants.length}</span>
+                        )}
+                      </button>
+
+                      {/* Lista de participantes na sidebar */}
+                      {roomParticipants.length > 0 && (
+                        <div className="pl-7 pr-2 flex flex-col gap-1 pb-1">
+                          {[...roomParticipants]
+                            .sort((a, b) => {
+                              if (a.user_id === myProfile.id) return -1;
+                              if (b.user_id === myProfile.id) return 1;
+                              return (a.display_name || a.username || "").localeCompare(b.display_name || b.username || "");
+                            })
+                            .map((participant) => (
+                              <div 
+                                key={participant.user_id} 
+                                className="flex items-center gap-2 py-0.5 group cursor-default"
+                              >
+                                <UserAvatar 
+                                  avatarUrl={participant.avatar_url} 
+                                  name={participant.display_name || participant.username} 
+                                  size="h-5 w-5" 
+                                  className="rounded-full shrink-0 border border-white/5" 
+                                />
+                                <span className="text-[12px] text-zinc-400 group-hover:text-zinc-300 truncate transition-colors">
+                                  {participant.display_name || participant.username}
+                                  {participant.user_id === myProfile.id && (
+                                    <span className="ml-1 text-[10px] text-cyan-500/60">(Você)</span>
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : (
