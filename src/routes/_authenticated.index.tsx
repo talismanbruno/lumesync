@@ -1,11 +1,4 @@
 
- * REDESIGN DE INTERFACE: IMPLEMENTAR LAYOUT "FLUID DOCK & FLOATING CANVAS" (ESTILO LINEAR / ARC)
- * 
- * 1. ESTRUTURA DO CONTAINER PRINCIPAL
- * - Dock Flutuante (Sidebar 1)
- * - Aside Flutuante (Sidebar 2)
- * - Main Canvas Flutuante
- */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone } from "lucide-react";
