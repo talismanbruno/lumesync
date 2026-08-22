@@ -248,7 +248,55 @@ function DashboardComponent() {
     toggleScreenShare,
     toggleNoiseSuppression,
     disconnect
-  } = useVoiceRoom(activeVoiceChannel ? `server-channel-${activeVoiceChannel.id}` : null, myProfile);
+  } = useVoiceRoom(
+    activeVoiceChannel 
+      ? (activeVoiceChannel.server_id === 'dm' ? activeVoiceChannel.id : `server-channel-${activeVoiceChannel.id}`) 
+      : null, 
+    myProfile
+  );
+
+  const handleStartVoiceCall = async (friend: Profile) => {
+    if (!myProfile?.id || !friend?.id) return;
+    
+    try {
+      // 1. Determinar Room Key
+      const ids = [myProfile.id, friend.id].sort();
+      const roomKey = `dm-1to1-${ids[0]}-${ids[1]}`;
+      
+      console.log("[VoiceCall] Iniciando chamada:", roomKey);
+      
+      // 2. Criar registro de sinalização
+      const { data, error } = await supabase
+        .from('voice_calls')
+        .insert({
+          initiator_id: myProfile.id,
+          recipient_id: friend.id,
+          room_key: roomKey,
+          status: 'ringing'
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        // Se já existir uma chamada ringing/active, podemos tentar entrar nela
+        console.warn("[VoiceCall] Erro ou chamada já existente:", error);
+      }
+      
+      // 3. Ativar UI local e entrar na sala
+      setActiveVoiceChannel({ 
+        id: roomKey, 
+        name: getDisplayName(friend), 
+        type: 'voice', 
+        server_id: 'dm' 
+      });
+      setShowVoiceUI(true);
+      
+      toast.info(`Chamando ${getDisplayName(friend)}...`);
+    } catch (err: any) {
+      toast.error("Erro ao iniciar chamada: " + err.message);
+    }
+  };
+
 
 
   const scrollToBottom = () => {
