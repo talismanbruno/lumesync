@@ -32,6 +32,7 @@ export const OrbitalConnectionPanel: React.FC<OrbitalConnectionPanelProps> = ({
       case 'unstable': return <SignalLow size={14} className="text-orange-500" />;
       case 'reconnecting': return <Zap size={14} className="text-amber-500 animate-pulse" />;
       case 'failed': return <Signal size={14} className="text-red-500" />;
+      case 'idle': return <Signal size={14} className="text-zinc-700" />;
       default: return <Signal size={14} className="text-zinc-500 animate-pulse" />;
     }
   };
@@ -42,6 +43,7 @@ export const OrbitalConnectionPanel: React.FC<OrbitalConnectionPanelProps> = ({
       case 'unstable': return 'Conexão Instável';
       case 'reconnecting': return 'Reconectando...';
       case 'failed': return 'Erro de Conexão';
+      case 'idle': return 'Desconectado';
       default: return 'Conectando...';
     }
   };

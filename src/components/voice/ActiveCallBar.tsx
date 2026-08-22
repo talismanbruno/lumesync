@@ -37,6 +37,7 @@ export const ActiveCallBar: React.FC<ActiveCallBarProps> = ({
   onOpenStage
 }) => {
   const statusColors = {
+    idle: 'bg-zinc-700',
     connecting: 'bg-zinc-500',
     connected: 'bg-emerald-500',
     reconnecting: 'bg-amber-500',

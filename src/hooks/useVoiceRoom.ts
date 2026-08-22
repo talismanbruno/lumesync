@@ -24,14 +24,14 @@ export interface VoiceParticipant {
   screenStream?: MediaStream | null;
 }
 
-export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'unstable' | 'failed';
+export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'unstable' | 'failed';
 
 export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | null) {
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isDeafened, setIsDeafened] = useState(false);
   const [remoteStreamsVersion, setRemoteStreamsVersion] = useState(0);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
   const [isNoiseSuppressionEnabled, setIsNoiseSuppressionEnabled] = useState(false);
   const [isNoiseSuppressionSupported, setIsNoiseSuppressionSupported] = useState(false);
   
@@ -125,11 +125,11 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
     
     setParticipants([]);
     setScreenStream(null);
-    setConnectionStatus('connecting');
+    setConnectionStatus('idle');
   }, [screenStream, roomKey, myProfile?.id]);
 
   const calculateStatus = useCallback(() => {
-    if (!channelRef.current) return 'connecting';
+    if (!channelRef.current) return connectionStatus === 'idle' ? 'idle' : 'connecting';
     
     const channelStatus = channelRef.current.state; // 'joining', 'joined', 'leaving', 'closed'
     const hasLocalStream = !!localStreamRef.current;
