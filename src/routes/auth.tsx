@@ -125,10 +125,16 @@ function AuthPage() {
   // Awaiting confirmation screen
   if (authState === "awaiting_email_confirmation") {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-500">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
+        {/* Orbital Light Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-cyan-500/10 rounded-full animate-[spin_60s_linear_infinite]" />
+        </div>
+
+        <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-500 z-10">
           <div className="flex flex-col items-center space-y-6">
-            <div className="h-20 w-20 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_30px_rgba(0,209,255,0.1)]">
+            <div className="h-20 w-20 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_30px_rgba(0,209,255,0.2)] animate-pulse">
               <Mail className="h-10 w-10 text-cyan-400" />
             </div>
             <div className="text-center space-y-2">
@@ -139,7 +145,9 @@ function AuthPage() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl space-y-6">
+          <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl space-y-6 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent opacity-50" />
+            
             <p className="text-zinc-400 text-xs text-center leading-relaxed">
               Clique no link presente no e-mail para ativar sua conta e acessar o LUME.
             </p>
