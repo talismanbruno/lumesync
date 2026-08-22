@@ -114,6 +114,38 @@ type Friendship = {
 };
 
 function DashboardComponent() {
+  const getDisplayName = (profile: any) => {
+    if (!profile) return "Usuário";
+    const name = (profile.display_name || profile.username || "").trim();
+    return name || "Usuário";
+  };
+
+  const getGroupTitle = (group: any, currentUserId: string) => {
+    if (!group) return "Grupo";
+    if (group.name && group.name.trim()) return group.name;
+
+    const members = group.dm_group_members || [];
+    if (members.length === 0) return "Carregando...";
+
+    const others = members
+      .filter((m: any) => m.user_id !== currentUserId)
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.joined_at || a.created_at || 0).getTime();
+        const dateB = new Date(b.joined_at || b.created_at || 0).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return a.user_id.localeCompare(b.user_id);
+      });
+
+    if (others.length === 0) return "Grupo Vazio";
+
+    const names = others.map((m: any) => getDisplayName(m.profiles));
+
+    if (others.length === 1) return names[0];
+    if (others.length === 2) return `${names[0]} e ${names[1]}`;
+    return `${names[0]}, ${names[1]} +${others.length - 2}`;
+  };
+
+
   const navigate = useNavigate();
   const { profile: globalProfile, user: authUser, signOut, updateProfile } = useAuth();
   
@@ -692,16 +724,23 @@ function DashboardComponent() {
   const fetchConversations = async () => {
     if (!myProfile?.id) return;
     
-    // Fetch Group DMs
+    // Fetch Group DMs with detailed members
     const { data: groupsData, error: groupsError } = await supabase
       .from('dm_groups')
-      .select('*, dm_group_members!inner(*)')
+      .select('*, dm_group_members!inner(*, profiles(*))')
       .eq('dm_group_members.user_id', myProfile.id);
       
     if (!groupsError && groupsData) {
       setDmGroups(groupsData);
+      
+      // Update active group if it exists
+      if (activeDMGroup) {
+        const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
+        if (updatedActive) setActiveDMGroup(updatedActive);
+      }
     }
   };
+
 
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
@@ -784,11 +823,23 @@ function DashboardComponent() {
       }, fetchUnreadCounts)
       .subscribe();
 
+    // Listen for Group DM member changes
+    const subGroupMembers = supabase
+      .channel('dm_group_members_realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'dm_group_members' 
+      }, fetchConversations)
+      .subscribe();
+
     return () => { 
       supabase.removeChannel(subFriends);
       supabase.removeChannel(subMessages);
+      supabase.removeChannel(subGroupMembers);
     };
   }, [myProfile?.id]);
+
 
   // Realtime Status for Profiles
   useEffect(() => {
@@ -1100,12 +1151,14 @@ function DashboardComponent() {
   };
 
   // ===== Navegação =====
+
   const clearChats = () => {
     setActiveChannel(null);
     setActiveDMFriend(null);
     setActiveDMGroup(null);
     setMessages([]);
   };
+
 
   const goHome = () => {
     setActiveServer(null);
@@ -1160,6 +1213,9 @@ function DashboardComponent() {
     const author = isBotAuthor
       ? { id: LUME_BOT_ID, username: 'lume', display_name: 'Lume', avatar_url: 'https://i.ibb.co/99YTNvGS/image.png' } as Profile
       : (msg.profile || profilesCache[authorId || ''] || null);
+
+
+
 
     const fileUrl = msg.file_url || undefined;
     const isImage = !!fileUrl && (msg.file_type?.startsWith('image') || fileUrl.startsWith('data:image'));
@@ -1366,7 +1422,7 @@ function DashboardComponent() {
       <aside className="w-[240px] shrink-0 bg-[#0a0a0b] border-r border-white/5 flex flex-col overflow-x-hidden">
         <header className="h-14 px-4 flex items-center justify-between border-b border-white/5 shrink-0 overflow-hidden">
           <span className="text-sm font-bold truncate text-zinc-100">
-            {activeServer ? activeServer.name : "Mensagens Diretas"}
+            {activeServer ? activeServer.name : (activeDMGroup ? getGroupTitle(activeDMGroup, myProfile.id) : "Mensagens Diretas")}
           </span>
           {activeServer ? (
             <button onClick={copyInvite} className="p-1.5 text-zinc-500 hover:text-cyan-400 transition-colors shrink-0" title="Copiar convite">
@@ -1378,6 +1434,7 @@ function DashboardComponent() {
             </button>
           )}
         </header>
+
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none px-2 py-3 space-y-4">
           {activeServer ? (
@@ -1490,9 +1547,12 @@ function DashboardComponent() {
                     <div className="h-8 w-8 shrink-0 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
                       <Users size={14} />
                     </div>
-                    <span className="truncate text-sm text-zinc-300">{group.name || "Grupo"}</span>
+                    <span className="truncate text-sm text-zinc-300">
+                      {getGroupTitle(group, myProfile.id)}
+                    </span>
                   </button>
                 ))}
+
 
                 {friendsList.map(friend => (
                   <button
@@ -1597,8 +1657,56 @@ function DashboardComponent() {
               ) : activeDMGroup ? (
                 <>
                   <Users size={18} className="text-cyan-400 shrink-0" />
-                  <span className="text-sm font-bold truncate">{activeDMGroup.name || "Grupo"}</span>
+                  <span className="text-sm font-bold truncate">
+                    {getGroupTitle(activeDMGroup, myProfile.id)}
+                  </span>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="p-2 text-zinc-400 hover:text-zinc-200 transition-colors">
+                          <Users size={18} />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 bg-[#181818] border-white/10 p-2 z-[60]" side="bottom" align="end">
+                        <div className="space-y-2">
+                          <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">
+                            Membros — {activeDMGroup.dm_group_members?.length || 0}
+                          </p>
+                          <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                            {(activeDMGroup.dm_group_members || [])
+                              .sort((a: any, b: any) => {
+                                if (a.user_id === myProfile.id) return -1;
+                                if (b.user_id === myProfile.id) return 1;
+                                const nameA = getDisplayName(a.profiles);
+                                const nameB = getDisplayName(b.profiles);
+                                return nameA.localeCompare(nameB);
+                              })
+                              .map((member: any) => (
+                                <div key={member.user_id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/5 group">
+                                  <UserAvatar 
+                                    avatarUrl={member.profiles?.avatar_url} 
+                                    name={getDisplayName(member.profiles)} 
+                                    size="h-8 w-8" 
+                                    className="rounded-lg"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-medium text-zinc-200 truncate">
+                                      {getDisplayName(member.profiles)}
+                                      {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500">(Você)</span>}
+                                    </span>
+                                    {member.profiles?.status && (
+                                      <span className="text-[10px] text-zinc-500 truncate capitalize">{member.profiles.status}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </>
+
               ) : (
                 <>
                   <UserAvatar
@@ -1631,10 +1739,11 @@ function DashboardComponent() {
                 </div>
               </div>
             ) : activeDMGroup ? (
-              renderComposer(sendGroupMessage, `Mensagem para ${activeDMGroup.name || "grupo"}`)
+              renderComposer(sendGroupMessage, `Mensagem para ${getGroupTitle(activeDMGroup, myProfile.id)}`)
             ) : (
-              renderComposer(handleSendMessage, activeChannel ? `Conversar em #${activeChannel.name}` : `Mensagem para ${activeDMFriend?.display_name || activeDMFriend?.username || ""}`)
+              renderComposer(handleSendMessage, activeChannel ? `Conversar em #${activeChannel.name}` : `Mensagem para ${getDisplayName(activeDMFriend)}`)
             )}
+
           </>
         ) : (
           <FriendsView
@@ -1709,7 +1818,7 @@ function DashboardComponent() {
         onClose={() => setIsCreateGroupOpen(false)}
         myProfile={myProfile}
         friendships={friendships}
-        onCreateGroup={async (memberIds: string[], name?: string) => {
+        onCreateGroup={async (memberIds: string[], name?: string | null) => {
           try {
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
