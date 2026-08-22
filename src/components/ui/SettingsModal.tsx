@@ -66,12 +66,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Área Principal Direita */}
         <main className="flex-1 bg-[#121214] flex flex-col overflow-hidden relative">
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-full transition-all z-50"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex-1 overflow-y-auto p-10">
 
           <div className="flex-1 overflow-y-auto p-10">
             {activeTab === 'profile' && (
@@ -90,6 +85,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">E-mail</p>
                       <p className="text-white">{user?.email || "..."}</p>
                     </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-white/5">
+                    <Button 
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        window.location.href = '/auth';
+                      }}
+                      className="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all w-full flex items-center justify-center gap-2"
+                    >
+                      <LogOut size={16} />
+                      Sair da Conta
+                    </Button>
                   </div>
                 </div>
               </div>
