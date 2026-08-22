@@ -137,7 +137,3 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     </Dialog>
   );
 }
-      </DialogContent>
-    </Dialog>
-  );
-}
