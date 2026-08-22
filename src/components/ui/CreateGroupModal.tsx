@@ -40,9 +40,10 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     .map(f => f.friend_profile)
     .filter(Boolean) as Profile[];
 
-  const filteredFriends = friends.filter(f => 
-    f.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (f.display_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+  const q = searchTerm.toLowerCase();
+  const filteredFriends = friends.filter(f =>
+    (f.username ?? "").toLowerCase().includes(q) ||
+    (f.display_name ?? "").toLowerCase().includes(q)
   );
 
   const toggleFriend = (id: string) => {
