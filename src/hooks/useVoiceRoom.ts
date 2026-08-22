@@ -447,9 +447,10 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
           });
         }
 
-        if (channelRef.current) {
+        const myPart = participants.find(p => p.id === myProfile?.id);
+        if (channelRef.current && myPart) {
           channelRef.current.track({
-            ...participants.find(p => p.id === myProfile?.id),
+            ...myPart,
             isMuted,
             isSharingScreen: !!screenStream
           });
@@ -461,9 +462,10 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
   const toggleDeafen = () => {
     const nextDeafened = !isDeafened;
     setIsDeafened(nextDeafened);
-    if (channelRef.current) {
+    const myPart = participants.find(p => p.id === myProfile?.id);
+    if (channelRef.current && myPart) {
       channelRef.current.track({
-        ...participants.find(p => p.id === myProfile?.id),
+        ...myPart,
         isDeafened: nextDeafened,
         isSharingScreen: !!screenStream
       });
