@@ -1,4 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+import { LumeLogo } from "@/components/ui/LumeLogo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 
 export const Route = createFileRoute("/auth")({
   component: () => {
