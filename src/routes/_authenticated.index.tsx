@@ -294,6 +294,9 @@ function DashboardComponent() {
           const profile = p.profiles as any;
           const channelId = p.channel_id;
           if (!grouped[channelId]) grouped[channelId] = [];
+          
+          // Se for o canal ativo e estivermos na call, priorizamos o estado do hook (Presence)
+          // caso contrário, usamos os dados do banco.
           grouped[channelId].push({
             user_id: p.user_id,
             username: profile?.username || 'Usuário',
@@ -301,6 +304,17 @@ function DashboardComponent() {
             avatar_url: profile?.avatar_url
           });
         });
+
+        // Overlay do estado do Hook para o canal ativo (mais preciso e real-time)
+        if (activeVoiceChannel?.id && participants.length > 0) {
+          grouped[activeVoiceChannel.id] = participants.map(p => ({
+            user_id: p.id,
+            username: p.username,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url
+          }));
+        }
+
         setVoiceParticipantsMap(grouped);
       }
     };
