@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowRight, UserPlus, LogIn, RefreshCcw, ArrowLeft } from "lucide-react";
+import { Mail, ArrowRight, UserPlus, LogIn, RefreshCcw, ArrowLeft, Phone, Sparkles, Download, Eye, EyeOff } from "lucide-react";
 
 type AuthState = "idle" | "submitting" | "awaiting_email_confirmation" | "error";
 
