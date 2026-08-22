@@ -1155,7 +1155,7 @@ function DashboardComponent() {
               <div className="space-y-1">
                 <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
                   <span className="flex-1">Mensagens Diretas</span>
-                  <Plus size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => setIsCreateGroupOpen(true)} />
+                  <Plus size={14} className="cursor-pointer hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setIsCreateGroupOpen(true); }} />
                 </div>
                 {/* Lume Bot Fixed */}
                 <button
@@ -1796,6 +1796,7 @@ function DashboardComponent() {
         friendships={friendships}
         onCreateGroup={async (memberIds, name) => {
           try {
+            // memberIds already includes current user from modal logic
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
               .insert({ name: name || null, created_by: myProfile.id })
@@ -1804,7 +1805,7 @@ function DashboardComponent() {
               
             if (groupError) throw groupError;
             
-            const memberInserts = [myProfile.id, ...memberIds].map(uid => ({
+            const memberInserts = Array.from(new Set(memberIds)).map(uid => ({
               group_id: group.id,
               user_id: uid
             }));
@@ -1816,12 +1817,17 @@ function DashboardComponent() {
             if (membersError) throw membersError;
             
             toast.success("Grupo criado com sucesso!");
-            await fetchConversations();
+            // Immediate navigation and state update
             setActiveDMGroup(group);
             setActiveDMFriend(null);
             setActiveChannel(null);
             setActiveServer(null);
             setActiveTab('conversas');
+            
+            // Background refresh
+            if (typeof fetchConversations === 'function') {
+              fetchConversations();
+            }
           } catch (err: any) {
             toast.error("Erro ao criar grupo: " + err.message);
           }
