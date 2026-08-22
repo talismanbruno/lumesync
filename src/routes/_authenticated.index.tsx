@@ -1316,7 +1316,7 @@ function DashboardComponent() {
           </DialogContent>
         </Dialog>
       {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
-      <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20 overflow-hidden">
+      <aside className="w-64 min-w-[256px] max-w-[256px] shrink-0 h-full rounded-3xl bg-[#0d0d11]/80 backdrop-blur-2xl border border-white/5 flex flex-col justify-between p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-20 overflow-hidden">
 
 
 
@@ -1700,7 +1700,7 @@ function DashboardComponent() {
   </div>
 
   {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
-  <main className="flex-1 min-w-0 h-full bg-[#0e0e11] flex flex-col relative overflow-hidden pt-12 md:pt-0">
+  <main className="flex-1 min-w-0 h-full rounded-3xl bg-[#0f0f14]/90 backdrop-blur-2xl border border-white/5 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
     <div className="flex flex-1 flex-col overflow-hidden">
 
 
@@ -1726,7 +1726,28 @@ function DashboardComponent() {
             />
         ) : activeChannel || activeDMFriend ? (
           <>
-            <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
+            <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
+                <span className="text-zinc-500 font-medium">Lume</span>
+                <span className="text-zinc-600">✦</span>
+                <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
+                {activeChannel && (
+                  <>
+                    <span className="text-zinc-600">✦</span>
+                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                      {activeChannel.type === 'voice' ? '🔊' : '#'} {activeChannel.name}
+                    </span>
+                  </>
+                )}
+                {activeDMFriend && (
+                  <>
+                    <span className="text-zinc-600">✦</span>
+                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                      @ {activeDMFriend.display_name || activeDMFriend.username}
+                    </span>
+                  </>
+                )}
+              </div>
               {activeChannel ? (
                 <>
                   <Hash size={20} className="mr-2 text-zinc-500" />
@@ -1783,7 +1804,7 @@ function DashboardComponent() {
                 <Settings size={18} className="cursor-pointer hover:text-white" />
                 <User size={18} className="cursor-pointer hover:text-white" />
               </div>
-            </div>
+            </header>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, index) => {
@@ -1940,7 +1961,8 @@ function DashboardComponent() {
                 </div>
               )
             ) : (
-            <div className="p-4 pt-0 relative">
+            <div className="p-4 pt-0">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-[#14141a]/90 border border-white/10 shadow-lg focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(0,209,255,0.15)] transition-all relative">
               {showEmojiPicker && (
                 <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
                   <div className="fixed inset-0" onClick={() => setShowEmojiPicker(false)} />
@@ -2031,7 +2053,7 @@ function DashboardComponent() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 bg-[#121212] rounded-xl px-2 focus-within:ring-1 focus-within:ring-[#00D1FF]/50 transition-all">
+              <div className="flex-1 flex items-center gap-2">
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -2086,6 +2108,7 @@ function DashboardComponent() {
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
             )}
