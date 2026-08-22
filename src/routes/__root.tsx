@@ -10,7 +10,6 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 
 import '../styles.css';
@@ -126,113 +125,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<{
-    session: any;
-    user: any;
-    profile: any;
-    error: any;
-  }>({ session: null, user: null, profile: null, error: null });
-  const router = useRouter();
-
-  useEffect(() => {
-    let mounted = true;
-
-    const checkAuth = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-
-        if (!mounted) return;
-        setDebugInfo(prev => ({ ...prev, session, user: session?.user }));
-
-        if (!session) {
-          if (window.location.pathname !== "/auth") {
-            router.navigate({ to: "/auth" });
-          }
-          return;
-        }
-
-        const { data: fetchedProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.warn("[Lume Auth] Profile fetch error:", profileError);
-        }
-
-        let profile = fetchedProfile;
-
-        if (!profile) {
-          const defaultUsername = session.user.email?.split('@')[0] || `user_${Date.now().toString().slice(-4)}`;
-          
-          const { data: newProfile, error: upsertError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: session.user.id,
-              username: defaultUsername,
-              display_name: defaultUsername,
-              status: 'online'
-            })
-            .select()
-            .maybeSingle();
-
-          if (!upsertError && newProfile) {
-            profile = newProfile;
-          }
-        } else if (profile.status !== 'offline' && profile.status !== 'dnd' && profile.status !== 'idle') {
-          // AUTO-ONLINE ON LOGIN: If profile exists and not invisible/dnd/idle, set to online
-          await supabase.from('profiles').update({ status: 'online' }).eq('id', session.user.id);
-        }
-
-        if (!mounted) return;
-        setDebugInfo(prev => ({ ...prev, profile }));
-        
-        const path = window.location.pathname;
-        if (!profile?.username) {
-          if (path !== "/onboarding") router.navigate({ to: "/onboarding" });
-        } else if (path === "/auth" || path === "/onboarding") {
-          router.navigate({ to: "/" });
-        }
-      } catch (error) {
-        console.error("[Lume Auth Error]", error);
-        setDebugInfo(prev => ({ ...prev, error }));
-      } finally {
-        if (mounted) {
-          setIsInitializing(false);
-        }
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        checkAuth();
-      } else if (event === "SIGNED_OUT") {
-        setDebugInfo({ session: null, user: null, profile: null, error: null });
-        setIsInitializing(false);
-        router.navigate({ to: "/auth" });
-      }
-    });
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-
-  // No static loading block here; rendering immediately.
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="top-center" theme="dark" richColors />
     </QueryClientProvider>
-
   );
 }
