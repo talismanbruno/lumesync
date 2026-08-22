@@ -365,12 +365,15 @@ function AuthPage() {
                       <button 
                         type="button"
                         onClick={(e) => {
-                          const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                          input.type = input.type === "password" ? "text" : "password";
+                          const inputEl = e.currentTarget.parentElement?.querySelector('input');
+                          if (inputEl) {
+                            inputEl.type = inputEl.type === "password" ? "text" : "password";
+                            // Force re-render if needed, but here we'll just toggle the type
+                          }
                         }}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
                       >
-                        {input.type === "password" ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        <Eye className="h-4 w-4" />
                       </button>
                     </div>
                     <p className="text-[9px] text-zinc-600 px-1 pt-1 italic">
