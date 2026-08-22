@@ -136,9 +136,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     }
 
     return pc;
-  }, [myProfile.id]);
+  }, [myProfile.id, createPeerConnection]);
 
   const joinVoiceChannel = useCallback(async (cid: string) => {
+    if (!cid || !myProfile?.id) return;
     if (channelRef.current) return;
     
     let stream: MediaStream | null = null;
@@ -160,6 +161,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       console.error("Error registering voice participant:", err);
     }
 
+    console.log(`[Lume Voice Room] Identidade: user.id=${myProfile.id}, channelId=${cid}`);
     const voiceChannel = supabase.channel(`voice-room-${cid}`, {
       config: { presence: { key: myProfile.id } }
     });
@@ -167,6 +169,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     voiceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = voiceChannel.presenceState();
+        console.log(`[Lume Voice Room] presence sync: count=${Object.keys(state).length}`, state);
         const users: VoiceParticipant[] = Object.values(state).flat().map((p: any) => ({
           id: p.user_id,
           username: p.username,
@@ -184,9 +187,10 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         // Trigger signaling for new users
         users.forEach(u => {
           if (u.id !== myProfile.id && !peerConnections.current.has(u.id)) {
-            // When a new user joins, the existing user ALWAYS initiates the connection.
-            // This ensures deterministic connection establishment regardless of ID comparison.
-            createPeerConnection(u.id, true, voiceChannel);
+            // Regra do iniciador léxico: O usuário com o menor ID léxico inicia a oferta
+            const isInitiator = myProfile.id.toLowerCase() < u.id.toLowerCase();
+            console.log(`[WebRTC] Criando conexão com ${u.id}, isInitiator=${isInitiator}`);
+            createPeerConnection(u.id, isInitiator, voiceChannel);
           }
         });
 
@@ -237,6 +241,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
       })
       .subscribe(async (status) => {
+        console.log(`[Lume Voice Room] Status da inscrição: ${status}`);
         if (status === 'SUBSCRIBED') {
           await voiceChannel.track({
             user_id: myProfile.id,
