@@ -241,8 +241,8 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                     size="h-20 w-20"
                     className="border-2 border-white/10"
                   />
-                  <span className="mt-4 text-sm font-medium text-zinc-200 flex items-center gap-1.5">
-                    {p.display_name || p.username}
+                  <span className="mt-4 text-sm font-medium text-zinc-200 flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{p.display_name || p.username}</span>
                     <AdminVerifiedBadge isAdmin={p.is_admin} size={12} />
                   </span>
                   <div className="absolute top-3 right-3 flex gap-2">
