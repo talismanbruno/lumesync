@@ -1,5 +1,7 @@
 import * as React from "react";
-import { X, User, Settings, Volume2, Palette, Sparkles } from "lucide-react";
+import { X, User, Settings, Volume2, Palette, Sparkles, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";

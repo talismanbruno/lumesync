@@ -71,7 +71,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       />
                       <div>
                         <p className="text-sm font-bold text-white">{friend.display_name || friend.username}</p>
-                        <p className="text-[10px] text-zinc-500 font-medium capitalize">{friend.status}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -114,7 +113,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     />
                     <div>
                       <p className="text-sm font-bold text-white">{friend.display_name || friend.username}</p>
-                      <p className="text-[10px] text-zinc-500 font-medium capitalize">{friend.status || 'offline'}</p>
                     </div>
                   </div>
                   <button 
@@ -133,7 +131,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <div className="space-y-8">
             <div className="space-y-4">
               <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Solicitações Recebidas — {pendingIncoming.length}</h3>
-              {pendingIncoming.map(f => (
+              {pendingIncoming.length > 0 ? pendingIncoming.map(f => (
                 <div key={f.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#121214] border border-white/5">
                   <div className="flex items-center gap-3">
                     <UserAvatar 
@@ -151,44 +149,22 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     <button 
                       onClick={() => onAcceptRequest(f.id)}
                       className="p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500 hover:text-black transition-all"
+                      title="Aceitar"
                     >
-                      <Plus size={18} />
+                      <Check size={18} />
                     </button>
                     <button 
                       onClick={() => onDeclineRequest(f.id)}
                       className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-black transition-all"
+                      title="Recusar"
                     >
                       <X size={18} />
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Solicitações Enviadas — {pendingOutgoing.length}</h3>
-              {pendingOutgoing.map(f => (
-                <div key={f.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#121214] border border-white/5 opacity-60">
-                  <div className="flex items-center gap-3">
-                    <UserAvatar 
-                      avatarUrl={f.friend_profile?.avatar_url}
-                      name={f.friend_profile?.display_name || f.friend_profile?.username}
-                      size="h-10 w-10"
-                      className="rounded-xl"
-                    />
-                    <div>
-                      <p className="text-sm font-bold text-white">{f.friend_profile?.display_name || f.friend_profile?.username}</p>
-                      <p className="text-[10px] text-zinc-500 font-medium">Aguardando resposta...</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => onDeclineRequest(f.id)}
-                    className="p-2 bg-zinc-800 text-zinc-500 rounded-lg hover:bg-red-500 hover:text-black transition-all"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
+              )) : (
+                <div className="py-8 text-center text-zinc-500 text-sm">Nenhuma solicitação pendente</div>
+              )}
             </div>
           </div>
         )}
@@ -208,10 +184,65 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 className="h-14 bg-black/40 border-white/5 text-white rounded-2xl pl-4 pr-32 focus:border-cyan-500/50 transition-all placeholder:text-zinc-700"
               />
               <Button 
-                onClick={() => {
-                  if (!addUsername.trim()) return;
-                  onSendRequest(addUsername);
-                  setAddUsername("");
+                onClick={async () => {
+                  const input = addUsername.trim();
+                  if (!input) {
+                    toast.error("Digite um nome de usuário!");
+                    return;
+                  }
+                  
+                  try {
+                    // 1. Busca perfil pelo username
+                    const { data: targetProfile, error: profileError } = await supabase
+                      .from('profiles')
+                      .select('id, username')
+                      .ilike('username', input)
+                      .maybeSingle();
+
+                    if (profileError) throw profileError;
+                    
+                    if (!targetProfile) {
+                      toast.error("Este usuário não existe!");
+                      return;
+                    }
+
+                    if (targetProfile.id === myProfile.id) {
+                      toast.error("Você não pode adicionar a si mesmo!");
+                      return;
+                    }
+
+                    // 2. Verifica se já existe amizade ou pedido
+                    const { data: existingFriendship, error: friendshipError } = await supabase
+                      .from('friendships')
+                      .select('*')
+                      .or(`and(requester_id.eq.${myProfile.id},addressee_id.eq.${targetProfile.id}),and(requester_id.eq.${targetProfile.id},addressee_id.eq.${myProfile.id})`)
+                      .maybeSingle();
+
+                    if (friendshipError) throw friendshipError;
+
+                    if (existingFriendship) {
+                      toast.info("Você já possui uma amizade ou pedido pendente com este usuário!");
+                      return;
+                    }
+
+                    // 3. Envia solicitação
+                    const { error: sendError } = await supabase
+                      .from('friendships')
+                      .insert({
+                        requester_id: myProfile.id,
+                        addressee_id: targetProfile.id,
+                        status: 'pending'
+                      });
+
+                    if (sendError) throw sendError;
+
+                    toast.success("Pedido de amizade enviado com sucesso!");
+                    setAddUsername("");
+                    if (onSendRequest) onSendRequest(input); // Callback opcional se necessário
+                  } catch (err: any) {
+                    console.error("Erro ao adicionar amigo:", err);
+                    toast.error("Erro ao processar solicitação.");
+                  }
                 }}
                 className="absolute right-2 top-2 h-10 bg-cyan-500 text-black hover:bg-cyan-400 font-bold px-4 rounded-xl shadow-[0_0_15px_rgba(0,209,255,0.2)]"
               >
