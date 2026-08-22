@@ -170,19 +170,23 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       .on('presence', { event: 'sync' }, () => {
         const state = voiceChannel.presenceState();
         console.log(`[Lume Voice Room] presence sync: count=${Object.keys(state).length}`, state);
-        const users: VoiceParticipant[] = Object.values(state).flat().map((p: any) => ({
-          id: p.user_id,
-          username: p.username,
-          display_name: p.display_name,
-          avatar_url: p.avatar_url,
-          isMuted: p.isMuted,
-          isDeafened: p.isDeafened,
-          isSharingScreen: p.isSharingScreen,
-          isSpeaking: false,
-          isTalking: false,
-          stream: remoteStreams.current.get(p.user_id) || null,
-          screenStream: remoteScreenStreams.current.get(p.user_id) || null
-        }));
+        const users: VoiceParticipant[] = Object.entries(state).map(([key, presences]: [string, any]) => {
+          // Cada entrada de presenceState() pode ser um array se o mesmo usuário estiver em várias abas
+          const p = presences[0]; 
+          return {
+            id: p.user_id || key,
+            username: p.username || 'Usuário',
+            display_name: p.display_name || p.username || 'Usuário',
+            avatar_url: p.avatar_url,
+            isMuted: p.isMuted ?? false,
+            isDeafened: p.isDeafened ?? false,
+            isSharingScreen: p.isSharingScreen ?? false,
+            isSpeaking: false,
+            isTalking: false,
+            stream: remoteStreams.current.get(p.user_id || key) || null,
+            screenStream: remoteScreenStreams.current.get(p.user_id || key) || null
+          };
+        });
         
         // Trigger signaling for new users
         users.forEach(u => {
