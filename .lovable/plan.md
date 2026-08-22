@@ -1,56 +1,74 @@
-# Plan - UX/Layout Adjustments: Chat Alignment, Friends Panel, and Home Defaults
+# Revisão Geral e Correção de Regressões (UX, Chat, Navegação e Servidores)
 
-Implement structural and logic improvements to LUME's dashboard, focusing on chat presentation, interactive friends management, and default entry state.
+Resolva todos os 15 pontos listados abaixo rigorosamente sem remover nenhuma função existente.
 
-## User Review Required
+## Pontos de Implementação
 
-> [!IMPORTANT]
-> - Friends system requires searching by exact username to send requests.
-> - Chat alignment changes will remove "centered" constraints for a wider, classic view.
+1.  **Fix de Login e Transição**:
+    *   No `src/routes/auth.tsx`, implementar um estado de carregamento suave e garantir que o redirecionamento para `/` seja direto, sem flashes de tela.
+2.  **Bot Oficial no Chat**:
+    *   No `src/routes/_authenticated.index.tsx` (onde a lógica de mensagens reside), identificar o bot Lume (ID `00000000-0000-0000-0000-000000000001` ou username `lume`).
+    *   Forçar o avatar oficial `https://i.ibb.co/99YTNvGS/image.png` e adicionar a tag `[OFICIAL]`.
+3.  **Barra de Rolagem Customizada**:
+    *   Em `src/styles.css`, adicionar classes para scrollbar ultra-fina/invisível.
+    *   Aplicar no container de mensagens em `src/routes/_authenticated.index.tsx`.
+4.  **Auto-selecionar #geral**:
+    *   Na lógica de clique de servidor em `src/routes/_authenticated.index.tsx`, garantir que o primeiro canal de texto seja aberto automaticamente.
+5.  **Botão de Deslogar nas Configurações**:
+    *   Adicionar botão "Sair da Conta" no `src/components/ui/SettingsModal.tsx` (aba Minha Conta).
+6.  **Remover Botão "X" Duplicado**:
+    *   Remover o botão customizado de fechar no `src/components/ui/SettingsModal.tsx`, mantendo o do `Dialog`.
+7.  **Limpar Texto de Status**:
+    *   Em `src/components/ui/FriendsView.tsx`, remover o texto cru "Dnd"/"Idle" abaixo do nome, mantendo apenas a bolinha de status.
+8.  **Fluxo de Adicionar Amigo**:
+    *   Implementar validações completas (vazio, inexistente, já amigo, sucesso) com toasts no `src/components/ui/FriendsView.tsx`.
+9.  **Simplificar Aba Pendentes**:
+    *   Filtrar `Friendships` para mostrar apenas solicitações recebidas pendentes no `src/components/ui/FriendsView.tsx`.
+10. **Restaurar Context Menu de Servidor**:
+    *   Reimplementar `onContextMenu` na lista de servidores para permitir exclusão pelo dono.
+11. **Restaurar Criação de Servidor**:
+    *   Verificar e garantir que o botão `+` abre o modal de criação e usa a RPC correta.
+12. **Correção de Mute na Call**:
+    *   Corrigir o `toggleMic` no `src/hooks/useVoiceRoom.ts` para ser bidirecional (habilitar/desabilitar tracks).
+13. **Destravar Criação de Grupos**:
+    *   No `src/components/ui/CreateGroupModal.tsx`, permitir criação com 1+ amigos e abrir a conversa imediatamente.
+14. **Desespremer Avatares**:
+    *   Ajustar `src/components/ui/UserAvatar.tsx` para garantir `shrink-0 aspect-square rounded-full overflow-hidden` com imagem `object-cover`.
+15. **Eliminar Delays na Navegação**:
+    *   Utilizar estados locais reativos para trocas imediatas de canal/DM antes de disparar queries.
 
-- **Status Badge Integration**: Verify if existing `StatusBadge.tsx` is sufficient for the Friends list.
-- **Home Navigation**: Confirm if "Disponível" should be the absolute default for all new sessions.
+## Detalhes Técnicos
 
-## Proposed Changes
+### Scrollbar CSS
+```css
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 10px;
+}
+```
 
-### Database & Backend
-#### Friendships Logic
-- Ensure `friendships` table supports status (pending, accepted, blocked).
-- Verify `direct_messages` query joins `profiles` to get fresh metadata (display_name, avatar).
+### Lógica do Bot
+```tsx
+const isBot = msg.user_id === '00000000-0000-0000-0000-000000000001' || msg.profile?.username === 'lume';
+const avatar = isBot ? "https://i.ibb.co/99YTNvGS/image.png" : msg.profile?.avatar_url;
+const name = isBot ? "Lume [OFICIAL]" : (msg.profile?.display_name || msg.profile?.username);
+```
 
-### Frontend UI/UX
-#### 1. Chat Alignment & Layout
-- **src/routes/_authenticated.index.tsx**:
-    - Locate message containers (Server and DM views).
-    - Remove `max-w-md mx-auto` or similar centering classes.
-    - Apply `flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4` to the scrollable container.
-    - Ensure `MessageItem` components align content to the left consistently.
-
-#### 2. Interactive Friends Panel
-- **src/components/ui/FriendsView.tsx** (or equivalent in dashboard):
-    - Implement conditional rendering for:
-        - **Disponível**: Online/Idle/DND users + Action buttons (Message, Call).
-        - **Todos**: List of all friends + Unfriend option.
-        - **Pendentes**: Incoming (Accept/Decline) and Outgoing (Cancel) requests.
-        - **Adicionar Amigo**: Input for username + Success toast via `sonner`.
-    - Ensure this view replaces the "Welcome" placeholder whenever `activeTab === 'amigos'`.
-
-#### 3. Default Home State
-- **src/routes/_authenticated.index.tsx**:
-    - Update `useEffect` or initial state: if no `activeServer` or `activeDM` is selected, default `activeTab` to `'amigos'` and `friendsTab` to `'disponivel'`.
-
-#### 4. Metadata Consistency
-- **Message Queries**: Update Supabase queries in `fetchMessages` and `fetchDMMessages` to fetch related profile data (`profiles!sender_id(...)`) instead of relying on stale local state or generic fallbacks.
-
-## Technical Details
-
-### UI Components
-- **Tailwind**: Transition from container-constrained layouts to widescreen fluid layouts.
-- **Lucide Icons**: Use `MessageSquare`, `Phone`, `Check`, `X`, `UserMinus` for friend actions.
-
-### Data Fetching
-- **Supabase**: Use `.select('*, profiles:sender_id(*)')` to ensure message items have access to real-time profile updates.
-- **Realtime**: Ensure friends list updates when friendship status changes.
-
-## Documentation (Verbatim)
-The text provided in the request will be written to `src/routes/index.tsx` as requested.
+### Voice Hook Fix
+```typescript
+const toggleMic = () => {
+  if (localStreamRef.current) {
+    const audioTrack = localStreamRef.current.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      setIsMuted(!audioTrack.enabled);
+    }
+  }
+};
+```
