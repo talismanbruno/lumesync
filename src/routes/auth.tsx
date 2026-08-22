@@ -370,7 +370,7 @@ function AuthPage() {
                         }}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
                       >
-                        <Eye className="h-4 w-4" />
+                        {input.type === "password" ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                       </button>
                     </div>
                     <p className="text-[9px] text-zinc-600 px-1 pt-1 italic">
