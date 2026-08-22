@@ -80,127 +80,83 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-        {activeSubTab === 'online' && (
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Disponível — {onlineFriends.length}</h3>
-            {onlineFriends.length > 0 ? (
-              <div className="grid gap-2">
-                {onlineFriends.map(friend => (
-                  <div key={friend.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#121214] border border-white/5 group hover:border-cyan-500/30 transition-all">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar 
-                        avatarUrl={friend.avatar_url}
-                        name={friend.display_name || friend.username}
-                        status={friend.status}
-                        showStatus={true}
-                        size="h-12 w-12"
-                        className="rounded-xl"
-                      />
-                      <div>
-                        <p className="text-sm font-bold text-white flex items-center gap-1.5 min-w-0">
-                          <span className="truncate">{friend.display_name || friend.username}</span>
-                          <AdminVerifiedBadge isAdmin={friend.is_admin} size={14} />
-                        </p>
-                      </div>
-                    </div>
-                    <FriendActionButtons 
+        <div className="max-w-5xl mx-auto w-full">
+          {activeSubTab === 'online' && (
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Disponível — {onlineFriends.length}</h3>
+              {onlineFriends.length > 0 ? (
+                <div className="grid gap-2">
+                  {onlineFriends.map((friend, index) => (
+                    <FriendRow 
+                      key={friend.id}
                       friend={friend}
+                      myProfile={myProfile}
                       onSelectDM={onSelectDM}
                       onStartCall={onStartCall}
-                      isBot={friend.id === 'lume-bot-fixed' || friend.username === 'lume'}
-                      isSelf={friend.id === myProfile.id}
+                      variant="online"
+                      className="animate-in fade-in slide-in-from-bottom-1 duration-300"
+                      style={{ animationDelay: `${Math.min(index * 20, 160)}ms` }}
                     />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-zinc-600 space-y-2">
-                <Users size={48} strokeWidth={1} className="opacity-20" />
-                <p className="text-sm">Ninguém disponível no momento.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeSubTab === 'all' && (
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Todos os Amigos — {friends.length}</h3>
-            <div className="grid gap-2">
-              {friends.map(friend => (
-                <div key={friend.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#121214] border border-white/5 group hover:border-zinc-700 transition-all">
-                  <div className="flex items-center gap-3">
-                    <UserAvatar 
-                      avatarUrl={friend.avatar_url}
-                      name={friend.display_name || friend.username}
-                      status={friend.status}
-                      showStatus={true}
-                      size="h-10 w-10"
-                      className="rounded-xl"
-                    />
-                    <div>
-                      <p className="text-sm font-bold text-white flex items-center gap-1.5 min-w-0">
-                        <span className="truncate">{friend.display_name || friend.username}</span>
-                        <AdminVerifiedBadge isAdmin={friend.is_admin} size={14} />
-                      </p>
-                    </div>
-                  </div>
-                  <FriendActionButtons 
-                    friend={friend}
-                    onSelectDM={onSelectDM}
-                    onStartCall={onStartCall}
-                    isBot={friend.id === 'lume-bot-fixed' || friend.username === 'lume'}
-                    isSelf={friend.id === myProfile.id}
-                  />
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeSubTab === 'pending' && (
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Solicitações Recebidas — {pendingIncoming.length}</h3>
-              {pendingIncoming.length > 0 ? pendingIncoming.map(f => (
-                <div key={f.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#121214] border border-white/5">
-                  <div className="flex items-center gap-3">
-                    <UserAvatar 
-                      avatarUrl={f.friend_profile?.avatar_url}
-                      name={f.friend_profile?.display_name || f.friend_profile?.username}
-                      size="h-10 w-10"
-                      className="rounded-xl"
-                    />
-                    <div>
-                      <p className="text-sm font-bold text-white flex items-center gap-1.5 min-w-0">
-                        <span className="truncate">{f.friend_profile?.display_name || f.friend_profile?.username}</span>
-                        <AdminVerifiedBadge isAdmin={f.friend_profile?.is_admin} size={14} />
-                      </p>
-                      <p className="text-[10px] text-zinc-500 font-medium">Enviou um pedido de amizade</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => onAcceptRequest(f.id)}
-                      className="p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500 hover:text-black transition-all"
-                      title="Aceitar"
-                    >
-                      <Check size={18} />
-                    </button>
-                    <button 
-                      onClick={() => onDeclineRequest(f.id)}
-                      className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-black transition-all"
-                      title="Recusar"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
+              ) : (
+                <div className="h-64 flex flex-col items-center justify-center text-zinc-600 space-y-2">
+                  <Users size={48} strokeWidth={1} className="opacity-20" />
+                  <p className="text-sm">Ninguém disponível no momento.</p>
                 </div>
-              )) : (
-                <div className="py-8 text-center text-zinc-500 text-sm">Nenhuma solicitação pendente</div>
               )}
             </div>
-          </div>
-        )}
+          )}
+
+          {activeSubTab === 'all' && (
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Todos os Amigos — {friends.length}</h3>
+              <div className="grid gap-2">
+                {friends.map((friend, index) => (
+                  <FriendRow 
+                    key={friend.id}
+                    friend={friend}
+                    myProfile={myProfile}
+                    onSelectDM={onSelectDM}
+                    onStartCall={onStartCall}
+                    variant="all"
+                    className="animate-in fade-in slide-in-from-bottom-1 duration-300"
+                    style={{ animationDelay: `${Math.min(index * 20, 160)}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSubTab === 'pending' && (
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Solicitações Recebidas — {pendingIncoming.length}</h3>
+                {pendingIncoming.length > 0 ? (
+                  <div className="grid gap-2">
+                    {pendingIncoming.map((f, index) => (
+                      <FriendRow 
+                        key={f.id}
+                        friend={f.friend_profile}
+                        myProfile={myProfile}
+                        onSelectDM={onSelectDM}
+                        onStartCall={onStartCall}
+                        variant="pending"
+                        friendshipId={f.id}
+                        onAcceptRequest={onAcceptRequest}
+                        onDeclineRequest={onDeclineRequest}
+                        className="animate-in fade-in slide-in-from-bottom-1 duration-300"
+                        style={{ animationDelay: `${Math.min(index * 20, 160)}ms` }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-zinc-500 text-sm">Nenhuma solicitação pendente</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {activeSubTab === 'add' && (
           <div className="max-w-xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
