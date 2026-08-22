@@ -342,13 +342,14 @@ function AuthPage() {
 
               <div className="mt-8 pt-6 border-t border-white/5 text-center">
                 <button 
+                  type="button"
                   onClick={() => {
-                    setIsLogin(!isLogin);
+                    setIsLogin(false);
                     setAuthState("idle");
                   }}
                   className="text-zinc-500 text-xs hover:text-cyan-400 transition-colors font-medium flex items-center justify-center gap-2 mx-auto"
                 >
-                  {isLogin ? "Não tem uma conta? Registre-se" : "Já tem uma conta? Entre"}
+                  Não tem uma conta? Registre-se
                   <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
