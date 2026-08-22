@@ -31,6 +31,9 @@ function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authState, setAuthState] = useState<AuthState>("idle");
   const [resendCooldown, setResendCooldown] = useState(0);
