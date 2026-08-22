@@ -80,15 +80,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Área Principal Direita */}
         <main className="flex-1 bg-[#121214] flex flex-col overflow-hidden relative">
           {/* Botão de Fechar Único e Acessível */}
-          <DialogClose 
-            asChild
-            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-50 group cursor-pointer"
+          <button 
+            type="button"
+            onClick={(e) => {
+              console.log("SettingsModal: Botão X clicado");
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-[100] group cursor-pointer"
             aria-label="Fechar configurações"
           >
-            <button type="button">
-              <X size={20} className="group-hover:scale-110 transition-transform" />
-            </button>
-          </DialogClose>
+            <X size={20} className="group-hover:scale-110 transition-transform" />
+          </button>
 
           <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
             {activeTab === 'profile' && (
