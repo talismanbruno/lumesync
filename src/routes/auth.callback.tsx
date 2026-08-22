@@ -10,7 +10,9 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/auth/callback')({
   validateSearch: (search) => searchSchema.parse(search),
-  loader: async ({ search }) => {
+  loader: async ({ location }) => {
+    // In TanStack Start/Router v1, search params are in location.search
+    const search = (location as any).search
     const code = search.code
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
