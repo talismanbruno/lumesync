@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2, ShieldCheck } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
