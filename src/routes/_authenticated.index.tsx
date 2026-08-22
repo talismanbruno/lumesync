@@ -266,14 +266,14 @@ function DashboardComponent() {
       console.log("[VoiceCall] Iniciando chamada:", roomKey);
       
       // 2. Criar registro de sinalização
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('voice_calls' as any)
         .insert({
           initiator_id: myProfile.id,
           recipient_id: friend.id,
           room_key: roomKey,
           status: 'ringing'
-        } as any)
+        } as any) as any)
         .select()
         .single();
         
@@ -904,8 +904,8 @@ function DashboardComponent() {
     fetchConversations();
     fetchUnreadCounts();
 
-    const subFriends = supabase
-      .channel('friendships_realtime')
+    const subFriends = (supabase
+      .channel('friendships_realtime') as any)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, fetchFriendships)
       .on('postgres_changes', { 
         event: 'INSERT', 
@@ -915,19 +915,17 @@ function DashboardComponent() {
       }, (payload: any) => {
         const call = payload.new;
         if (call.status === 'ringing') {
-          // Sinalização de chamada recebida
           const initiatorId = call.initiator_id;
-          // Buscar nome do iniciador do cache ou banco
           const initiator = profilesCache[initiatorId] || { display_name: "Alguém", username: "alguem" };
           
           toast(`Chamada de voz de ${initiator.display_name || initiator.username}`, {
             action: {
               label: "Atender",
               onClick: async () => {
-                await supabase
+                await (supabase
                   .from('voice_calls' as any)
-                  .update({ status: 'active' } as any)
-                  .eq('id' as any, call.id);
+                  .update({ status: 'active' } as any) as any)
+                  .eq('id', call.id);
                 
                 setActiveVoiceChannel({ 
                   id: call.room_key, 
@@ -941,13 +939,13 @@ function DashboardComponent() {
             cancel: {
               label: "Recusar",
               onClick: async () => {
-                await supabase
+                await (supabase
                   .from('voice_calls' as any)
-                  .update({ status: 'ended' } as any)
-                  .eq('id' as any, call.id);
+                  .update({ status: 'ended' } as any) as any)
+                  .eq('id', call.id);
               }
             },
-            duration: 30000, // 30 segundos tocando
+            duration: 30000,
           });
         }
       })
