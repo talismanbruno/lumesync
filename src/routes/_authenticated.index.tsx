@@ -1657,8 +1657,56 @@ function DashboardComponent() {
               ) : activeDMGroup ? (
                 <>
                   <Users size={18} className="text-cyan-400 shrink-0" />
-                  <span className="text-sm font-bold truncate">{activeDMGroup.name || "Grupo"}</span>
+                  <span className="text-sm font-bold truncate">
+                    {getGroupTitle(activeDMGroup, myProfile.id)}
+                  </span>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="p-2 text-zinc-400 hover:text-zinc-200 transition-colors">
+                          <Users size={18} />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 bg-[#181818] border-white/10 p-2 z-[60]" side="bottom" align="end">
+                        <div className="space-y-2">
+                          <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">
+                            Membros — {activeDMGroup.dm_group_members?.length || 0}
+                          </p>
+                          <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                            {(activeDMGroup.dm_group_members || [])
+                              .sort((a: any, b: any) => {
+                                if (a.user_id === myProfile.id) return -1;
+                                if (b.user_id === myProfile.id) return 1;
+                                const nameA = getDisplayName(a.profiles);
+                                const nameB = getDisplayName(b.profiles);
+                                return nameA.localeCompare(nameB);
+                              })
+                              .map((member: any) => (
+                                <div key={member.user_id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/5 group">
+                                  <UserAvatar 
+                                    avatarUrl={member.profiles?.avatar_url} 
+                                    name={getDisplayName(member.profiles)} 
+                                    size="h-8 w-8" 
+                                    className="rounded-lg"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-medium text-zinc-200 truncate">
+                                      {getDisplayName(member.profiles)}
+                                      {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500">(Você)</span>}
+                                    </span>
+                                    {member.profiles?.status && (
+                                      <span className="text-[10px] text-zinc-500 truncate capitalize">{member.profiles.status}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </>
+
               ) : (
                 <>
                   <UserAvatar
