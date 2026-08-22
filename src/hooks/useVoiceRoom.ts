@@ -41,7 +41,7 @@ export function useVoiceRoom(roomKey: string | null, myProfile: any) {
     // Remove participant from the table
     if (roomKey && myProfile?.id) {
       try {
-        await supabase.from('voice_participants').delete().match({ 
+        await (supabase.from('voice_participants') as any).delete().match({ 
           room_key: roomKey, 
           user_id: myProfile.id 
         });
@@ -153,7 +153,7 @@ export function useVoiceRoom(roomKey: string | null, myProfile: any) {
 
     // Register participant in the table
     try {
-      await supabase.from('voice_participants').upsert({ 
+      await (supabase.from('voice_participants') as any).upsert({ 
         room_key: rk, 
         user_id: myProfile.id 
       });
