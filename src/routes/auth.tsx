@@ -170,7 +170,7 @@ function AuthPage() {
     }
   };
 
-  if (isAuthChecking || (user && !profile?.username)) {
+  if (isAuthChecking || (user && profile?.username)) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
