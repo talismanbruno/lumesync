@@ -1802,7 +1802,7 @@ function DashboardComponent() {
               <div ref={chatEndRef} />
             </div>
 
-            {isReadOnly ? (
+            {isReadOnly || !dmGroups.some(g => g.id === activeDMGroup?.id && g.dm_group_members?.some((m: any) => m.user_id === myProfile.id)) ? (
               <div className="px-6 pb-6 pt-2 shrink-0">
                 <div className="flex items-center justify-center gap-2 bg-[#121212] border border-white/5 rounded-2xl py-3 text-xs text-zinc-600">
                   <Lock size={14} /> Canal somente leitura
