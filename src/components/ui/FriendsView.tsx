@@ -138,8 +138,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       className="rounded-xl"
                     />
                     <div>
-                      <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                        {friend.display_name || friend.username}
+                      <p className="text-sm font-bold text-white flex items-center gap-1.5 min-w-0">
+                        <span className="truncate">{friend.display_name || friend.username}</span>
                         <AdminVerifiedBadge isAdmin={friend.is_admin} size={14} />
                       </p>
                     </div>
