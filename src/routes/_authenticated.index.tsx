@@ -239,23 +239,7 @@ function DashboardComponent() {
         
         const serverList = (data as any[] || []).map(item => item.servers).filter(Boolean) as Server[];
         setServers(serverList || []);
-        if (serverList.length > 0 && !activeServer) {
-          const firstServer = serverList[0];
-          if (firstServer) {
-            setActiveServer(firstServer);
-            
-            // Auto-select #geral for the first server
-            const { data: channelsData } = await supabase
-              .from("channels")
-              .select("*")
-              .eq("server_id", firstServer.id)
-              .order("created_at", { ascending: true });
-              
-            if (channelsData && channelsData.length > 0) {
-              setActiveChannel(channelsData[0] as Channel);
-            }
-          }
-        }
+
       } catch (err) {
         console.error("[Lume Servers Catch]:", err);
       }
