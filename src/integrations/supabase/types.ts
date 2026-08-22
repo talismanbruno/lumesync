@@ -407,6 +407,51 @@ export type Database = {
           },
         ]
       }
+      voice_calls: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          initiator_id: string
+          recipient_id: string
+          room_key: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          initiator_id: string
+          recipient_id: string
+          room_key: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          initiator_id?: string
+          recipient_id?: string
+          room_key?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_calls_initiator_id_fkey"
+            columns: ["initiator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_calls_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_participants: {
         Row: {
           id: string
