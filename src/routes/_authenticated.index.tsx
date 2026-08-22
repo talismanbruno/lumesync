@@ -907,6 +907,50 @@ function DashboardComponent() {
     const subFriends = supabase
       .channel('friendships_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, fetchFriendships)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'voice_calls',
+        filter: `recipient_id=eq.${myProfile.id}`
+      }, (payload: any) => {
+        const call = payload.new;
+        if (call.status === 'ringing') {
+          // Sinalização de chamada recebida
+          const initiatorId = call.initiator_id;
+          // Buscar nome do iniciador do cache ou banco
+          const initiator = profilesCache[initiatorId] || { display_name: "Alguém", username: "alguem" };
+          
+          toast(`Chamada de voz de ${initiator.display_name || initiator.username}`, {
+            action: {
+              label: "Atender",
+              onClick: async () => {
+                await supabase
+                  .from('voice_calls')
+                  .update({ status: 'active' } as any)
+                  .eq('id', call.id);
+                
+                setActiveVoiceChannel({ 
+                  id: call.room_key, 
+                  name: initiator.display_name || initiator.username, 
+                  type: 'voice', 
+                  server_id: 'dm' 
+                });
+                setShowVoiceUI(true);
+              }
+            },
+            cancel: {
+              label: "Recusar",
+              onClick: async () => {
+                await supabase
+                  .from('voice_calls')
+                  .update({ status: 'ended' } as any)
+                  .eq('id', call.id);
+              }
+            },
+            duration: 30000, // 30 segundos tocando
+          });
+        }
+      })
       .subscribe();
 
     const subMessages = supabase
