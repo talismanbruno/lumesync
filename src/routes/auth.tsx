@@ -227,7 +227,7 @@ function AuthPage() {
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Senha</label>
                     <div className="relative">
                       <Input 
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pr-10"
@@ -237,15 +237,10 @@ function AuthPage() {
                       />
                       <button 
                         type="button"
-                        onClick={(e) => {
-                          const inputEl = e.currentTarget.parentElement?.querySelector('input');
-                          if (inputEl) {
-                            inputEl.type = inputEl.type === "password" ? "text" : "password";
-                          }
-                        }}
+                        onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
                       >
-                        <Eye className="h-4 w-4" />
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
