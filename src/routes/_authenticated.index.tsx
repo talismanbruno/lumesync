@@ -2275,14 +2275,16 @@ function DashboardComponent() {
           if (membersError) throw membersError;
           
           toast.success("Grupo criado com sucesso!");
-          // Opcional: navegar ou abrir o grupo
+          await fetchConversations();
+          setActiveDMGroup(group);
+          setActiveDMFriend(null);
+          setActiveChannel(null);
+          setActiveServer(null);
         } catch (err: any) {
           toast.error("Erro ao criar grupo: " + err.message);
         }
       }}
     />
-
     </div>
   );
-
 }
