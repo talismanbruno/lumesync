@@ -1258,8 +1258,9 @@ function DashboardComponent() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
-      <aside className="w-64 min-w-[256px] max-w-[256px] shrink-0 h-full rounded-3xl bg-[#0d0d11]/80 backdrop-blur-2xl border border-white/5 flex flex-col justify-between p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-20 overflow-hidden">
+    {/* Barra Lateral Única (Canais do Servidor ou Lista de DMs - 240px) */}
+    <aside className="w-60 min-w-[240px] max-w-[240px] h-full bg-[#0d0d10] border-r border-white/5 flex flex-col justify-between p-3 shrink-0">
+
 
 
 
