@@ -1,82 +1,75 @@
 /**
- * CORREÇÕES OBRIGATÓRIAS: IMAGENS NO CHAT, CRIAÇÃO DIRETA DE GRUPOS E STATUS NO RODAPÉ
+ * REDESIGN DE INTERFACE: IMPLEMENTAR LAYOUT "FLUID DOCK & FLOATING CANVAS" (ESTILO LINEAR / ARC)
  * 
- * 1. CORRIGIR ENVIO E RENDERIZAÇÃO DE IMAGENS/GIFS NO CHAT (MessageInput.tsx e MessageItem.tsx):
+ * Vamos substituir o layout tradicional rígido de 3 colunas coladas por uma arquitetura moderna de ilhas flutuantes com efeito Glassmorphism, mantendo 100% das funcionalidades existentes (Chat, Voz, DMs, Grupos e Configurações).
  * 
- * Problema: As mensagens estão aparecendo como um botão quebrado com o texto "Mídia" porque o file_url está sendo enviado vazio ou undefined.
+ * 1. ESTRUTURA DO CONTAINER PRINCIPAL (src/routes/_authenticated.tsx ou Layout Base):
+ * Substitua o contêiner raiz pelo layout flutuante:
  * 
- * Ao Enviar GIF do GIPHY:
- * Certifique-se de extrair a URL direta: const gifUrl = gif.images?.original?.url || gif.images?.fixed_height?.url;
- * OBRIGATÓRIO: O file_url no insert da mensagem DEVE ser essa string gifUrl (começando com https://media.giphy.com/...).
+ * codeTsx
  * 
- * Ao Enviar Imagem/Anexo do Computador:
- * Converta o arquivo selecionado para Base64 usando FileReader (ou suba para o Supabase Storage e pegue a publicUrl). O file_url DEVE ser uma URL válida (começando com https:// ou data:image/).
+ * <div className="flex h-screen w-screen overflow-hidden bg-[#050505] p-3 gap-3 text-zinc-100 antialiased select-none font-sans">
+ *   
+ *   {/* 1. DOCK FLUTUANTE DE SERVIDORES (Cápsula Esquerda) */}
+ *   <nav className="w-[70px] min-w-[70px] shrink-0 h-full rounded-3xl bg-[#0a0a0d]/80 backdrop-blur-2xl border border-white/5 flex flex-col items-center py-4 justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-30">
+ *     {/* Topo: Logo Oficial Lume */}
+ *     {/* Meio: Servidores em lista vertical com o botão + estilizado */}
+ *     {/* Rodapé: Mini Avatar com Status e botão de Configurações ⚙️ */}
+ *   </nav>
  * 
- * Na Renderização (MessageItem.tsx):
- * NUNCA renderize a tag <img> se file_url for nulo, vazio ou "undefined".
+ *   {/* 2. PAINEL FLUTUANTE DE CANAIS / DMs (Ilha Secundária) */}
+ *   <aside className="w-64 min-w-[256px] max-w-[256px] shrink-0 h-full rounded-3xl bg-[#0d0d11]/80 backdrop-blur-2xl border border-white/5 flex flex-col justify-between p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-20 overflow-hidden">
+ *     {/* Cabeçalho com Nome do Espaço e Ações */}
+ *     {/* Lista de Canais (Texto/Voz) ou Lista de DMs e Grupos */}
+ *     {/* Widget Flutuante de Voz Conectada no rodapé da ilha */}
+ *   </aside>
  * 
- * Se file_url for uma URL válida:
- * {message.file_url && message.file_url.startsWith('http') && (
- *   <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
- *     <img 
- *       src={message.file_url} 
- *       alt="Imagem anexada" 
- *       className="w-auto max-h-80 object-contain rounded-xl block" 
- *       loading="lazy" 
- *     />
- *   </div>
- * )}
+ *   {/* 3. CANVAS PRINCIPAL (Chat / Chamada de Voz / Tela) */}
+ *   <main className="flex-1 min-w-0 h-full rounded-3xl bg-[#0f0f14]/90 backdrop-blur-2xl border border-white/5 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
+ *     
+ *     {/* Header com Breadcrumbs: Lume ✦ Servidor ✦ #geral */}
+ *     <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
+ *       <div className="flex items-center gap-2 text-sm">
+ *         <span className="text-zinc-500 font-medium">Lume</span>
+ *         <span className="text-zinc-600">✦</span>
+ *         <span className="text-zinc-300 font-semibold">{activeSpaceName}</span>
+ *         <span className="text-zinc-600">✦</span>
+ *         <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+ *           {activeChannelType === 'voice' ? '🔊' : '#'} {activeChannelName}
+ *         </span>
+ *       </div>
+ *       {/* Botões de Ação: Ligar, Compartilhar Tela, Membros */}
+ *     </header>
  * 
- * 2. CORRIGIR CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
- * Substitua a lógica de criação de grupo por inserção direta à prova de falhas:
+ *     {/* Área Central: Feed de Mensagens ou Stage da Chamada de Voz WebRTC */}
+ *     <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+ *       {/* Mensagens ou VoiceRoomUI */}
+ *     </div>
  * 
- * const handleCreateGroup = async () => {
- *   if (selectedFriendIds.length === 0) {
- *     toast.error("Selecione pelo menos 1 amigo para criar o grupo!");
- *     return;
- *   }
- *   setIsLoading(true);
- *   try {
- *     const { data: newGroup, error: groupError } = await supabase
- *       .from('dm_groups')
- *       .insert({
- *         name: groupName.trim() || `Grupo com ${selectedFriendIds.length + 1} membros`,
- *         created_by: user.id
- *       })
- *       .select()
- *       .single();
- *       
- *     if (groupError) throw groupError;
- *     const membersToInsert = [
- *       { group_id: newGroup.id, user_id: user.id },
- *       ...selectedFriendIds.map(friendId => ({ group_id: newGroup.id, user_id: friendId }))
- *     ];
- *     const { error: membersError } = await supabase
- *       .from('dm_group_members')
- *       .insert(membersToInsert);
- *     if (membersError) throw membersError;
- *     toast.success("Grupo criado com sucesso!");
- *     onClose();
- *     await fetchConversations();
- *     onSelectGroup(newGroup.id);
- *   } catch (err: any) {
- *     console.error("Erro ao criar grupo:", err);
- *     toast.error(err.message || "Erro ao criar grupo");
- *   } finally {
- *     setIsLoading(false);
- *   }
- * };
+ *     {/* Input de Mensagem em Pílula Flutuante (Floating Pill) */}
+ *     <div className="p-4 pt-0">
+ *       <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#14141a]/90 border border-white/10 shadow-lg focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(0,209,255,0.15)] transition-all">
+ *         {/* Botão de Anexo, Input de Texto, Emojis, GIFs e Botão Enviar */}
+ *       </div>
+ *     </div>
  * 
- * 3. RESTAURAR O SELETOR DE STATUS NO RODAPÉ ESQUERDO (SidebarUserFooter.tsx):
- * Ao clicar no avatar ou no nome teamlume no rodapé da barra lateral:
- * NÃO ABRA O USERPROFILECARD.
- * Abra o Menu Dropdown de Status (Disponível 🟢, Ausente 🟡, Não Perturbe 🔴, Invisível ⚪).
- * Use <DropdownMenuPortal> com z-50 abrindo para cima (side="top"), para que o menu flutue livremente sem quebrar o layout da barra lateral.
+ *   </main>
+ * 
+ * </div>
+ * 
+ * 2. REGRAS DE REFINAMENTO VISUAL:
+ * 
+ * Cores e Superfícies: Fundo geral #050505, Ilhas em #0d0d11/80 com backdrop-blur-2xl e bordas ultra-finas border-white/5.
+ * 
+ * Preservar 100% da Lógica Existente: Não altere nenhuma função do Supabase, WebRTC, DMs, grupos, status ou perfil. Apenas envolva os componentes existentes nessa nova estrutura flutuante.
+ * 
+ * Scrollbars Limpas: Use barras de rolagem invisíveis ou finas (scrollbar-none ou scrollbar-thin scrollbar-thumb-zinc-800).
  * 
  * VALIDAÇÃO OBRIGATÓRIA:
- * Envie um GIF do menu de GIFs: o GIF animado DEVE carregar e ficar visível na conversa (sem a caixa cinza com texto "Mídia").
- * Clique no + de Mensagens Diretas, selecione um amigo e clique em "Criar Grupo": o modal DEVE fechar e o grupo deve aparecer na lista de conversas.
- * Clique no seu nome no rodapé esquerdo: o menu com as opções de status (Disponível, Ausente, etc.) DEVE abrir.
+ * 
+ * Verifique a tela: o app deve se parecer com um workspace moderno e flutuante (com espaçamento ao redor de todas as janelas), sem nenhuma coluna colada nas extremidades.
+ * 
+ * Confirme que a navegação entre servidores, DMs, chat de texto e chamadas de voz continua funcionando com velocidade máxima.
  * 
  * IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
  */
