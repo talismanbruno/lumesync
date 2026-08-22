@@ -335,8 +335,19 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
-        // The muted state should reflect the track status
-        // If enabled is true, isMuted should be false
+        const isMuted = !audioTrack.enabled;
+        
+        if (channelRef.current) {
+          channelRef.current.track({
+            user_id: myProfile.id,
+            username: myProfile?.username || 'Usuário',
+            display_name: myProfile?.display_name || 'Usuário',
+            avatar_url: myProfile?.avatar_url,
+            isMuted,
+            isDeafened,
+            isSharingScreen: !!screenStream
+          });
+        }
       }
     }
   };
