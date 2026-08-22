@@ -164,7 +164,6 @@ function DashboardComponent() {
   
   // Home / Friends state
   const [friendships, setFriendships] = useState<Friendship[]>([]);
-  const [friendFilter, setFriendFilter] = useState<'online' | 'all' | 'pending' | 'add'>('online');
   const [addFriendUsername, setAddFriendUsername] = useState("");
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [activeDMFriend, setActiveDMFriend] = useState<Profile | null>(null);
@@ -185,7 +184,9 @@ function DashboardComponent() {
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState<'conversas' | 'servidores' | 'amigos'>('conversas');
+  const [activeTab, setActiveTab] = useState<'conversas' | 'servidores' | 'amigos'>('amigos');
+  const [friendFilter, setFriendFilter] = useState<'online' | 'all' | 'pending' | 'add'>('online');
+
 
   
   
@@ -331,8 +332,9 @@ function DashboardComponent() {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from("messages")
-        .select("*, profile:profiles(*)")
+        .select("*, profile:profiles!user_id(*)")
         .eq("channel_id", activeChannel.id)
+
         .order("created_at", { ascending: true })
         .limit(50);
         
@@ -973,8 +975,9 @@ function DashboardComponent() {
     const fetchDMs = async () => {
       const { data, error } = await supabase
         .from('direct_messages')
-        .select('*')
+        .select('*, profile:profiles!sender_id(*)')
         .or(`and(sender_id.eq.${myProfile.id},recipient_id.eq.${activeDMFriend.id}),and(sender_id.eq.${activeDMFriend.id},recipient_id.eq.${myProfile.id})`)
+
         .order('created_at', { ascending: true })
         .limit(50);
       if (!error && data) setMessages(data as Message[]);
@@ -1363,9 +1366,11 @@ function DashboardComponent() {
       </div>
 
       {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
-      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden z-10">
-        <div className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden z-10 w-full items-center">
+
+        <div className="flex flex-1 flex-col overflow-hidden w-full">
           {activeVoiceChannel && showVoiceUI ? (
+
             <VoiceRoomUI
               participants={participants}
               myProfile={myProfile}
@@ -1418,8 +1423,9 @@ function DashboardComponent() {
                 )}
               </header>
 
-              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                <div className="max-w-4xl mx-auto space-y-6">
+              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+                <div className="space-y-6">
+
                   {messages.map((msg, idx) => (
                     <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
@@ -1473,8 +1479,9 @@ function DashboardComponent() {
               </div>
 
               {/* Message Input */}
-              <div className="p-6 bg-gradient-to-t from-[#050505] to-transparent">
-                <div className="max-w-4xl mx-auto relative group">
+              <div className="w-full max-w-5xl px-8 pb-8 bg-gradient-to-t from-[#050505] to-transparent">
+                <div className="relative group">
+
                   {attachmentPreview && (
                     <div className="absolute bottom-full left-0 mb-4 p-2 bg-[#121214] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2">
                       <div className="relative">
