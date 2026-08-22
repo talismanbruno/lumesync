@@ -1073,195 +1073,251 @@ function DashboardComponent() {
         />
       )}
 
-      {/* Sidebar Wrapper (Columns 1 & 2) */}
-      <div className={`fixed inset-y-0 left-0 z-[70] flex w-[312px] transform transition-transform duration-300 md:relative md:translate-x-0 md:w-auto md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-full w-full">
-          {/* COLUNA 1: SERVIDORES (LARGURA FIXA E NUNCA ESMAGA) */}
-          <nav className="w-[72px] min-w-[72px] shrink-0 h-full bg-[#0a0a0c] border-r border-zinc-800/60 flex flex-col items-center py-3 z-30 select-none overflow-x-hidden">
-            {/* 1. Botão Home / Lume Logo */}
-            <button 
-              onClick={() => { setActiveServer(null); setActiveDMFriend(null); setActiveChannel(null); setShowVoiceUI(false); }} 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all mb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 relative"
-            >
-              <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 rounded-xl object-contain" />
-            </button>
-            
-            <div className="w-8 h-[2px] bg-zinc-800 rounded my-1" />
-            
-            {/* 2. Lista de Servidores com o Botão + no final da lista */}
-            <div className="flex-1 w-full flex flex-col items-center gap-2 overflow-y-auto custom-scrollbar overflow-x-hidden py-1">
-              {servers.map((server) => (
+      {/* Sidebar Wrapper (Unified 2-Panel Layout) */}
+      <div className={`fixed inset-y-0 left-0 z-[70] flex w-80 transform transition-transform duration-300 md:relative md:translate-x-0 md:shrink-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex flex-col h-full w-full bg-[#0d0d10] border-r border-white/5">
+          {/* Top: Logo + Quick Search */}
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <LumeLogo variant="full" className="h-6 w-auto" />
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 text-zinc-500 hover:text-white transition-colors md:hidden"
+              >
+                <X size={20} onClick={() => setIsMobileMenuOpen(false)} />
+              </button>
+            </div>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-cyan-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Busca rápida..." 
+                className="w-full bg-black/40 border border-white/5 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500/30 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Middle: Unified Tabs (Capsules) */}
+          <div className="px-4 py-2">
+            <div className="flex gap-1 p-1 bg-black/40 rounded-xl border border-white/5">
+              <button 
+                onClick={() => { setActiveTab('conversas'); setActiveServer(null); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'conversas' ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                <MessageSquare size={12} />
+                <span>Conversas</span>
+              </button>
+              <button 
+                onClick={() => { setActiveTab('servidores'); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'servidores' ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                <Hash size={12} />
+                <span>Servidores</span>
+              </button>
+              <button 
+                onClick={() => { setActiveTab('amigos'); setActiveServer(null); setActiveDMFriend(null); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'amigos' ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
+                <Users size={12} />
+                <span>Amigos</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Dynamic Content List */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 custom-scrollbar">
+            {activeTab === 'conversas' && (
+              <div className="space-y-1">
+                <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
+                  <span className="flex-1">Mensagens Diretas</span>
+                  <Plus size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => setIsCreateGroupOpen(true)} />
+                </div>
+                {/* Lume Bot Fixed */}
                 <button
-                  key={server.id}
-                  onClick={() => setActiveServer(server)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setContextMenu({ x: e.clientX, y: e.clientY, server });
+                  onClick={() => {
+                    setActiveDMFriend({
+                      id: LUME_BOT_ID,
+                      username: 'lume',
+                      display_name: 'Lume',
+                      avatar_url: 'https://i.ibb.co/99YTNvGS/image.png',
+                      status: 'online',
+                      is_verified: true
+                    } as Profile);
+                    setActiveChannel(null);
+                    setShowVoiceUI(false);
+                    markAsRead(LUME_BOT_ID);
                   }}
-                  className={`group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[24px] transition-all duration-200 hover:rounded-[16px] ${
-                    activeServer?.id === server.id ? "rounded-[16px] bg-[#00D1FF] text-black glow-sm" : "bg-[#121212] text-zinc-400 hover:bg-[#00D1FF] hover:text-black"
+                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-all ${
+                    activeDMFriend?.id === LUME_BOT_ID ? 'bg-white/5 text-white' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
                   }`}
                 >
-                  <div className={`absolute -left-1 h-2 w-2 rounded-full bg-white transition-all ${activeServer?.id === server.id ? "scale-100" : "scale-0 group-hover:scale-100"}`} />
-                  <span className="text-sm font-bold truncate px-1">{server.name.substring(0, 2).toUpperCase()}</span>
+                  <div className="relative shrink-0">
+                    <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-8 h-8 rounded-xl object-contain" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#00D1FF] ring-2 ring-[#0d0d10]" />
+                  </div>
+                  <div className="flex flex-col items-start flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 w-full">
+                      <span className="font-semibold text-sm truncate">Lume</span>
+                      <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span className="px-1 py-0.2 text-[8px] bg-cyan-500/20 text-cyan-400 font-bold rounded">OFICIAL</span>
+                    </div>
+                  </div>
                 </button>
-              ))}
-              
-              {/* O Botão + DEVE FICAR AQUI DENTRO DA COLUNA 1, ABAIXO DOS SERVIDORES */}
-              <button 
-                onClick={() => setIsCreatingServer(true)}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[24px] bg-[#121212] text-[#00D1FF] transition-all hover:rounded-[16px] hover:bg-[#00D1FF] hover:text-black glow-sm border border-[#00D1FF]/20"
-              >
-                <Plus size={24} />
-              </button>
-            </div>
-          </nav>
-      {/* Moved context menu and dialogs outside the nav but inside the wrapper if needed, 
-          or just ensured the wrapper is closed correctly */}
 
-
-
-        {contextMenu && (
-          <>
-            <div 
-              className="fixed inset-0 z-50" 
-              onClick={() => setContextMenu(null)} 
-              onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} 
-            />
-            <div 
-              style={{ top: contextMenu.y, left: contextMenu.x }}
-              className="fixed z-50 w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
-            >
-              {contextMenu.server.owner_id === myProfile.id ? (
-                <button
-                  onClick={() => {
-                    setServerToDelete(contextMenu.server);
-                    setIsDeletingServer(true);
-                    setContextMenu(null);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-md transition-colors text-left"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Excluir Servidor</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleLeaveServer(contextMenu.server.id);
-                    setContextMenu(null);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 rounded-md transition-colors text-left"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sair do Servidor</span>
-                </button>
-              )}
-            </div>
-          </>
-        )}
-        
-        {/* Remove old Plus button location outside Column 1 */}
-        <Dialog open={isCreatingServer} onOpenChange={(open) => { setIsCreatingServer(open); if (!open) setServerModalTab('create'); }}>
-          <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle className="text-center text-2xl font-bold">
-                {serverModalTab === 'create' ? "Crie seu servidor" : "Entre em um servidor"}
-              </DialogTitle>
-              <DialogDescription className="text-center text-zinc-400">
-                {serverModalTab === 'create' 
-                  ? "Seu servidor é onde você e seus amigos se reúnem. Crie o seu e comece a conversar." 
-                  : "Insira um convite abaixo para entrar em um servidor existente."}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex gap-2 p-1 bg-[#050505] rounded-lg mb-4">
-              <button 
-                onClick={() => setServerModalTab('create')}
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'create' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
-              >
-                Criar
-              </button>
-              <button 
-                onClick={() => setServerModalTab('join')}
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${serverModalTab === 'join' ? "bg-[#121212] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
-              >
-                Entrar
-              </button>
-            </div>
-
-            {serverModalTab === 'create' ? (
-              <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-zinc-400">Nome do Servidor</label>
-                  <Input 
-                    value={newServerName}
-                    onChange={(e) => setNewServerName(e.target.value)}
-                    placeholder="O servidor de..." 
-                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
-                  />
-                </div>
+                {/* Friend Conversations */}
+                {friendships
+                  .filter(f => f.status === 'accepted' && f.friend_profile?.id !== LUME_BOT_ID)
+                  .map(f => {
+                    const friend = f.friend_profile;
+                    if (!friend) return null;
+                    return (
+                      <button 
+                        key={friend.id}
+                        onClick={() => { setActiveDMFriend(friend); setActiveChannel(null); setShowVoiceUI(false); markAsRead(friend.id); }}
+                        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm transition-colors overflow-hidden ${
+                          activeDMFriend?.id === friend.id ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                        }`}
+                      >
+                        <div className="relative shrink-0">
+                          <Avatar className="h-8 w-8 rounded-xl border border-white/5">
+                            <AvatarImage src={friend.avatar_url || ""} />
+                            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px] rounded-xl">
+                              {friend.username.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <StatusBadge status={friend.status} size="sm" className="absolute bottom-0 right-0 border-2 border-[#0d0d10]" />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="font-medium">{friend.display_name || friend.username}</span>
+                            {friend.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                          </div>
+                        </div>
+                        {(unreadCounts[friend.id] || 0) > 0 && (
+                          <span className="w-4 h-4 bg-cyan-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(0,209,255,0.4)]">
+                            {unreadCounts[friend.id]}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
               </div>
-            ) : (
-              <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-zinc-400">Link de convite</label>
-                  <Input 
-                    value={inviteCodeInput}
-                    onChange={(e) => setInviteCodeInput(e.target.value)}
-                    placeholder="hYp3r-LUM3" 
-                    className="bg-[#050505] border-white/10 text-white h-11 focus-visible:ring-[#00D1FF]"
-                  />
-                  <p className="text-[10px] text-zinc-500">
-                    Os convites devem ser parecidos com <span className="text-zinc-400 font-mono">hYp3r-LUM3</span>
-                  </p>
+            )}
+
+            {activeTab === 'servidores' && (
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">
+                    <span className="flex-1">Seus Servidores</span>
+                    <Plus size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => setIsCreatingServer(true)} />
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {servers.map(server => (
+                      <button 
+                        key={server.id}
+                        onClick={() => setActiveServer(server)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${activeServer?.id === server.id ? "bg-white/10 text-white shadow-sm border border-white/5" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
+                      >
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${activeServer?.id === server.id ? "bg-cyan-500 text-black shadow-[0_0_15px_rgba(0,209,255,0.3)]" : "bg-zinc-800 text-zinc-400"}`}>
+                          {server.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span className="font-medium truncate flex-1 text-left">{server.name}</span>
+                        {activeServer?.id === server.id && <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,209,255,0.8)]" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {activeServer && (
+                  <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                    <div className="h-px bg-white/5 mx-2" />
+                    <div className="space-y-1">
+                      <div className="flex items-center px-2 py-1 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">Canais</div>
+                      {channels.map(channel => (
+                        <button 
+                          key={channel.id}
+                          onClick={() => { 
+                            if (channel.type === 'text') { setActiveChannel(channel); setActiveDMFriend(null); setShowVoiceUI(false); }
+                            else { setActiveVoiceChannel(channel); setShowVoiceUI(true); }
+                          }}
+                          className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            (channel.type === 'text' && activeChannel?.id === channel.id) || (channel.type === 'voice' && activeVoiceChannel?.id === channel.id)
+                              ? "bg-white/5 text-cyan-400" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+                          }`}
+                        >
+                          {channel.type === 'text' ? <Hash size={16} /> : <Volume2 size={16} />}
+                          <span className="font-medium">{channel.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'amigos' && (
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center px-2 py-2 text-[10px] font-bold uppercase text-zinc-500 tracking-wider">Amigos</div>
+                  {['online', 'all', 'pending', 'add'].map(f => (
+                    <button 
+                      key={f}
+                      onClick={() => setFriendFilter(f as any)}
+                      className={`flex w-full items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${friendFilter === f ? "bg-white/5 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"}`}
+                    >
+                      {f === 'online' ? <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,209,255,0.8)]" /> :
+                       f === 'all' ? <Users size={16} /> :
+                       f === 'pending' ? <Clock size={16} /> : <Plus size={16} />}
+                      <span className="capitalize">{f === 'online' ? 'Disponível' : f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : 'Adicionar'}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-            
-            <DialogFooter className="bg-[#18181b]/50 -mx-6 -mb-6 p-4 rounded-b-lg">
-              <div className="flex w-full justify-between items-center">
-                <button 
-                  onClick={() => setIsCreatingServer(false)}
-                  className="text-sm text-zinc-400 hover:underline"
-                >
-                  Voltar
-                </button>
-                <Button 
-                  onClick={serverModalTab === 'create' ? handleCreateServer : handleJoinServer} 
-                  className="bg-[#00D1FF] text-black hover:bg-[#00D1FF]/90 glow-sm font-bold px-8 h-10"
-                >
-                  {serverModalTab === 'create' ? "Criar Servidor" : "Entrar no Servidor"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
 
-        {/* Delete Confirmation Modal */}
-        <Dialog open={isDeletingServer} onOpenChange={setIsDeletingServer}>
-          <DialogContent className="bg-[#121212] border-white/10 text-white">
-            <DialogHeader>
-              <DialogTitle>Excluir '{serverToDelete?.name}'?</DialogTitle>
-              <DialogDescription className="text-zinc-400 pt-2">
-                Esta ação não pode ser desfeita. Todos os canais e mensagens serão apagados permanentemente.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="mt-4">
-              <Button variant="ghost" onClick={() => setIsDeletingServer(false)} className="text-white hover:bg-white/5">
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleDeleteServer} 
-                className="bg-red-600 text-white hover:bg-red-700 glow-red border-none"
+          {/* Bottom: Profile Widget */}
+          <div className="p-4 bg-black/20 border-t border-white/5">
+            <div className="flex items-center gap-3 p-2 bg-[#121214] border border-white/5 rounded-2xl group hover:border-zinc-700 transition-all">
+              <div className="relative shrink-0">
+                <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
+                  <PopoverTrigger asChild>
+                    <button className="relative w-9 h-9 rounded-xl overflow-hidden bg-zinc-800 transition-transform active:scale-90">
+                      <img src={myProfile?.avatar_url || ""} alt="Avatar" className="w-full h-full object-cover" />
+                      <StatusBadge status={myProfile?.status} size="sm" className="absolute bottom-0 right-0 border-2 border-[#121214]" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverPortal>
+                    <PopoverContent side="top" align="start" sideOffset={12} className="w-48 bg-[#0d0d11] border border-white/5 rounded-2xl p-1.5 shadow-2xl z-50 backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-200">
+                      {['online', 'idle', 'dnd', 'offline'].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleUpdateStatus(s as any)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-left"
+                        >
+                          <StatusBadge status={s as any} size="sm" />
+                          <span className="capitalize font-medium">{s === 'offline' ? 'Invisível' : s === 'dnd' ? 'Não Perturbe' : s === 'idle' ? 'Ausente' : 'Disponível'}</span>
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </PopoverPortal>
+                </Popover>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white truncate">{myProfile?.display_name || myProfile?.username}</p>
+                <p className="text-[10px] text-zinc-500 font-medium truncate capitalize">{myProfile?.status || 'online'}</p>
+              </div>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 text-zinc-500 hover:text-white transition-colors"
               >
-                Sim, excluir servidor
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-    {/* Barra Lateral Única (Canais do Servidor ou Lista de DMs - 240px) */}
-    <aside className="w-60 min-w-[240px] max-w-[240px] h-full bg-[#0d0d10] border-r border-white/5 flex flex-col justify-between p-3 shrink-0">
+                <Settings2 size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
 
 
