@@ -31,6 +31,9 @@ function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authState, setAuthState] = useState<AuthState>("idle");
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -40,6 +43,47 @@ function AuthPage() {
       navigate({ to: "/", replace: true });
     }
   }, [user, profile, navigate, isAuthChecking]);
+
+  const validateUsername = (val: string) => {
+    let normalized = val.replace(/^@/, "").toLowerCase();
+    normalized = normalized.replace(/[^a-z0-9_]/g, "");
+    setUsername(normalized);
+
+    if (normalized.length > 0 && normalized.length < 3) {
+      setUsernameError("Mínimo 3 caracteres");
+    } else if (normalized.length > 20) {
+      setUsernameError("Máximo 20 caracteres");
+    } else {
+      setUsernameError("");
+    }
+  };
+
+  useEffect(() => {
+    let timeoutId: any;
+    if (username.length >= 3 && !isLogin) {
+      timeoutId = setTimeout(async () => {
+        setIsCheckingUsername(true);
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("username", username)
+            .maybeSingle();
+          
+          if (data) {
+            setUsernameError("Este username já está em uso");
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsCheckingUsername(false);
+        }
+      }, 500);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [username, isLogin]);
 
   useEffect(() => {
     let timer: any;
@@ -74,7 +118,8 @@ function AuthPage() {
           options: {
             emailRedirectTo: redirectTo,
             data: {
-              username: email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 6)
+              username: username,
+              display_name: email.split('@')[0]
             }
           }
         });
@@ -344,6 +389,33 @@ function AuthPage() {
 
               <form onSubmit={handleAuth} className="space-y-6">
                 <div className="space-y-4">
+                  {!isLogin && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Nome de usuário</label>
+                      <div className="relative">
+                        <Input 
+                          type="text" 
+                          value={username}
+                          onChange={(e) => validateUsername(e.target.value)}
+                          className={`bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10 ${usernameError ? 'border-red-500/50' : ''}`} 
+                          placeholder="seu_username"
+                          required
+                          minLength={3}
+                          maxLength={20}
+                        />
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600 text-sm font-bold">@</span>
+                        {isCheckingUsername && (
+                          <RefreshCcw className="absolute right-3.5 top-1/2 -translate-y-1/2 h-3 w-3 text-cyan-500/50 animate-spin" />
+                        )}
+                      </div>
+                      {usernameError ? (
+                        <p className="text-[9px] text-red-400 px-1 font-medium">{usernameError}</p>
+                      ) : username.length >= 3 && !isCheckingUsername ? (
+                        <p className="text-[9px] text-cyan-500/50 px-1 font-medium italic">Seu identificador será @{username}</p>
+                      ) : null}
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">E-mail</label>
                     <div className="relative">
@@ -388,7 +460,7 @@ function AuthPage() {
                 <div className="space-y-4">
                   <Button 
                     type="submit" 
-                    disabled={authState === "submitting"}
+                    disabled={authState === "submitting" || (!isLogin && (!!usernameError || username.length < 3 || isCheckingUsername))}
                     className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {authState === "submitting" ? (
