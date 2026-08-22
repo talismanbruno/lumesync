@@ -164,57 +164,97 @@ function AuthenticatedLayout() {
     }
   };
 
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
+
+  const handleSelectServer = (serverId: string | null) => {
+    setSelectedServerId(serverId);
+    const server = servers.find(s => s.id === serverId);
+    if (server) {
+      window.dispatchEvent(new CustomEvent('lume-server-change', { detail: server }));
+    } else {
+      window.dispatchEvent(new CustomEvent('lume-server-change', { detail: null }));
+    }
+  };
+
+  const handleGoHome = () => {
+    handleSelectServer(null);
+  };
+
+  const handleServerContextMenu = (e: React.MouseEvent, server: Server) => {
+    e.preventDefault();
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] p-3 gap-3 text-zinc-100 antialiased select-none font-sans">
-      {/* 1. DOCK FLUTUANTE DE SERVIDORES (Cápsula Esquerda) */}
-      <nav className="w-[70px] min-w-[70px] shrink-0 h-full rounded-3xl bg-[#0a0a0d]/80 backdrop-blur-2xl border border-white/5 flex flex-col items-center py-4 justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-30">
-        <div className="flex flex-col items-center gap-4 w-full">
-          <button onClick={() => navigate({ to: "/" })} className="mb-2">
-            <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Lume" className="w-10 h-10 object-contain hover:scale-110 transition-transform" />
+    <div className="flex flex-col h-screen w-screen bg-[#050505] text-zinc-100 overflow-hidden font-sans select-none">
+      
+      {/* 1. BARRA SUPERIOR HORIZONTAL (TOP NAVIGATION BAR - 60px) */}
+      <header className="h-16 px-6 bg-[#0a0a0d] border-b border-white/5 flex items-center justify-between shrink-0 z-40">
+        
+        {/* Logo Oficial Lume à Esquerda */}
+        <div className="flex items-center gap-3">
+          <img src="https://i.ibb.co/C3h465Sr/image.png" alt="Lume" className="h-7 w-auto object-contain" />
+        </div>
+
+        {/* Seletor Horizontal de Servidores e Home (Cápsulas Centrais) */}
+        <div className="flex items-center gap-2 overflow-x-auto max-w-[60%] py-1 scrollbar-none">
+          {/* Botão Home / Mensagens Diretas */}
+          <button
+            onClick={handleGoHome}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              selectedServerId === null 
+                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_12px_rgba(0,209,255,0.2)]' 
+                : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'
+            }`}
+          >
+            <span>🏠 Mensagens Diretas</span>
           </button>
-          
-          <div className="w-8 h-[2px] bg-white/5 rounded-full mb-2" />
-          
-          {servers.map(server => (
-            <button 
+
+          {/* Lista Horizontal de Servidores */}
+          {servers.map((server) => (
+            <button
               key={server.id}
-              onClick={() => {
-                // This would set active space in a global state if we had it, 
-                // for now we navigate or use local state if everything is in one file
-                window.dispatchEvent(new CustomEvent('lume-server-change', { detail: server }));
-              }}
-              className="group relative flex items-center justify-center"
+              onClick={() => handleSelectServer(server.id)}
+              onContextMenu={(e) => handleServerContextMenu(e, server)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                selectedServerId === server.id 
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_12px_rgba(0,209,255,0.2)]' 
+                  : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5'
+              }`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-[#121214] border border-white/5 flex items-center justify-center text-zinc-400 group-hover:rounded-xl group-hover:bg-[#00D1FF] group-hover:text-black transition-all overflow-hidden font-bold">
-                {server.name.substring(0, 2).toUpperCase()}
-              </div>
+              <span className={`w-2 h-2 rounded-full ${selectedServerId === server.id ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,209,255,0.6)]' : 'bg-zinc-600'}`} />
+              <span>{server.name}</span>
             </button>
           ))}
 
-          <button 
+          {/* Botão + Criar Servidor */}
+          <button
             onClick={() => setIsCreatingServer(true)}
-            className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 border-dashed flex items-center justify-center text-zinc-500 hover:border-[#00D1FF]/50 hover:text-[#00D1FF] hover:bg-[#00D1FF]/5 transition-all"
+            className="p-2 rounded-xl bg-zinc-900/40 hover:bg-cyan-500/10 hover:text-cyan-400 border border-dashed border-zinc-700 hover:border-cyan-500/40 text-zinc-400 transition-all shrink-0"
+            title="Criar Servidor"
           >
-            <Plus size={20} />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
+        {/* Perfil do Usuário e Configurações à Direita */}
+        <div className="flex items-center gap-3">
+          {/* Widget de Perfil com Avatar e Status */}
+          <Popover open={isStatusDropdownOpen} onOpenChange={setIsStatusDropdownOpen}>
             <PopoverTrigger asChild>
-              <button className="relative group">
-                <UserAvatar 
-                  avatarUrl={myProfile?.avatar_url}
-                  name={myProfile?.display_name || myProfile?.username}
-                  size="h-10 w-10"
-                  status={myProfile?.status || 'online'}
-                  showStatus={true}
-                  className="rounded-2xl border border-white/10 group-hover:border-[#00D1FF]/50 transition-all cursor-pointer"
-                />
-              </button>
+              <div 
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-white/5 hover:border-zinc-700 transition-all cursor-pointer"
+              >
+                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800">
+                  <img src={myProfile?.avatar_url || ""} alt="Avatar" className="w-full h-full object-cover" />
+                  <StatusBadge status={myProfile?.status || 'online'} />
+                </div>
+                <span className="text-xs font-semibold text-white">{myProfile?.display_name || 'Usuário'}</span>
+                {myProfile?.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400" />}
+              </div>
             </PopoverTrigger>
             <PopoverPortal>
-              <PopoverContent side="right" align="end" sideOffset={15} className="w-48 bg-[#0d0d11] border border-white/5 rounded-2xl p-1.5 shadow-2xl z-50 backdrop-blur-xl">
+              <PopoverContent side="bottom" align="end" sideOffset={8} className="w-48 bg-[#0d0d11] border border-white/5 rounded-2xl p-1.5 shadow-2xl z-50 backdrop-blur-xl">
                 {['online', 'idle', 'dnd', 'offline'].map((s) => (
                   <button
                     key={s}
@@ -227,13 +267,6 @@ function AuthenticatedLayout() {
                 ))}
                 <div className="h-[1px] bg-white/5 my-1" />
                 <button 
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors text-left"
-                >
-                  <Settings size={16} />
-                  <span>Configurações</span>
-                </button>
-                <button 
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-400/5 rounded-xl transition-colors text-left"
                 >
@@ -243,10 +276,21 @@ function AuthenticatedLayout() {
               </PopoverContent>
             </PopoverPortal>
           </Popover>
-        </div>
-      </nav>
 
-      <Outlet />
+          {/* Botão de Configurações ⚙️ */}
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 rounded-xl bg-zinc-900/60 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* 2. CORPO PRINCIPAL (2 COLUNAS: CANAIS/DMS + CHAT/VOZ WIDESCREEN) */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <Outlet />
+      </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
