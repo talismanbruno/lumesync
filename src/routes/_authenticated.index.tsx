@@ -267,13 +267,13 @@ function DashboardComponent() {
       
       // 2. Criar registro de sinalização
       const { data, error } = await supabase
-        .from('voice_calls')
+        .from('voice_calls' as any)
         .insert({
           initiator_id: myProfile.id,
           recipient_id: friend.id,
           room_key: roomKey,
           status: 'ringing'
-        })
+        } as any)
         .select()
         .single();
         
