@@ -118,7 +118,7 @@ function AuthPage() {
           options: {
             emailRedirectTo: redirectTo,
             data: {
-              username: username,
+              username: username.toLowerCase().trim(),
               display_name: email.split('@')[0]
             }
           }
