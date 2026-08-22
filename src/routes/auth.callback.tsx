@@ -10,8 +10,8 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/auth/callback')({
   validateSearch: (search) => searchSchema.parse(search),
-  loader: async ({ deps }) => {
-    const { code } = deps as any
+  loader: async ({ search }) => {
+    const code = search.code
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       if (error) {
@@ -22,6 +22,5 @@ export const Route = createFileRoute('/auth/callback')({
 
     throw redirect({ to: '/' })
   },
-  loaderDeps: ({ search }) => search,
   component: () => null
 })
