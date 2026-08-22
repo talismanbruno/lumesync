@@ -1216,6 +1216,7 @@ function DashboardComponent() {
 
 
 
+
     const fileUrl = msg.file_url || undefined;
     const isImage = !!fileUrl && (msg.file_type?.startsWith('image') || fileUrl.startsWith('data:image'));
     const isVideo = !!fileUrl && (msg.file_type?.startsWith('video') || fileUrl.startsWith('data:video'));
