@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_authenticated/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "icon", type: "image/png", href: "https://i.ibb.co/99YTNvGS/image.png" }],
+    links: [{ rel: "icon", type: "image/png", href: "/favicon.png" }],
   }),
   component: DashboardComponent,
 });
@@ -1472,7 +1472,7 @@ function DashboardComponent() {
           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 ${!activeServer ? 'bg-cyan-500/15 border border-cyan-500/40 rounded-xl' : 'bg-[#121212] hover:rounded-xl'}`}
           title="Início"
         >
-          <img src="https://i.ibb.co/99YTNvGS/image.png" alt="Início" className="w-7 h-7 object-contain" />
+          <img src="/brand/lume-mark.png" alt="Início" className="w-7 h-7 object-contain" />
         </button>
 
         <div className="w-8 h-[2px] bg-white/5 rounded-full my-1 shrink-0" />
@@ -1623,10 +1623,10 @@ function DashboardComponent() {
 
                 {/* Canal oficial fixado */}
                 <button
-                  onClick={() => { markAsRead(LUME_BOT_ID); openDM({ id: LUME_BOT_ID, username: 'lume', display_name: 'Lume', avatar_url: 'https://i.ibb.co/99YTNvGS/image.png' } as Profile); }}
+                  onClick={() => { markAsRead(LUME_BOT_ID); openDM({ id: LUME_BOT_ID, username: 'lume', display_name: 'Lume', avatar_url: '/brand/lume-mark.png' } as Profile); }}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMFriend?.id === LUME_BOT_ID ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 >
-                  <UserAvatar avatarUrl="https://i.ibb.co/99YTNvGS/image.png" name="Lume" size="h-8 w-8" className="rounded-lg" />
+                  <UserAvatar avatarUrl="/brand/lume-mark.png" name="Lume" size="h-8 w-8" className="rounded-lg" />
                   <span className="truncate text-sm text-zinc-200">Lume</span>
                   <span className="ml-auto text-[9px] font-bold text-cyan-400 shrink-0">OFICIAL</span>
                 </button>

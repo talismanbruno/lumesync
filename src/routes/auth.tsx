@@ -11,6 +11,17 @@ import { Mail, ArrowRight, UserPlus, LogIn, RefreshCcw, ArrowLeft, Phone, Sparkl
 type AuthState = "idle" | "submitting" | "awaiting_email_confirmation" | "error";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Lume | Autenticação" },
+      { name: "description", content: "Lume" },
+      { property: "og:title", content: "Lume" },
+      { property: "og:description", content: "Lume" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "icon", type: "image/png", href: "/favicon.png" }],
+  }),
   component: AuthPage,
 });
 

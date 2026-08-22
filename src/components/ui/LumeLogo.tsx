@@ -10,7 +10,7 @@ export const LumeLogo: React.FC<LogoProps> = ({ variant = 'full', className = ''
   if (variant === 'icon') {
     return (
       <img 
-        src="https://i.ibb.co/99YTNvGS/image.png" 
+        src="/brand/lume-mark.png" 
         alt="Lume Icon" 
         className={`w-10 h-10 rounded-xl object-contain hover:scale-105 transition-transform select-none ${className}`} 
       />
@@ -21,7 +21,7 @@ export const LumeLogo: React.FC<LogoProps> = ({ variant = 'full', className = ''
   return (
     <div className={`flex items-center justify-center select-none ${className}`}>
       <img 
-        src="https://i.ibb.co/C3h465Sr/image.png" 
+        src="/brand/lume-wordmark.png" 
         alt="Lume" 
         className="h-12 w-auto max-w-[280px] mx-auto object-contain mb-3" 
       />

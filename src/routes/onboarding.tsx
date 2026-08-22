@@ -27,7 +27,7 @@ export const Route = createFileRoute("/onboarding")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "icon", type: "image/png", href: "https://i.ibb.co/99YTNvGS/image.png" }],
+    links: [{ rel: "icon", type: "image/png", href: "/favicon.png" }],
   }),
   component: OnboardingComponent,
 });
