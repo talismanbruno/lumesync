@@ -171,7 +171,7 @@ function DashboardComponent() {
 
   const myProfile: Profile = (globalProfile as Profile) ?? dbProfile ?? {
     id: authUser?.id || "",
-    username: authUser?.email?.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '') || "usuario",
+    username: authUser?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9_]/g, '') || "usuario",
     display_name: authUser?.email?.split('@')[0] || "Usuário Lume",
     avatar_url: null,
     status: 'online'
