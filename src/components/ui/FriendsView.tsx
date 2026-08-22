@@ -171,8 +171,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       className="rounded-xl"
                     />
                     <div>
-                      <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                        {f.friend_profile?.display_name || f.friend_profile?.username}
+                      <p className="text-sm font-bold text-white flex items-center gap-1.5 min-w-0">
+                        <span className="truncate">{f.friend_profile?.display_name || f.friend_profile?.username}</span>
                         <AdminVerifiedBadge isAdmin={f.friend_profile?.is_admin} size={14} />
                       </p>
                       <p className="text-[10px] text-zinc-500 font-medium">Enviou um pedido de amizade</p>
