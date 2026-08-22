@@ -1363,7 +1363,7 @@ function DashboardComponent() {
       </div>
 
       {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
-      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden z-[50]">
+      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden z-10">
         <div className="flex flex-1 flex-col overflow-hidden">
           {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
