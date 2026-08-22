@@ -39,7 +39,9 @@ function AuthPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
-    if (!isAuthChecking && user && profile?.username) {
+    if (isAuthChecking) return;
+
+    if (user && profile?.username) {
       navigate({ to: "/", replace: true });
     }
   }, [user, profile, navigate, isAuthChecking]);
