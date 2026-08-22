@@ -116,8 +116,8 @@ type Friendship = {
 function DashboardComponent() {
   const getDisplayName = (profile: any) => {
     if (!profile) return "Usuário";
-    const name = (profile.display_name || profile.username || "").trim();
-    return name || "Usuário";
+    const name = (profile.display_name || profile.username || "").trim().toLowerCase();
+    return name || "usuario";
   };
 
   const getGroupTitle = (group: any, currentUserId: string) => {
