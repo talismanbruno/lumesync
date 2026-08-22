@@ -188,7 +188,7 @@ function DashboardComponent() {
   const [newServerName, setNewServerName] = useState("");
   const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
   const [isDeletingServer, setIsDeletingServer] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; server: Server } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; server?: Server; group?: any } | null>(null);
   
   // Media State
   const [isUploading, setIsUploading] = useState(false);
@@ -216,6 +216,8 @@ function DashboardComponent() {
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [dmGroups, setDmGroups] = useState<any[]>([]);
   const [activeDMGroup, setActiveDMGroup] = useState<any | null>(null);
+  const [groupToLeave, setGroupToLeave] = useState<any | null>(null);
+  const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
@@ -720,6 +722,38 @@ function DashboardComponent() {
     } catch (error: any) {
       console.error("Erro ao sair do servidor:", error);
       toast.error(error.message || "Erro ao sair do servidor");
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!groupToLeave || !myProfile?.id || isLeavingGroup) return;
+    
+    setIsLeavingGroup(true);
+    try {
+      const { error } = await supabase
+        .from('dm_group_members')
+        .delete()
+        .eq('group_id', groupToLeave.id)
+        .eq('user_id', myProfile.id);
+
+      if (error) throw error;
+
+      toast.success("Você saiu do grupo");
+      
+      // Update local state
+      setDmGroups(prev => prev.filter(g => g.id !== groupToLeave.id));
+      
+      if (activeDMGroup?.id === groupToLeave.id) {
+        clearChats();
+        setFriendFilter('online');
+      }
+
+      setGroupToLeave(null);
+    } catch (error: any) {
+      console.error("Erro ao sair do grupo:", error);
+      toast.error("Erro ao sair do grupo: " + error.message);
+    } finally {
+      setIsLeavingGroup(false);
     }
   };
 
@@ -1553,20 +1587,31 @@ function DashboardComponent() {
                   <span className="ml-auto text-[9px] font-bold text-cyan-400 shrink-0">OFICIAL</span>
                 </button>
 
-                {dmGroups.map(group => (
-                  <button
-                    key={group.id}
-                    onClick={() => openGroup(group)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMGroup?.id === group.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                  >
-                    <div className="h-8 w-8 shrink-0 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <Users size={14} />
-                    </div>
-                    <span className="truncate text-sm text-zinc-300">
-                      {getGroupTitle(group, myProfile.id)}
-                    </span>
-                  </button>
-                ))}
+                  {dmGroups.map(group => (
+                    <ContextMenu key={group.id}>
+                      <ContextMenuTrigger asChild>
+                        <button
+                          onClick={() => openGroup(group)}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMGroup?.id === group.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                        >
+                          <div className="h-8 w-8 shrink-0 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                            <Users size={14} />
+                          </div>
+                          <span className="truncate text-sm text-zinc-300">
+                            {getGroupTitle(group, myProfile.id)}
+                          </span>
+                        </button>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="bg-[#0d0d11] border-white/10 text-zinc-200">
+                        <ContextMenuItem 
+                          className="text-red-400 focus:text-red-400" 
+                          onClick={() => setGroupToLeave(group)}
+                        >
+                          <LogOut size={14} className="mr-2" /> Sair do grupo
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  ))}
 
 
                 {friendsList.map(friend => (
@@ -1715,6 +1760,16 @@ function DashboardComponent() {
                                   </div>
                                 </div>
                               ))}
+                          </div>
+                          <div className="pt-2 mt-2 border-t border-white/5">
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => setGroupToLeave(activeDMGroup)}
+                              className="w-full justify-start gap-2 text-xs text-red-400 hover:text-red-400 hover:bg-red-400/10 h-8 font-medium"
+                            >
+                              <LogOut size={14} />
+                              Sair do grupo
+                            </Button>
                           </div>
                         </div>
                       </PopoverContent>
@@ -1888,6 +1943,34 @@ function DashboardComponent() {
 
 
       />
+
+      {/* Confirmação de Sair do Grupo */}
+      <Dialog open={!!groupToLeave} onOpenChange={(open) => !open && setGroupToLeave(null)}>
+        <DialogContent className="bg-[#121212] border-white/10 text-white sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Sair do grupo?</DialogTitle>
+            <DialogDescription className="text-zinc-400 pt-2">
+              Você deixará de ver esta conversa, mas ela continuará disponível para os outros participantes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="ghost" 
+              onClick={() => setGroupToLeave(null)}
+              className="hover:bg-white/5 text-zinc-300"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleLeaveGroup}
+              disabled={isLeavingGroup}
+              className="bg-red-500 hover:bg-red-600 text-white border-none"
+            >
+              {isLeavingGroup ? "Saindo..." : "Sair do grupo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
