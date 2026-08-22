@@ -29,12 +29,14 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   isMuted,
   isDeafened,
   isSharingScreen,
+  isNoiseSuppressionEnabled,
   screenStream,
   remoteVideoStreams,
   peerConnections,
   toggleMute,
   toggleDeafen,
   toggleScreenShare,
+  toggleNoiseSuppression,
   onDisconnect,
   onClose
 }) => {
