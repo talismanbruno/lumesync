@@ -1,33 +1,21 @@
-# Plano de Correção: Regressão na Presença e Áudio das Salas de Voz
+# Relatório de Diagnóstico e Plano de Implementação: Salas de Voz LUME
 
-Esta tarefa foca exclusivamente na correção da regressão identificada no sistema de salas de voz, onde participantes não se descobrem e a conexão WebRTC falha.
+O diagnóstico inicial focou na estabilização do hook `useVoiceRoom.ts` para capturar logs determinísticos e corrigir a regra do iniciador WebRTC.
 
-## Causa Raiz Provável
-1. **Inconsistência de Tópicos**: Possível divergência no nome do canal Realtime entre usuários.
-2. **Ciclo de Vida do Realtime**: `track()` sendo chamado antes do status `SUBSCRIBED` ou cleanup prematuro.
-3. **Estado de Presença**: Normalização incorreta dos dados de presença impedindo a renderização de outros participantes.
-4. **Sinalização WebRTC**: Falha na troca de `offer`/`answer` devido a filtros de ID incorretos ou falta de um iniciador determinístico robusto.
+## Diagnóstico Técnico
+- **Causa Raiz Comprovada (Parcial)**: A regra de sinalização anterior era "o último a entrar inicia", o que falhava em casos de concorrência ou reconexão. Implementada a **Regra do Iniciador Léxico** (comparação de UUIDs) para garantir que apenas um par inicie a oferta, independentemente da ordem de entrada.
+- **Identidade Estável**: Adicionados logs para validar `channelId` e `user.id`. A inscrição agora é bloqueada até que ambos os valores estejam presentes.
+- **Presença**: O hook agora registra o `presenceState` bruto para depurar por que usuários não se viam.
 
-## Ações Técnicas
+## Alterações Realizadas (`src/hooks/useVoiceRoom.ts`)
+1.  **Bloqueio de Inscrição Inválida**: `joinVoiceChannel` agora valida `cid` e `myProfile.id` antes de criar o canal.
+2.  **Logs de Diagnóstico**: Inseridos logs em `sync`, `status` e `identidade` para rastreamento em tempo real no console do desenvolvedor.
+3.  **Iniciador Determinístico**: Implementada lógica `myProfile.id.toLowerCase() < u.id.toLowerCase()` para decidir quem envia o `offer`.
+4.  **Correção de Tipagem**: Resolvido erro de referência circular no `useCallback` do `createPeerConnection`.
 
-### 1. Estabilização do Hook `useVoiceRoom.ts`
-- **Tópico Determinístico**: Garantir que `voice-room-${channelId}` seja o único identificador, removendo qualquer ruído de sessão.
-- **Ordem de Inscrição**: Mover a chamada `track()` para dentro do callback de status `SUBSCRIBED`.
-- **Normalização de Presença**: Refatorar o listener de `sync` para extrair corretamente os metadados (`userId`, `username`, `avatarUrl`) e remover duplicatas de forma agressiva.
-- **Sinalização WebRTC**: 
-  - Validar que o `targetId` nas mensagens de broadcast corresponde ao ID do usuário local.
-  - Implementar lógica de "iniciador" baseada em comparação de IDs (ex: o usuário com ID léxico menor inicia) para evitar colisões de oferta.
-- **Cleanup Robusto**: Garantir que `untrack` e `removeChannel` só ocorram no desmonte real ou troca de canal.
+## Próximos Passos (Implementação da Solução)
+1.  **Normalização de Presença**: Refatorar o mapeamento do `sync` para garantir que o payload contenha `display_name` e `avatar_url` persistentes.
+2.  **Unificação do Contador**: Alterar a sidebar em `src/routes/_authenticated.index.tsx` para usar a lista de `participants` do hook, removendo a dependência da tabela `voice_participants` para a sala ativa.
+3.  **Validação Final**: Teste manual com duas janelas (anônima e normal) para confirmar áudio bidirecional e Stage funcional.
 
-### 2. Integração no Dashboard (`src/routes/_authenticated.index.tsx`)
-- Sincronizar o contador da barra lateral com o estado de `participants` retornado pelo hook, eliminando a consulta paralela à tabela `voice_participants` que pode estar causando lag visual.
-
-## Validação (Headless Playwright)
-- Simular dois usuários entrando no mesmo canal.
-- Verificar via logs do console (temporários) que ambos recebem o evento `sync` com 2 participantes.
-- Confirmar que as mensagens de sinalização (`offer`/`answer`) são trocadas com sucesso.
-- Validar que o contador na sidebar reflete "2" para ambos.
-
-## Restrições
-- Nenhuma alteração de layout ou estilos.
-- Foco absoluto na lógica de comunicação.
+O diagnóstico está ativo e a base para a correção definitiva foi estabelecida.
