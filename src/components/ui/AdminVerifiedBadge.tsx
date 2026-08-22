@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface AdminVerifiedBadgeProps {
-  isAdmin?: boolean | null;
+  isAdmin?: boolean | null | undefined;
   className?: string;
   size?: number;
 }

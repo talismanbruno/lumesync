@@ -1850,11 +1850,13 @@ function DashboardComponent() {
                                     size="h-8 w-8" 
                                     className="rounded-lg"
                                   />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-medium text-zinc-200 truncate">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-xs font-bold text-zinc-200 group-hover:text-white transition-colors truncate">
                                       {getDisplayName(member.profiles)}
-                                      {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500">(Você)</span>}
                                     </span>
+                                    <AdminVerifiedBadge isAdmin={member.profiles?.is_admin} size={10} />
+                                    {member.user_id === myProfile.id && <span className="ml-1 text-[10px] text-zinc-500 shrink-0">(Você)</span>}
+                                  </div>
                                     {member.profiles?.status && (
                                       <span className="text-[10px] text-zinc-500 truncate capitalize">{member.profiles.status}</span>
                                     )}
