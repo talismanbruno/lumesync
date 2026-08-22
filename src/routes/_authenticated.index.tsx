@@ -185,6 +185,8 @@ function DashboardComponent() {
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [activeTab, setActiveTab] = useState<'conversas' | 'servidores' | 'amigos'>('conversas');
+
   
   
   const chatEndRef = useRef<HTMLDivElement>(null);
