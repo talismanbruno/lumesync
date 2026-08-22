@@ -458,7 +458,7 @@ function AuthPage() {
                 <div className="space-y-4">
                   <Button 
                     type="submit" 
-                    disabled={authState === "submitting"}
+                    disabled={authState === "submitting" || (!isLogin && (!!usernameError || username.length < 3 || isCheckingUsername))}
                     className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {authState === "submitting" ? (
