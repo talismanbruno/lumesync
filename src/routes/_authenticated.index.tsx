@@ -1772,7 +1772,26 @@ function DashboardComponent() {
           />
         ) : inChat ? (
           <>
-            <header className="h-14 px-6 flex items-center gap-3 border-b border-white/5 shrink-0 overflow-hidden">
+            <div className="flex flex-col flex-none z-40">
+              {activeVoiceChannel && (
+                <ActiveCallBar 
+                  participants={participants}
+                  roomName={activeVoiceChannel.name}
+                  connectionStatus={connectionStatus}
+                  isMuted={isMuted}
+                  isDeafened={isDeafened}
+                  isSharingScreen={isSharingScreen}
+                  isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
+                  onToggleMute={toggleMute}
+                  onToggleDeafen={toggleDeafen}
+                  onToggleScreenShare={toggleScreenShare}
+                  onToggleNoiseSuppression={toggleNoiseSuppression}
+                  onDisconnect={disconnect}
+                  onOpenStage={() => setShowVoiceUI(true)}
+                />
+              )}
+              <header className="h-14 px-6 flex items-center gap-3 border-b border-white/5 shrink-0 overflow-hidden">
+
               {activeChannel ? (
                 <>
                   <Hash size={18} className="text-zinc-600 shrink-0" />
