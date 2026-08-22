@@ -1323,9 +1323,13 @@ function DashboardComponent() {
 
 
 
-        <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={activeServer ? copyInvite : undefined}>
-          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
-          {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
+        <div className="flex h-14 items-center justify-between px-2 mb-4">
+          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white uppercase">{activeServer?.name || "LUME"}</h2>
+          {activeServer && (
+            <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors">
+              <UserPlus size={16} />
+            </button>
+          )}
         </div>
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar">
@@ -1627,74 +1631,38 @@ function DashboardComponent() {
           </div>
         )}
 
-        {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
-          <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors flex-1 min-w-0">
-                <UserAvatar 
-                  avatarUrl={myProfile?.avatar_url}
-                  name={myProfile?.display_name || myProfile?.username}
-                  size="h-9 w-9"
-                  status={myProfile?.status || 'online'}
-                  showStatus={true}
-                  className="shrink-0 object-cover aspect-square"
-                />
-                <div className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white">
-                  <div className="flex items-center gap-1 w-full min-w-0">
-                    <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-                    {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-                  </div>
-                  <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-                    {myProfile.status === 'online' ? 'Disponível' : 
-                     myProfile.status === 'idle' ? 'Ausente' : 
-                     myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-                  </p>
+        {/* Widget de Voz (Se Conectado) */}
+        {activeVoiceChannel && (
+          <div className="mt-auto mb-4 bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col gap-3">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-zinc-400 truncate uppercase tracking-widest">Voz Conectada</span>
                 </div>
-              </div>
-            </PopoverTrigger>
-            <PopoverPortal>
-              <PopoverContent 
-                side="top" 
-                align="start" 
-                sideOffset={12}
-                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[50] animate-in slide-in-from-bottom-2 duration-200"
-              >
-                <div className="px-2 py-1.5 mb-1 border-b border-white/5">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
-                </div>
-                {[
-                  { id: 'online', label: 'Disponível 🟢', color: '#00D1FF' },
-                  { id: 'idle', label: 'Ausente 🟡', color: '#F59E0B' },
-                  { id: 'dnd', label: 'Não Perturbe 🔴', color: '#EF4444' },
-                  { id: 'offline', label: 'Invisível ⚪', color: '#71717A' }
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleUpdateStatus(s.id as any)}
-                    className="w-full flex items-center gap-3 px-2 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-md transition-colors text-left"
-                  >
-                    <StatusBadge status={s.id} size="sm" showGlow={s.id === 'online'} />
-                    <span>{s.label}</span>
-                    {myProfile.status === s.id && <Check size={14} className="ml-auto text-[#00D1FF]" />}
-                  </button>
-                ))}
-              </PopoverContent>
-            </PopoverPortal>
-          </Popover>
-          
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
-            title="Configurações"
-          >
-            <Settings size={16} />
-          </button>
-          
-          <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 transition-colors">
-            <LogOut size={16} />
-          </button>
-        </div>
+                <button 
+                  onClick={() => {
+                    disconnect();
+                    setActiveVoiceChannel(null);
+                    setShowVoiceUI(false);
+                  }}
+                  className="text-zinc-500 hover:text-red-500 transition-colors"
+                >
+                  <PhoneOff size={14} />
+                </button>
+             </div>
+             <div className="flex items-center gap-3">
+               <button onClick={toggleMute} className={`p-2 rounded-xl transition-colors ${isMuted ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+               </button>
+               <button onClick={toggleDeafen} className={`p-2 rounded-xl transition-colors ${isDeafened ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 {isDeafened ? <Headphones size={16} /> : <Headphones size={16} />}
+               </button>
+               <button onClick={toggleScreenShare} className={`p-2 rounded-xl transition-colors ${isSharingScreen ? 'bg-cyan-500/10 text-cyan-400' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 <Monitor size={16} />
+               </button>
+             </div>
+          </div>
+        )}
       </aside>
     </div>
   </div>
