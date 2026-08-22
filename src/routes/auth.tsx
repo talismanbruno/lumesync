@@ -115,7 +115,8 @@ function AuthPage() {
           options: {
             emailRedirectTo: redirectTo,
             data: {
-              username: email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 6)
+              username: username,
+              display_name: email.split('@')[0]
             }
           }
         });
