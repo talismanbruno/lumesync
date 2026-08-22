@@ -1807,9 +1807,9 @@ function DashboardComponent() {
               ) : activeDMGroup ? (
                 <>
                   <Users size={18} className="text-cyan-400 shrink-0" />
-                  <span className="text-sm font-bold truncate">
-                    {getGroupTitle(activeDMGroup, myProfile.id)}
-                  </span>
+                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{getGroupTitle(activeDMGroup, myProfile.id)}</span>
+                  </h2>
                   <div className="ml-auto flex items-center gap-2">
                     <button 
                       onClick={() => {
@@ -1890,11 +1890,11 @@ function DashboardComponent() {
                     size="h-7 w-7"
                     className="rounded-lg"
                   />
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-sm font-bold truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
+                  <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
                     <AdminVerifiedBadge isAdmin={activeDMFriend?.is_admin} size={12} />
                     {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
-                  </div>
+                  </h2>
                   {!isBotChat && activeDMFriend && (
                     <div className="ml-auto flex items-center gap-2">
                       <button 
