@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { LumeLogo } from "@/components/ui/LumeLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowRight, UserPlus, LogIn, RefreshCcw, ArrowLeft } from "lucide-react";
+import { Mail, ArrowRight, UserPlus, LogIn, RefreshCcw, ArrowLeft, Phone, Sparkles, Download, Eye, EyeOff } from "lucide-react";
 
 type AuthState = "idle" | "submitting" | "awaiting_email_confirmation" | "error";
 
@@ -17,9 +17,10 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { profile, user, isAuthChecking } = useAuth();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [authState, setAuthState] = useState<AuthState>("idle");
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -125,10 +126,16 @@ function AuthPage() {
   // Awaiting confirmation screen
   if (authState === "awaiting_email_confirmation") {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-500">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
+        {/* Orbital Light Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-cyan-500/10 rounded-full animate-[spin_60s_linear_infinite]" />
+        </div>
+
+        <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-500 z-10">
           <div className="flex flex-col items-center space-y-6">
-            <div className="h-20 w-20 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_30px_rgba(0,209,255,0.1)]">
+            <div className="h-20 w-20 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_30px_rgba(0,209,255,0.2)] animate-pulse">
               <Mail className="h-10 w-10 text-cyan-400" />
             </div>
             <div className="text-center space-y-2">
@@ -139,7 +146,9 @@ function AuthPage() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl space-y-6">
+          <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl space-y-6 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent opacity-50" />
+            
             <p className="text-zinc-400 text-xs text-center leading-relaxed">
               Clique no link presente no e-mail para ativar sua conta e acessar o LUME.
             </p>
@@ -179,82 +188,226 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30">
-      <div className="w-full max-w-[400px] space-y-8 animate-in fade-in zoom-in-95 duration-500">
-        <div className="flex flex-col items-center space-y-4">
-          <LumeLogo variant="full" className="h-12 w-auto mb-2" />
-          <p className="text-zinc-500 text-sm font-medium tracking-wide">Comunicação minimalista em tempo real.</p>
-        </div>
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans selection:bg-cyan-500/30 overflow-hidden relative">
+      {/* Orbital Light Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-cyan-500/10 rounded-full animate-[spin_60s_linear_infinite]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-cyan-500/5 rounded-full animate-[spin_40s_linear_infinite_reverse]" />
+      </div>
 
-        <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          
-          <form onSubmit={handleAuth} className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">E-mail</label>
-                <div className="relative">
-                  <Input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10" 
-                    placeholder="exemplo@lume.com"
-                    required
-                  />
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+      <div className={`w-full ${isLogin ? 'max-w-[400px]' : 'max-w-[900px]'} transition-all duration-500 z-10`}>
+        {isLogin ? (
+          <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex flex-col items-center space-y-4">
+              <LumeLogo variant="full" className="h-12 w-auto mb-2" />
+              <p className="text-zinc-500 text-sm font-medium tracking-wide">Comunicação minimalista em tempo real.</p>
+            </div>
+
+            <div className="bg-[#121212] border border-white/5 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              
+              <form onSubmit={handleAuth} className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">E-mail</label>
+                    <div className="relative">
+                      <Input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10" 
+                        placeholder="exemplo@lume.com"
+                        required
+                      />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Senha</label>
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pr-10"
+                        placeholder="••••••••"
+                        required
+                        minLength={8}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={authState === "submitting"}
+                  className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {authState === "submitting" ? (
+                    <>
+                      <RefreshCcw className="h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      Entrar
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-white/5 text-center">
+                <button 
+                  onClick={() => {
+                    setIsLogin(false);
+                    setAuthState("idle");
+                  }}
+                  className="text-zinc-500 text-xs hover:text-cyan-400 transition-colors font-medium flex items-center justify-center gap-2 mx-auto"
+                >
+                  Não tem uma conta? Registre-se
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-center opacity-20 hover:opacity-100 transition-opacity duration-1000">
+               <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em] pointer-events-none">LUME ETHERNET • 2026</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row bg-[#121212] border border-white/5 rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Left Side: Presentation */}
+            <div className="lg:w-1/2 p-12 lg:p-16 flex flex-col justify-between relative bg-black/20 border-r border-white/5 overflow-hidden">
+              {/* Internal Orbital Effect */}
+              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative z-10 space-y-8">
+                <LumeLogo variant="full" className="h-10 w-auto" />
+                
+                <div className="space-y-4">
+                  <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+                    Seu espaço.<br />
+                    <span className="text-cyan-400">Sua comunidade.</span>
+                  </h1>
+                  <p className="text-zinc-400 text-lg max-w-[320px]">
+                    Converse, jogue e compartilhe momentos em tempo real.
+                  </p>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  {[
+                    { icon: Phone, text: "Chamadas e compartilhamento de tela" },
+                    { icon: Sparkles, text: "Personalização com GIFs" },
+                    { icon: Download, text: "Anexos de até 50 MB" }
+                  ].map((benefit, i) => (
+                    <div key={i} className="flex items-center gap-3 text-zinc-300">
+                      <div className="h-8 w-8 rounded-lg bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                        <benefit.icon className="h-4 w-4 text-cyan-400" />
+                      </div>
+                      <span className="text-sm font-medium">{benefit.text}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Senha</label>
-                <Input 
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700"
-                  placeholder="••••••••"
-                  required
-                  minLength={8}
-                />
+
+              <div className="relative z-10 pt-12">
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">LUME ETHERNET • 2026</p>
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={authState === "submitting"}
-              className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {authState === "submitting" ? (
-                <>
-                  <RefreshCcw className="h-4 w-4 animate-spin" />
-                  {isLogin ? "Entrando..." : "Criando conta..."}
-                </>
-              ) : (
-                <>
-                  {isLogin ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {isLogin ? "Entrar" : "Criar Conta"}
-                </>
-              )}
-            </Button>
-          </form>
+            {/* Right Side: Register Form */}
+            <div className="lg:w-1/2 p-12 lg:p-16 space-y-8 bg-black/10">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-white tracking-tight">Crie sua conta</h2>
+                <p className="text-zinc-500 text-sm">Comece sua jornada no LUME hoje mesmo.</p>
+              </div>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <button 
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setAuthState("idle");
-              }}
-              className="text-zinc-500 text-xs hover:text-cyan-400 transition-colors font-medium flex items-center justify-center gap-2 mx-auto"
-            >
-              {isLogin ? "Não tem uma conta? Registre-se" : "Já tem uma conta? Entre"}
-              <ArrowRight className="h-3 w-3" />
-            </button>
+              <form onSubmit={handleAuth} className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">E-mail</label>
+                    <div className="relative">
+                      <Input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pl-10" 
+                        placeholder="seu@email.com"
+                        required
+                      />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Senha</label>
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-black/40 border-white/5 text-white h-12 rounded-xl focus:border-cyan-500/50 transition-all placeholder:text-zinc-700 pr-10"
+                        placeholder="No mínimo 8 caracteres"
+                        required
+                        minLength={8}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-cyan-400 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-zinc-600 px-1 pt-1 italic">
+                      Use letras, números e símbolos para maior segurança.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Button 
+                    type="submit" 
+                    disabled={authState === "submitting"}
+                    className="w-full bg-cyan-500 text-black hover:bg-cyan-400 font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(0,209,255,0.15)] hover:shadow-[0_0_25px_rgba(0,209,255,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {authState === "submitting" ? (
+                      <>
+                        <RefreshCcw className="h-4 w-4 animate-spin" />
+                        Criando conta...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4" />
+                        Criar conta
+                      </>
+                    )}
+                  </Button>
+
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(true);
+                      setAuthState("idle");
+                    }}
+                    className="w-full text-zinc-500 text-xs hover:text-cyan-400 transition-colors font-medium flex items-center justify-center gap-2"
+                  >
+                    Já tem uma conta? Entrar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-        
-        <div className="text-center opacity-20 hover:opacity-100 transition-opacity duration-1000">
-           <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em] pointer-events-none">LUME ETHERNET • 2026</p>
-        </div>
+        )}
       </div>
     </div>
   );
