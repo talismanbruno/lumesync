@@ -1330,8 +1330,9 @@ function DashboardComponent() {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-bold text-zinc-100 truncate">
+            <span className="text-sm font-bold text-zinc-100 flex items-center gap-1.5 truncate">
               {author?.display_name || author?.username || "Usuário"}
+              <AdminVerifiedBadge isAdmin={author?.is_admin} size={12} />
             </span>
             {isBotAuthor && (
               <span className="text-[9px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-400 px-1.5 py-0.5 rounded">
