@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -1276,6 +1276,9 @@ function DashboardComponent() {
             )}
           </div>
 
+          {/* Spacer to push profile to bottom */}
+          <div className="flex-1" />
+
           {/* Bottom: Profile Widget */}
           <div className="p-4 bg-black/20 border-t border-white/5 space-y-3">
             {/* Widget de Voz (Se Conectado) */}
@@ -1360,7 +1363,7 @@ function DashboardComponent() {
       </div>
 
       {/* Área Principal de Chat / Chamada de Voz em Tela Ampla */}
-      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden">
+      <main className="flex-1 min-w-0 h-full bg-[#050505] flex flex-col relative overflow-hidden z-[50]">
         <div className="flex flex-1 flex-col overflow-hidden">
           {activeVoiceChannel && showVoiceUI ? (
             <VoiceRoomUI
