@@ -1197,7 +1197,7 @@ function DashboardComponent() {
 
           {msg.content && (
             <div className="text-sm text-zinc-300 break-words whitespace-pre-wrap leading-relaxed">
-              <MessageText text={msg.content} />
+              <MessageText content={msg.content} />
             </div>
           )}
 
