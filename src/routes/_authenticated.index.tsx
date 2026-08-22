@@ -1277,7 +1277,48 @@ function DashboardComponent() {
           </div>
 
           {/* Bottom: Profile Widget */}
-          <div className="p-4 bg-black/20 border-t border-white/5">
+          <div className="p-4 bg-black/20 border-t border-white/5 space-y-3">
+            {/* Widget de Voz (Se Conectado) */}
+            {activeVoiceChannel && (
+              <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-3 flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-cyan-400 truncate uppercase tracking-widest">Voz Conectada</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => setShowVoiceUI(true)}
+                        className="p-1 text-zinc-500 hover:text-white transition-colors"
+                      >
+                        <Monitor size={14} />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          disconnect();
+                          setActiveVoiceChannel(null);
+                          setShowVoiceUI(false);
+                        }}
+                        className="p-1 text-zinc-500 hover:text-red-500 transition-colors"
+                      >
+                        <PhoneOff size={14} />
+                      </button>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-2">
+                   <button onClick={toggleMute} className={`flex-1 p-2 rounded-xl transition-colors ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                     {isMuted ? <MicOff size={14} /> : <Mic size={14} />}
+                   </button>
+                   <button onClick={toggleDeafen} className={`flex-1 p-2 rounded-xl transition-colors ${isDeafened ? 'bg-red-500/20 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                     <Headphones size={14} />
+                   </button>
+                   <button onClick={toggleScreenShare} className={`flex-1 p-2 rounded-xl transition-colors ${isSharingScreen ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                     <ScreenShare size={14} />
+                   </button>
+                 </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 p-2 bg-[#121214] border border-white/5 rounded-2xl group hover:border-zinc-700 transition-all">
               <div className="relative shrink-0">
                 <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
