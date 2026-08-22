@@ -1683,10 +1683,11 @@ function DashboardComponent() {
                 </div>
               </div>
             ) : activeDMGroup ? (
-              renderComposer(sendGroupMessage, `Mensagem para ${activeDMGroup.name || "grupo"}`)
+              renderComposer(sendGroupMessage, `Mensagem para ${getGroupTitle(activeDMGroup, myProfile.id)}`)
             ) : (
-              renderComposer(handleSendMessage, activeChannel ? `Conversar em #${activeChannel.name}` : `Mensagem para ${activeDMFriend?.display_name || activeDMFriend?.username || ""}`)
+              renderComposer(handleSendMessage, activeChannel ? `Conversar em #${activeChannel.name}` : `Mensagem para ${getDisplayName(activeDMFriend)}`)
             )}
+
           </>
         ) : (
           <FriendsView
