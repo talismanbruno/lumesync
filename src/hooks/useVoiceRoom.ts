@@ -483,6 +483,14 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         await audioTrack.applyConstraints({ noiseSuppression: nextState });
         const settings = audioTrack.getSettings();
         setIsNoiseSuppressionEnabled(!!settings.noiseSuppression);
+        
+        const myPart = participants.find(p => p.id === myProfile?.id);
+        if (channelRef.current && myPart) {
+          channelRef.current.track({
+            ...myPart,
+            isNoiseSuppressionEnabled: !!settings.noiseSuppression
+          });
+        }
       } catch (e) {
         toast.error("Erro ao aplicar supressão de ruído");
       }
@@ -491,8 +499,11 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
 
   return {
     participants,
+    allParticipantsInRoom: participants,
     connectionStatus,
     screenStream,
+    remoteVideoStreams,
+    peerConnections,
     isMuted: localStreamRef.current ? !localStreamRef.current.getAudioTracks()[0]?.enabled : false,
     isDeafened,
     isSharingScreen: !!screenStream,
