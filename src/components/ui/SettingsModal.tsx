@@ -30,7 +30,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }, [isOpen, onClose]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)]">
         {/* Sidebar Esquerda */}
         <aside className="w-60 bg-[#0A0A0C] flex flex-col p-4 border-r border-white/5 shrink-0">
@@ -83,12 +83,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button 
             type="button"
             onClick={(e) => {
-              console.log("SettingsModal: Botão X clicado");
               e.preventDefault();
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-[100] group cursor-pointer"
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-[100] group cursor-pointer pointer-events-auto"
             aria-label="Fechar configurações"
           >
             <X size={20} className="group-hover:scale-110 transition-transform" />
