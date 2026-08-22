@@ -153,9 +153,11 @@ function DashboardComponent() {
 
 
   
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   // Local state as fallback/override if needed, but primary is from context
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
+
 
   useEffect(() => {
     if (authUser) {
@@ -725,20 +727,33 @@ function DashboardComponent() {
     if (!myProfile?.id) return;
     
     // Fetch Group DMs with detailed members
-    const { data: groupsData, error: groupsError } = await supabase
-      .from('dm_groups')
-      .select('*, dm_group_members!inner(*, profiles(*))')
-      .eq('dm_group_members.user_id', myProfile.id);
+    const { data: membersData, error: membersError } = await supabase
+      .from('dm_group_members')
+      .select('group_id')
+      .eq('user_id', myProfile.id);
+
+    if (!membersError && membersData) {
+      const groupIds = membersData.map(m => m.group_id);
       
-    if (!groupsError && groupsData) {
-      setDmGroups(groupsData);
-      
-      // Update active group if it exists
-      if (activeDMGroup) {
-        const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
-        if (updatedActive) setActiveDMGroup(updatedActive);
+      if (groupIds.length > 0) {
+        const { data: groupsData, error: groupsError } = await supabase
+          .from('dm_groups')
+          .select('*, dm_group_members(*, profiles(*))')
+          .in('id', groupIds);
+          
+        if (!groupsError && groupsData) {
+          setDmGroups(groupsData);
+          
+          if (activeDMGroup) {
+            const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
+            if (updatedActive) setActiveDMGroup(updatedActive);
+          }
+        }
+      } else {
+        setDmGroups([]);
       }
     }
+
   };
 
 
@@ -1819,19 +1834,34 @@ function DashboardComponent() {
         myProfile={myProfile}
         friendships={friendships}
         onCreateGroup={async (memberIds: string[], name?: string | null) => {
+          if (isCreatingGroup) return;
+          setIsCreatingGroup(true);
           try {
+            console.log("[CreateGroup] Tentando criar grupo com:", memberIds);
+            
+            const creatorId = dbProfile?.id || authUser?.id;
+            if (!creatorId) throw new Error("Usuário não autenticado");
+
+            // 1. Criar o grupo
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
-              .insert({ name: name || null, created_by: myProfile.id })
+              .insert({ 
+                name: (name && name.trim()) ? name.trim() : null, 
+                created_by: creatorId 
+              })
               .select()
               .single();
 
             if (groupError) throw groupError;
 
-            const memberInserts = Array.from(new Set(memberIds)).map(uid => ({
+            // 2. Preparar membros (garantir que o criador está incluído e IDs são únicos)
+            const allMemberIds = Array.from(new Set([creatorId, ...memberIds]));
+            const memberInserts = allMemberIds.map(uid => ({
               group_id: group.id,
               user_id: uid,
             }));
+
+            console.log("[CreateGroup] Inserindo membros efetivos:", memberInserts);
 
             const { error: membersError } = await supabase
               .from('dm_group_members')
@@ -1840,13 +1870,23 @@ function DashboardComponent() {
             if (membersError) throw membersError;
 
             toast.success("Grupo criado com sucesso!");
+            
+            // 3. Forçar atualização e abrir
+            if (typeof fetchConversations === 'function') {
+              await fetchConversations();
+            }
+            
             openGroup(group);
             setIsCreateGroupOpen(false);
-            if (typeof fetchConversations === 'function') fetchConversations();
           } catch (err: any) {
+            console.error("[CreateGroup] Falha crítica:", err);
             toast.error("Erro ao criar grupo: " + err.message);
+          } finally {
+            setIsCreatingGroup(false);
           }
         }}
+
+
       />
     </div>
   );

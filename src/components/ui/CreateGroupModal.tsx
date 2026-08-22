@@ -54,58 +54,25 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateGroup = async () => {
+    if (isLoading) return; // Proteção contra múltiplos cliques
     if (selectedFriends.length === 0) {
       toast.error("Selecione pelo menos 1 amigo para criar o grupo!");
       return;
     }
-    setIsLoading(true);
-    try {
-      // 1. Cria o grupo
-      const { data: newGroup, error: groupError } = await supabase
-        .from('dm_groups')
-        .insert({
-          name: groupName.trim() || null,
-          created_by: myProfile.id
 
-        })
-        .select()
-        .single();
-        
-      if (groupError) throw groupError;
-
-      // 2. Adiciona o criador e os amigos selecionados
-      const membersToInsert = [
-        { group_id: newGroup.id, user_id: myProfile.id },
-        ...selectedFriends.map(friendId => ({ group_id: newGroup.id, user_id: friendId }))
-      ];
-
-      const { error: membersError } = await supabase
-        .from('dm_group_members')
-        .insert(membersToInsert);
-
-      if (membersError) throw membersError;
-
-      toast.success("Grupo criado com sucesso!");
-      onClose();
-      
-      // Auto-open the new group
-      if (onCreateGroup) {
-        onCreateGroup([myProfile.id, ...selectedFriends], groupName.trim() || null);
-      }
-
-      
-      if ((window as any).refreshConversations) {
-        (window as any).refreshConversations();
-      }
-      setSelectedFriends([]);
-      setGroupName("");
-    } catch (err: any) {
-      console.error("Erro ao criar grupo:", err);
-      toast.error(err.message || "Erro ao criar grupo");
-    } finally {
-      setIsLoading(false);
+    // Apenas passamos a intenção para o componente pai.
+    // O modal não deve realizar operações de banco de dados diretamente
+    // para evitar conflitos de lógica e criação duplicada.
+    if (onCreateGroup) {
+      onCreateGroup([myProfile.id, ...selectedFriends], groupName.trim() || null);
     }
+    
+    // Limpamos o estado local
+    setSelectedFriends([]);
+    setGroupName("");
+    onClose();
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
