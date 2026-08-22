@@ -1,40 +1,78 @@
-# Implementação de Controles de Chamada Ativa (Órbita Ativa & Conexão Orbital)
+# Implementação de Controles de Chamada Ativa (Revisado)
 
-Este plano descreve a implementação de dois componentes de controle para chamadas de voz ativas no LUME, integrando-os com o sistema WebRTC existente.
+Este plano detalha a implementação da interface de controle de chamadas ("Órbita Ativa" e "Conexão Orbital"), garantindo persistência da conexão e integridade dos estados WebRTC.
 
-## User Review Required
+## Persistência e Visibilidade
+Para evitar que a chamada caia ao fechar a interface, o hook `useVoiceRoom` será mantido no componente pai (`DashboardComponent` em `_authenticated.index.tsx`).
+- O estado `showVoiceUI` controlará apenas a visibilidade do `VoiceRoomUI` (Stage).
+- Fechar o Stage (minimizar) não chamará `disconnect()`. A chamada só encerra ao clicar explicitamente no botão de desconectar.
 
-> [!IMPORTANT]
-> A sinalização de status de conexão (Conectando, Conectado, etc.) será baseada nos estados disponíveis no hook `useVoiceRoom.ts`.
+## Fonte Única de Estado
+Todos os componentes consumirão o estado retornado por uma única instância de `useVoiceRoom`:
+- **Participantes:** `participants` sincronizados via Presence.
+- **Mídia:** `isMuted`, `isDeafened`, `isSharingScreen`.
+- **Status de Conexão:** Mapeamento em tempo real (veja abaixo).
 
-## Proposed Changes
+## Mapeamento de Status de Conexão
+Criaremos um estado derivado `connectionStatus` baseado em:
+1. **Conectando:** Supabase Channel status é 'joining' ou `localStream` ainda não obtido.
+2. **Conectado:** Channel status é 'SUBSCRIBED' e `localStream` ativo.
+3. **Reconectando:** Eventos de 'system' indicando reconexão do socket.
+4. **Conexão instável:** `iceConnectionState` de algum peer em 'disconnected' ou 'failed' por > 5s.
+5. **Falha na conexão:** Channel erro fatal ou todos os peers desconectados.
 
-### 1. Novos Componentes UI
-- `src/components/voice/ActiveCallBar.tsx`: Faixa horizontal compacta para o topo do chat.
-- `src/components/voice/OrbitalConnectionPanel.tsx`: Painel lateral acima do perfil.
+## Detecção de Fala (Voz)
+Implementaremos detecção real de áudio local usando `AudioContext` e `AnalyserNode` no stream do microfone.
+- O nível de volume será enviado via `broadcast` Realtime (throttled) para atualizar o `isSpeaking` dos outros participantes.
+- Se a latência for alta, o indicador será removido conforme solicitado.
 
-### 2. Integração no Dashboard
-- Modificar `src/routes/_authenticated.index.tsx` para renderizar os novos componentes.
-- A `ActiveCallBar` aparecerá no topo da coluna 3 (Canvas) quando houver uma chamada ativa e o usuário NÃO estiver com o Stage (VoiceRoomUI) aberto.
-- O `OrbitalConnectionPanel` aparecerá na sidebar (coluna 2) sempre que houver uma chamada ativa local.
+## Supressão de Ruído
+Adicionaremos um toggle que aplica `noiseSuppression: true` nas `MediaTrackConstraints` do microfone.
+- Verificação via `navigator.mediaDevices.getSupportedConstraints()`.
+- Tooltip de erro se o hardware/browser não suportar.
 
-### 3. Melhorias no Hook de Voz
-- Garantir que o estado de participantes e conexão seja exportado corretamente para uso nos componentes de UI.
+## Props dos Componentes
 
-## Technical Details
+### `ActiveCallBar` (Topo do Chat)
+```typescript
+interface ActiveCallBarProps {
+  roomName: string;
+  participants: VoiceParticipant[];
+  myProfile: any;
+  isMuted: boolean;
+  isDeafened: boolean;
+  isSharingScreen: boolean;
+  connectionStatus: string;
+  onOpenStage: () => void;
+  onToggleMute: () => void;
+  onToggleDeafen: () => void;
+  onToggleScreenShare: () => void;
+  onDisconnect: () => void;
+}
+```
 
-### Estilização
-- Uso de `backdrop-blur-md` e bordas finas com `border-white/5`.
-- Cores de acento LUME: `#00D1FF` (Cyan) para estados ativos.
-- Animações `animate-in` para transições suaves de entrada/saída.
+### `OrbitalConnectionPanel` (Sidebar)
+```typescript
+interface OrbitalConnectionPanelProps {
+  status: string;
+  roomName: string;
+  contextName: string;
+  participantCount: number;
+  isMuted: boolean;
+  isDeafened: boolean;
+  isSharingScreen: boolean;
+  isNoiseSuppressionEnabled: boolean;
+  onOpenStage: () => void;
+  onToggleMute: () => void;
+  onToggleDeafen: () => void;
+  onToggleScreenShare: () => void;
+  onToggleNoiseSuppression: () => void;
+  onDisconnect: () => void;
+}
+```
 
-### Funcionalidades
-- **Avatares:** Exibição de até 4 avatares com indicador +N.
-- **Controles:** Mute, Ensurdecer (se suportado), Compartilhamento de Tela e Desconectar.
-- **Indicador de Fala:** Integrar com o estado `isSpeaking`/`isTalking` já presente nos perfis dos participantes.
-
-## Execution Plan
-1. Criar `src/components/voice/ActiveCallBar.tsx`.
-2. Criar `src/components/voice/OrbitalConnectionPanel.tsx`.
-3. Atualizar `src/routes/_authenticated.index.tsx` para gerenciar a visibilidade e os controles.
-4. Validar comportamento em tempo real.
+## Plano de Execução
+1. Modificar `useVoiceRoom.ts` para incluir detecção de voz real e status de conexão WebRTC.
+2. Atualizar as definições de interface em `src/components/voice/`.
+3. Injetar o hook no topo do `DashboardComponent`.
+4. Renderizar condicionais para a Barra e o Painel.
