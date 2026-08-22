@@ -1,41 +1,43 @@
-# Implementação de Controles de Chamada Ativa (Revisado v2)
+# Implementação de Controles de Chamada Ativa (Revisado v3 - Final)
 
-Este plano detalha a implementação da interface de controle de chamadas ("Órbita Ativa" e "Conexão Orbital"), garantindo persistência da conexão e integridade dos estados WebRTC, seguindo os ajustes obrigatórios de tipos, lógica de status e detecção de fala.
+Este plano detalha a implementação da interface de controle de chamadas ("Órbita Ativa" e "Conexão Orbital"), garantindo persistência, tipagem estrita e lógica de status WebRTC/Presence precisa.
 
 ## Persistência e Visibilidade
-Para evitar que a chamada caia ao fechar a interface, o hook `useVoiceRoom` será mantido no componente pai (`DashboardComponent` em `src/routes/_authenticated.index.tsx`).
+- O hook `useVoiceRoom` será instanciado no `DashboardComponent` (src/routes/_authenticated.index.tsx).
 - O estado `showVoiceUI` controlará apenas a visibilidade do `VoiceRoomUI` (Stage).
-- Minimizar o Stage (botão X) apenas esconde a UI; a desconexão real ocorre apenas no cleanup/leave explícito.
+- Minimizar (botão X) apenas oculta a interface; o encerramento ocorre apenas no `disconnect()`.
 
-## Fonte Única de Estado e Tipagem
-Todos os componentes consumirão o estado de uma única instância do hook.
-- **Tipos Reais:** Substituição de `any` por `LumeProfile` e `ConnectionStatus`.
-- **ConnectionStatus:** `connecting | connected | reconnecting | unstable | failed`.
+## Tipagem e Estados de Conexão
+- **Tipos Estritos:** `LumeProfile` (id, username, avatar_url, etc.) e `ConnectionStatus`.
+- **Mapeamento de Status (`ConnectionStatus`):**
+    - `connecting`: Canal != 'SUBSCRIBED' OU `localStream` ausente OU track != 'live'.
+    - `reconnecting`: Canal já esteve conectado mas está 'joining' OU peers em 'checking'/'disconnected' < 5s.
+    - `connected`: Canal 'SUBSCRIBED' e track local ativa. (Solo call = connected).
+    - `unstable`: Pelo menos um peer em 'disconnected'/'failed' > 5s.
+    - `failed`: Erro fatal do canal, stream local irrecuperável ou TODOS os peers falharam.
+- **Segurança:** Não exibe `connected` se o microfone falhou/stream local é nulo.
 
-## Lógica de Status de Conexão
-- **Connected:** Canal subscrito, mesmo com 0 peers remotos (aguardando entrada).
-- **Unstable:** Pelo menos um peer falhou ou desconectou por > 5s (timer limpo no cleanup).
-- **Failed:** Erro fatal no canal ou todos os peers ativos em estado de falha (se peers > 0).
-- Agregação de estados: Um peer falho em chamada de grupo não derruba os outros.
+## Detecção de Fala (VAD)
+- **Processamento:** Local via `AudioContext` e `AnalyserNode`.
+- **Transmissão:** Apenas booleano `speaking` via broadcast com throttle.
+- **Expiração:** Timout de segurança no receptor para evitar que participantes fiquem "presos" no estado de fala.
+- **Mute:** Se `isMuted`, `speaking` é forçado para `false`.
 
-## Detecção de Fala (Voice Activity Detection - VAD)
-- **Cálculo Local:** Uso de `AudioContext` e `AnalyserNode` apenas localmente.
-- **Sinalização Eficiente:** Transmissão apenas do booleano `speaking: true/false` via broadcast.
-- **Throttle:** Evento disparado apenas na transição de estado, com limite de frequência.
-- **Silêncio:** Quando o usuário está mutado, `speaking` é forçado para `false`.
-- **Cleanup:** Destruição completa de contextos de áudio e timers ao desconectar.
+## Supressão de Ruído e Configurações
+- **Noise Suppression:** Verificação de suporte, aplicação de constraints e confirmação via `getSettings()`.
+- **Interface:** Botão funcional que abre um popover de configurações de áudio real (seleção de dispositivos).
 
-## Supressão de Ruído
-- Verificação de suporte via `navigator.mediaDevices.getSupportedConstraints()`.
-- Aplicação dinâmica de constraints na track ativa com verificação via `track.getSettings()`.
-- Fallback visual caso a aplicação falhe.
+## Interfaces de Componentes
+Exportação de handlers e estados sincronizados:
+- `isMuted`, `isDeafened`, `isSharingScreen`, `isNoiseSuppressionEnabled`.
+- `connectionStatus` (tipado).
+- `onToggleMute`, `onToggleDeafen`, `onToggleScreenShare`, `onToggleNoiseSuppression`, `onOpenAudioSettings`, `onOpenStage`, `onDisconnect`.
 
-## Acessibilidade e Mobile
-- Implementação de `aria-label`, `aria-pressed`, suporte a foco por teclado e `prefers-reduced-motion`.
-- Layouts compactos e responsivos para dispositivos móveis.
+## Acessibilidade
+- `aria-label`, `aria-pressed`, suporte a teclado, `prefers-reduced-motion` e tooltips.
 
 ## Plano de Execução
-1. Atualizar `useVoiceRoom.ts` com a nova lógica de status, VAD e supressão de ruído.
-2. Refinar `ActiveCallBar.tsx` e `OrbitalConnectionPanel.tsx` com as props e interfaces finais.
-3. Integrar no `DashboardComponent` elevando o estado do hook.
-4. Validar fluxos de entrada/saída, minimização e sincronia de controles.
+1. Atualizar `useVoiceRoom.ts` com a nova lógica de VAD, Supressão de Ruído e Mapeamento de Status.
+2. Criar `src/components/voice/ActiveCallBar.tsx` e `src/components/voice/OrbitalConnectionPanel.tsx`.
+3. Injetar hook no `DashboardComponent` e adicionar popover de configurações de áudio.
+4. Validar chamadas solo e em grupo, minimização e reabertura.
