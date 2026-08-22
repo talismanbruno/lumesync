@@ -136,7 +136,7 @@ export function useVoiceRoom(channelId: string | null, myProfile: any) {
     }
 
     return pc;
-  }, [myProfile.id, createPeerConnection]);
+  }, [myProfile.id]);
 
   const joinVoiceChannel = useCallback(async (cid: string) => {
     if (!cid || !myProfile?.id) return;
