@@ -1757,12 +1757,14 @@ function DashboardComponent() {
             isMuted={isMuted}
             isDeafened={isDeafened}
             isSharingScreen={isSharingScreen}
+            isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
             screenStream={screenStream}
             remoteVideoStreams={remoteVideoStreams}
             peerConnections={peerConnections}
             toggleMute={toggleMute}
             toggleDeafen={toggleDeafen}
             toggleScreenShare={toggleScreenShare}
+            toggleNoiseSuppression={toggleNoiseSuppression}
             onDisconnect={() => {
               disconnect();
               setActiveVoiceChannel(null);
