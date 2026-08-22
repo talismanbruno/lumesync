@@ -171,7 +171,7 @@ function DashboardComponent() {
 
   const myProfile: Profile = (globalProfile as Profile) ?? dbProfile ?? {
     id: authUser?.id || "",
-    username: authUser?.email?.split('@')[0] || "usuário",
+    username: authUser?.email?.split('@')[0] || "usuario",
     display_name: authUser?.email?.split('@')[0] || "Usuário Lume",
     avatar_url: null,
     status: 'online'

@@ -204,12 +204,12 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <Input 
                 value={addUsername}
                 onChange={(e) => setAddUsername(e.target.value)}
-                placeholder="Ex: lumebot#0001"
+                placeholder="Ex: @username"
                 className="h-14 bg-black/40 border-white/5 text-white rounded-2xl pl-4 pr-32 focus:border-cyan-500/50 transition-all placeholder:text-zinc-700"
               />
               <Button 
                 onClick={async () => {
-                  const input = addUsername.trim();
+                  const input = addUsername.trim().replace(/^@/, "").toLowerCase();
                   if (!input) {
                     toast.error("Digite um nome de usuário!");
                     return;
@@ -220,7 +220,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     const { data: targetProfile, error: profileError } = await supabase
                       .from('profiles')
                       .select('id, username')
-                      .ilike('username', input)
+                      .eq('username', input)
                       .maybeSingle();
 
                     if (profileError) throw profileError;
