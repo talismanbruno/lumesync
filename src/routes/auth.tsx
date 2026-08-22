@@ -25,17 +25,17 @@ export const Route = createFileRoute("/auth")({
 
     const handleAuth = async (e: React.FormEvent) => {
       e.preventDefault();
+      if (isLoading) return;
       setIsLoading(true);
       try {
         if (isLogin) {
-          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) throw error;
-          toast.success("Bem-vindo de volta!");
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 500);
-          return;
-
+          
+          if (data.session) {
+            toast.success("Bem-vindo de volta!");
+            navigate({ to: "/", replace: true });
+          }
         } else {
           const { error } = await supabase.auth.signUp({ email, password });
           if (error) throw error;
@@ -43,7 +43,6 @@ export const Route = createFileRoute("/auth")({
         }
       } catch (error: any) {
         toast.error(error.message || "Erro na autenticação");
-      } finally {
         setIsLoading(false);
       }
     };
