@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { Mic, MicOff, Headphones, PhoneOff, Monitor, X, Eye, EyeOff, Volume2, VolumeX, Maximize2, Minimize2, ShieldCheck } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { VoiceParticipant } from '@/hooks/useVoiceRoom';
@@ -11,12 +11,14 @@ interface VoiceRoomUIProps {
   isMuted: boolean;
   isDeafened: boolean;
   isSharingScreen: boolean;
+  isNoiseSuppressionEnabled: boolean;
   screenStream: MediaStream | null;
   remoteVideoStreams: React.MutableRefObject<Map<string, MediaStream>>;
   peerConnections: React.MutableRefObject<Map<string, RTCPeerConnection>>;
   toggleMute: () => void;
   toggleDeafen: () => void;
   toggleScreenShare: () => void;
+  toggleNoiseSuppression: () => void;
   onDisconnect: () => void;
   onClose?: () => void;
 }
@@ -27,12 +29,14 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
   isMuted,
   isDeafened,
   isSharingScreen,
+  isNoiseSuppressionEnabled,
   screenStream,
   remoteVideoStreams,
   peerConnections,
   toggleMute,
   toggleDeafen,
   toggleScreenShare,
+  toggleNoiseSuppression,
   onDisconnect,
   onClose
 }) => {
@@ -317,11 +321,23 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
           <Button
             variant="ghost"
             size="icon"
+            onClick={toggleNoiseSuppression}
+            className={`h-12 w-12 rounded-xl transition-all p-3 cursor-pointer ${
+              isNoiseSuppressionEnabled ? "bg-[#00D1FF]/10 text-[#00D1FF] hover:bg-[#00D1FF]/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <ShieldCheck size={22} />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleScreenShare}
             className={`h-12 w-12 rounded-xl transition-all p-3 cursor-pointer ${
               isSharingScreen ? "bg-[#00D1FF]/10 text-[#00D1FF] hover:bg-[#00D1FF]/20" : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
           >
+
             <Monitor size={22} />
           </Button>
 

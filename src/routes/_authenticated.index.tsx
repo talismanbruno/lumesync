@@ -1,11 +1,4 @@
-/**
- * REDESIGN DE INTERFACE: IMPLEMENTAR LAYOUT "FLUID DOCK & FLOATING CANVAS" (ESTILO LINEAR / ARC)
- * 
- * 1. ESTRUTURA DO CONTAINER PRINCIPAL
- * - Dock Flutuante (Sidebar 1)
- * - Aside Flutuante (Sidebar 2)
- * - Main Canvas Flutuante
- */
+
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone } from "lucide-react";
@@ -40,6 +33,8 @@ import {
 } from "@/components/ui/context-menu";
 import { useVoiceRoom } from "@/hooks/useVoiceRoom";
 import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
+import { ActiveCallBar } from "@/components/voice/ActiveCallBar";
+import { OrbitalConnectionPanel } from "@/components/voice/OrbitalConnectionPanel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { SettingsModal } from "@/components/ui/SettingsModal";
@@ -238,16 +233,19 @@ function DashboardComponent() {
   
   const {
     participants,
-    allParticipantsInRoom,
+    connectionStatus,
     screenStream,
     isMuted,
     isDeafened,
     isSharingScreen,
+    isNoiseSuppressionEnabled,
+    isNoiseSuppressionSupported,
     remoteVideoStreams,
     peerConnections,
     toggleMute,
     toggleDeafen,
     toggleScreenShare,
+    toggleNoiseSuppression,
     disconnect
   } = useVoiceRoom(activeVoiceChannel ? `server-channel-${activeVoiceChannel.id}` : null, myProfile);
 
@@ -351,7 +349,9 @@ function DashboardComponent() {
             user_id: p.id,
             username: p.username,
             display_name: p.display_name,
-            avatar_url: p.avatar_url
+            avatar_url: p.avatar_url,
+            isSpeaking: p.isSpeaking,
+            isMuted: p.isMuted
           }));
         }
 
@@ -1513,6 +1513,19 @@ function DashboardComponent() {
 
       {/* COLUNA 2 — CANAIS OU DMs (240px) */}
       <aside className="w-[240px] shrink-0 bg-[#0a0a0b] border-r border-white/5 flex flex-col overflow-x-hidden">
+        {activeVoiceChannel && (
+          <OrbitalConnectionPanel 
+            myProfile={myProfile}
+            connectionStatus={connectionStatus}
+            isMuted={isMuted}
+            isDeafened={isDeafened}
+            onToggleMute={toggleMute}
+            onToggleDeafen={toggleDeafen}
+            onDisconnect={disconnect}
+            onOpenSettings={() => toast.info("Configurações de áudio em breve")}
+          />
+        )}
+
         <header className="h-14 px-4 flex items-center justify-between border-b border-white/5 shrink-0 overflow-hidden">
           <span className="text-sm font-bold truncate text-zinc-100">
             {activeServer ? activeServer.name : (activeDMGroup ? getGroupTitle(activeDMGroup, myProfile.id) : "Mensagens Diretas")}
@@ -1737,12 +1750,14 @@ function DashboardComponent() {
             isMuted={isMuted}
             isDeafened={isDeafened}
             isSharingScreen={isSharingScreen}
+            isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
             screenStream={screenStream}
             remoteVideoStreams={remoteVideoStreams}
             peerConnections={peerConnections}
             toggleMute={toggleMute}
             toggleDeafen={toggleDeafen}
             toggleScreenShare={toggleScreenShare}
+            toggleNoiseSuppression={toggleNoiseSuppression}
             onDisconnect={() => {
               disconnect();
               setActiveVoiceChannel(null);
@@ -1752,7 +1767,26 @@ function DashboardComponent() {
           />
         ) : inChat ? (
           <>
-            <header className="h-14 px-6 flex items-center gap-3 border-b border-white/5 shrink-0 overflow-hidden">
+            <div className="flex flex-col flex-none z-40">
+              {activeVoiceChannel && (
+                <ActiveCallBar 
+                  participants={participants}
+                  roomName={activeVoiceChannel.name}
+                  connectionStatus={connectionStatus}
+                  isMuted={isMuted}
+                  isDeafened={isDeafened}
+                  isSharingScreen={isSharingScreen}
+                  isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
+                  onToggleMute={toggleMute}
+                  onToggleDeafen={toggleDeafen}
+                  onToggleScreenShare={toggleScreenShare}
+                  onToggleNoiseSuppression={toggleNoiseSuppression}
+                  onDisconnect={disconnect}
+                  onOpenStage={() => setShowVoiceUI(true)}
+                />
+              )}
+              <header className="h-14 px-6 flex items-center gap-3 border-b border-white/5 shrink-0 overflow-hidden">
+
               {activeChannel ? (
                 <>
                   <Hash size={18} className="text-zinc-600 shrink-0" />
@@ -1862,6 +1896,8 @@ function DashboardComponent() {
                 </>
               )}
             </header>
+          </div>
+
 
             <div className="flex-1 overflow-y-auto custom-scrollbar py-4">
               {messages.length === 0 && (
