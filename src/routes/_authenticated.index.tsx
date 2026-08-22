@@ -1214,6 +1214,7 @@ function DashboardComponent() {
       ? { id: LUME_BOT_ID, username: 'lume', display_name: 'Lume', avatar_url: 'https://i.ibb.co/99YTNvGS/image.png' } as Profile
       : (msg.profile || profilesCache[authorId || ''] || null);
 
+
     const fileUrl = msg.file_url || undefined;
     const isImage = !!fileUrl && (msg.file_type?.startsWith('image') || fileUrl.startsWith('data:image'));
     const isVideo = !!fileUrl && (msg.file_type?.startsWith('video') || fileUrl.startsWith('data:video'));
