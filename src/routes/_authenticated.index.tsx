@@ -1,7 +1,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone, ShieldCheck } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -40,6 +40,7 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/compon
 import { SettingsModal } from "@/components/ui/SettingsModal";
 import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
 import { FriendsView } from "@/components/ui/FriendsView";
+import { AdminVerifiedBadge } from "@/components/ui/AdminVerifiedBadge";
 
 
 export const Route = createFileRoute("/_authenticated/")({

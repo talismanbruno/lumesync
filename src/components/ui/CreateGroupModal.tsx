@@ -7,6 +7,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AdminVerifiedBadge } from "./AdminVerifiedBadge";
 
 interface Profile {
   id: string;
@@ -118,7 +119,10 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                   status={friend.status}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{friend.display_name || friend.username}</p>
+                  <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                    {friend.display_name || friend.username}
+                    <AdminVerifiedBadge isAdmin={friend.is_admin} size={12} />
+                  </p>
                   <p className="text-[10px] text-zinc-500 truncate">@{friend.username}</p>
                 </div>
                 <Checkbox 
