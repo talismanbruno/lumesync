@@ -1,42 +1,36 @@
-# Plano de Implementação - Fase 6: Mini Profile Card & Lume Nitro Grátis
+# Layout Redesign: Unified 2-Panel System
 
-Este plano implementa o sistema de perfis aprimorados, permitindo GIFs no banner/avatar, edição de bio e o Mini Profile Card no estilo Discord.
+This plan details the "REDESIGN RADICAL" to remove splash text and implement a unified 2-panel layout (Telegram/Raycast style) by consolidating the sidebar and optimizing the main canvas.
 
-## Alterações de Banco de Dados
+## User Review Required
 
-1. **Atualizar tabela `profiles`**:
-   - Adicionar coluna `banner_url` (text) para suporte a GIFs/imagens de fundo.
-   - Adicionar coluna `bio` (text) com valor padrão vazio.
+> [!IMPORTANT]
+> The redesign will move all server navigation, direct messages, and friends into a single 320px sidebar on the left. The top horizontal bar will be integrated into this new layout to ensure a clean, widescreen experience.
 
-## Componentes e Interface
+## Proposed Changes
 
-1. **Mini Profile Card (`src/components/ui/UserProfileCard.tsx`)**:
-   - Criar um componente de popover/card elegante.
-   - **Topo**: Banner de 100px com suporte a imagem ou gradiente padrão.
-   - **Meio**: Avatar sobreposto com badge de status em tempo real.
-   - **Conteúdo**: Nome de exibição, @username e seção "Sobre Mim" com a bio.
-   - **Rodapé**: Data de entrada ("Membro do Lume desde...").
-   - **Ações**: Botão "Enviar Mensagem" (para outros) ou "Editar Perfil" (para o próprio usuário).
+### 1. Remove Splash Text and Blocking UI
+- Clear the verbatim technical documentation currently displayed on the `/auth` route.
+- Ensure the app loads directly into the functional interface (or a minimal spinner/logo).
 
-2. **Modal de Edição ("Lume Nitro Grátis")**:
-   - Criar interface para upload de arquivos (avatar e banner).
-   - Permitir edição de `display_name` e `bio`.
-   - Implementar persistência no Supabase (Storage + Table Update).
+### 2. Consolidated 2-Panel Layout overhaul (`src/routes/_authenticated.tsx`)
+- **Remove** the top horizontal navigation header.
+- **Remove** the separate vertical server icon dock.
+- **Implement** a single 320px fixed-width left panel.
+  - **Top**: Official Lume Logo + Quick Search Bar.
+  - **Middle**: Unified Navigation Tabs (Capsule style): `Conversas`, `Servidores`, `Amigos`.
+    - `Conversas`: DMs, Groups, and the Official Lume Bot.
+    - `Servidores`: User servers and their text/voice channels.
+    - `Amigos`: Friend status filters (Online, Pending, Add).
+  - **Bottom**: User profile widget with status selector and settings gear.
 
-## Correções e Refinamentos
+### 3. Widescreen Canvas (`src/routes/_authenticated.index.tsx`)
+- Update the main area to be a true "Floating Canvas" that occupies all remaining space.
+- Remove all remaining Discord-style UI duplications.
+- Ensure smooth transitions when switching between tabs in the left panel.
 
-1. **Bloqueio do Bot Lume**:
-   - Refinar a verificação do chat ativo para garantir que o Bot Oficial seja sempre bloqueado para escrita.
-   - Manter a barra informativa com o cadeado ciano.
-
-2. **Markdown de Mensagens**:
-   - Atualizar `src/components/ui/MessageText.tsx` para processar corretamente negritos (`**texto**`) e quebras de linha preservadas.
-
-3. **Integração no Dashboard**:
-   - Adicionar triggers de abertura do `UserProfileCard` ao clicar em avatares no chat e listas de membros.
-
-## Detalhes Técnicos
-- Utilização de `lucide-react` para ícones.
-- `shadcn/ui` (Popover, Dialog, Button) para os componentes de UI.
-- Supabase Storage para armazenamento de mídias de perfil.
-- Sincronização em tempo real via `profilesCache` já existente.
+## Technical Details
+- Consolidate layout logic into `src/routes/_authenticated.tsx`.
+- Use a single `activeTab` state to drive the content of the left panel.
+- Update `src/routes/_authenticated.index.tsx` to handle the broad canvas rendering based on the selection from the new unified sidebar.
+- Maintain existing Realtime, WebRTC, and Supabase integration throughout the refactor.
