@@ -1,84 +1,10 @@
 /**
- * CORREÇÕES OBRIGATÓRIAS: IMAGENS NO CHAT, CRIAÇÃO DIRETA DE GRUPOS E STATUS NO RODAPÉ
+ * REDESIGN DE INTERFACE: IMPLEMENTAR LAYOUT "FLUID DOCK & FLOATING CANVAS" (ESTILO LINEAR / ARC)
  * 
- * 1. CORRIGIR ENVIO E RENDERIZAÇÃO DE IMAGENS/GIFS NO CHAT (MessageInput.tsx e MessageItem.tsx):
- * 
- * Problema: As mensagens estão aparecendo como um botão quebrado com o texto "Mídia" porque o file_url está sendo enviado vazio ou undefined.
- * 
- * Ao Enviar GIF do GIPHY:
- * Certifique-se de extrair a URL direta: const gifUrl = gif.images?.original?.url || gif.images?.fixed_height?.url;
- * OBRIGATÓRIO: O file_url no insert da mensagem DEVE ser essa string gifUrl (começando com https://media.giphy.com/...).
- * 
- * Ao Enviar Imagem/Anexo do Computador:
- * Converta o arquivo selecionado para Base64 usando FileReader (ou suba para o Supabase Storage e pegue a publicUrl). O file_url DEVE ser uma URL válida (começando com https:// ou data:image/).
- * 
- * Na Renderização (MessageItem.tsx):
- * NUNCA renderize a tag <img> se file_url for nulo, vazio ou "undefined".
- * 
- * Se file_url for uma URL válida:
- * {message.file_url && message.file_url.startsWith('http') && (
- *   <div className="mt-2 max-w-sm rounded-xl overflow-hidden bg-black/40 border border-zinc-800">
- *     <img 
- *       src={message.file_url} 
- *       alt="Imagem anexada" 
- *       className="w-auto max-h-80 object-contain rounded-xl block" 
- *       loading="lazy" 
- *     />
- *   </div>
- * )}
- * 
- * 2. CORRIGIR CRIAÇÃO DE GRUPO DE DMs (CreateGroupModal.tsx):
- * Substitua a lógica de criação de grupo por inserção direta à prova de falhas:
- * 
- * const handleCreateGroup = async () => {
- *   if (selectedFriendIds.length === 0) {
- *     toast.error("Selecione pelo menos 1 amigo para criar o grupo!");
- *     return;
- *   }
- *   setIsLoading(true);
- *   try {
- *     const { data: newGroup, error: groupError } = await supabase
- *       .from('dm_groups')
- *       .insert({
- *         name: groupName.trim() || `Grupo com ${selectedFriendIds.length + 1} membros`,
- *         created_by: user.id
- *       })
- *       .select()
- *       .single();
- *       
- *     if (groupError) throw groupError;
- *     const membersToInsert = [
- *       { group_id: newGroup.id, user_id: user.id },
- *       ...selectedFriendIds.map(friendId => ({ group_id: newGroup.id, user_id: friendId }))
- *     ];
- *     const { error: membersError } = await supabase
- *       .from('dm_group_members')
- *       .insert(membersToInsert);
- *     if (membersError) throw membersError;
- *     toast.success("Grupo criado com sucesso!");
- *     onClose();
- *     await fetchConversations();
- *     onSelectGroup(newGroup.id);
- *   } catch (err: any) {
- *     console.error("Erro ao criar grupo:", err);
- *     toast.error(err.message || "Erro ao criar grupo");
- *   } finally {
- *     setIsLoading(false);
- *   }
- * };
- * 
- * 3. RESTAURAR O SELETOR DE STATUS NO RODAPÉ ESQUERDO (SidebarUserFooter.tsx):
- * Ao clicar no avatar ou no nome teamlume no rodapé da barra lateral:
- * NÃO ABRA O USERPROFILECARD.
- * Abra o Menu Dropdown de Status (Disponível 🟢, Ausente 🟡, Não Perturbe 🔴, Invisível ⚪).
- * Use <DropdownMenuPortal> com z-50 abrindo para cima (side="top"), para que o menu flutue livremente sem quebrar o layout da barra lateral.
- * 
- * VALIDAÇÃO OBRIGATÓRIA:
- * Envie um GIF do menu de GIFs: o GIF animado DEVE carregar e ficar visível na conversa (sem a caixa cinza com texto "Mídia").
- * Clique no + de Mensagens Diretas, selecione um amigo e clique em "Criar Grupo": o modal DEVE fechar e o grupo deve aparecer na lista de conversas.
- * Clique no seu nome no rodapé esquerdo: o menu com as opções de status (Disponível, Ausente, etc.) DEVE abrir.
- * 
- * IMPORTANTE: Execute TODOS os detalhes desta tarefa com máxima precisão. Não ignore nada, não simplifique, implemente EXATAMENTE o que foi pedido.
+ * 1. ESTRUTURA DO CONTAINER PRINCIPAL
+ * - Dock Flutuante (Sidebar 1)
+ * - Aside Flutuante (Sidebar 2)
+ * - Main Canvas Flutuante
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -253,6 +179,8 @@ function DashboardComponent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [dmGroups, setDmGroups] = useState<any[]>([]);
+  const [activeDMGroup, setActiveDMGroup] = useState<any | null>(null);
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
@@ -743,6 +671,20 @@ function DashboardComponent() {
     }
   };
 
+  const fetchConversations = async () => {
+    if (!myProfile?.id) return;
+    
+    // Fetch Group DMs
+    const { data: groupsData, error: groupsError } = await supabase
+      .from('dm_groups')
+      .select('*, dm_group_members!inner(*)')
+      .eq('dm_group_members.user_id', myProfile.id);
+      
+    if (!groupsError && groupsData) {
+      setDmGroups(groupsData);
+    }
+  };
+
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
     
@@ -800,6 +742,7 @@ function DashboardComponent() {
 
   useEffect(() => {
     fetchFriendships();
+    fetchConversations();
     fetchUnreadCounts();
 
     const subFriends = supabase
@@ -1097,7 +1040,7 @@ function DashboardComponent() {
 // Removed the blocking "Sincronizando Perfil..." interface.
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
+    <div className="flex h-full w-full overflow-hidden bg-transparent">
       {/* PAINEL DE INSTRUÇÕES (DEBUG) */}
       {/* Debug Panel removed per UI requirements */}
 
@@ -1316,16 +1259,20 @@ function DashboardComponent() {
           </DialogContent>
         </Dialog>
       {/* COLUNA 2: CANAIS / DMs (LARGURA FIXA 240px NO DESKTOP) */}
-      <aside className="w-60 min-w-[240px] max-w-[240px] shrink-0 h-full bg-[#121214] border-r border-zinc-800/60 flex flex-col justify-between z-20 overflow-hidden">
+      <aside className="w-64 min-w-[256px] max-w-[256px] shrink-0 h-full rounded-3xl bg-[#0d0d11]/80 backdrop-blur-2xl border border-white/5 flex flex-col justify-between p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-20 overflow-hidden">
 
 
 
 
 
 
-        <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm group cursor-pointer" onClick={activeServer ? copyInvite : undefined}>
-          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white">{activeServer?.name || "LUME"}</h2>
-          {activeServer && <UserPlus size={16} className="text-zinc-500 group-hover:text-white" />}
+        <div className="flex h-14 items-center justify-between px-2 mb-4">
+          <h2 className="text-sm font-bold truncate flex-1 tracking-tight text-white uppercase">{activeServer?.name || "LUME"}</h2>
+          {activeServer && (
+            <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors">
+              <UserPlus size={16} />
+            </button>
+          )}
         </div>
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar">
@@ -1627,80 +1574,44 @@ function DashboardComponent() {
           </div>
         )}
 
-        {/* User Footer */}
-        <div className="mt-auto flex items-center gap-3 border-t border-white/5 bg-[#050505]/50 p-2 relative overflow-hidden">
-          <Popover open={showStatusMenu} onOpenChange={setShowStatusMenu}>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors flex-1 min-w-0">
-                <UserAvatar 
-                  avatarUrl={myProfile?.avatar_url}
-                  name={myProfile?.display_name || myProfile?.username}
-                  size="h-9 w-9"
-                  status={myProfile?.status || 'online'}
-                  showStatus={true}
-                  className="shrink-0 object-cover aspect-square"
-                />
-                <div className="flex flex-col items-start flex-1 min-w-0 overflow-hidden text-white">
-                  <div className="flex items-center gap-1 w-full min-w-0">
-                    <p className="truncate text-xs font-bold w-full">{myProfile?.display_name || myProfile?.username || "Usuário Lume"}</p>
-                    {myProfile.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-                  </div>
-                  <p className="truncate text-[10px] text-zinc-500 uppercase tracking-tight w-full">
-                    {myProfile.status === 'online' ? 'Disponível' : 
-                     myProfile.status === 'idle' ? 'Ausente' : 
-                     myProfile.status === 'dnd' ? 'Não Perturbe' : 'Invisível'}
-                  </p>
+        {/* Widget de Voz (Se Conectado) */}
+        {activeVoiceChannel && (
+          <div className="mt-auto mb-4 bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col gap-3">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-zinc-400 truncate uppercase tracking-widest">Voz Conectada</span>
                 </div>
-              </div>
-            </PopoverTrigger>
-            <PopoverPortal>
-              <PopoverContent 
-                side="top" 
-                align="start" 
-                sideOffset={12}
-                className="w-48 bg-[#141416] border border-zinc-800 rounded-lg p-1.5 shadow-2xl z-[50] animate-in slide-in-from-bottom-2 duration-200"
-              >
-                <div className="px-2 py-1.5 mb-1 border-b border-white/5">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Definir Status</span>
-                </div>
-                {[
-                  { id: 'online', label: 'Disponível 🟢', color: '#00D1FF' },
-                  { id: 'idle', label: 'Ausente 🟡', color: '#F59E0B' },
-                  { id: 'dnd', label: 'Não Perturbe 🔴', color: '#EF4444' },
-                  { id: 'offline', label: 'Invisível ⚪', color: '#71717A' }
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleUpdateStatus(s.id as any)}
-                    className="w-full flex items-center gap-3 px-2 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white rounded-md transition-colors text-left"
-                  >
-                    <StatusBadge status={s.id} size="sm" showGlow={s.id === 'online'} />
-                    <span>{s.label}</span>
-                    {myProfile.status === s.id && <Check size={14} className="ml-auto text-[#00D1FF]" />}
-                  </button>
-                ))}
-              </PopoverContent>
-            </PopoverPortal>
-          </Popover>
-          
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
-            title="Configurações"
-          >
-            <Settings size={16} />
-          </button>
-          
-          <button onClick={handleSignOut} className="rounded-md p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-500 transition-colors">
-            <LogOut size={16} />
-          </button>
-        </div>
+                <button 
+                  onClick={() => {
+                    disconnect();
+                    setActiveVoiceChannel(null);
+                    setShowVoiceUI(false);
+                  }}
+                  className="text-zinc-500 hover:text-red-500 transition-colors"
+                >
+                  <PhoneOff size={14} />
+                </button>
+             </div>
+             <div className="flex items-center gap-3">
+               <button onClick={toggleMute} className={`p-2 rounded-xl transition-colors ${isMuted ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+               </button>
+               <button onClick={toggleDeafen} className={`p-2 rounded-xl transition-colors ${isDeafened ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 {isDeafened ? <Headphones size={16} /> : <Headphones size={16} />}
+               </button>
+               <button onClick={toggleScreenShare} className={`p-2 rounded-xl transition-colors ${isSharingScreen ? 'bg-cyan-500/10 text-cyan-400' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
+                 <Monitor size={16} />
+               </button>
+             </div>
+          </div>
+        )}
       </aside>
     </div>
   </div>
 
   {/* COLUNA 3: CHAT / SALA DE VOZ (OCUPA TODO O RESTANTE SEM COMPRIMIR O LADO) */}
-  <main className="flex-1 min-w-0 h-full bg-[#0e0e11] flex flex-col relative overflow-hidden pt-12 md:pt-0">
+  <main className="flex-1 min-w-0 h-full rounded-3xl bg-[#0f0f14]/90 backdrop-blur-2xl border border-white/5 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative overflow-hidden">
     <div className="flex flex-1 flex-col overflow-hidden">
 
 
@@ -1726,7 +1637,28 @@ function DashboardComponent() {
             />
         ) : activeChannel || activeDMFriend ? (
           <>
-            <div className="flex h-12 items-center border-b border-white/5 px-4 shadow-sm">
+            <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
+                <span className="text-zinc-500 font-medium">Lume</span>
+                <span className="text-zinc-600">✦</span>
+                <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
+                {activeChannel && (
+                  <>
+                    <span className="text-zinc-600">✦</span>
+                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                      {activeChannel.type === 'voice' ? '🔊' : '#'} {activeChannel.name}
+                    </span>
+                  </>
+                )}
+                {activeDMFriend && (
+                  <>
+                    <span className="text-zinc-600">✦</span>
+                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                      @ {activeDMFriend.display_name || activeDMFriend.username}
+                    </span>
+                  </>
+                )}
+              </div>
               {activeChannel ? (
                 <>
                   <Hash size={20} className="mr-2 text-zinc-500" />
@@ -1783,7 +1715,7 @@ function DashboardComponent() {
                 <Settings size={18} className="cursor-pointer hover:text-white" />
                 <User size={18} className="cursor-pointer hover:text-white" />
               </div>
-            </div>
+            </header>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, index) => {
@@ -1940,7 +1872,8 @@ function DashboardComponent() {
                 </div>
               )
             ) : (
-            <div className="p-4 pt-0 relative">
+            <div className="p-4 pt-0">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-[#14141a]/90 border border-white/10 shadow-lg focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(0,209,255,0.15)] transition-all relative">
               {showEmojiPicker && (
                 <div className="absolute bottom-full left-4 mb-4 z-50 animate-in fade-in slide-in-from-bottom-2">
                   <div className="fixed inset-0" onClick={() => setShowEmojiPicker(false)} />
@@ -2031,7 +1964,7 @@ function DashboardComponent() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 bg-[#121212] rounded-xl px-2 focus-within:ring-1 focus-within:ring-[#00D1FF]/50 transition-all">
+              <div className="flex-1 flex items-center gap-2">
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -2086,6 +2019,7 @@ function DashboardComponent() {
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
             )}
@@ -2291,14 +2225,17 @@ function DashboardComponent() {
           if (membersError) throw membersError;
           
           toast.success("Grupo criado com sucesso!");
-          // Opcional: navegar ou abrir o grupo
+          await fetchConversations();
+          // We don't have setActiveDMGroup in state yet, but I'll add it
+          setActiveDMGroup(group);
+          setActiveDMFriend(null);
+          setActiveChannel(null);
+          setActiveServer(null);
         } catch (err: any) {
           toast.error("Erro ao criar grupo: " + err.message);
         }
       }}
     />
-
     </div>
   );
-
 }
