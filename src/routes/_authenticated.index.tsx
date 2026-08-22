@@ -1644,7 +1644,7 @@ function DashboardComponent() {
                 <span className="text-zinc-500 font-medium">Lume</span>
                 <span className="text-zinc-600">✦</span>
                 <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
-                {activeChannel && (
+                {activeChannel && activeChannel.name !== 'geral' && activeChannel.name !== 'Sala de Voz' && (
                   <>
                     <span className="text-zinc-600">✦</span>
                     <span className="text-cyan-400 font-bold flex items-center gap-1.5">
@@ -1661,6 +1661,7 @@ function DashboardComponent() {
                   </>
                 )}
               </div>
+
               {activeChannel ? (
                 <>
                   <Hash size={20} className="mr-2 text-zinc-500" />
