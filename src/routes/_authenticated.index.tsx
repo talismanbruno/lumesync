@@ -240,16 +240,19 @@ function DashboardComponent() {
   
   const {
     participants,
-    allParticipantsInRoom,
+    connectionStatus,
     screenStream,
     isMuted,
     isDeafened,
     isSharingScreen,
+    isNoiseSuppressionEnabled,
+    isNoiseSuppressionSupported,
     remoteVideoStreams,
     peerConnections,
     toggleMute,
     toggleDeafen,
     toggleScreenShare,
+    toggleNoiseSuppression,
     disconnect
   } = useVoiceRoom(activeVoiceChannel ? `server-channel-${activeVoiceChannel.id}` : null, myProfile);
 
@@ -353,7 +356,9 @@ function DashboardComponent() {
             user_id: p.id,
             username: p.username,
             display_name: p.display_name,
-            avatar_url: p.avatar_url
+            avatar_url: p.avatar_url,
+            isSpeaking: p.isSpeaking,
+            isMuted: p.isMuted
           }));
         }
 
