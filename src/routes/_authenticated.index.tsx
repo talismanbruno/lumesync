@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare } from "lucide-react";
+import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
@@ -249,7 +249,7 @@ function DashboardComponent() {
     toggleDeafen,
     toggleScreenShare,
     disconnect
-  } = useVoiceRoom(activeVoiceChannel?.id || null, myProfile);
+  } = useVoiceRoom(activeVoiceChannel ? `server-channel-${activeVoiceChannel.id}` : null, myProfile);
 
 
   const scrollToBottom = () => {
@@ -1765,6 +1765,18 @@ function DashboardComponent() {
                     {getGroupTitle(activeDMGroup, myProfile.id)}
                   </span>
                   <div className="ml-auto flex items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        const roomKey = `dm-group-${activeDMGroup.id}`;
+                        // Aqui seria disparado o convite via broadcast no futuro
+                        setActiveVoiceChannel({ id: roomKey, name: getGroupTitle(activeDMGroup, myProfile.id), type: 'voice', server_id: 'dm' });
+                        setShowVoiceUI(true);
+                      }}
+                      className="p-2 text-zinc-400 hover:text-cyan-400 transition-colors"
+                      title="Chamada de voz"
+                    >
+                      <Phone size={18} />
+                    </button>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="p-2 text-zinc-400 hover:text-zinc-200 transition-colors">
@@ -1831,6 +1843,22 @@ function DashboardComponent() {
                   />
                   <span className="text-sm font-bold truncate">{activeDMFriend?.display_name || activeDMFriend?.username}</span>
                   {isBotChat && <BadgeCheck size={15} className="text-cyan-400 shrink-0" />}
+                  {!isBotChat && activeDMFriend && (
+                    <div className="ml-auto flex items-center gap-2">
+                      <button 
+                        onClick={() => {
+                          const ids = [myProfile.id, activeDMFriend.id].sort();
+                          const roomKey = `dm-1to1-${ids[0]}-${ids[1]}`;
+                          setActiveVoiceChannel({ id: roomKey, name: getDisplayName(activeDMFriend), type: 'voice', server_id: 'dm' });
+                          setShowVoiceUI(true);
+                        }}
+                        className="p-2 text-zinc-400 hover:text-cyan-400 transition-colors"
+                        title="Chamada de voz"
+                      >
+                        <Phone size={18} />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </header>
