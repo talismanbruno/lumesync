@@ -11,12 +11,14 @@ interface VoiceRoomUIProps {
   isMuted: boolean;
   isDeafened: boolean;
   isSharingScreen: boolean;
+  isNoiseSuppressionEnabled: boolean;
   screenStream: MediaStream | null;
   remoteVideoStreams: React.MutableRefObject<Map<string, MediaStream>>;
   peerConnections: React.MutableRefObject<Map<string, RTCPeerConnection>>;
   toggleMute: () => void;
   toggleDeafen: () => void;
   toggleScreenShare: () => void;
+  toggleNoiseSuppression: () => void;
   onDisconnect: () => void;
   onClose?: () => void;
 }
