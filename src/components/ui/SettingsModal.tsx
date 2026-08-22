@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import { useEffect } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,16 +20,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
 
-  const handleClose = () => {
-    onClose();
-  };
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [onClose]);
 
   return (
     <Dialog 
       open={isOpen} 
       onOpenChange={(open) => { 
         if (open === false) {
-          handleClose(); 
+          onClose(); 
         }
       }}
     >
@@ -38,7 +49,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           showCloseButton={false}
           onEscapeKeyDown={(event) => {
             event.preventDefault();
-            handleClose();
+            onClose();
           }}
           className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[100]"
         >
@@ -92,11 +103,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* Botão de Fechar Único e Direto */}
           <button 
             type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              handleClose();
-            }}
+            onClick={() => onClose()}
             className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full border border-zinc-800 bg-[#0A0A0C] text-zinc-400 hover:text-white hover:border-zinc-700 transition-all z-[100] cursor-pointer"
             aria-label="Fechar configurações"
           >
