@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserAvatar } from './UserAvatar';
-import { MessageSquare, Phone, UserPlus, Clock, Users, Plus, X, Search } from 'lucide-react';
+import { MessageSquare, Phone, UserPlus, Clock, Users, Plus, X, Search, Check } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 import { Button } from './button';
 import { Input } from './input';
