@@ -114,6 +114,38 @@ type Friendship = {
 };
 
 function DashboardComponent() {
+  const getDisplayName = (profile: any) => {
+    if (!profile) return "Usuário";
+    const name = (profile.display_name || profile.username || "").trim();
+    return name || "Usuário";
+  };
+
+  const getGroupTitle = (group: any, currentUserId: string) => {
+    if (!group) return "Grupo";
+    if (group.name && group.name.trim()) return group.name;
+
+    const members = group.dm_group_members || [];
+    if (members.length === 0) return "Carregando...";
+
+    const others = members
+      .filter((m: any) => m.user_id !== currentUserId)
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.joined_at || a.created_at || 0).getTime();
+        const dateB = new Date(b.joined_at || b.created_at || 0).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return a.user_id.localeCompare(b.user_id);
+      });
+
+    if (others.length === 0) return "Grupo Vazio";
+
+    const names = others.map((m: any) => getDisplayName(m.profiles));
+
+    if (others.length === 1) return names[0];
+    if (others.length === 2) return `${names[0]} e ${names[1]}`;
+    return `${names[0]}, ${names[1]} +${others.length - 2}`;
+  };
+
+
   const navigate = useNavigate();
   const { profile: globalProfile, user: authUser, signOut, updateProfile } = useAuth();
   
@@ -692,16 +724,23 @@ function DashboardComponent() {
   const fetchConversations = async () => {
     if (!myProfile?.id) return;
     
-    // Fetch Group DMs
+    // Fetch Group DMs with detailed members
     const { data: groupsData, error: groupsError } = await supabase
       .from('dm_groups')
-      .select('*, dm_group_members!inner(*)')
+      .select('*, dm_group_members!inner(*, profiles(*))')
       .eq('dm_group_members.user_id', myProfile.id);
       
     if (!groupsError && groupsData) {
       setDmGroups(groupsData);
+      
+      // Update active group if it exists
+      if (activeDMGroup) {
+        const updatedActive = groupsData.find((g: any) => g.id === activeDMGroup.id);
+        if (updatedActive) setActiveDMGroup(updatedActive);
+      }
     }
   };
+
 
   const fetchFriendships = async () => {
     if (!myProfile?.id) return;
@@ -784,11 +823,23 @@ function DashboardComponent() {
       }, fetchUnreadCounts)
       .subscribe();
 
+    // Listen for Group DM member changes
+    const subGroupMembers = supabase
+      .channel('dm_group_members_realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'dm_group_members' 
+      }, fetchConversations)
+      .subscribe();
+
     return () => { 
       supabase.removeChannel(subFriends);
       supabase.removeChannel(subMessages);
+      supabase.removeChannel(subGroupMembers);
     };
   }, [myProfile?.id]);
+
 
   // Realtime Status for Profiles
   useEffect(() => {
@@ -1366,7 +1417,7 @@ function DashboardComponent() {
       <aside className="w-[240px] shrink-0 bg-[#0a0a0b] border-r border-white/5 flex flex-col overflow-x-hidden">
         <header className="h-14 px-4 flex items-center justify-between border-b border-white/5 shrink-0 overflow-hidden">
           <span className="text-sm font-bold truncate text-zinc-100">
-            {activeServer ? activeServer.name : "Mensagens Diretas"}
+            {activeServer ? activeServer.name : (activeDMGroup ? getGroupTitle(activeDMGroup, myProfile.id) : "Mensagens Diretas")}
           </span>
           {activeServer ? (
             <button onClick={copyInvite} className="p-1.5 text-zinc-500 hover:text-cyan-400 transition-colors shrink-0" title="Copiar convite">
@@ -1378,6 +1429,7 @@ function DashboardComponent() {
             </button>
           )}
         </header>
+
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none px-2 py-3 space-y-4">
           {activeServer ? (

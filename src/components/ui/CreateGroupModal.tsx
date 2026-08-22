@@ -64,8 +64,9 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
       const { data: newGroup, error: groupError } = await supabase
         .from('dm_groups')
         .insert({
-          name: groupName.trim() || `Grupo com ${selectedFriends.length + 1} membros`,
+          name: groupName.trim() || null,
           created_by: myProfile.id
+
         })
         .select()
         .single();
@@ -89,8 +90,9 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
       
       // Auto-open the new group
       if (onCreateGroup) {
-        onCreateGroup([myProfile.id, ...selectedFriends], groupName.trim() || `Grupo com ${selectedFriends.length + 1} membros`);
+        onCreateGroup([myProfile.id, ...selectedFriends], groupName.trim() || null);
       }
+
       
       if ((window as any).refreshConversations) {
         (window as any).refreshConversations();
