@@ -1821,25 +1821,39 @@ function DashboardComponent() {
         myProfile={myProfile}
         friendships={friendships}
         onCreateGroup={async (memberIds: string[], name?: string | null) => {
+          if (isCreatingGroup) return;
+          setIsCreatingGroup(true);
           try {
+            console.log("[CreateGroup] Iniciando criação:", { memberIds, name });
+            
             const { data: group, error: groupError } = await supabase
               .from('dm_groups')
-              .insert({ name: name || null, created_by: myProfile.id })
+              .insert({ name: name || null, created_by: dbProfile?.id || authUser?.id })
               .select()
               .single();
 
-            if (groupError) throw groupError;
+            if (groupError) {
+              console.error("[CreateGroup] Erro ao criar grupo:", groupError);
+              throw groupError;
+            }
+
+            console.log("[CreateGroup] Grupo criado:", group.id);
 
             const memberInserts = Array.from(new Set(memberIds)).map(uid => ({
               group_id: group.id,
               user_id: uid,
             }));
 
+            console.log("[CreateGroup] Inserindo membros:", memberInserts);
+
             const { error: membersError } = await supabase
               .from('dm_group_members')
               .insert(memberInserts);
 
-            if (membersError) throw membersError;
+            if (membersError) {
+              console.error("[CreateGroup] Erro ao inserir membros:", membersError);
+              throw membersError;
+            }
 
             toast.success("Grupo criado com sucesso!");
             openGroup(group);
@@ -1847,8 +1861,11 @@ function DashboardComponent() {
             if (typeof fetchConversations === 'function') fetchConversations();
           } catch (err: any) {
             toast.error("Erro ao criar grupo: " + err.message);
+          } finally {
+            setIsCreatingGroup(false);
           }
         }}
+
       />
     </div>
   );
