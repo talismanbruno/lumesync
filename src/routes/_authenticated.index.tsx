@@ -153,9 +153,11 @@ function DashboardComponent() {
 
 
   
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   // Local state as fallback/override if needed, but primary is from context
   const [currentUser, setCurrentUser] = useState<{ id: string, email?: string | null | undefined } | null>(null);
   const [dbProfile, setDbProfile] = useState<Profile | null>(null);
+
 
   useEffect(() => {
     if (authUser) {
