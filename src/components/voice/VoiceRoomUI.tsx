@@ -132,8 +132,8 @@ export const VoiceRoomUI: React.FC<VoiceRoomUIProps> = ({
                   size="h-5 w-5"
                   className="border border-white/10"
                 />
-                <span className="text-xs font-medium text-white flex items-center gap-1.5">
-                  {activeWatchingStream.userId === myProfile.id ? "Sua Transmissão" : `Transmissão de ${activeWatchingStream.username}`}
+                <span className="text-xs font-medium text-white flex items-center gap-1.5 min-w-0">
+                  <span className="truncate">{activeWatchingStream.userId === myProfile.id ? "Sua Transmissão" : `Transmissão de ${activeWatchingStream.username}`}</span>
                   <AdminVerifiedBadge isAdmin={participants.find(p => p.id === activeWatchingStream.userId)?.is_admin} size={12} />
                 </span>
                 <div className="flex items-center gap-1 bg-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold text-white ml-2">
