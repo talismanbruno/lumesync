@@ -28,7 +28,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { profile, user, isAuthChecking } = useAuth();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
