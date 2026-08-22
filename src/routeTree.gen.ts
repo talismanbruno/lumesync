@@ -35,3 +35,21 @@ export const routeTree = rootRoute.addChildren([
   onboardingRoute,
   authenticatedRoute.addChildren([authenticatedIndexRoute]),
 ])
+
+export interface FileRoutesByPath {
+  '/': {
+    parentRoute: typeof rootRoute
+  }
+  '/auth': {
+    parentRoute: typeof rootRoute
+  }
+  '/onboarding': {
+    parentRoute: typeof rootRoute
+  }
+  '/_authenticated': {
+    parentRoute: typeof rootRoute
+  }
+  '/_authenticated/': {
+    parentRoute: typeof authenticatedRoute
+  }
+}
