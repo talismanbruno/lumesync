@@ -1542,9 +1542,12 @@ function DashboardComponent() {
                     <div className="h-8 w-8 shrink-0 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
                       <Users size={14} />
                     </div>
-                    <span className="truncate text-sm text-zinc-300">{group.name || "Grupo"}</span>
+                    <span className="truncate text-sm text-zinc-300">
+                      {getGroupTitle(group, myProfile.id)}
+                    </span>
                   </button>
                 ))}
+
 
                 {friendsList.map(friend => (
                   <button
