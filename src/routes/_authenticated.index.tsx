@@ -44,6 +44,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { SettingsModal } from "@/components/ui/SettingsModal";
 import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
+import { FriendsView } from "@/components/ui/FriendsView";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -1118,9 +1120,15 @@ function DashboardComponent() {
                 <span>Servidores</span>
               </button>
               <button 
-                onClick={() => { setActiveTab('amigos'); setActiveServer(null); setActiveDMFriend(null); }}
+                onClick={() => { 
+                  setActiveTab('amigos'); 
+                  setActiveServer(null); 
+                  setActiveDMFriend(null); 
+                  setActiveChannel(null); 
+                }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${activeTab === 'amigos' ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
               >
+
                 <Users size={12} />
                 <span>Amigos</span>
               </button>
@@ -1370,7 +1378,6 @@ function DashboardComponent() {
 
         <div className="flex flex-1 flex-col overflow-hidden w-full">
           {activeVoiceChannel && showVoiceUI ? (
-
             <VoiceRoomUI
               participants={participants}
               myProfile={myProfile}
@@ -1390,42 +1397,35 @@ function DashboardComponent() {
               }}
               onClose={() => setShowVoiceUI(false)}
             />
-          ) : activeChannel || activeDMFriend ? (
+          ) : activeTab === 'amigos' ? (
+            <FriendsView 
+              activeSubTab={friendFilter}
+              friendships={friendships}
+              myProfile={myProfile}
+              onSelectDM={(friend) => {
+                setActiveDMFriend(friend);
+                setActiveTab('conversas');
+              }}
+              onAcceptRequest={handleAcceptFriendRequest}
+              onDeclineRequest={handleDeclineFriendRequest}
+              onSendRequest={handleSendFriendRequest}
+            />
+          ) : activeDMFriend ? (
             <>
               <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
                 <div className="flex items-center gap-2 text-sm text-zinc-300">
                   <span className="text-zinc-500 font-medium">Lume</span>
                   <span className="text-zinc-600">✦</span>
-                  <span className="text-zinc-300 font-semibold">{activeServer?.name || "Home"}</span>
-                  {activeChannel && activeChannel.name !== 'geral' && activeChannel.name !== 'Sala de Voz' && (
-                    <>
-                      <span className="text-zinc-600">✦</span>
-                      <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                        {activeChannel.type === 'voice' ? '🔊' : '#'} {activeChannel.name}
-                      </span>
-                    </>
-                  )}
-                  {activeDMFriend && (
-                    <>
-                      <span className="text-zinc-600">✦</span>
-                      <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                        @ {activeDMFriend.display_name || activeDMFriend.username}
-                      </span>
-                    </>
-                  )}
+                  <span className="text-zinc-300 font-semibold">Mensagens Diretas</span>
+                  <span className="text-zinc-600">✦</span>
+                  <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                    @ {activeDMFriend.display_name || activeDMFriend.username}
+                  </span>
                 </div>
-                
-                {activeServer && (
-                  <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                    <UserPlus size={14} />
-                    <span>Convidar</span>
-                  </button>
-                )}
               </header>
 
               <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 custom-scrollbar">
                 <div className="space-y-6">
-
                   {messages.map((msg, idx) => (
                     <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
@@ -1478,10 +1478,8 @@ function DashboardComponent() {
                 </div>
               </div>
 
-              {/* Message Input */}
               <div className="w-full max-w-5xl px-8 pb-8 bg-gradient-to-t from-[#050505] to-transparent">
                 <div className="relative group">
-
                   {attachmentPreview && (
                     <div className="absolute bottom-full left-0 mb-4 p-2 bg-[#121214] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2">
                       <div className="relative">
@@ -1525,8 +1523,151 @@ function DashboardComponent() {
                           handleSendMessage(e as any);
                         }
                       }}
-                      placeholder={isBotChat ? "Canal oficial (somente leitura)" : `Conversar em ${activeChannel ? '#' + activeChannel.name : '@' + (activeDMFriend?.display_name || activeDMFriend?.username)}`}
+                      placeholder={isBotChat ? "Canal oficial (somente leitura)" : `Conversar com @${activeDMFriend.display_name || activeDMFriend.username}`}
                       disabled={isBotChat && !myProfile.is_admin}
+                      className="flex-1 bg-transparent border-none text-sm text-white py-2.5 px-2 resize-none max-h-32 focus:ring-0 placeholder:text-zinc-600 custom-scrollbar"
+                      rows={1}
+                    />
+                    <div className="flex items-center gap-1">
+                      <button 
+                        type="button"
+                        onClick={() => setShowGifPicker(!showGifPicker)}
+                        className={`p-2 transition-colors ${showGifPicker ? "text-cyan-400" : "text-zinc-500 hover:text-white"}`}
+                      >
+                        <Film size={20} />
+                      </button>
+                      <button 
+                        type="submit"
+                        disabled={(!newMessage.trim() && !selectedFile) || isUploading}
+                        className="p-2.5 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(0,209,255,0.2)] disabled:opacity-50"
+                      >
+                        <Send size={18} />
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </>
+          ) : activeChannel ? (
+            <>
+              <header className="h-14 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-transparent">
+                <div className="flex items-center gap-2 text-sm text-zinc-300">
+                  <span className="text-zinc-500 font-medium">Lume</span>
+                  <span className="text-zinc-600">✦</span>
+                  <span className="text-zinc-300 font-semibold">{activeServer?.name}</span>
+                  <span className="text-zinc-600">✦</span>
+                  <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                    # {activeChannel.name}
+                  </span>
+                </div>
+                {activeServer && (
+                  <button onClick={copyInvite} className="p-2 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <UserPlus size={14} />
+                    <span>Convidar</span>
+                  </button>
+                )}
+              </header>
+
+              <div className="flex-1 w-full max-w-5xl px-8 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+                <div className="space-y-6">
+                  {messages.map((msg, idx) => (
+                    <div key={msg.id || idx} className="group flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <UserProfileCard user={msg.profile || ({} as Profile)} isMe={msg.user_id === myProfile.id}>
+                        <div className="shrink-0 cursor-pointer">
+                          <UserAvatar 
+                            avatarUrl={msg.profile?.avatar_url}
+                            name={msg.profile?.display_name || msg.profile?.username}
+                            size="h-10 w-10"
+                            className="rounded-xl border border-white/5 shadow-lg"
+                          />
+                        </div>
+                      </UserProfileCard>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-bold text-white hover:underline cursor-pointer">
+                            {msg.profile?.display_name || msg.profile?.username || 'Usuário'}
+                          </span>
+                          <span className="text-[10px] text-zinc-600 font-medium">
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="text-sm text-zinc-300 leading-relaxed break-words">
+                          <MessageText content={msg.content} />
+                        </div>
+                        {msg.file_url && (
+                          <div className="mt-2 rounded-2xl overflow-hidden border border-white/5 bg-black/20 max-w-sm">
+                            {msg.file_type?.startsWith('image/') ? (
+                              <PhotoProvider>
+                                <PhotoView src={msg.file_url}>
+                                  <img src={msg.file_url} alt="Attachment" className="w-full h-auto cursor-zoom-in hover:opacity-90 transition-opacity" />
+                                </PhotoView>
+                              </PhotoProvider>
+                            ) : msg.file_type?.startsWith('video/') ? (
+                              <video src={msg.file_url} controls className="w-full h-auto" />
+                            ) : (
+                              <div className="p-4 flex items-center gap-3">
+                                <FileText className="text-cyan-400" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-white truncate">{msg.file_name || 'Arquivo'}</p>
+                                  <a href={msg.file_url} download className="text-[10px] text-cyan-400 hover:underline">Download</a>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+              </div>
+
+              <div className="w-full max-w-5xl px-8 pb-8 bg-gradient-to-t from-[#050505] to-transparent">
+                <div className="relative group">
+                  {attachmentPreview && (
+                    <div className="absolute bottom-full left-0 mb-4 p-2 bg-[#121214] border border-white/5 rounded-2xl animate-in slide-in-from-bottom-2">
+                      <div className="relative">
+                        <img src={attachmentPreview} alt="Preview" className="h-32 w-auto rounded-xl object-cover" />
+                        <button onClick={() => { setAttachmentPreview(null); setSelectedFile(null); }} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full shadow-lg">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <form 
+                    onSubmit={handleSendMessage}
+                    className="flex items-end gap-2 bg-[#121214] border border-white/5 rounded-2xl p-2 focus-within:border-cyan-500/30 transition-all shadow-2xl"
+                  >
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-2.5 text-zinc-500 hover:text-white transition-colors"
+                    >
+                      <Plus size={20} />
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSelectedFile(file);
+                          if (file.type.startsWith('image/')) setAttachmentPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e as any);
+                        }
+                      }}
+                      placeholder={`Conversar em #${activeChannel.name}`}
                       className="flex-1 bg-transparent border-none text-sm text-white py-2.5 px-2 resize-none max-h-32 focus:ring-0 placeholder:text-zinc-600 custom-scrollbar"
                       rows={1}
                     />
@@ -1577,6 +1718,7 @@ function DashboardComponent() {
             </div>
           )}
         </div>
+
       </main>
 
       <SettingsModal 

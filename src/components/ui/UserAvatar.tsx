@@ -20,7 +20,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   status,
   showStatus = false
 }) => {
-  const userInitials = initials || name.substring(0, 2).toUpperCase();
+  const userInitials = initials || (name && name.length >= 2 ? name.substring(0, 2).toUpperCase() : 'LM');
 
   return (
     <div className={cn(
@@ -28,14 +28,19 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       size,
       className
     )}>
-      {avatarUrl ? (
+      {avatarUrl && avatarUrl.trim() !== "" ? (
         <img 
           src={avatarUrl} 
           alt={name} 
           className="w-full h-full object-cover aspect-square block select-none" 
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
         />
       ) : (
-        <span className="font-bold text-white uppercase">{userInitials}</span>
+        <div className="w-full h-full rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-cyan-400 select-none">
+          {userInitials}
+        </div>
       )}
       
       {showStatus && status && (
