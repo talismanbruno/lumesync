@@ -9,16 +9,25 @@ import { toast } from 'sonner';
 
 interface FriendsViewProps {
   activeSubTab: 'online' | 'all' | 'pending' | 'add';
+  onChangeSubTab?: (tab: 'online' | 'all' | 'pending' | 'add') => void;
   friendships: any[];
   myProfile: any;
   onSelectDM: (friend: any) => void;
   onAcceptRequest: (id: string) => void;
   onDeclineRequest: (id: string) => void;
-  onSendRequest: (username: string) => void;
+  onSendRequest?: (username: string) => void;
 }
+
+const TABS: { key: 'online' | 'all' | 'pending' | 'add'; label: string }[] = [
+  { key: 'online', label: 'Disponível' },
+  { key: 'all', label: 'Todos' },
+  { key: 'pending', label: 'Pendentes' },
+  { key: 'add', label: 'Adicionar Amigo' },
+];
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
   activeSubTab,
+  onChangeSubTab,
   friendships,
   myProfile,
   onSelectDM,
@@ -34,24 +43,38 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     .filter(Boolean);
 
   const onlineFriends = friends.filter(f => f.status && f.status !== 'offline');
-  
+
   const pendingIncoming = friendships.filter(f => f.status === 'pending' && f.addressee_id === myProfile.id);
-  const pendingOutgoing = friendships.filter(f => f.status === 'pending' && f.requester_id === myProfile.id);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full">
-      <header className="h-14 px-6 border-b border-white/5 flex items-center shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-zinc-300">
-            <Users size={18} className="text-zinc-500" />
-            <span className="font-bold text-sm">Amigos</span>
-          </div>
-          <div className="h-6 w-px bg-white/5 mx-2" />
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-2">Visualizar</span>
-          </div>
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <header className="h-14 px-6 border-b border-white/5 flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-2 text-zinc-300 shrink-0">
+          <Users size={18} className="text-zinc-500" />
+          <span className="font-bold text-sm">Amigos</span>
+        </div>
+        <div className="h-6 w-px bg-white/5" />
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => onChangeSubTab?.(tab.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeSubTab === tab.key
+                  ? tab.key === 'add'
+                    ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(0,209,255,0.25)]'
+                    : 'bg-white/10 text-white'
+                  : tab.key === 'add'
+                    ? 'text-cyan-400 hover:bg-cyan-500/10'
+                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </header>
+
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
         {activeSubTab === 'online' && (
