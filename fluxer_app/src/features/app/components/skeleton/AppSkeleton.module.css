@@ -33,7 +33,7 @@
 	width: min(32rem, 80vw);
 	aspect-ratio: 1;
 	transform: translate(-50%, -50%);
-	border: 1px solid rgb(0 209 255 / 8%);
+	border: var(--skeleton-chrome-border);
 	border-radius: 50%;
 	box-shadow:
 		0 0 8rem rgb(0 209 255 / 5%),
@@ -67,14 +67,14 @@
 
 .orbitRingOuter {
 	inset: 0;
-	border: 1px solid rgb(0 209 255 / 16%);
+	border: var(--skeleton-chrome-border);
 	border-top-color: rgb(0 209 255 / 72%);
 	animation: lume-orbit-spin 2.8s linear infinite;
 }
 
 .orbitRingInner {
 	inset: 0.75rem;
-	border: 1px solid rgb(255 255 255 / 8%);
+	border: var(--skeleton-chrome-border);
 	border-right-color: rgb(255 255 255 / 50%);
 	animation: lume-orbit-spin-reverse 2s linear infinite;
 }
@@ -92,7 +92,7 @@
 	place-items: center;
 	width: 5.5rem;
 	aspect-ratio: 1;
-	border: 1px solid rgb(255 255 255 / 7%);
+	border: var(--skeleton-chrome-border);
 	border-radius: 1.75rem;
 	background: rgb(4 8 9 / 92%);
 	box-shadow:
