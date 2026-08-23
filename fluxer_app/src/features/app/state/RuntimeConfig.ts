@@ -241,7 +241,7 @@ function applyDocumentBranding(appPublic: InstanceAppPublic): void {
 	lastAppliedDocumentProductName = productName;
 	upsertDocumentMeta('application-name', productName);
 	upsertDocumentMeta('apple-mobile-web-app-title', productName);
-	const faviconUrl = appPublic.branding.favicon_url ?? appPublic.branding.icon_url ?? '/lume/lume-logo.png';
+	const faviconUrl = '/lume/lume-favicon-v2.png';
 	if (faviconUrl) {
 		upsertDocumentLink('icon', faviconUrl);
 	} else {
@@ -517,7 +517,7 @@ class RuntimeConfig {
 	}
 
 	get faviconUrl(): string | null {
-		return this.appPublic.branding.favicon_url ?? this.iconUrl;
+		return '/lume/lume-favicon-v2.png';
 	}
 
 	get themeColor(): string | null {

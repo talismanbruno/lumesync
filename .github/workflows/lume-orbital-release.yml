@@ -8,7 +8,6 @@ on:
     paths:
       - .github/workflows/lume-orbital-release.yml
       - fluxer_app/**
-      - fluxer_api/**
       - fluxer_app_proxy/**
       - fluxer_common/**
       - fluxer_svc/**
@@ -55,30 +54,14 @@ jobs:
           cache-from: type=gha,scope=lume-orbital-app
           cache-to: type=gha,mode=max,scope=lume-orbital-app
 
-      - name: Build Lume API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: fluxer_api/Dockerfile
-          load: true
-          tags: lume-api:${{ github.sha }}
-          build-args: |
-            BUILD_VERSION=${{ github.sha }}
-          cache-from: type=gha,scope=lume-orbital-api
-          cache-to: type=gha,mode=max,scope=lume-orbital-api
-
       - name: Package image for Oracle deployment
         shell: bash
         run: |
           set -euo pipefail
           docker image inspect "lume-orbital:${GITHUB_SHA}" >/dev/null
-          docker image inspect "lume-api:${GITHUB_SHA}" >/dev/null
           docker save "lume-orbital:${GITHUB_SHA}" | gzip -1 > lume-orbital-amd64.tar.gz
-          docker save "lume-api:${GITHUB_SHA}" | gzip -1 > lume-api-amd64.tar.gz
           sha256sum lume-orbital-amd64.tar.gz > lume-orbital-amd64.tar.gz.sha256
-          sha256sum lume-api-amd64.tar.gz > lume-api-amd64.tar.gz.sha256
           printf '%s\n' "lume-orbital:${GITHUB_SHA}" > lume-orbital-image.txt
-          printf '%s\n' "lume-api:${GITHUB_SHA}" > lume-api-image.txt
 
       - name: Publish edge deployment assets
         env:
@@ -97,7 +80,4 @@ jobs:
             lume-orbital-amd64.tar.gz \
             lume-orbital-amd64.tar.gz.sha256 \
             lume-orbital-image.txt \
-            lume-api-amd64.tar.gz \
-            lume-api-amd64.tar.gz.sha256 \
-            lume-api-image.txt \
             --clobber
