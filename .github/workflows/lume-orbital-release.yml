@@ -1,0 +1,83 @@
+name: Build Lume Orbital image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - rebrand/lume-foundation
+    paths:
+      - .github/workflows/lume-orbital-release.yml
+      - fluxer_app/**
+      - fluxer_app_proxy/**
+      - fluxer_common/**
+      - fluxer_svc/**
+      - packages/**
+      - patches/**
+      - tools/ci/**
+      - Cargo.lock
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - tsconfigs/**
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lume-orbital-edge
+  cancel-in-progress: true
+
+jobs:
+  build-image:
+    name: Build deployable app image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Lume app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: fluxer_app_proxy/Dockerfile
+          load: true
+          tags: lume-orbital:${{ github.sha }}
+          build-args: |
+            BUILD_VERSION=${{ github.sha }}
+            BUNDLE_LOCAL_ASSETS=true
+            FLUXER_APP_PROXY_TIME_FREEZE_ENABLED=false
+          cache-from: type=gha,scope=lume-orbital-app
+          cache-to: type=gha,mode=max,scope=lume-orbital-app
+
+      - name: Package image for Oracle deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker image inspect "lume-orbital:${GITHUB_SHA}" >/dev/null
+          docker save "lume-orbital:${GITHUB_SHA}" | gzip -1 > lume-orbital-amd64.tar.gz
+          sha256sum lume-orbital-amd64.tar.gz > lume-orbital-amd64.tar.gz.sha256
+          printf '%s\n' "lume-orbital:${GITHUB_SHA}" > lume-orbital-image.txt
+
+      - name: Publish edge deployment assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view lume-orbital-edge >/dev/null 2>&1; then
+            gh release create lume-orbital-edge \
+              --target "${GITHUB_SHA}" \
+              --title "Lume Orbital Edge" \
+              --notes "Imagem de implantação contínua do frontend Lume." \
+              --prerelease
+          fi
+          gh release upload lume-orbital-edge \
+            lume-orbital-amd64.tar.gz \
+            lume-orbital-amd64.tar.gz.sha256 \
+            lume-orbital-image.txt \
+            --clobber
