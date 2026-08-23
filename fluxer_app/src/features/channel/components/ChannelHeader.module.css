@@ -4,7 +4,7 @@
 	--channel-header-text-primary: var(--text-primary);
 	--channel-header-text-muted: var(--text-primary-muted);
 	--channel-header-text-tertiary: var(--text-tertiary);
-	--channel-header-divider-color: var(--background-modifier-hover);
+	--channel-header-divider-color: var(--lume-line);
 	--channel-header-hover-background: color-mix(in srgb, #fff 6%, transparent);
 	--channel-header-update-icon-color: #22c55e;
 	--voice-call-header-text: var(--text-primary);
@@ -15,14 +15,14 @@
 	gap: var(--channel-header-gap);
 	height: var(--layout-header-height);
 	min-height: var(--layout-header-height);
-	border-bottom: 0.0625rem solid var(--user-area-divider-color);
-	background-color: var(--background-secondary-lighter);
+	border-bottom: 0.0625rem solid var(--lume-line);
+	background: linear-gradient(90deg, rgba(0, 209, 255, 0.025), transparent 28%), var(--lume-bg-canvas);
 	padding: 0 var(--channel-header-padding-inline);
 	color: var(--channel-header-text-primary);
 }
 
 .headerWrapper {
-	--channel-header-background: var(--background-secondary-lighter);
+	--channel-header-background: var(--lume-bg-canvas);
 	background-color: var(--channel-header-background);
 	display: flex;
 	flex-direction: column;
@@ -68,8 +68,9 @@
 	align-items: center;
 	gap: var(--spacing-4);
 	padding: var(--spacing-3) var(--spacing-4);
-	border-top: 0.0625rem solid color-mix(in srgb, #fff 10%, transparent);
-	background-color: #000;
+	border-top: 0.0625rem solid var(--lume-cyan-line);
+	border-bottom: 0.0625rem solid var(--lume-line);
+	background: linear-gradient(90deg, rgba(0, 209, 255, 0.075), transparent 42%), var(--lume-bg-panel);
 	color: var(--text-primary);
 }
 

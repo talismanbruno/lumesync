@@ -53,19 +53,27 @@
 	gap: 0.75rem;
 	width: 100%;
 	border: none;
-	background-color: var(--background-secondary-alt);
+	background: linear-gradient(110deg, rgba(0, 209, 255, 0.018), transparent 34%), var(--lume-bg-elevated);
+	border: 0.0625rem solid var(--lume-line);
 	color: var(--text-primary);
 	border-radius: var(--radius-lg);
 	padding: 0.75rem 1rem;
 	cursor: pointer;
 	text-align: left;
-	transition: background-color 0.15s;
+	transition:
+		background-color 180ms var(--lume-easing),
+		border-color 180ms var(--lume-easing),
+		transform 180ms var(--lume-easing),
+		box-shadow 180ms var(--lume-easing);
 	-webkit-tap-highlight-color: transparent;
 }
 
 @media (hover: hover) and (pointer: fine) {
 	.friendItem:hover {
-		background-color: var(--background-modifier-hover);
+		background-color: color-mix(in srgb, var(--lume-bg-elevated) 92%, var(--lume-cyan) 8%);
+		border-color: var(--lume-cyan-line);
+		box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.22);
+		transform: translateY(-0.0625rem);
 	}
 }
 

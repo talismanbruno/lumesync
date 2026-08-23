@@ -4,7 +4,7 @@
 	"private": true,
 	"description": "Lume is an open-source instant messaging and VoIP app built for friends, groups, gamers, and communities.",
 	"homepage": "https://lumesync.vercel.app",
-	"author": "Fluxer Platform AB <support@fluxer.app>",
+	"author": "Lume Team",
 	"sideEffects": [
 		"*.css",
 		"**/*.css"

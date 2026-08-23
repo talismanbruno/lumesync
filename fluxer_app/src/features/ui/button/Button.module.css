@@ -11,7 +11,7 @@
 	height: 2.25rem;
 	min-height: 2.25rem;
 	min-width: 4.5rem;
-	border-radius: 0.5rem;
+	border-radius: var(--radius-lg);
 	border: 0.0625rem solid transparent;
 	cursor: pointer;
 	appearance: none;
@@ -22,11 +22,12 @@
 	max-width: 100%;
 	outline: none;
 	transition:
-		background-color 0.12s ease,
-		border-color 0.12s ease,
-		box-shadow 0.12s ease,
-		color 0.12s ease,
-		opacity 0.12s ease;
+		background-color 180ms var(--lume-easing),
+		border-color 180ms var(--lume-easing),
+		box-shadow 180ms var(--lume-easing),
+		color 180ms var(--lume-easing),
+		opacity 180ms var(--lume-easing),
+		transform 160ms var(--lume-easing);
 }
 
 .button.matchSkeletonHeight {
@@ -118,7 +119,8 @@
 .button.primary {
 	background-color: var(--brand-primary);
 	border-color: color-mix(in srgb, var(--brand-primary) 82%, white 18%);
-	color: var(--brand-primary-fill);
+	color: var(--text-on-brand-primary);
+	box-shadow: 0 0.5rem 1.5rem rgba(0, 209, 255, 0.12);
 }
 
 :global(:where(html.window-focused, html.unfocused-fully-interactive):not(.window-focus-activation-guard))
@@ -126,6 +128,7 @@
 .button.primary[data-context-menu-open='true']:not(:disabled):not([data-disabled]) {
 	background-color: var(--brand-secondary);
 	border-color: color-mix(in srgb, var(--brand-secondary) 84%, white 16%);
+	box-shadow: 0 0.75rem 2rem rgba(0, 209, 255, 0.2);
 }
 
 .button.primary:active:not(:disabled):not([data-disabled]) {

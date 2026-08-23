@@ -68,6 +68,17 @@ var {
 :root {
 	--saturation-factor: 1;
 	--user-select: auto;
+	--lume-cyan: #00d1ff;
+	--lume-cyan-soft: rgba(0, 209, 255, 0.14);
+	--lume-cyan-line: rgba(0, 209, 255, 0.2);
+	--lume-bg-canvas: #050505;
+	--lume-bg-rail: #030304;
+	--lume-bg-panel: #08080a;
+	--lume-bg-elevated: #0d0d10;
+	--lume-line: rgba(255, 255, 255, 0.055);
+	--lume-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.5);
+	--lume-glow: 0 0 2rem rgba(0, 209, 255, 0.1);
+	--lume-easing: cubic-bezier(0.22, 1, 0.36, 1);
 
 	--font-keybind: -apple-system, BlinkMacSystemFont, var(--font-sans);
 
@@ -216,8 +227,8 @@ var {
 	--spacing-24: 6rem;
 
 	--layout-guild-list-width: 4.5rem;
-	--layout-sidebar-width: 20rem;
-	--layout-header-height: 3.5rem;
+	--layout-sidebar-width: 15rem;
+	--layout-header-height: 3.25rem;
 	--layout-user-area-height: var(--footer-box-height);
 	--layout-user-area-reserved-height: 0px;
 	--layout-voice-connection-height: 0px;
@@ -342,7 +353,7 @@ var {
 	--scrollbar-thumb-bg-hover: color-mix(in srgb, var(--background-textarea) 25%, var(--text-secondary) 75%);
 	--scrollbar-track-bg: color-mix(in srgb, var(--background-secondary) 80%, transparent);
 
-	--focus-primary: #00b0f4;
+	--focus-primary: var(--lume-cyan);
 }
 
 html.platform-native.platform-macos {
@@ -364,7 +375,7 @@ html.platform-native.platform-macos {
 }
 
 html {
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-canvas);
 	color: var(--text-primary);
 	overflow: hidden;
 	overscroll-behavior: none;
@@ -411,6 +422,7 @@ body {
 	scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
 	margin: 0;
 	padding: 0;
+	background: radial-gradient(circle at 72% -18%, rgba(0, 209, 255, 0.055), transparent 32rem), var(--lume-bg-canvas);
 }
 
 button,
@@ -700,15 +712,27 @@ html.reduced-motion * {
 
 :where(button, [role='button']) {
 	transition:
-		transform var(--transition-fast),
-		background-color var(--transition-normal),
-		border-color var(--transition-normal),
-		color var(--transition-normal),
-		opacity var(--transition-normal);
+		transform 160ms var(--lume-easing),
+		background-color 180ms var(--lume-easing),
+		border-color 180ms var(--lume-easing),
+		color 180ms var(--lume-easing),
+		opacity 180ms var(--lume-easing),
+		box-shadow 180ms var(--lume-easing);
 }
 
 @media (hover: hover) and (pointer: fine) {
 	:where(button, [role='button']):active:not(:disabled) {
-		transform: scale(0.97);
+		transform: scale(0.975);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
 	}
 }

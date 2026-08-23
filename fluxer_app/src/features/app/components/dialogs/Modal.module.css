@@ -35,9 +35,9 @@
 }
 
 .backdropCentered {
-	background: rgba(0, 0, 0, 0.35);
-	backdrop-filter: blur(0.5rem);
-	-webkit-backdrop-filter: blur(0.5rem);
+	background: rgba(0, 0, 0, 0.68);
+	backdrop-filter: blur(0.875rem);
+	-webkit-backdrop-filter: blur(0.875rem);
 }
 
 .focusLock {
@@ -123,13 +123,16 @@
 	max-height: calc(100svh - 3rem);
 	display: flex;
 	flex-direction: column;
-	background-color: var(--background-secondary);
-	border: 0.0625rem solid var(--background-header-secondary);
-	border-radius: 0.5rem;
+	background:
+		linear-gradient(135deg, rgba(0, 209, 255, 0.045), transparent 32%),
+		color-mix(in srgb, var(--lume-bg-elevated) 96%, transparent);
+	border: 0.0625rem solid var(--lume-cyan-line);
+	border-radius: var(--radius-2xl);
 	box-shadow:
-		0 0 0 0.0625rem hsla(223, 7%, 20%, 0.08),
-		0 0.5rem 1.5rem -0.25rem rgba(0, 0, 0, 0.25),
-		0 1.25rem 3rem -0.5rem rgba(0, 0, 0, 0.2);
+		0 0 0 0.0625rem rgba(255, 255, 255, 0.025),
+		var(--lume-shadow),
+		var(--lume-glow);
+	backdrop-filter: blur(1.25rem);
 	overflow: hidden;
 	pointer-events: all;
 }
@@ -172,11 +175,11 @@
 	max-height: calc(var(--fullscreen-available-height) - 0.125rem);
 	width: calc(100% - 0.125rem);
 	max-width: calc(clamp(60rem, 96vw, 87.5rem) - 0.125rem);
-	border: 0.0625rem solid var(--background-header-secondary);
-	border-radius: clamp(0.5rem, 1vw, 0.75rem);
+	border: 0.0625rem solid var(--lume-line);
+	border-radius: clamp(0.875rem, 1vw, 1.25rem);
 	box-sizing: border-box;
 	padding: 0;
-	background: var(--background-secondary);
+	background: var(--lume-bg-panel);
 	box-shadow:
 		0 0 0 0.0625rem hsla(223, 7%, 20%, 0.08),
 		0 0.5rem 1.5rem -0.25rem rgba(0, 0, 0, 0.25),

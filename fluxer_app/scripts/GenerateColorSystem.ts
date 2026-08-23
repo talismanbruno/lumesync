@@ -439,7 +439,7 @@ const CONFIG: Config = {
 				value: `color-mix(
 in srgb,
 var(--background-secondary-alt) 90%,
-hsl(258, calc(10% * var(--saturation-factor)), 2%) 10%
+hsl(210, calc(8% * var(--saturation-factor)), 2%) 10%
 )`,
 			},
 			{name: '--panel-control-border', family: 'neutralDark', saturation: 30, lightness: 65, alpha: 0.45},
@@ -460,9 +460,9 @@ hsl(258, calc(10% * var(--saturation-factor)), 2%) 10%
 			{name: '--control-button-active-text', value: 'var(--text-primary)'},
 			{name: '--control-button-danger-text', hue: 1, saturation: 77, useSaturationFactor: true, lightness: 60},
 			{name: '--control-button-danger-hover-bg', hue: 1, saturation: 77, useSaturationFactor: true, lightness: 20},
-				{name: '--brand-primary', family: 'brand', lightness: 50},
-				{name: '--brand-secondary', family: 'brand', saturation: 100, lightness: 42},
-				{name: '--brand-primary-light', family: 'brand', saturation: 100, lightness: 72},
+			{name: '--brand-primary', family: 'brand', lightness: 50},
+			{name: '--brand-secondary', family: 'brand', saturation: 100, lightness: 42},
+			{name: '--brand-primary-light', family: 'brand', saturation: 100, lightness: 72},
 			{name: '--brand-primary-fill', hue: 0, saturation: 0, lightness: 100},
 			{name: '--status-online', family: 'statusOnline', lightness: 40},
 			{name: '--status-idle', family: 'statusIdle', lightness: 50},
@@ -477,7 +477,7 @@ hsl(258, calc(10% * var(--saturation-factor)), 2%) 10%
 			{name: '--plutonium-icon', family: 'brandIcon', lightness: 50},
 			{name: '--invite-verified-icon-color', value: 'var(--text-on-brand-primary)'},
 			{name: '--text-link', family: 'link', lightness: 70},
-				{name: '--text-on-brand-primary', hue: 210, saturation: 80, lightness: 6},
+			{name: '--text-on-brand-primary', hue: 210, saturation: 80, lightness: 6},
 			...DARK_CODE_TOKENS,
 			{name: '--text-selection', hue: 198, saturation: 92, useSaturationFactor: true, lightness: 70, alpha: 0.35},
 			{name: '--markup-mention-text', value: 'var(--text-link)'},
@@ -580,9 +580,9 @@ hsl(245, calc(100% * var(--saturation-factor)), 80%) 40%
 			{name: '--shadow-md', value: '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)'},
 			{name: '--shadow-lg', value: '0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)'},
 			{name: '--shadow-xl', value: '0 10px 20px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)'},
-				{name: '--transition-fast', value: '150ms cubic-bezier(0.22, 1, 0.36, 1)'},
-				{name: '--transition-normal', value: '220ms cubic-bezier(0.22, 1, 0.36, 1)'},
-				{name: '--transition-slow', value: '300ms cubic-bezier(0.22, 1, 0.36, 1)'},
+			{name: '--transition-fast', value: '150ms cubic-bezier(0.22, 1, 0.36, 1)'},
+			{name: '--transition-normal', value: '220ms cubic-bezier(0.22, 1, 0.36, 1)'},
+			{name: '--transition-slow', value: '300ms cubic-bezier(0.22, 1, 0.36, 1)'},
 			{name: '--spoiler-overlay-color', value: 'rgba(0, 0, 0, 0.2)'},
 			{name: '--spoiler-overlay-hover-color', value: 'rgba(0, 0, 0, 0.3)'},
 			{name: '--scrollbar-thumb-bg', value: 'rgba(121, 122, 124, 0.4)'},
@@ -692,7 +692,7 @@ hsl(245, calc(100% * var(--saturation-factor)), 80%) 40%
 				value: `color-mix(
 in srgb,
 var(--background-primary) 90%,
-hsl(258, calc(10% * var(--saturation-factor)), 0%) 10%
+hsl(210, calc(8% * var(--saturation-factor)), 0%) 10%
 )`,
 			},
 			{name: '--panel-control-border', family: 'neutralDark', saturation: 20, lightness: 30, alpha: 0.35},

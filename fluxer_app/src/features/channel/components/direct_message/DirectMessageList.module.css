@@ -14,7 +14,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	overflow: hidden;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
 	padding-bottom: 0;
 }
 
@@ -23,11 +23,11 @@
 	align-items: center;
 	height: var(--layout-header-height);
 	min-height: var(--layout-header-height);
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
 	padding: 0 var(--spacing-2);
 	width: 100%;
 	border: none;
-	border-bottom: 0.0625rem solid var(--user-area-divider-color);
+	border-bottom: 0.0625rem solid var(--lume-line);
 	cursor: pointer;
 	text-align: left;
 }
@@ -103,7 +103,7 @@
 	min-height: 0;
 	width: 100%;
 	min-width: 0;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
 }
 
 .mobileHeader {
@@ -250,7 +250,7 @@
 	width: 100%;
 	cursor: pointer;
 	align-items: center;
-	border-radius: var(--radius-md);
+	border-radius: var(--radius-lg);
 	border: none;
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
@@ -299,7 +299,10 @@
 
 .clickableItemSelected {
 	composes: clickableItem;
-	background-color: color-mix(in srgb, var(--surface-interactive-selected-bg) 35%, transparent);
+	background:
+		linear-gradient(90deg, var(--lume-cyan-soft), transparent 82%),
+		color-mix(in srgb, var(--lume-bg-elevated) 94%, var(--lume-cyan) 6%);
+	box-shadow: inset 0.125rem 0 var(--lume-cyan);
 	color: var(--surface-interactive-selected-color);
 }
 

@@ -3,8 +3,8 @@
 .textareaContainer {
 	position: relative;
 	margin-top: 0.5rem;
-	background-color: var(--background-textarea);
-	border-radius: var(--radius-xl);
+	background-color: var(--lume-bg-elevated);
+	border-radius: var(--radius-2xl);
 	font-size: var(--textarea-font-size);
 }
 
@@ -205,9 +205,9 @@
 	margin-block-start: 0;
 	margin-block-end: var(--composer-box-inset);
 	margin-inline: var(--composer-box-inset-inline);
-	background-color: var(--background-textarea);
-	--composer-box-radius: var(--footer-box-radius);
-	--composer-box-ring-color: var(--floating-surface-ring-color);
+	background-color: var(--lume-bg-elevated);
+	--composer-box-radius: var(--radius-2xl);
+	--composer-box-ring-color: var(--lume-line);
 	--scrollbar-track-bg: var(--background-textarea);
 }
 
@@ -217,10 +217,11 @@
 	inset: 0;
 	border-radius: inherit;
 	box-shadow: inset 0 0 0 0.0625rem var(--composer-box-ring-color);
-	transition: box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: box-shadow 180ms var(--lume-easing);
 	pointer-events: none;
 }
 
 .textareaOuterRow:focus-within {
-	--composer-box-ring-color: var(--floating-surface-ring-color-strong);
+	--composer-box-ring-color: var(--lume-cyan-line);
+	box-shadow: var(--lume-glow);
 }

@@ -8,13 +8,13 @@
 	min-height: 0;
 	width: 100%;
 	min-width: 0;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
 }
 
 .dmLayoutContainerMobile {
 	composes: dmLayoutContainer;
 	grid-template-columns: 1fr;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
 }
 
 .dmLayoutContainerFullscreen {
@@ -29,7 +29,8 @@
 	width: 100%;
 	min-width: 0;
 	flex-direction: column;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-panel);
+	border-inline-end: 0.0625rem solid var(--lume-line);
 }
 
 .contentColumn {
@@ -38,7 +39,7 @@
 	min-height: 0;
 	width: 100%;
 	min-width: 0;
-	background-color: var(--background-tertiary);
+	background-color: var(--lume-bg-canvas);
 }
 
 .contentColumnFullscreen {
@@ -50,7 +51,7 @@
 	min-height: 0;
 	width: 100%;
 	min-width: 0;
-	background-color: var(--background-secondary);
+	background-color: var(--lume-bg-canvas);
 }
 
 .contentInnerFullscreen {

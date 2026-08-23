@@ -11,9 +11,9 @@
 	position: relative;
 	overflow: hidden;
 	--settings-edge-gutter: clamp(1rem, 3vw, 1.5rem);
-	--settings-surface-background: var(--form-surface-background);
-	--settings-panel-background: color-mix(in srgb, var(--form-surface-background) 88%, var(--background-primary));
-	--settings-border-color: var(--background-modifier-accent);
+	--settings-surface-background: var(--lume-bg-panel);
+	--settings-panel-background: var(--lume-bg-elevated);
+	--settings-border-color: var(--lume-line);
 	--settings-hover-background: var(--surface-interactive-hover-bg);
 	--settings-hover-border-color: color-mix(in srgb, var(--background-modifier-accent) 72%, var(--text-tertiary));
 	--settings-selected-background: var(--surface-interactive-selected-bg);
@@ -166,7 +166,7 @@
 	flex: 0 0 clamp(15.75rem, 24svw, 20rem);
 	display: flex;
 	border-right: 0.0625rem solid var(--settings-border-color);
-	background: var(--settings-surface-background);
+	background: linear-gradient(180deg, rgba(0, 209, 255, 0.035), transparent 16rem), var(--settings-surface-background);
 	overflow: hidden;
 	position: relative;
 }
@@ -195,7 +195,7 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	background: var(--background-secondary);
+	background: var(--lume-bg-canvas);
 	min-width: 0;
 	min-height: 0;
 	overflow: hidden;
@@ -232,7 +232,8 @@
 	justify-content: space-between;
 	padding: 0 1rem;
 	flex-shrink: 0;
-	background: var(--background-secondary);
+	background: color-mix(in srgb, var(--lume-bg-canvas) 92%, transparent);
+	backdrop-filter: blur(1rem);
 	border-bottom: 0.0625rem solid var(--settings-border-color);
 	contain: layout style paint;
 }

@@ -5,9 +5,14 @@
 	flex-direction: column;
 	gap: 0;
 	width: 100%;
-	background-color: var(--panel-control-bg);
-	border-radius: var(--footer-box-radius);
-	box-shadow: inset 0 0 0 0.0625rem var(--floating-surface-ring-color);
+	background:
+		linear-gradient(120deg, rgba(0, 209, 255, 0.045), transparent 38%),
+		color-mix(in srgb, var(--lume-bg-elevated) 94%, transparent);
+	border-radius: var(--radius-xl);
+	box-shadow:
+		inset 0 0 0 0.0625rem var(--lume-line),
+		0 0.75rem 2.25rem rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(1rem);
 	overflow: hidden;
 	position: relative;
 }
@@ -30,7 +35,7 @@
 }
 
 .voiceConnectionWrapper {
-	border-bottom: 0.0625rem solid var(--floating-surface-ring-color-strong);
+	border-bottom: 0.0625rem solid var(--lume-cyan-line);
 }
 
 .userInfo {
@@ -223,8 +228,8 @@
 
 :global(:where(html.window-focused, html.unfocused-fully-interactive):not(.window-focus-activation-guard))
 	.controlButton:hover {
-	background-color: color-mix(in srgb, var(--control-button-normal-text) 10%, transparent);
-	color: var(--control-button-hover-text);
+	background-color: var(--lume-cyan-soft);
+	color: var(--lume-cyan);
 }
 
 .controlButton.active {
