@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import RuntimeConfig, {DEFAULT_APP_PUBLIC_CONFIG} from '@app/features/app/state/RuntimeConfig';
-import FluxerWordmarkMonochromeAsset from '@app/media/images/fluxer-logo-wordmark-monochrome.svg?react';
-import FluxerWordmarkAsset from '@app/media/images/fluxer-wordmark.svg?react';
+import LumeWordmarkAsset from '@app/media/images/lume-wordmark.png';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
 import {observer} from 'mobx-react-lite';
@@ -52,6 +51,12 @@ export const FluxerWordmark = observer(({variant = 'default', ...props}: FluxerW
 			</span>
 		);
 	}
-	const Asset = variant === 'monochrome' ? FluxerWordmarkMonochromeAsset : FluxerWordmarkAsset;
-	return <Asset role="img" aria-label={ariaLabel} data-flx="ui.icons.fluxer-wordmark.img" {...props} />;
+	return (
+		<img
+			{...getImageSizingProps(props)}
+			src={LumeWordmarkAsset}
+			alt={ariaLabel}
+			data-flx={getDataFlx(props, `ui.icons.fluxer-wordmark.img.${variant}`)}
+		/>
+	);
 });

@@ -137,13 +137,13 @@ export function normalizeInstanceServices(services?: InstanceServices | null): I
 
 export const DEFAULT_APP_PUBLIC_CONFIG: InstanceAppPublic = {
 	branding: {
-		product_name: 'Fluxer',
+		product_name: 'Lume',
 		icon_url: null,
 		symbol_url: null,
 		logo_url: null,
 		wordmark_url: null,
 		favicon_url: null,
-		theme_color: null,
+		theme_color: '#00D1FF',
 	},
 	setup: {
 		configured: false,

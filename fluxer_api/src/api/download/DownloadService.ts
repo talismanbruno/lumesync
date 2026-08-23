@@ -823,7 +823,7 @@ export class DownloadService {
 	}
 
 	private getModernProductName(channel: DesktopChannel): string {
-		return channel === 'canary' ? 'Fluxer Canary' : 'Fluxer';
+		return channel === 'canary' ? 'Lume Canary' : 'Lume';
 	}
 
 	private buildModernArtifactFilename(

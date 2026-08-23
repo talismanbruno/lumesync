@@ -2,8 +2,8 @@
 	"name": "fluxer_app",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Fluxer is a free and open source instant messaging and VoIP chat app built for friends, groups, and communities.",
-	"homepage": "https://fluxer.app",
+	"description": "Lume is an open-source instant messaging and VoIP app built for friends, groups, gamers, and communities.",
+	"homepage": "https://lumesync.vercel.app",
 	"author": "Fluxer Platform AB <support@fluxer.app>",
 	"sideEffects": [
 		"*.css",

@@ -44,8 +44,8 @@ import {
 } from '../StripeSubscriptionPeriod';
 import {extractId} from '../StripeUtils';
 
-const PRODUCT_NAME = 'Fluxer';
-const PREMIUM_TIER_NAME = 'Plutonium';
+const PRODUCT_NAME = 'Lume';
+const PREMIUM_TIER_NAME = 'Plus';
 const TERMS_URL = 'https://fluxer.app/terms';
 export const EU_WITHDRAWAL_WAIVER_TEXT_VERSION = '2026-04-23';
 

@@ -11,7 +11,7 @@ const MACOS_HELP_MENU_TITLE_AUTODETECT_OPT_OUT = '\u200C';
 
 function buildTemplate(): Array<MenuItemConstructorOptions> {
 	const isCanary = BUILD_CHANNEL === 'canary';
-	const appName = isCanary ? 'Fluxer Canary' : 'Fluxer';
+	const appName = isCanary ? 'Lume Canary' : 'Lume';
 	const isMac = process.platform === 'darwin';
 	const template: Array<MenuItemConstructorOptions> = [];
 	if (isMac) {

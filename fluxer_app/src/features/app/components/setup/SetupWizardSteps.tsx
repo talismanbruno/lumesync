@@ -91,7 +91,7 @@ const PRODUCT_NAME_LABEL_DESCRIPTOR = msg({
 	comment: 'Label for the product name input in the setup wizard.',
 });
 const PRODUCT_NAME_PLACEHOLDER_DESCRIPTOR = msg({
-	message: 'Fluxer',
+	message: 'Lume',
 	comment: 'Placeholder for the product name input in the setup wizard.',
 });
 const PRODUCT_NAME_ERROR_DESCRIPTOR = msg({

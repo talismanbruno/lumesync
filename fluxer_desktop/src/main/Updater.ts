@@ -474,7 +474,7 @@ function buildManualLatestDownloadUrl(format: ManualDesktopFormat): string {
 }
 
 function getModernProductName(): string {
-	return BUILD_CHANNEL === 'canary' ? 'Fluxer Canary' : 'Fluxer';
+	return BUILD_CHANNEL === 'canary' ? 'Lume Canary' : 'Lume';
 }
 
 function getManualUpdateSuggestedName(format: LinuxManualDesktopFormat, version: string): string {
