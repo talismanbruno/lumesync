@@ -109,7 +109,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = observer(
 					{
 						type: ThemeTypes.DARK,
 						label: i18n._(DARK_THEME_DESCRIPTOR),
-						backgroundColor: 'hsl(258, calc(10% * var(--saturation-factor)), 12.04%)',
+						backgroundColor: 'hsl(210, calc(6% * var(--saturation-factor)), 9.04%)',
 						isLight: false,
 						icon: null,
 						tooltip: i18n._(USE_DARK_THEME_DESCRIPTOR),
@@ -125,7 +125,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = observer(
 					{
 						type: ThemeTypes.COAL,
 						label: i18n._(COAL_THEME_DESCRIPTOR),
-						backgroundColor: 'hsl(258, 10%, 2%)',
+						backgroundColor: 'hsl(210, 6%, 2%)',
 						isLight: false,
 						icon: null,
 						tooltip: i18n._(USE_COAL_THEME_PITCH_BLACK_SURFACES_DESCRIPTOR),
@@ -142,7 +142,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = observer(
 						type: ThemeTypes.SYSTEM,
 						label: i18n._(SYSTEM_THEME_DESCRIPTOR),
 						backgroundColor: systemPrefersDark
-							? 'hsl(258, calc(10% * var(--saturation-factor)), 5%)'
+							? 'hsl(210, calc(6% * var(--saturation-factor)), 5%)'
 							: 'hsl(220, 10%, 98.5%)',
 						isLight: !systemPrefersDark,
 						icon: (
