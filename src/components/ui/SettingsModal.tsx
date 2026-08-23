@@ -1,13 +1,11 @@
 import * as React from "react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, User, Settings, Volume2, Palette, Sparkles, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-import { Dialog, DialogContent, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
-import { useEffect } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,7 +18,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -43,16 +41,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         }
       }}
     >
-      <DialogPortal>
-        <DialogOverlay />
-        <DialogContent 
-          showCloseButton={false}
-          onEscapeKeyDown={(event) => {
-            event.preventDefault();
-            onClose();
-          }}
-          className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[100]"
-        >
+      <DialogContent
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          onClose();
+        }}
+        className="max-w-[1000px] h-[80vh] w-[90vw] p-0 overflow-hidden bg-[#121214] border-zinc-800 flex flex-row outline-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[100]"
+      >
         {/* Sidebar Esquerda */}
         <aside className="w-60 bg-[#0A0A0C] flex flex-col p-4 border-r border-white/5 shrink-0">
           <div className="space-y-6">
@@ -157,7 +153,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         </main>
       </DialogContent>
-      </DialogPortal>
     </Dialog>
   );
 }
+

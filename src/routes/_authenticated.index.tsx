@@ -1,10 +1,10 @@
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Hash, Settings, Plus, Search, User, LogOut, Send, Volume2, UserPlus, Sparkles, Trash2, Users, Check, X, MessageSquare, Clock, Monitor, PhoneOff, Mic, MicOff, Headphones, Menu, ChevronUp, Paperclip, Smile, Film, Download, FileText, Image as ImageIcon, Lock, Camera, BadgeCheck, Settings2, ScreenShare, Phone, ShieldCheck } from "lucide-react";
 import { MessageText } from "@/components/ui/MessageText";
 import { UserProfileCard } from "@/components/ui/UserProfileCard";
-import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
+import type { EmojiClickData, Theme as EmojiTheme } from 'emoji-picker-react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import 'react-photo-view/dist/react-photo-view.css';
 import { LumeLogo } from "@/components/ui/LumeLogo";
@@ -32,15 +32,25 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useVoiceRoom } from "@/hooks/useVoiceRoom";
-import { VoiceRoomUI } from "@/components/voice/VoiceRoomUI";
 import { ActiveCallBar } from "@/components/voice/ActiveCallBar";
 import { OrbitalConnectionPanel } from "@/components/voice/OrbitalConnectionPanel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
-import { SettingsModal } from "@/components/ui/SettingsModal";
-import { CreateGroupModal } from "@/components/ui/CreateGroupModal";
 import { FriendsView } from "@/components/ui/FriendsView";
 import { AdminVerifiedBadge } from "@/components/ui/AdminVerifiedBadge";
+
+const EmojiPicker = lazy(() => import('emoji-picker-react'));
+const VoiceRoomUI = lazy(() => import("@/components/voice/VoiceRoomUI").then((module) => ({ default: module.VoiceRoomUI })));
+const SettingsModal = lazy(() => import("@/components/ui/SettingsModal").then((module) => ({ default: module.SettingsModal })));
+const CreateGroupModal = lazy(() => import("@/components/ui/CreateGroupModal").then((module) => ({ default: module.CreateGroupModal })));
+
+function DeferredPanelFallback({ label }: { label: string }) {
+  return (
+    <div className="flex-1 flex items-center justify-center bg-[#050505] text-xs font-semibold tracking-[0.18em] uppercase text-cyan-400/70">
+      {label}
+    </div>
+  );
+}
 
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -218,8 +228,37 @@ function DashboardComponent() {
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [hiddenDMIds, setHiddenDMIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'conversas' | 'servidores' | 'amigos'>('amigos');
   const [friendFilter, setFriendFilter] = useState<'online' | 'all' | 'pending' | 'add'>('online');
+
+  const hiddenDMStorageKey = myProfile.id ? `lume:hidden-dms:${myProfile.id}` : null;
+
+  useEffect(() => {
+    if (!hiddenDMStorageKey || typeof window === 'undefined') return;
+
+    try {
+      const stored = window.localStorage.getItem(hiddenDMStorageKey);
+      const parsed = stored ? JSON.parse(stored) : [];
+      setHiddenDMIds(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []);
+    } catch {
+      setHiddenDMIds([]);
+    }
+  }, [hiddenDMStorageKey]);
+
+  const setDMHidden = (friendId: string, hidden: boolean) => {
+    setHiddenDMIds((current) => {
+      const next = hidden
+        ? Array.from(new Set([...current, friendId]))
+        : current.filter((id) => id !== friendId);
+
+      if (hiddenDMStorageKey && typeof window !== 'undefined') {
+        window.localStorage.setItem(hiddenDMStorageKey, JSON.stringify(next));
+      }
+
+      return next;
+    });
+  };
 
 
   
@@ -1351,21 +1390,21 @@ function DashboardComponent() {
     setFriendFilter('online');
   };
 
-  const openServer = async (server: Server) => {
-    clearChats();
+  const openServer = (server: Server) => {
+    // Channel loading is owned by the activeServer effect. Keeping navigation
+    // synchronous prevents FriendsView from flashing between destinations.
     setActiveServer(server);
-    const { data } = await supabase
-      .from("channels")
-      .select("*")
-      .eq("server_id", server.id)
-      .order("created_at", { ascending: true });
-    const list = (data || []) as Channel[];
-    setChannels(list);
-    const geral = list.find(c => c.type === 'text' && c.name === 'geral') || list.find(c => c.type === 'text');
-    if (geral) setActiveChannel(geral);
+    setChannels([]);
+    setActiveChannel(null);
+    setActiveDMFriend(null);
+    setActiveDMGroup(null);
+    setMessages([]);
   };
 
   const openDM = (friend: Profile) => {
+    if (!isOfficialLumeConversation(friend)) {
+      setDMHidden(friend.id, false);
+    }
     setActiveServer(null);
     setChannels([]);
     setActiveChannel(null);
@@ -1388,8 +1427,35 @@ function DashboardComponent() {
     .map(f => f.friend_profile)
     .filter(Boolean) as Profile[];
 
+  const visibleDMFriends = friendsList.filter((friend) => !hiddenDMIds.includes(friend.id));
+
+  const hideDM = (friend: Profile) => {
+    if (isOfficialLumeConversation(friend)) return;
+    setDMHidden(friend.id, true);
+    setUnreadCounts((current) => {
+      const next = { ...current };
+      delete next[friend.id];
+      return next;
+    });
+
+    if (activeDMFriend?.id === friend.id) {
+      goHome();
+    }
+  };
+
   const isReadOnly = isBotChat && !myProfile.is_admin;
   const inChat = !!(activeChannel || activeDMFriend || activeDMGroup);
+  const mainViewKey = showVoiceUI && activeVoiceChannel
+    ? `voice:${activeVoiceChannel.id}`
+    : activeChannel
+      ? `channel:${activeChannel.id}`
+      : activeDMGroup
+        ? `group:${activeDMGroup.id}`
+        : activeDMFriend
+          ? `dm:${activeDMFriend.id}`
+          : activeServer
+            ? `server:${activeServer.id}:loading`
+            : `friends:${friendFilter}`;
 
   const renderMessage = (msg: Message) => {
     const authorId = (msg as any).user_id || (msg as any).sender_id;
@@ -1547,10 +1613,12 @@ function DashboardComponent() {
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="end" className="p-0 border-none bg-transparent w-auto z-50">
-            <EmojiPicker
-              theme={Theme.DARK}
-              onEmojiClick={(emoji: EmojiClickData) => setNewMessage(prev => prev + emoji.emoji)}
-            />
+            <Suspense fallback={<div className="h-72 w-80 rounded-2xl bg-[#0d0d11] border border-white/5" />}>
+              <EmojiPicker
+                theme={'dark' as EmojiTheme}
+                onEmojiClick={(emoji: EmojiClickData) => setNewMessage(prev => prev + emoji.emoji)}
+              />
+            </Suspense>
           </PopoverContent>
         </Popover>
 
@@ -1759,32 +1827,43 @@ function DashboardComponent() {
                   ))}
 
 
-                {friendsList.map(friend => (
-                  <button
-                    key={friend.id}
-                    onClick={() => { markAsRead(friend.id); openDM(friend); }}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMFriend?.id === friend.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                  >
-                    <div className="relative shrink-0">
-                      <UserAvatar
-                        avatarUrl={friend.avatar_url}
-                        name={friend.display_name || friend.username}
-                        status={friend.status}
-                        showStatus
-                        size="h-8 w-8"
-                        className="rounded-lg"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span className="truncate text-sm text-zinc-300 font-medium">{friend.display_name || friend.username}</span>
-                      <AdminVerifiedBadge isAdmin={friend.is_admin} size={12} />
-                    </div>
-                    {(unreadCounts[friend.id] || 0) > 0 && (
-                      <span className="ml-auto shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-cyan-500 text-black text-[10px] font-bold flex items-center justify-center">
-                        {unreadCounts[friend.id]}
-                      </span>
-                    )}
-                  </button>
+                {visibleDMFriends.map(friend => (
+                  <ContextMenu key={friend.id}>
+                    <ContextMenuTrigger asChild>
+                      <button
+                        onClick={() => { markAsRead(friend.id); openDM(friend); }}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all overflow-hidden ${activeDMFriend?.id === friend.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                      >
+                        <div className="relative shrink-0">
+                          <UserAvatar
+                            avatarUrl={friend.avatar_url}
+                            name={friend.display_name || friend.username}
+                            status={friend.status}
+                            showStatus
+                            size="h-8 w-8"
+                            className="rounded-lg"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className="truncate text-sm text-zinc-300 font-medium">{friend.display_name || friend.username}</span>
+                          <AdminVerifiedBadge isAdmin={friend.is_admin} size={12} />
+                        </div>
+                        {(unreadCounts[friend.id] || 0) > 0 && (
+                          <span className="ml-auto shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-cyan-500 text-black text-[10px] font-bold flex items-center justify-center">
+                            {unreadCounts[friend.id]}
+                          </span>
+                        )}
+                      </button>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="bg-[#0d0d11] border-white/10 text-zinc-200">
+                      <ContextMenuItem
+                        className="text-red-400 focus:text-red-400"
+                        onClick={() => hideDM(friend)}
+                      >
+                        <X size={14} className="mr-2" /> Remover da lista
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 ))}
               </div>
             </div>
@@ -1859,28 +1938,34 @@ function DashboardComponent() {
 
       {/* COLUNA 3 — CANVAS PRINCIPAL */}
       <main className="flex-1 min-w-0 flex flex-col bg-[#050505] overflow-hidden">
-        {showVoiceUI && activeVoiceChannel ? (
-          <VoiceRoomUI
-            participants={participants}
-            myProfile={myProfile}
-            isMuted={isMuted}
-            isDeafened={isDeafened}
-            isSharingScreen={isSharingScreen}
-            isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
-            screenStream={screenStream}
-            remoteVideoStreams={remoteVideoStreams}
-            peerConnections={peerConnections}
-            toggleMute={toggleMute}
-            toggleDeafen={toggleDeafen}
-            toggleScreenShare={toggleScreenShare}
-            toggleNoiseSuppression={toggleNoiseSuppression}
-            onDisconnect={() => {
-              disconnect();
-              setActiveVoiceChannel(null);
-              setShowVoiceUI(false);
-            }}
-            onClose={() => setShowVoiceUI(false)}
-          />
+        <section
+          key={mainViewKey}
+          className="flex-1 min-h-0 flex flex-col motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-200"
+        >
+          {showVoiceUI && activeVoiceChannel ? (
+          <Suspense fallback={<DeferredPanelFallback label="Abrindo órbita" />}>
+            <VoiceRoomUI
+              participants={participants}
+              myProfile={myProfile}
+              isMuted={isMuted}
+              isDeafened={isDeafened}
+              isSharingScreen={isSharingScreen}
+              isNoiseSuppressionEnabled={isNoiseSuppressionEnabled}
+              screenStream={screenStream}
+              remoteVideoStreams={remoteVideoStreams}
+              peerConnections={peerConnections}
+              toggleMute={toggleMute}
+              toggleDeafen={toggleDeafen}
+              toggleScreenShare={toggleScreenShare}
+              toggleNoiseSuppression={toggleNoiseSuppression}
+              onDisconnect={() => {
+                disconnect();
+                setActiveVoiceChannel(null);
+                setShowVoiceUI(false);
+              }}
+              onClose={() => setShowVoiceUI(false)}
+            />
+          </Suspense>
         ) : inChat ? (
           <>
             <div className="flex flex-col flex-none z-40">
@@ -2044,6 +2129,18 @@ function DashboardComponent() {
             )}
 
           </>
+        ) : activeServer ? (
+          <div className="flex-1 flex items-center justify-center bg-[#050505] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="h-10 w-10 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 flex items-center justify-center shadow-[0_0_24px_rgba(0,209,255,0.08)]">
+                <Sparkles size={18} className="text-cyan-400 motion-safe:animate-pulse" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-zinc-200">Sincronizando {activeServer.name}</p>
+                <p className="mt-1 text-xs text-zinc-600">Carregando os canais do servidor…</p>
+              </div>
+            </div>
+          </div>
         ) : (
           <FriendsView
             activeSubTab={friendFilter}
@@ -2056,15 +2153,18 @@ function DashboardComponent() {
             onSendRequest={handleSendFriendRequest}
             onStartCall={handleStartVoiceCall}
           />
-        )}
+          )}
+        </section>
       </main>
 
       {/* MODAIS */}
       {isSettingsOpen && (
-        <SettingsModal 
-          isOpen={true} 
-          onClose={() => setIsSettingsOpen(false)} 
-        />
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={true}
+            onClose={() => setIsSettingsOpen(false)}
+          />
+        </Suspense>
       )}
 
       <Dialog open={isCreatingServer} onOpenChange={setIsCreatingServer}>
@@ -2118,12 +2218,14 @@ function DashboardComponent() {
         </DialogContent>
       </Dialog>
 
-      <CreateGroupModal
-        isOpen={isCreateGroupOpen}
-        onClose={() => setIsCreateGroupOpen(false)}
-        myProfile={myProfile}
-        friendships={friendships}
-        onCreateGroup={async (memberIds: string[], name?: string | null) => {
+      {isCreateGroupOpen && (
+        <Suspense fallback={null}>
+          <CreateGroupModal
+            isOpen={true}
+            onClose={() => setIsCreateGroupOpen(false)}
+            myProfile={myProfile}
+            friendships={friendships}
+            onCreateGroup={async (memberIds: string[], name?: string | null) => {
           if (isCreatingGroup) return;
           setIsCreatingGroup(true);
           try {
@@ -2174,10 +2276,10 @@ function DashboardComponent() {
           } finally {
             setIsCreatingGroup(false);
           }
-        }}
-
-
-      />
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Confirmação de Sair do Grupo */}
       <Dialog open={!!groupToLeave} onOpenChange={(open) => !open && setGroupToLeave(null)}>
@@ -2209,4 +2311,5 @@ function DashboardComponent() {
     </div>
   );
 }
+
 
