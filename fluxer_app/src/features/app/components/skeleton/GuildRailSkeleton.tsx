@@ -17,10 +17,10 @@ import {skeletonSurfaceVar} from '@app/features/app/components/skeleton/Skeleton
 import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
 import {Platform} from '@app/features/platform/types/Platform';
 import {getRemScaleForDocument} from '@app/features/theme/layout/RemFromPx';
+import {FluxerIcon} from '@app/features/ui/components/icons/FluxerIcon';
 import Dimension from '@app/features/ui/state/Dimension';
 import {flxElementClassName} from '@app/lib/react';
 import {
-	ChatCircleIcon,
 	CompassIcon,
 	DownloadSimpleIcon,
 	type Icon,
@@ -245,8 +245,7 @@ const FluxerButtonPlaceholder = ({selected}: {readonly selected: boolean}) => (
 			className={flxElementClassName(styles.fluxerIcon)}
 			data-flx="app.skeleton.guild-rail-skeleton.fluxer-button-placeholder.fluxer-icon"
 		>
-			<ChatCircleIcon
-				weight="fill"
+			<FluxerIcon
 				className={styles.fluxerIconGlyph}
 				data-flx="app.skeleton.guild-rail-skeleton.fluxer-button-placeholder.fluxer-icon-glyph"
 			/>
@@ -489,8 +488,8 @@ export const GuildRailSkeleton: React.FC<GuildRailSkeletonProps> = ({
 	const organizedItems = rememberedLayout?.organizedItems ?? FALLBACK_ORGANIZED_ITEMS;
 	const selectedItemIndex = rememberedLayout?.selectedItemIndex ?? SKELETON_NO_SELECTED_RAIL_ITEM_INDEX;
 	const fluxerVisible = rememberedLayout?.fluxerVisible ?? !RuntimeConfig.directMessagesDisabled;
-	const favoritesVisible = rememberedLayout?.favoritesVisible ?? true;
-	const discoveryVisible = rememberedLayout?.discoveryVisible ?? communityActionsAvailable;
+	const favoritesVisible = false;
+	const discoveryVisible = false;
 	const addGuildVisible = rememberedLayout?.addGuildVisible ?? communityActionsAvailable;
 	const downloadVisible = rememberedLayout?.downloadVisible ?? SHOWS_DOWNLOAD_ACTION;
 	const helpVisible = rememberedLayout?.helpVisible ?? true;

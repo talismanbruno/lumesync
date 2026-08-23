@@ -222,9 +222,10 @@
 }
 
 .fluxerIconGlyph {
-	height: 1.75rem;
-	width: 1.75rem;
-	color: currentColor;
+	height: 2rem;
+	width: 2rem;
+	object-fit: contain;
+	filter: drop-shadow(0 0 0.35rem rgb(0 209 255 / 0.2));
 }
 
 .dividerSlot {
