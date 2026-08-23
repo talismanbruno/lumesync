@@ -88,14 +88,14 @@ var {
 	--native-titlebar-height: 2rem;
 	--macos-traffic-light-inset: 78px;
 
-	--radius-sm: 0.25rem;
-	--radius-md: 0.375rem;
-	--radius-lg: 0.5rem;
-	--radius-xl: 0.75rem;
-	--radius-2xl: 1rem;
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+	--radius-2xl: 1.25rem;
 	--radius-full: 624.9375rem;
 
-	--media-border-radius: 0.25rem;
+	--media-border-radius: 0.625rem;
 
 	--input-container-padding: 0.625rem;
 	--list-row-min-height: 4.5rem;
@@ -686,4 +686,29 @@ html.reduced-motion * {
 	animation-iteration-count: 1;
 	transition-duration: 0.01ms;
 	scroll-behavior: auto;
+}
+
+::selection {
+	background: color-mix(in srgb, var(--brand-primary) 32%, transparent);
+	color: var(--text-primary);
+}
+
+:where(button, [role='button'], a, input, textarea, select):focus-visible {
+	outline: 0.125rem solid color-mix(in srgb, var(--brand-primary) 72%, white);
+	outline-offset: 0.125rem;
+}
+
+:where(button, [role='button']) {
+	transition:
+		transform var(--transition-fast),
+		background-color var(--transition-normal),
+		border-color var(--transition-normal),
+		color var(--transition-normal),
+		opacity var(--transition-normal);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	:where(button, [role='button']):active:not(:disabled) {
+		transform: scale(0.97);
+	}
 }

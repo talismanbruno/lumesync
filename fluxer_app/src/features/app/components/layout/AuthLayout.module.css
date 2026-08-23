@@ -33,7 +33,9 @@
 	position: relative;
 	min-height: 100svh;
 	width: 100%;
-	background-color: var(--brand-primary);
+	background:
+		radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--brand-primary) 12%, transparent) 0, transparent 34rem),
+		#050505;
 }
 
 :global(.auth-page),
@@ -105,7 +107,7 @@
 .patternHost {
 	position: fixed;
 	inset: 0;
-	opacity: 0.06;
+	opacity: 0.025;
 	pointer-events: none;
 	z-index: 0;
 	background-repeat: repeat;
@@ -134,9 +136,13 @@
 	width: 100%;
 	max-width: 56rem;
 	overflow: hidden;
-	border-radius: 1rem;
-	background-color: var(--background-secondary);
-	box-shadow: 0 1.5625rem 3.125rem -0.75rem rgb(0 0 0 / 0.25);
+	border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 18%, transparent);
+	border-radius: 1.25rem;
+	background: color-mix(in srgb, var(--background-secondary) 92%, transparent);
+	box-shadow:
+		0 1.5625rem 4rem -1.25rem rgb(0 0 0 / 0.75),
+		0 0 3rem color-mix(in srgb, var(--brand-primary) 5%, transparent);
+	backdrop-filter: blur(1.25rem);
 	transition:
 		max-width 180ms ease,
 		min-height 180ms ease;
@@ -169,7 +175,9 @@
 	justify-content: center;
 	padding: 3rem 2rem;
 	border-right: 0.0625rem solid var(--background-modifier-accent);
-	background-color: var(--background-secondary);
+	background:
+		radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--brand-primary) 14%, transparent), transparent 60%),
+		color-mix(in srgb, var(--background-primary) 82%, transparent);
 }
 
 .logo {
@@ -188,7 +196,7 @@
 	flex-direction: column;
 	justify-content: center;
 	padding: 3rem;
-	background: var(--background-secondary);
+	background: color-mix(in srgb, var(--background-secondary) 94%, transparent);
 }
 
 .formSideSingle {
