@@ -51,9 +51,13 @@ readonly build_container="lume-api-patch-build-${SOURCE_SHA:0:12}"
 readonly image_ref="lume-api-patch:${SOURCE_SHA}"
 readonly caddy_next="${temp_dir}/Caddyfile.next"
 readonly caddy_backup="${CADDY_FILE}.before-lume-api"
+candidate_promoted=false
 
 cleanup() {
 	"${docker_command[@]}" rm -f "${build_container}" >/dev/null 2>&1 || true
+	if [[ "${candidate_promoted}" != true ]]; then
+		"${docker_command[@]}" rm -f "${CANDIDATE_CONTAINER}" >/dev/null 2>&1 || true
+	fi
 	rm -rf -- "${temp_dir}"
 }
 trap cleanup EXIT
@@ -91,7 +95,7 @@ chmod 600 "${env_file}"
 printf 'Warming the candidate API alongside the healthy production API...\n'
 "${docker_command[@]}" run --detach \
 	--name "${CANDIDATE_CONTAINER}" \
-	--restart unless-stopped \
+	--restart no \
 	--network "${network}" \
 	--network-alias "${CANDIDATE_CONTAINER}" \
 	--env-file "${env_file}" \
@@ -125,6 +129,8 @@ if [[ "${candidate_status}" != healthy ]]; then
 	printf 'Candidate API did not become healthy in time. Production was untouched.\n' >&2
 	exit 1
 fi
+
+"${docker_command[@]}" update --restart unless-stopped "${CANDIDATE_CONTAINER}" >/dev/null
 
 replacement_count="$(grep -Ec '^[[:space:]]*reverse_proxy api:8080[[:space:]]*$' "${CADDY_FILE}")"
 if [[ "${replacement_count}" -ne 3 ]]; then
@@ -174,6 +180,8 @@ if ! curl --fail --silent --show-error --max-time 20 "${public_base_url%/}/api/_
 	printf 'Public health check failed. The previous API route was restored.\n' >&2
 	exit 1
 fi
+
+candidate_promoted=true
 
 printf 'Candidate API %s is healthy and serving public API traffic.\n' "${image_ref}"
 printf 'The original API remains online as the automatic fallback.\n'
