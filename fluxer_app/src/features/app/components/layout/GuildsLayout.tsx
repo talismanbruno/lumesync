@@ -31,13 +31,11 @@ import {OutlineFrame} from '@app/features/app/components/layout/OutlineFrame';
 import type {ScrollIndicatorSeverity} from '@app/features/app/components/layout/ScrollIndicatorStateMachine';
 import {AddGuildButton} from '@app/features/app/components/layout/sidebar_nav/AddGuildButton';
 import {DiscoveryButton} from '@app/features/app/components/layout/sidebar_nav/DiscoveryButton';
-import {DownloadButton} from '@app/features/app/components/layout/sidebar_nav/DownloadButton';
 import {FavoritesButton} from '@app/features/app/components/layout/sidebar_nav/FavoritesButton';
 import {FluxerButton} from '@app/features/app/components/layout/sidebar_nav/FluxerButton';
 import {GuildFolderItem} from '@app/features/app/components/layout/sidebar_nav/GuildFolderItem';
 import {resolveDMListItemUnreadState} from '@app/features/app/components/layout/sidebar_nav/GuildListDMItem';
 import {GuildListItem} from '@app/features/app/components/layout/sidebar_nav/GuildListItem';
-import {HelpButton} from '@app/features/app/components/layout/sidebar_nav/HelpButton';
 import {
 	DragItemType,
 	DropPlacement,
@@ -84,12 +82,10 @@ import GuildAvailability from '@app/features/guild/state/GuildAvailability';
 import GuildFolderExpanded from '@app/features/guild/state/GuildFolderExpanded';
 import GuildListState, {type OrganizedItem} from '@app/features/guild/state/GuildList';
 import GuildReadState from '@app/features/guild/state/GuildReadState';
-import HiddenGuildListButtons from '@app/features/guild/state/HiddenGuildListButtons';
 import {PRIMARY_NAVIGATION_LANDMARK_DESCRIPTOR} from '@app/features/i18n/utils/CommonMessageDescriptors';
 import {openMacPermissionsModal} from '@app/features/permissions/system/commands/MacPermissionsModalCommands';
 import MacPermissions from '@app/features/permissions/system/state/MacPermissions';
 import {useLocation} from '@app/features/platform/components/router/RouterReact';
-import {Platform} from '@app/features/platform/types/Platform';
 import {ComponentDispatch} from '@app/features/platform/utils/ComponentBus';
 import ReadStates from '@app/features/read_state/state/ReadStates';
 import {getRemScaleForDocument} from '@app/features/theme/layout/RemFromPx';
@@ -196,25 +192,19 @@ type GuildNavigationRow =
 	| (NavigationRow & {readonly kind: 'organized-item'; readonly item: OrganizedItem})
 	| (NavigationRow & {readonly kind: 'bottom-drop-zone'})
 	| (NavigationRow & {readonly kind: 'discovery'})
-	| (NavigationRow & {readonly kind: 'add-guild'})
-	| (NavigationRow & {readonly kind: 'download'})
-	| (NavigationRow & {readonly kind: 'help'});
+	| (NavigationRow & {readonly kind: 'add-guild'});
 
 interface GuildNavigationVisibility {
 	readonly fluxerVisible: boolean;
 	readonly favoritesVisible: boolean;
 	readonly discoveryVisible: boolean;
 	readonly addGuildVisible: boolean;
-	readonly downloadVisible: boolean;
-	readonly helpVisible: boolean;
 }
 
 function useGuildNavigationVisibility(): GuildNavigationVisibility {
 	const communityActionsVisible = !RuntimeConfig.singleCommunityEnabled;
 	const fluxerVisible = !RuntimeConfig.directMessagesDisabled;
 	const favoritesVisible = Accessibility.showFavorites;
-	const downloadVisible = !Platform.isElectron && !Platform.isPWA && !HiddenGuildListButtons.downloadButtonHidden;
-	const helpVisible = !HiddenGuildListButtons.helpButtonHidden;
 	return useMemo(
 		() =>
 			Object.freeze({
@@ -222,10 +212,8 @@ function useGuildNavigationVisibility(): GuildNavigationVisibility {
 				favoritesVisible,
 				discoveryVisible: communityActionsVisible,
 				addGuildVisible: communityActionsVisible,
-				downloadVisible,
-				helpVisible,
 			}),
-		[communityActionsVisible, downloadVisible, favoritesVisible, fluxerVisible, helpVisible],
+		[communityActionsVisible, favoritesVisible, fluxerVisible],
 	);
 }
 
@@ -330,22 +318,6 @@ function createGuildNavigationRows({
 			focusTargetIdentity: 'add-guild',
 		});
 	}
-	if (visibility.downloadVisible) {
-		rows.push({
-			kind: 'download',
-			key: 'download',
-			focusable: true,
-			focusTargetIdentity: 'download',
-		});
-	}
-	if (visibility.helpVisible) {
-		rows.push({
-			kind: 'help',
-			key: 'help',
-			focusable: true,
-			focusTargetIdentity: 'help',
-		});
-	}
 	return rows;
 }
 
@@ -354,7 +326,6 @@ function hasGapAfterGuildNavigationRow(row: GuildNavigationRow, nextRow: GuildNa
 		case 'fluxer':
 		case 'discovery':
 		case 'add-guild':
-		case 'download':
 			return true;
 		case 'favorites':
 			if (nextRow == null) {
@@ -1488,8 +1459,8 @@ function createGuildRailSkeletonLayout({
 		favoritesVisible: visibility.favoritesVisible,
 		discoveryVisible: visibility.discoveryVisible,
 		addGuildVisible: visibility.addGuildVisible,
-		downloadVisible: visibility.downloadVisible,
-		helpVisible: visibility.helpVisible,
+		downloadVisible: false,
+		helpVisible: false,
 		selectedItemIndex,
 		organizedItems: Object.freeze(projectedItems),
 	});
@@ -2046,10 +2017,6 @@ const GuildList = observer(() => {
 				return <DiscoveryButton data-flx="app.guilds-layout.render-guild-navigation-row.discovery-button" />;
 			case 'add-guild':
 				return <AddGuildButton data-flx="app.guilds-layout.render-guild-navigation-row.add-guild-button" />;
-			case 'download':
-				return <DownloadButton data-flx="app.guilds-layout.render-guild-navigation-row.download-button" />;
-			case 'help':
-				return <HelpButton data-flx="app.guilds-layout.render-guild-navigation-row.help-button" />;
 		}
 	};
 	const renderGuildNavigationListItem = (row: GuildNavigationRow, index: number): React.ReactNode => {

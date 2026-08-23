@@ -2,8 +2,7 @@
 
 import {showGenericErrorModal} from '@app/features/app/components/alerts/GenericErrorModalCommands';
 import * as Modal from '@app/features/app/components/dialogs/Modal';
-import {ExternalLink} from '@app/features/app/components/shared/ExternalLink';
-import {EXAMPLE_EMAIL, SUPPORT_EMAIL, SUPPORT_EMAIL_MAILTO} from '@app/features/app/config/I18nDisplayConstants';
+import {EXAMPLE_EMAIL} from '@app/features/app/config/I18nDisplayConstants';
 import styles from '@app/features/auth/components/modals/RequiredActionModal.module.css';
 import {
 	A_NEW_VERIFICATION_CODE_HAS_BEEN_SENT_DESCRIPTOR,
@@ -267,15 +266,7 @@ export const ValueBlock: React.FC<ValueBlockProps> = ({label, value}) => (
 );
 export const SupportLinkLine: React.FC = () => {
 	const {i18n} = useLingui();
-	return (
-		<ExternalLink
-			href={SUPPORT_EMAIL_MAILTO}
-			className={styles.supportLink}
-			data-flx="auth.required-action-modal.support-link-line.external-link"
-		>
-			{i18n._(SUPPORT_LINK_LABEL_DESCRIPTOR)} ({SUPPORT_EMAIL})
-		</ExternalLink>
-	);
+	return <span className={styles.supportLink}>{i18n._(SUPPORT_LINK_LABEL_DESCRIPTOR)}</span>;
 };
 
 interface NewEmailAddressFormProps {

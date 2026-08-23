@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import * as Modal from '@app/features/app/components/dialogs/Modal';
-import {ExternalLink} from '@app/features/app/components/shared/ExternalLink';
 import {
 	MFA_CODE_DIGIT_COUNT,
 	PHONE_VERIFICATION_LIMIT,
 	PHONE_VERIFICATION_WINDOW_DAYS,
 	PRODUCT_NAME,
-	SUPPORT_EMAIL,
-	SUPPORT_EMAIL_MAILTO,
 } from '@app/features/app/config/I18nDisplayConstants';
 import {useFormSubmit} from '@app/features/app/hooks/useFormSubmit';
 import * as EmojiUtils from '@app/features/expressions/utils/EmojiUtils';
@@ -300,11 +297,7 @@ export const PhoneAddModal = observer(() => {
 					<p className={styles.footerText} data-flx="user.phone-add-modal.footer-text--2">
 						<Trans>
 							Sending an SMS to this phone number is too expensive for {PRODUCT_NAME}, so we need you to send us an SMS
-							instead. We know this isn't ideal. You can also contact{' '}
-							<ExternalLink href={SUPPORT_EMAIL_MAILTO} data-flx="user.phone-add-modal.external-link">
-								{SUPPORT_EMAIL}
-							</ExternalLink>{' '}
-							to have us lift this requirement from your account.
+							instead. We know this isn't ideal.
 						</Trans>
 					</p>
 				</div>

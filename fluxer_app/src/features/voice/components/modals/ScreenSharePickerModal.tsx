@@ -61,7 +61,6 @@ import VoiceSettings, {
 import {getNativeAudioAvailabilityCached} from '@app/features/voice/utils/NativeAudioCaptureBridge';
 import {
 	getDisplayShareEnvironment,
-	shouldShowDesktopDownloadCta,
 	supportsDeviceScreenShare,
 	usesNativeDisplaySharePicker,
 } from '@app/features/voice/utils/ScreenShareEnvironment';
@@ -94,10 +93,9 @@ const FAILED_TO_LOAD_SHAREABLE_SOURCES_DESCRIPTOR = msg({
 	message: 'Failed to load shareable sources.',
 	comment: 'Error text shown in the screen-share picker when the list of shareable windows/displays fails to load.',
 });
-const THIS_PICKER_IS_ONLY_AVAILABLE_IN_THE_DESKTOP_DESCRIPTOR = msg({
-	message: 'This picker is only available in the desktop app.',
-	comment:
-		'Empty state in the screen-share picker shown to web users. Explains that this advanced picker requires the desktop app.',
+const USE_THE_BROWSER_SHARE_PICKER_DESCRIPTOR = msg({
+	message: 'Use the browser picker to choose what you want to share.',
+	comment: 'Empty state in the screen-share picker shown when browser-managed source selection is required.',
 });
 const APP_WINDOW_DESCRIPTOR = msg({
 	message: 'App window',
@@ -686,7 +684,6 @@ const ScreenSharePickerModalLoadedContent = observer(
 		const {i18n} = useLingui();
 		const {videoDevices} = useMediaDevices({autoRefresh: activeTab === 'devices', requestPermissions: false});
 		const usesNativeDisplayPicker = usesNativeDisplaySharePicker(displayShareEnvironment);
-		const showDesktopDownloadCta = shouldShowDesktopDownloadCta(displayShareEnvironment);
 		const [desktopSources, setDesktopSources] = useState<Array<DesktopSource>>(
 			() => initialDesktopSources?.map(normaliseDesktopSource) ?? [],
 		);
@@ -762,7 +759,7 @@ const ScreenSharePickerModalLoadedContent = observer(
 						setLoadError(
 							getElectronAPI()
 								? i18n._(FAILED_TO_LOAD_SHAREABLE_SOURCES_DESCRIPTOR)
-								: i18n._(THIS_PICKER_IS_ONLY_AVAILABLE_IN_THE_DESKTOP_DESCRIPTOR),
+								: i18n._(USE_THE_BROWSER_SHARE_PICKER_DESCRIPTOR),
 						);
 					}
 				}
@@ -1108,7 +1105,6 @@ const ScreenSharePickerModalLoadedContent = observer(
 							pickerActionLabel={pickerActionLabel}
 							onPickerAction={() => void handleStartSelection(NATIVE_DISPLAY_SELECTION_ID)}
 							pickerActionPending={nativeDisplayPending}
-							showDesktopDownloadCta={showDesktopDownloadCta}
 							data-flx="voice.screen-share-picker-modal.screen-share-picker-modal-loaded-content.native-display-picker-state"
 						/>
 					) : showEmptyState && activeCards.length === 0 ? (

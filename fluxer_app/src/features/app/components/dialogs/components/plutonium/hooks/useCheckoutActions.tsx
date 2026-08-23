@@ -8,7 +8,6 @@ import {
 	PIX_PAYMENT_METHOD,
 	PREMIUM_PRODUCT_FULL_NAME,
 	PRODUCT_NAME,
-	SUPPORT_EMAIL,
 	UPI_PAYMENT_METHOD,
 } from '@app/features/app/config/I18nDisplayConstants';
 import {CANCEL_DESCRIPTOR, CLOSE_DESCRIPTOR, OKAY_DESCRIPTOR} from '@app/features/i18n/utils/CommonMessageDescriptors';
@@ -138,16 +137,16 @@ const PURCHASES_DISABLED_TITLE_DESCRIPTOR = msg({
 	comment: 'Modal title shown when purchases are disabled on this account (server-side enforcement).',
 });
 const PURCHASES_DISABLED_BODY_DESCRIPTOR = msg({
-	message: 'Purchases are disabled for this account. Contact {supportEmail} if this looks wrong.',
-	comment: 'Modal body shown when purchases are disabled. Provides the support email for appeals.',
+	message: 'Purchases are disabled for this account.',
+	comment: 'Modal body shown when purchases are disabled.',
 });
 const CHECKOUT_BLOCKED_TITLE_DESCRIPTOR = msg({
 	message: 'Checkout unavailable',
 	comment: 'Modal title for the generic "checkout blocked" state when no more specific reason is known.',
 });
 const CHECKOUT_BLOCKED_BODY_DESCRIPTOR = msg({
-	message: 'Checkout is blocked for this account. Contact {supportEmail} if you need help.',
-	comment: 'Modal body for the generic "checkout blocked" state. Provides the support email.',
+	message: 'Checkout is blocked for this account.',
+	comment: 'Modal body for the generic "checkout blocked" state.',
 });
 const CHECKOUT_START_FAILED_TITLE_DESCRIPTOR = msg({
 	message: "Couldn't start checkout",
@@ -406,9 +405,7 @@ export const useCheckoutActions = (
 								modal(() => (
 									<ConfirmModal
 										title={i18n._(PURCHASES_DISABLED_TITLE_DESCRIPTOR)}
-										description={i18n._(PURCHASES_DISABLED_BODY_DESCRIPTOR, {
-											supportEmail: SUPPORT_EMAIL,
-										})}
+										description={i18n._(PURCHASES_DISABLED_BODY_DESCRIPTOR)}
 										secondaryText={i18n._(CLOSE_DESCRIPTOR)}
 										data-flx="app.plutonium.use-checkout-actions.handle-checkout-error.confirm-modal--3"
 									/>
@@ -420,9 +417,7 @@ export const useCheckoutActions = (
 							modal(() => (
 								<ConfirmModal
 									title={i18n._(CHECKOUT_BLOCKED_TITLE_DESCRIPTOR)}
-									description={i18n._(CHECKOUT_BLOCKED_BODY_DESCRIPTOR, {
-										supportEmail: SUPPORT_EMAIL,
-									})}
+									description={i18n._(CHECKOUT_BLOCKED_BODY_DESCRIPTOR)}
 									secondaryText={i18n._(CLOSE_DESCRIPTOR)}
 									data-flx="app.plutonium.use-checkout-actions.handle-checkout-error.confirm-modal--4"
 								/>

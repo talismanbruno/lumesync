@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import {ConfirmModal} from '@app/features/app/components/dialogs/ConfirmModal';
 import {SettingsTabSection} from '@app/features/app/components/dialogs/shared/SettingsTabLayout';
 import {
-	DESKTOP_DOWNLOAD_URL,
 	MACOS_INPUT_MONITORING_PERMISSION_NAME,
 	MACOS_MICROPHONE_PERMISSION_NAME,
 	MACOS_PRIVACY_AND_SECURITY_SETTINGS_NAME,
@@ -16,14 +14,11 @@ import {openMacPermissionsModal} from '@app/features/permissions/system/commands
 import {MacPermissionsSettingsRow} from '@app/features/permissions/system/components/MacPermissionsSettingsRow';
 import NativePermission from '@app/features/permissions/system/state/NativePermission';
 import {Button} from '@app/features/ui/button/Button';
-import * as ModalCommands from '@app/features/ui/commands/ModalCommands';
-import {modal} from '@app/features/ui/commands/ModalCommands';
 import type {ComboboxOption} from '@app/features/ui/components/form/FormCombobox';
 import {Switch} from '@app/features/ui/components/form/FormSwitch';
 import {RESET_SLIDER_TO_DEFAULT_VALUE_DESCRIPTOR, Slider} from '@app/features/ui/components/Slider';
 import {canResetSliderValue, SliderResetIconButton} from '@app/features/ui/components/slider/SliderResetIconButton';
 import {RadioGroup, type RadioOption} from '@app/features/ui/radio_group/RadioGroup';
-import {openExternalUrl} from '@app/features/ui/utils/NativeUtils';
 import {formatRoundedPercentage} from '@app/features/ui/utils/PercentageFormatting';
 import {WarningAlert} from '@app/features/ui/warning_alert/WarningAlert';
 import {CompactComboboxRow} from '@app/features/user/components/modals/tabs/components/CompactComboboxRow';
@@ -93,18 +88,6 @@ const NOISE_SUPPRESSION_STANDARD_DESCRIPTOR = msg({
 });
 const NONE_DESCRIPTOR = msg({
 	message: 'None',
-	comment: 'Short label in the voice tab. Keep it concise.',
-});
-const PUSH_TO_TALK_LIMITED_DESCRIPTOR = msg({
-	message: 'Push-to-talk (limited)',
-	comment: 'Short label in the voice tab. Keep it concise.',
-});
-const DOWNLOAD_DESKTOP_APP_DESCRIPTOR = msg({
-	message: 'Download desktop app',
-	comment: 'Button or menu action label in the voice tab. Keep it concise.',
-});
-const I_UNDERSTAND_DESCRIPTOR = msg({
-	message: 'I understand',
 	comment: 'Short label in the voice tab. Keep it concise.',
 });
 const PUSH_TO_TALK_DESCRIPTOR = msg({
@@ -313,35 +296,6 @@ export const VoiceTab: React.FC<VoiceTabProps> = observer(({voiceSettings, autoR
 	};
 	const setPushToTalkEnabled = (enabled: boolean) => {
 		const mode = enabled ? 'voice_push_to_talk' : 'voice_activity';
-		if (enabled && !isNativeDesktop) {
-			ModalCommands.push(
-				modal(() => (
-					<ConfirmModal
-						title={i18n._(PUSH_TO_TALK_LIMITED_DESCRIPTOR)}
-						description={
-							<p data-flx="user.voice-tab.set-push-to-talk-enabled.p">
-								<Trans>
-									In a browser, push-to-talk only works while the {PRODUCT_NAME} tab is focused. Install the desktop app
-									for system-wide push-to-talk.
-								</Trans>
-							</p>
-						}
-						primaryText={i18n._(DOWNLOAD_DESKTOP_APP_DESCRIPTOR)}
-						primaryVariant="primary"
-						secondaryText={i18n._(I_UNDERSTAND_DESCRIPTOR)}
-						onPrimary={() => {
-							void openExternalUrl(DESKTOP_DOWNLOAD_URL);
-						}}
-						onSecondary={() => {
-							Keybind.setTransmitMode(mode);
-							MediaEngine.handlePushToTalkModeChange();
-						}}
-						data-flx="user.voice-tab.set-push-to-talk-enabled.confirm-modal"
-					/>
-				)),
-			);
-			return;
-		}
 		if (enabled && isNativeMac && !inputMonitoringGranted) {
 			openMacPermissionsModal({focus: 'input-monitoring'});
 		}
@@ -414,16 +368,7 @@ export const VoiceTab: React.FC<VoiceTabProps> = observer(({voiceSettings, autoR
 			{isPushToTalk && isPttLimited && (
 				<WarningAlert
 					actions={
-						!isNativeDesktop ? (
-							<Button
-								variant="primary"
-								small={true}
-								onClick={() => void openExternalUrl(DESKTOP_DOWNLOAD_URL)}
-								data-flx="user.voice-tab.render-ptt-controls.button.download-desktop-app"
-							>
-								{i18n._(DOWNLOAD_DESKTOP_APP_DESCRIPTOR)}
-							</Button>
-						) : (
+						isNativeDesktop ? (
 							<Button
 								variant="primary"
 								small={true}
@@ -434,7 +379,7 @@ export const VoiceTab: React.FC<VoiceTabProps> = observer(({voiceSettings, autoR
 									permissionName: MACOS_INPUT_MONITORING_PERMISSION_NAME,
 								})}
 							</Button>
-						)
+						) : undefined
 					}
 					data-flx="user.voice-tab.render-ptt-controls.warning-alert"
 				>

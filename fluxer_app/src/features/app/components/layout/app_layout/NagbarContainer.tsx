@@ -5,7 +5,6 @@ import styles from '@app/features/app/components/layout/app_layout/NagbarContain
 import {BuildEnvironmentNagbar} from '@app/features/app/components/layout/app_layout/nagbars/BuildEnvironmentNagbar';
 import {ConnectionNagbar} from '@app/features/app/components/layout/app_layout/nagbars/ConnectionNagbar';
 import {CorruptedInstallationNagbar} from '@app/features/app/components/layout/app_layout/nagbars/CorruptedInstallationNagbar';
-import {DesktopDownloadNagbar} from '@app/features/app/components/layout/app_layout/nagbars/DesktopDownloadNagbar';
 import {DesktopNotificationNagbar} from '@app/features/app/components/layout/app_layout/nagbars/DesktopNotificationNagbar';
 import {EmailVerificationNagbar} from '@app/features/app/components/layout/app_layout/nagbars/EmailVerificationNagbar';
 import {GiftInventoryNagbar} from '@app/features/app/components/layout/app_layout/nagbars/GiftInventoryNagbar';
@@ -146,13 +145,7 @@ export const NagbarContainer: React.FC<NagbarContainerProps> = observer(({nagbar
 							/>
 						);
 					case NagbarType.DESKTOP_DOWNLOAD:
-						return (
-							<DesktopDownloadNagbar
-								key={nagbar.type}
-								isMobile={mobileLayout.enabled}
-								data-flx="app.app-layout.nagbar-container.desktop-download-nagbar"
-							/>
-						);
+						return null;
 					case NagbarType.GUILD_MEMBERSHIP_CTA:
 						return (
 							<GuildMembershipCtaNagbar

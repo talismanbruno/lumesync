@@ -8,13 +8,7 @@ type ConfigObject = Record<string, unknown>;
 
 let cachedConfig: MasterConfig | null = null;
 
-const DEFAULT_PASSKEY_ORIGINS = [
-	'https://fluxer.app',
-	'https://web.fluxer.app',
-	'https://web.canary.fluxer.app',
-	'android:apk-key-hash:keSY4bimyLqZQV7bKXgpa2xYuqXi0qZJzsYtp6gpx7w',
-	'android:apk-key-hash:zRmCKDKo3uCX2GDZISjJx8Rzo3J-Y3Gbp7s7mAaUH28',
-];
+const DEFAULT_PASSKEY_ORIGINS: Array<string> = [];
 
 function defaultConfig(): MasterConfig {
 	return {
@@ -152,8 +146,8 @@ function defaultConfig(): MasterConfig {
 			connection_initiation_secret: '',
 			sso_allow_private_addresses: false,
 			passkeys: {
-				rp_name: 'Fluxer',
-				rp_id: 'fluxer.app',
+				rp_name: 'Lume',
+				rp_id: 'localhost',
 				additional_allowed_origins: DEFAULT_PASSKEY_ORIGINS,
 			},
 			vapid: {
@@ -162,12 +156,12 @@ function defaultConfig(): MasterConfig {
 				email: '',
 			},
 			bluesky: {
-				enabled: true,
-				client_name: 'Fluxer',
+				enabled: false,
+				client_name: 'Lume',
 				client_uri: '',
 				logo_uri: '',
-				tos_uri: 'https://fluxer.app/terms',
-				policy_uri: 'https://fluxer.app/privacy',
+				tos_uri: '',
+				policy_uri: '',
 				keys: [],
 			},
 		},
@@ -180,7 +174,7 @@ function defaultConfig(): MasterConfig {
 				enabled: false,
 				provider: 'none',
 				from_email: '',
-				from_name: 'Fluxer',
+				from_name: 'Lume',
 			},
 			sms: {
 				enabled: false,

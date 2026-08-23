@@ -388,7 +388,7 @@ export const useActiveNagbars = (conditions: NagbarConditions): Array<NagbarStat
 			{
 				type: NagbarType.DESKTOP_DOWNLOAD,
 				priority: 9,
-				visible: conditions.canShowDesktopDownload,
+				visible: false,
 				dismissible: true,
 			},
 			{
