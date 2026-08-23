@@ -1,19 +1,21 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 
 .container {
+	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 1fr);
-	grid-template-rows: minmax(0, 1fr);
+	place-items: center;
 	height: 100%;
 	min-height: 0;
 	width: 100%;
 	min-width: 0;
 	overflow: hidden;
-	position: relative;
+	background:
+		radial-gradient(circle at 50% 46%, rgb(0 209 255 / 7%) 0, transparent 32rem),
+		linear-gradient(145deg, #030404 0%, #050708 48%, #020303 100%);
 	user-select: none;
 	-webkit-user-select: none;
 	opacity: 1;
-	transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
+	transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .containerExiting {
@@ -24,73 +26,198 @@
 	pointer-events: none;
 }
 
-.containerGuilds {
-	--layout-user-area-overlay-height: 0px;
-	grid-template-columns: var(--layout-guild-list-width) minmax(0, 1fr);
-	background-color: var(--background-secondary);
+.ambientGlow {
+	position: absolute;
+	left: 50%;
+	top: 48%;
+	width: min(32rem, 80vw);
+	aspect-ratio: 1;
+	transform: translate(-50%, -50%);
+	border: 1px solid rgb(0 209 255 / 8%);
+	border-radius: 50%;
+	box-shadow:
+		0 0 8rem rgb(0 209 255 / 5%),
+		inset 0 0 6rem rgb(0 209 255 / 2%);
 }
 
-.containerRailless {
-	grid-template-columns: minmax(0, 1fr);
-}
-
-.containerReserveUserArea {
-	--layout-user-area-overlay-height: calc(
-		var(--layout-user-area-height) +
-		var(--user-area-box-inset-block-end) +
-		var(--layout-voice-connection-height)
-	);
-}
-
-.containerReserveMobileBottomNav {
-	--layout-mobile-bottom-nav-reserved-height: var(--mobile-bottom-nav-height);
-}
-
-:global(html.platform-native) .containerGuilds {
-	padding-top: var(--native-titlebar-height);
-}
-
-.outlineFrame {
-	--outline-radius: 0px;
-}
-
-:global(html:not(.platform-native)) .outlineFrame {
-	border-top: none;
-}
-
-:global(html.platform-native) .outlineFrame {
-	border-top: 0.0625rem solid var(--user-area-divider-color);
-	--outline-radius: var(--outline-frame-radius-native);
-}
-
-.content {
-	display: grid;
-	grid-template-rows: minmax(0, 1fr);
-	min-width: 0;
-	min-height: 0;
-	overflow: hidden;
-}
-
-.main {
-	display: grid;
-	grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr);
-	flex: 1;
-	min-width: 0;
-	min-height: 0;
-	overflow: hidden;
-}
-
-.mainSidebarless {
-	grid-template-columns: minmax(0, 1fr);
-}
-
-.contentColumn {
+.syncCard {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	min-width: 0;
-	min-height: 0;
+	align-items: center;
+	width: min(22rem, calc(100vw - 3rem));
+	padding: 2.5rem 2rem;
+}
+
+.orbit {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 8.5rem;
+	aspect-ratio: 1;
+}
+
+.orbitRingOuter,
+.orbitRingInner,
+.orbitLight {
+	position: absolute;
+	border-radius: 50%;
+}
+
+.orbitRingOuter {
+	inset: 0;
+	border: 1px solid rgb(0 209 255 / 16%);
+	border-top-color: rgb(0 209 255 / 72%);
+	animation: lume-orbit-spin 2.8s linear infinite;
+}
+
+.orbitRingInner {
+	inset: 0.75rem;
+	border: 1px solid rgb(255 255 255 / 8%);
+	border-right-color: rgb(255 255 255 / 50%);
+	animation: lume-orbit-spin-reverse 2s linear infinite;
+}
+
+.orbitLight {
+	inset: -0.1rem;
+	background: conic-gradient(from 30deg, transparent 0 80%, rgb(0 209 255 / 24%) 94%, transparent 100%);
+	filter: blur(8px);
+	animation: lume-orbit-spin 2.8s linear infinite;
+}
+
+.logoShell {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 5.5rem;
+	aspect-ratio: 1;
+	border: 1px solid rgb(255 255 255 / 7%);
+	border-radius: 1.75rem;
+	background: rgb(4 8 9 / 92%);
+	box-shadow:
+		0 1.25rem 4rem rgb(0 0 0 / 60%),
+		0 0 2.5rem rgb(0 209 255 / 10%),
+		inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.logo {
+	width: 3.75rem;
+	height: 3.75rem;
+	object-fit: contain;
+	filter: drop-shadow(0 0 0.9rem rgb(0 209 255 / 24%));
+	animation: lume-logo-breathe 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.copy {
+	margin-top: 1.7rem;
+	text-align: center;
+}
+
+.title,
+.subtitle {
+	margin: 0;
+}
+
+.title {
+	color: #f4fbfc;
+	font-size: 0.78rem;
+	font-weight: 760;
+	letter-spacing: 0.22em;
+	line-height: 1.4;
+	text-transform: uppercase;
+}
+
+.title::after {
+	display: inline-block;
+	width: 1.2em;
+	content: '\2026';
+	color: #00d1ff;
+	text-align: left;
+	animation: lume-ellipsis 1.4s steps(4, end) infinite;
+}
+
+.subtitle {
+	margin-top: 0.6rem;
+	color: rgb(228 242 245 / 45%);
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+}
+
+.progress {
+	position: relative;
+	width: 7rem;
+	height: 2px;
+	margin-top: 1.5rem;
 	overflow: hidden;
-	background-color: var(--background-secondary);
+	border-radius: 999px;
+	background: rgb(255 255 255 / 6%);
+}
+
+.progress span {
+	position: absolute;
+	inset-block: 0;
+	left: -45%;
+	width: 45%;
+	border-radius: inherit;
+	background: linear-gradient(90deg, transparent, #00d1ff 65%, #c4f7ff);
+	box-shadow: 0 0 0.75rem rgb(0 209 255 / 55%);
+	animation: lume-progress 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes lume-orbit-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes lume-orbit-spin-reverse {
+	to {
+		transform: rotate(-360deg);
+	}
+}
+
+@keyframes lume-logo-breathe {
+	0%,
+	100% {
+		transform: scale(0.96);
+		opacity: 0.82;
+	}
+
+	50% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes lume-progress {
+	0% {
+		left: -45%;
+	}
+
+	100% {
+		left: 100%;
+	}
+}
+
+@keyframes lume-ellipsis {
+	0% {
+		clip-path: inset(0 100% 0 0);
+	}
+
+	100% {
+		clip-path: inset(0 0 0 0);
+	}
+}
+
+:global(html.reduced-motion) .orbitRingOuter,
+:global(html.reduced-motion) .orbitRingInner,
+:global(html.reduced-motion) .orbitLight,
+:global(html.reduced-motion) .logo,
+:global(html.reduced-motion) .progress span,
+:global(html.reduced-motion) .title::after {
+	animation: none;
 }
 
 :global(html.reduced-motion) .container {
@@ -100,5 +227,42 @@
 @media (prefers-reduced-motion: reduce) {
 	.container {
 		transition-duration: 0s;
+	}
+
+	.orbitRingOuter,
+	.orbitRingInner,
+	.orbitLight,
+	.logo,
+	.progress span,
+	.title::after {
+		animation: none;
+	}
+}
+
+@media (max-width: 36rem) {
+	.ambientGlow {
+		width: 88vw;
+	}
+
+	.syncCard {
+		padding-inline: 1rem;
+	}
+
+	.orbit {
+		width: 7.5rem;
+	}
+
+	.logoShell {
+		width: 4.9rem;
+		border-radius: 1.5rem;
+	}
+
+	.logo {
+		width: 3.25rem;
+		height: 3.25rem;
+	}
+
+	.subtitle {
+		max-width: 14rem;
 	}
 }
