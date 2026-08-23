@@ -38,6 +38,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from "@/components/ui/popover";
 import { FriendsView } from "@/components/ui/FriendsView";
 import { AdminVerifiedBadge } from "@/components/ui/AdminVerifiedBadge";
+import { playLumeSound, showDesktopNotification } from "@/lib/notifications";
 
 const EmojiPicker = lazy(() => import('emoji-picker-react'));
 const VoiceRoomUI = lazy(() => import("@/components/voice/VoiceRoomUI").then((module) => ({ default: module.VoiceRoomUI })));
@@ -219,6 +220,7 @@ function DashboardComponent() {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'profile' | 'voice'>('profile');
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [dmGroups, setDmGroups] = useState<any[]>([]);
   const [activeDMGroup, setActiveDMGroup] = useState<any | null>(null);
@@ -227,12 +229,22 @@ function DashboardComponent() {
   const bannerUploadRef = useRef<HTMLInputElement>(null);
   
   const [profilesCache, setProfilesCache] = useState<Record<string, Profile>>({});
+  const profilesCacheRef = useRef<Record<string, Profile>>({});
+  const activeDMFriendRef = useRef<Profile | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [hiddenDMIds, setHiddenDMIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'conversas' | 'servidores' | 'amigos'>('amigos');
   const [friendFilter, setFriendFilter] = useState<'online' | 'all' | 'pending' | 'add'>('online');
 
   const hiddenDMStorageKey = myProfile.id ? `lume:hidden-dms:${myProfile.id}` : null;
+
+  useEffect(() => {
+    profilesCacheRef.current = profilesCache;
+  }, [profilesCache]);
+
+  useEffect(() => {
+    activeDMFriendRef.current = activeDMFriend;
+  }, [activeDMFriend]);
 
   useEffect(() => {
     if (!hiddenDMStorageKey || typeof window === 'undefined') return;
@@ -955,9 +967,12 @@ function DashboardComponent() {
         const call = payload.new;
         if (call.status === 'ringing') {
           const initiatorId = call.initiator_id;
-          const initiator = profilesCache[initiatorId] || { display_name: "Alguém", username: "alguem" };
+          const initiator = profilesCacheRef.current[initiatorId] || { display_name: "Alguém", username: "alguem" };
+          const initiatorName = initiator.display_name || initiator.username;
+          playLumeSound('call');
+          showDesktopNotification('Chamada no Lume', `${initiatorName} está ligando para você.`, `lume-call-${call.id}`);
           
-          toast(`Chamada de voz de ${initiator.display_name || initiator.username}`, {
+          toast(`Chamada de voz de ${initiatorName}`, {
             action: {
               label: "Atender",
               onClick: async () => {
@@ -968,7 +983,7 @@ function DashboardComponent() {
                 
                 setActiveVoiceChannel({ 
                   id: call.room_key, 
-                  name: initiator.display_name || initiator.username, 
+                  name: initiatorName,
                   type: 'voice', 
                   server_id: 'dm' 
                 });
@@ -997,7 +1012,15 @@ function DashboardComponent() {
         schema: 'public', 
         table: 'direct_messages',
         filter: `recipient_id=eq.${myProfile.id}`
-      }, fetchUnreadCounts)
+      }, (payload: any) => {
+        void fetchUnreadCounts();
+        const message = payload.new;
+        if (!message?.sender_id || activeDMFriendRef.current?.id === message.sender_id) return;
+        const sender = profilesCacheRef.current[message.sender_id];
+        const senderName = sender?.display_name || sender?.username || 'Nova mensagem';
+        playLumeSound('message');
+        showDesktopNotification(senderName, message.content || 'Enviou um anexo.', `lume-dm-${message.sender_id}`);
+      })
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -1885,7 +1908,10 @@ function DashboardComponent() {
                 setActiveVoiceChannel(null);
                 setShowVoiceUI(false);
               }}
-              onOpenSettings={() => toast.info("Configurações de áudio em breve")}
+              onOpenSettings={() => {
+                setSettingsInitialTab('voice');
+                setIsSettingsOpen(true);
+              }}
             />
           </div>
         )}
@@ -1930,7 +1956,7 @@ function DashboardComponent() {
             </PopoverPortal>
           </Popover>
 
-          <button onClick={() => setIsSettingsOpen(true)} className="p-1.5 shrink-0 text-zinc-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
+          <button onClick={() => { setSettingsInitialTab('profile'); setIsSettingsOpen(true); }} className="p-1.5 shrink-0 text-zinc-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
             <Settings size={18} />
           </button>
         </div>
@@ -2163,6 +2189,7 @@ function DashboardComponent() {
           <SettingsModal
             isOpen={true}
             onClose={() => setIsSettingsOpen(false)}
+            initialTab={settingsInitialTab}
           />
         </Suspense>
       )}
