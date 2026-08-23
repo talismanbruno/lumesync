@@ -40,6 +40,7 @@
 	width: 100%;
 	min-width: 0;
 	background-color: var(--lume-bg-canvas);
+	animation: orbitalCanvasIn 220ms var(--lume-easing) both;
 }
 
 .contentColumnFullscreen {
@@ -56,4 +57,16 @@
 
 .contentInnerFullscreen {
 	background-color: #000;
+}
+
+@keyframes orbitalCanvasIn {
+	from {
+		opacity: 0.72;
+		transform: translateY(0.1875rem);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }

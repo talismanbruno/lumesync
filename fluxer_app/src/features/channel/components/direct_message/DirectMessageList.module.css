@@ -258,6 +258,11 @@
 	background-color: transparent;
 	color: var(--text-primary-muted);
 	box-shadow: none;
+	transition:
+		background-color 180ms var(--lume-easing),
+		color 180ms var(--lume-easing),
+		box-shadow 180ms var(--lume-easing),
+		transform 180ms var(--lume-easing);
 }
 
 .clickableItemIcon {
@@ -289,6 +294,7 @@
 		.clickableItem:hover:not(.clickableItemSelected) {
 		background-color: var(--surface-interactive-hover-bg);
 		color: var(--text-primary);
+		transform: translateX(0.125rem);
 	}
 }
 
