@@ -24,29 +24,29 @@ function generateManifest() {
 		scope: '/',
 		icons: [
 			{
-				src: '/lume/lume-favicon-v2.png',
+				src: '/assets/lume-favicon-v3.png',
 				sizes: '192x192',
 				type: 'image/png',
 				purpose: 'any',
 			},
 			{
-				src: '/lume/lume-favicon-v2.png',
+				src: '/assets/lume-favicon-v3.png',
 				sizes: '512x512',
 				type: 'image/png',
 				purpose: 'any',
 			},
 			{
-				src: '/lume/lume-favicon-v2.png',
+				src: '/assets/lume-favicon-v3.png',
 				sizes: '180x180',
 				type: 'image/png',
 			},
 			{
-				src: '/lume/lume-favicon-v2.png',
+				src: '/assets/lume-favicon-v3.png',
 				sizes: '32x32',
 				type: 'image/png',
 			},
 			{
-				src: '/lume/lume-favicon-v2.png',
+				src: '/assets/lume-favicon-v3.png',
 				sizes: '16x16',
 				type: 'image/png',
 			},
@@ -61,7 +61,7 @@ function generateBrowserConfig() {
 <browserconfig>
   <msapplication>
     <tile>
-      <square150x150logo src="/lume/lume-favicon-v2.png"/>
+      <square150x150logo src="/assets/lume-favicon-v3.png"/>
       <TileColor>#050505</TileColor>
     </tile>
   </msapplication>
@@ -98,7 +98,7 @@ export class StaticFilesPlugin {
 			throw new Error(`StaticFilesPlugin: Lume logo is missing at ${this.brandingLogoPath}.`);
 		}
 		compilation.emitAsset('lume/lume-logo.png', new sources.RawSource(fs.readFileSync(this.brandingLogoPath)));
-		compilation.emitAsset('lume/lume-favicon-v2.png', new sources.RawSource(fs.readFileSync(this.brandingLogoPath)));
+		compilation.emitAsset('assets/lume-favicon-v3.png', new sources.RawSource(fs.readFileSync(this.brandingLogoPath)));
 	}
 
 	apply(compiler) {
