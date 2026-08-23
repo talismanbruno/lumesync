@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  AUDIO_PREFERENCES_EVENT,
+  applyOutputDevice,
+  getAudioPreferences,
+  getMicrophoneConstraints,
+  setAudioPreferences,
+  type AudioPreferences
+} from '@/lib/audioPreferences';
 
 export interface LumeProfile {
   id: string;
@@ -28,6 +36,21 @@ export interface VoiceParticipant {
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'unstable' | 'failed';
 
+function getIceServers(): RTCIceServer[] {
+  const servers: RTCIceServer[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
+  ];
+  const turnUrl = import.meta.env.VITE_TURN_URL;
+  if (turnUrl) {
+    servers.push({
+      urls: turnUrl.split(',').map((url: string) => url.trim()).filter(Boolean),
+      username: import.meta.env.VITE_TURN_USERNAME,
+      credential: import.meta.env.VITE_TURN_CREDENTIAL
+    });
+  }
+  return servers;
+}
+
 export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | null) {
   const [participants, setParticipants] = useState<VoiceParticipant[]>([]);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
@@ -38,12 +61,24 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
   const [isNoiseSuppressionSupported, setIsNoiseSuppressionSupported] = useState(false);
   
   const channelRef = useRef<any>(null);
+  const myProfileRef = useRef<LumeProfile | null>(myProfile);
+  const localUserIdRef = useRef<string | null>(myProfile?.id || null);
+  const roomKeyRef = useRef<string | null>(null);
+  const joiningRoomRef = useRef<string | null>(null);
+  const joinAttemptRef = useRef(0);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const remoteStreams = useRef<Map<string, MediaStream>>(new Map());
+  const remoteAudioElements = useRef<Map<string, HTMLAudioElement>>(new Map());
   const remoteVideoStreams = useRef<Map<string, MediaStream>>(new Map());
   const remoteScreenStreams = useRef<Map<string, MediaStream>>(new Map());
+  const pendingIceCandidates = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+  const screenSenders = useRef<Map<string, RTCRtpSender[]>>(new Map());
+  const reconnectTimers = useRef<Map<string, number>>(new Map());
   const voiceChannelRef = useRef<any>(null);
+  const isDeafenedRef = useRef(false);
+  const appliedAudioPreferencesRef = useRef<AudioPreferences>(getAudioPreferences());
   
   // Audio Analysis for VAD
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -51,6 +86,9 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
   const vadIntervalRef = useRef<number | null>(null);
   const lastSpeakingState = useRef<boolean>(false);
   const speakingExpiryTimers = useRef<Map<string, number>>(new Map());
+
+  myProfileRef.current = myProfile;
+  if (myProfile?.id) localUserIdRef.current = myProfile.id;
 
   // Check support for noise suppression
   useEffect(() => {
@@ -78,6 +116,11 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
   }, []);
 
   const cleanup = useCallback(async () => {
+    joinAttemptRef.current += 1;
+    const leavingRoomKey = roomKeyRef.current;
+    roomKeyRef.current = null;
+    joiningRoomRef.current = null;
+
     if (vadIntervalRef.current) {
       window.clearInterval(vadIntervalRef.current);
       vadIntervalRef.current = null;
@@ -89,20 +132,24 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
     
     speakingExpiryTimers.current.forEach(timer => window.clearTimeout(timer));
     speakingExpiryTimers.current.clear();
+    reconnectTimers.current.forEach(timer => window.clearTimeout(timer));
+    reconnectTimers.current.clear();
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
     }
-    if (screenStream) {
-      screenStream.getTracks().forEach(t => t.stop());
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(t => t.stop());
+      screenStreamRef.current = null;
     }
     
-    if (roomKey && myProfile?.id) {
+    const localUserId = localUserIdRef.current;
+    if (leavingRoomKey && localUserId) {
       try {
         await (supabase.from('voice_participants') as any).delete().match({ 
-          room_key: roomKey, 
-          user_id: myProfile.id 
+          room_key: leavingRoomKey,
+          user_id: localUserId
         });
       } catch (err) {
         console.error("Error removing voice participant:", err);
@@ -121,23 +168,28 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
     
     peerConnections.current.forEach(pc => pc.close());
     peerConnections.current.clear();
+    remoteAudioElements.current.forEach(audio => {
+      audio.pause();
+      audio.srcObject = null;
+      audio.remove();
+    });
+    remoteAudioElements.current.clear();
     remoteStreams.current.clear();
     remoteVideoStreams.current.clear();
     remoteScreenStreams.current.clear();
+    pendingIceCandidates.current.clear();
+    screenSenders.current.clear();
     
     setParticipants([]);
     setScreenStream(null);
     setConnectionStatus('idle');
-  }, [screenStream, roomKey, myProfile?.id]);
+  }, []);
 
-  const calculateStatus = useCallback(() => {
-    if (!channelRef.current) return connectionStatus === 'idle' ? 'idle' : 'connecting';
+  const calculateStatus = useCallback((): ConnectionStatus => {
+    if (!channelRef.current) return 'idle';
     
     const channelStatus = channelRef.current.state; // 'joining', 'joined', 'leaving', 'closed'
-    const hasLocalStream = !!localStreamRef.current;
-    const isTrackLive = localStreamRef.current?.getAudioTracks()[0]?.readyState === 'live';
-
-    if (channelStatus !== 'joined' || !hasLocalStream || !isTrackLive) {
+    if (channelStatus !== 'joined') {
       return 'connecting';
     }
 
@@ -150,7 +202,7 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
 
     // Unstable: Se algum peer estiver falho ou desconectado
     const unstablePeer = peers.find(pc => 
-      pc.connectionState === 'failed' || pc.connectionState === 'disconnected'
+      pc.connectionState === 'failed'
     );
     
     if (unstablePeer) {
@@ -166,11 +218,8 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
     return 'connected';
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setConnectionStatus(calculateStatus());
-    }, 1000);
-    return () => clearInterval(interval);
+  const refreshConnectionStatus = useCallback(() => {
+    setConnectionStatus(calculateStatus());
   }, [calculateStatus]);
 
   const startVAD = useCallback((stream: MediaStream) => {
@@ -198,26 +247,107 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
           voiceChannelRef.current.send({
             type: 'broadcast',
             event: 'speaking',
-            payload: { userId: myProfile?.id, isSpeaking }
+            payload: { userId: myProfileRef.current?.id, isSpeaking }
           });
           
           // Atualiza localmente
           setParticipants(prev => prev.map(p => 
-            p.id === myProfile?.id ? { ...p, isSpeaking } : p
+            p.id === myProfileRef.current?.id ? { ...p, isSpeaking } : p
           ));
         }
       }, 100);
     } catch (e) {
       console.warn("VAD initiation failed:", e);
     }
-  }, [myProfile?.id]);
+  }, []);
+
+  const replaceInputDevice = useCallback(async (preferences: AudioPreferences) => {
+    if (!roomKeyRef.current || !localStreamRef.current) return;
+    try {
+      const nextStream = await navigator.mediaDevices.getUserMedia({
+        audio: getMicrophoneConstraints(preferences),
+        video: false
+      });
+      const nextTrack = nextStream.getAudioTracks()[0];
+      if (!nextTrack) return;
+
+      const previousStream = localStreamRef.current;
+      const previousTrack = previousStream.getAudioTracks()[0];
+      if (previousTrack) nextTrack.enabled = previousTrack.enabled;
+      await Promise.all(Array.from(peerConnections.current.values()).map(async pc => {
+        const sender = pc.getSenders().find(item => item.track?.kind === 'audio' && item.track.id === previousTrack?.id);
+        if (sender) await sender.replaceTrack(nextTrack);
+      }));
+
+      if (vadIntervalRef.current) window.clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+      await audioContextRef.current?.close().catch(() => undefined);
+      audioContextRef.current = null;
+      previousStream.getTracks().forEach(track => track.stop());
+      localStreamRef.current = nextStream;
+      setIsNoiseSuppressionEnabled(!!nextTrack.getSettings().noiseSuppression);
+      startVAD(nextStream);
+      toast.success('Dispositivo de entrada atualizado.');
+    } catch (error) {
+      console.warn('Falha ao trocar microfone:', error);
+      toast.error('Não foi possível usar este microfone.');
+    }
+  }, [startVAD]);
+
+  useEffect(() => {
+    const handlePreferences = (event: Event) => {
+      const preferences = (event as CustomEvent<AudioPreferences>).detail || getAudioPreferences();
+      const previous = appliedAudioPreferencesRef.current;
+      appliedAudioPreferencesRef.current = preferences;
+      if (preferences.outputDeviceId !== previous.outputDeviceId) {
+        remoteAudioElements.current.forEach(audio => {
+          void applyOutputDevice(audio, preferences.outputDeviceId).catch(() => undefined);
+        });
+      }
+      if (
+        preferences.inputDeviceId !== previous.inputDeviceId ||
+        preferences.noiseSuppression !== previous.noiseSuppression ||
+        preferences.echoCancellation !== previous.echoCancellation ||
+        preferences.autoGainControl !== previous.autoGainControl
+      ) {
+        void replaceInputDevice(preferences);
+      }
+    };
+    window.addEventListener(AUDIO_PREFERENCES_EVENT, handlePreferences);
+    return () => window.removeEventListener(AUDIO_PREFERENCES_EVENT, handlePreferences);
+  }, [replaceInputDevice]);
+
+  const sendOffer = useCallback(async (pc: RTCPeerConnection, userId: string, voiceChannel: any, iceRestart = false) => {
+    try {
+      const offer = await pc.createOffer({ iceRestart });
+      await pc.setLocalDescription(offer);
+      await voiceChannel.send({
+        type: 'broadcast',
+        event: 'offer',
+        payload: { offer: pc.localDescription, to: userId, from: myProfileRef.current?.id }
+      });
+    } catch (error) {
+      console.warn('Falha ao negociar conexão de voz:', error);
+      setConnectionStatus('unstable');
+    }
+  }, []);
+
+  const flushPendingCandidates = useCallback(async (userId: string, pc: RTCPeerConnection) => {
+    const candidates = pendingIceCandidates.current.get(userId) || [];
+    pendingIceCandidates.current.delete(userId);
+    for (const candidate of candidates) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.warn('Candidato ICE descartado:', error);
+      }
+    }
+  }, []);
 
   const createPeerConnection = useCallback((userId: string, isInitiator: boolean, voiceChannel: any) => {
     if (peerConnections.current.has(userId)) return peerConnections.current.get(userId)!;
 
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
+    const pc = new RTCPeerConnection({ iceServers: getIceServers() });
 
     peerConnections.current.set(userId, pc);
 
@@ -226,13 +356,17 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         pc.addTrack(track, localStreamRef.current!);
       });
     }
+    if (screenStreamRef.current) {
+      const senders = screenStreamRef.current.getTracks().map(track => pc.addTrack(track, screenStreamRef.current!));
+      screenSenders.current.set(userId, senders);
+    }
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         voiceChannel.send({
           type: 'broadcast',
           event: 'ice-candidate',
-          payload: { candidate: event.candidate, to: userId, from: myProfile?.id }
+          payload: { candidate: event.candidate, to: userId, from: myProfileRef.current?.id }
         });
       }
     };
@@ -246,10 +380,16 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         setRemoteStreamsVersion(v => v + 1);
       } else if (event.track.kind === 'audio') {
         remoteStreams.current.set(userId, stream);
+        const previousAudio = remoteAudioElements.current.get(userId);
+        previousAudio?.pause();
+        if (previousAudio) previousAudio.srcObject = null;
         const audio = new Audio();
         audio.srcObject = stream;
         audio.autoplay = true;
+        audio.muted = isDeafenedRef.current;
         (audio as any).playsInline = true;
+        remoteAudioElements.current.set(userId, audio);
+        void applyOutputDevice(audio, getAudioPreferences().outputDeviceId).catch(() => undefined);
         audio.play().catch(e => console.warn("Autoplay blocked:", e));
       }
 
@@ -262,53 +402,79 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
       ));
     };
 
+    pc.onconnectionstatechange = () => {
+      const existingTimer = reconnectTimers.current.get(userId);
+      if (existingTimer) {
+        window.clearTimeout(existingTimer);
+        reconnectTimers.current.delete(userId);
+      }
+
+      if (pc.connectionState === 'disconnected') {
+        setConnectionStatus('reconnecting');
+        const timer = window.setTimeout(() => {
+          if (pc.connectionState === 'disconnected') {
+            setConnectionStatus('unstable');
+            if (isInitiator) void sendOffer(pc, userId, voiceChannel, true);
+          }
+        }, 5000);
+        reconnectTimers.current.set(userId, timer);
+      } else if (pc.connectionState === 'failed') {
+        setConnectionStatus('reconnecting');
+        if (isInitiator) void sendOffer(pc, userId, voiceChannel, true);
+      } else {
+        refreshConnectionStatus();
+      }
+    };
+
     if (isInitiator) {
-      pc.createOffer().then(offer => pc.setLocalDescription(offer)).then(() => {
-        voiceChannel.send({
-          type: 'broadcast',
-          event: 'offer',
-          payload: { offer: pc.localDescription, to: userId, from: myProfile?.id }
-        });
-      });
+      void sendOffer(pc, userId, voiceChannel);
     }
 
     return pc;
-  }, [myProfile?.id]);
+  }, [refreshConnectionStatus, sendOffer]);
 
   const joinVoiceChannel = useCallback(async (rk: string) => {
-    if (!rk || !myProfile?.id) return;
-    if (channelRef.current) return;
+    const profile = myProfileRef.current;
+    if (!rk || !profile?.id) return;
+    if (roomKeyRef.current === rk || joiningRoomRef.current === rk) return;
+    if (channelRef.current) await cleanup();
+    joiningRoomRef.current = rk;
+    roomKeyRef.current = rk;
+    const joinAttempt = ++joinAttemptRef.current;
+    setConnectionStatus('connecting');
     
     let stream: MediaStream | null = null;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: { 
-          echoCancellation: true, 
-          noiseSuppression: true,
-          autoGainControl: true 
-        }, 
+      const audioPreferences = getAudioPreferences();
+      appliedAudioPreferencesRef.current = audioPreferences;
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: getMicrophoneConstraints(audioPreferences),
         video: false 
       });
       localStreamRef.current = stream;
+      setIsNoiseSuppressionEnabled(!!stream.getAudioTracks()[0]?.getSettings().noiseSuppression);
       startVAD(stream);
     } catch (err) {
       console.warn("Microfone indisponível ou permissão negada.");
-      toast.warning("Entrando como ouvinte.");
-      setConnectionStatus('failed');
+      toast.warning("Microfone indisponível. Você entrou apenas para ouvir.");
+    }
+
+    if (joinAttempt !== joinAttemptRef.current || roomKeyRef.current !== rk) {
+      stream?.getTracks().forEach(track => track.stop());
       return;
     }
 
     try {
       await (supabase.from('voice_participants') as any).upsert({ 
         room_key: rk, 
-        user_id: myProfile.id 
+        user_id: profile.id
       });
     } catch (err) {
       console.error("Error registering voice participant:", err);
     }
 
     const voiceChannel = supabase.channel(`voice-room-${rk}`, {
-      config: { presence: { key: myProfile.id } }
+      config: { presence: { key: profile.id } }
     });
 
     voiceChannel
@@ -332,13 +498,29 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         });
         
         users.forEach(u => {
-          if (u.id !== myProfile.id && !peerConnections.current.has(u.id)) {
-            const isInitiator = myProfile.id.toLowerCase() < u.id.toLowerCase();
+          if (u.id !== profile.id && !peerConnections.current.has(u.id)) {
+            const isInitiator = profile.id.toLowerCase() < u.id.toLowerCase();
             createPeerConnection(u.id, isInitiator, voiceChannel);
           }
         });
 
+        const activeRemoteIds = new Set(users.filter(u => u.id !== profile.id).map(u => u.id));
+        peerConnections.current.forEach((pc, userId) => {
+          if (activeRemoteIds.has(userId)) return;
+          pc.close();
+          peerConnections.current.delete(userId);
+          remoteStreams.current.delete(userId);
+          remoteVideoStreams.current.delete(userId);
+          remoteScreenStreams.current.delete(userId);
+          pendingIceCandidates.current.delete(userId);
+          const audio = remoteAudioElements.current.get(userId);
+          audio?.pause();
+          if (audio) audio.srcObject = null;
+          remoteAudioElements.current.delete(userId);
+        });
+
         setParticipants(users);
+        refreshConnectionStatus();
       })
       .on('broadcast', { event: 'speaking' }, ({ payload }) => {
         if (payload.userId) {
@@ -346,88 +528,140 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         }
       })
       .on('broadcast', { event: 'offer' }, async ({ payload }) => {
-        if (payload.to !== myProfile.id) return;
-        const pc = createPeerConnection(payload.from, false, voiceChannel);
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        voiceChannel.send({
-          type: 'broadcast',
-          event: 'answer',
-          payload: { answer: pc.localDescription, to: payload.from, from: myProfile.id }
-        });
+        if (payload.to !== profile.id) return;
+        try {
+          const pc = createPeerConnection(payload.from, false, voiceChannel);
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+          await flushPendingCandidates(payload.from, pc);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await voiceChannel.send({
+            type: 'broadcast',
+            event: 'answer',
+            payload: { answer: pc.localDescription, to: payload.from, from: profile.id }
+          });
+        } catch (error) {
+          console.warn('Falha ao responder chamada:', error);
+          setConnectionStatus('unstable');
+        }
       })
       .on('broadcast', { event: 'answer' }, async ({ payload }) => {
-        if (payload.to !== myProfile.id) return;
+        if (payload.to !== profile.id) return;
         const pc = peerConnections.current.get(payload.from);
-        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+        if (!pc) return;
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+          await flushPendingCandidates(payload.from, pc);
+        } catch (error) {
+          console.warn('Resposta WebRTC inválida:', error);
+        }
       })
       .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
-        if (payload.to !== myProfile.id) return;
+        if (payload.to !== profile.id) return;
         const pc = peerConnections.current.get(payload.from);
-        if (pc) await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        if (!pc || !pc.remoteDescription) {
+          const queued = pendingIceCandidates.current.get(payload.from) || [];
+          queued.push(payload.candidate);
+          pendingIceCandidates.current.set(payload.from, queued);
+          return;
+        }
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        } catch (error) {
+          console.warn('Candidato ICE inválido:', error);
+        }
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await voiceChannel.track({
-            user_id: myProfile.id,
-            username: myProfile?.username || 'Usuário',
-            display_name: myProfile?.display_name || 'Usuário',
-            avatar_url: myProfile?.avatar_url,
+            user_id: profile.id,
+            username: profile.username || 'Usuário',
+            display_name: profile.display_name || profile.username || 'Usuário',
+            avatar_url: profile.avatar_url,
             isMuted: false,
             isDeafened: false,
             isSharingScreen: false,
-            is_admin: myProfile.is_admin ?? false
+            is_admin: profile.is_admin ?? false
           });
+          joiningRoomRef.current = null;
+          setConnectionStatus('connected');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          joiningRoomRef.current = null;
+          setConnectionStatus('failed');
+        } else if (status === 'CLOSED') {
+          setConnectionStatus('idle');
         }
       });
 
     channelRef.current = voiceChannel;
     voiceChannelRef.current = voiceChannel;
-  }, [myProfile, createPeerConnection, startVAD, updateSpeakingState]);
+  }, [cleanup, createPeerConnection, flushPendingCandidates, refreshConnectionStatus, startVAD, updateSpeakingState]);
 
   useEffect(() => {
-    if (roomKey) {
-      joinVoiceChannel(roomKey);
+    if (!roomKey || !myProfile?.id) return;
+    void joinVoiceChannel(roomKey);
+    return () => {
+      void cleanup();
+    };
+  }, [roomKey, myProfile?.id, joinVoiceChannel, cleanup]);
+
+  const updateLocalPresence = useCallback((changes: Record<string, unknown>) => {
+    const profile = myProfileRef.current;
+    if (!channelRef.current || !profile?.id) return;
+    const current = participants.find(p => p.id === profile.id);
+    void channelRef.current.track({
+      user_id: profile.id,
+      username: profile.username || 'Usuário',
+      display_name: profile.display_name || profile.username || 'Usuário',
+      avatar_url: profile.avatar_url,
+      is_admin: profile.is_admin ?? false,
+      isMuted: current?.isMuted ?? false,
+      isDeafened: isDeafenedRef.current,
+      isSharingScreen: !!screenStreamRef.current,
+      ...changes
+    });
+  }, [participants]);
+
+  const stopScreenShare = useCallback(async () => {
+    const activeStream = screenStreamRef.current;
+    if (!activeStream) return;
+
+    screenStreamRef.current = null;
+    activeStream.getTracks().forEach(track => track.stop());
+    setScreenStream(null);
+    updateLocalPresence({ isSharingScreen: false });
+
+    for (const [peerId, senders] of screenSenders.current.entries()) {
+      const pc = peerConnections.current.get(peerId);
+      if (!pc || pc.signalingState === 'closed') continue;
+      senders.forEach(sender => {
+        try { pc.removeTrack(sender); } catch (error) { console.warn('Falha ao remover tela:', error); }
+      });
+      if (voiceChannelRef.current) await sendOffer(pc, peerId, voiceChannelRef.current);
     }
-  }, [roomKey, joinVoiceChannel]);
+    screenSenders.current.clear();
+  }, [sendOffer, updateLocalPresence]);
 
   const handleShareScreen = async () => {
+    if (screenStreamRef.current) {
+      await stopScreenShare();
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      screenStreamRef.current = stream;
       setScreenStream(stream);
       
-      peerConnections.current.forEach(async (pc, peerId) => {
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        voiceChannelRef.current?.send({
-          type: 'broadcast',
-          event: 'screen-offer',
-          payload: { fromUserId: myProfile?.id, toUserId: peerId, sdp: offer }
-        });
-      });
-      
-      const myPart = participants.find(p => p.id === myProfile?.id);
-      if (channelRef.current && myPart) {
-        channelRef.current.track({
-          ...myPart,
-          isSharingScreen: true
-        });
+      for (const [peerId, pc] of peerConnections.current.entries()) {
+        const senders = stream.getTracks().map(track => pc.addTrack(track, stream));
+        screenSenders.current.set(peerId, senders);
+        if (voiceChannelRef.current) await sendOffer(pc, peerId, voiceChannelRef.current);
       }
+      updateLocalPresence({ isSharingScreen: true });
 
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.onended = () => {
-          setScreenStream(null);
-          const currentMyPart = participants.find(p => p.id === myProfile?.id);
-          if (channelRef.current && currentMyPart) {
-            channelRef.current.track({
-              ...currentMyPart,
-              isSharingScreen: false
-            });
-          }
-        };
+        videoTrack.onended = () => { void stopScreenShare(); };
       }
     } catch (err) {
       console.log("Compartilhamento cancelado");
@@ -447,33 +681,24 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
           voiceChannelRef.current?.send({
             type: 'broadcast',
             event: 'speaking',
-            payload: { userId: myProfile?.id, isSpeaking: false }
+            payload: { userId: myProfileRef.current?.id, isSpeaking: false }
           });
         }
 
-        const myPart = participants.find(p => p.id === myProfile?.id);
-        if (channelRef.current && myPart) {
-          channelRef.current.track({
-            ...myPart,
-            isMuted,
-            isSharingScreen: !!screenStream
-          });
-        }
+        updateLocalPresence({ isMuted });
       }
     }
   };
 
   const toggleDeafen = () => {
     const nextDeafened = !isDeafened;
+    isDeafenedRef.current = nextDeafened;
     setIsDeafened(nextDeafened);
-    const myPart = participants.find(p => p.id === myProfile?.id);
-    if (channelRef.current && myPart) {
-      channelRef.current.track({
-        ...myPart,
-        isDeafened: nextDeafened,
-        isSharingScreen: !!screenStream
-      });
-    }
+    remoteAudioElements.current.forEach(audio => {
+      audio.muted = nextDeafened;
+      if (!nextDeafened) void audio.play().catch(() => undefined);
+    });
+    updateLocalPresence({ isDeafened: nextDeafened });
   };
 
   const toggleNoiseSuppression = async () => {
@@ -487,14 +712,13 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
         await audioTrack.applyConstraints({ noiseSuppression: nextState });
         const settings = audioTrack.getSettings();
         setIsNoiseSuppressionEnabled(!!settings.noiseSuppression);
+        appliedAudioPreferencesRef.current = {
+          ...appliedAudioPreferencesRef.current,
+          noiseSuppression: !!settings.noiseSuppression
+        };
+        setAudioPreferences({ noiseSuppression: !!settings.noiseSuppression });
         
-        const myPart = participants.find(p => p.id === myProfile?.id);
-        if (channelRef.current && myPart) {
-          channelRef.current.track({
-            ...myPart,
-            isNoiseSuppressionEnabled: !!settings.noiseSuppression
-          });
-        }
+        updateLocalPresence({ isNoiseSuppressionEnabled: !!settings.noiseSuppression });
       } catch (e) {
         toast.error("Erro ao aplicar supressão de ruído");
       }
@@ -520,3 +744,4 @@ export function useVoiceRoom(roomKey: string | null, myProfile: LumeProfile | nu
     disconnect: cleanup
   };
 }
+
