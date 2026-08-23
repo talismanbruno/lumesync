@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+.container {
+	position: absolute;
+	right: var(--composer-box-padding-inline, 0px);
+	bottom: calc(100% + var(--composer-status-safe-gap, 0.5rem));
+	z-index: 4;
+}
