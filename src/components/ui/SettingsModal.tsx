@@ -6,17 +6,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import { VoiceSettingsTab } from "./VoiceSettingsTab";
+
+type SettingsTab = 'my-account' | 'profile' | 'voice' | 'appearance';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   userProfile?: any;
   onProfileUpdate?: (updatedProfile: any) => void;
+  initialTab?: SettingsTab;
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, initialTab = 'profile' }: SettingsModalProps) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<'my-account' | 'profile' | 'voice' | 'appearance'>('profile');
+  const [activeTab, setActiveTab] = React.useState<SettingsTab>(initialTab);
+
+  React.useEffect(() => {
+    if (isOpen) setActiveTab(initialTab);
+  }, [initialTab, isOpen]);
 
   React.useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -141,7 +149,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
-            {(activeTab === 'voice' || activeTab === 'appearance') && (
+            {activeTab === 'voice' && <VoiceSettingsTab />}
+
+            {activeTab === 'appearance' && (
               <div className="max-w-2xl h-full flex flex-col items-center justify-center space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 opacity-50">
                 <Settings size={48} className="text-zinc-700 animate-spin-slow" />
                 <div className="text-center">
