@@ -27,9 +27,11 @@ import {TooltipWithKeybind} from '@app/features/ui/keybind_hint/KeybindHint';
 import {Popout} from '@app/features/ui/popover/PopoverPopout';
 import MobileLayout from '@app/features/ui/state/MobileLayout';
 import {Tooltip} from '@app/features/ui/tooltip/Tooltip';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import {UserSettingsModal} from '@app/features/user/components/modals/UserSettingsModal';
 import {USER_SETTINGS_LABEL_DESCRIPTOR} from '@app/features/user/components/settings_utils/SettingsConstants';
 import type {User} from '@app/features/user/models/User';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {VoiceConnectionStatus} from '@app/features/voice/components/VoiceConnectionStatus';
 import {VoiceAudioSettingsMenu} from '@app/features/voice/components/VoiceSettingsMenus';
@@ -282,7 +284,8 @@ const UserAreaInner = observer(
 								<StatusAwareAvatar user={user} size={32} data-flx="app.user-area.user-area-inner.status-aware-avatar" />
 								<div className={styles.userInfoText} data-flx="app.user-area.user-area-inner.user-info-text">
 									<div className={styles.userName} data-flx="app.user-area.user-area-inner.user-name">
-										{displayName}
+										<span>{displayName}</span>
+										<LumeOwnerBadge user={user} />
 									</div>
 									<div className={styles.userStatus} data-flx="app.user-area.user-area-inner.user-status">
 										<div
@@ -290,7 +293,7 @@ const UserAreaInner = observer(
 											data-flx="app.user-area.user-area-inner.hover-roll"
 										>
 											<div className={styles.hovered} data-flx="app.user-area.user-area-inner.hovered">
-												{NicknameUtils.formatTagForStreamerMode(user.tag)}
+												{formatLumePublicTagForStreamerMode(user)}
 											</div>
 											<div className={styles.defaultState} data-flx="app.user-area.user-area-inner.default-state">
 												{customStatus ? (

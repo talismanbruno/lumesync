@@ -7,6 +7,7 @@ import {cdnUrl} from '@app/features/messaging/utils/MessagingUrlUtils';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import {Tooltip} from '@app/features/ui/tooltip/Tooltip';
 import {handleExternalLinkClick} from '@app/features/ui/utils/NativeUtils';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import styles from '@app/features/user/components/popouts/UserProfileBadges.module.css';
 import type {Profile} from '@app/features/user/models/Profile';
 import type {User} from '@app/features/user/models/User';
@@ -19,11 +20,6 @@ import {observer} from 'mobx-react-lite';
 import type React from 'react';
 import {useMemo} from 'react';
 
-const STAFF_DESCRIPTOR = msg({
-	message: '{productName} Staff',
-	comment:
-		'Short badge title in the user profile badges popout. Preserve {productName}; it is inserted by code. English locales use Title Case for official badge titles; other locales should use natural local capitalization.',
-});
 const COMMUNITY_TEAM_DESCRIPTOR = msg({
 	message: '{productName} Community Team',
 	comment:
@@ -91,15 +87,6 @@ export const UserProfileBadges: React.FC<UserProfileBadgesProps> = observer(
 		const selfHosted = RuntimeConfig.isSelfHosted();
 		const badges = useMemo(() => {
 			const result: Array<Badge> = [];
-			if (user.flags & PublicUserFlags.STAFF) {
-				result.push({
-					type: 'icon',
-					key: 'staff',
-					iconUrl: cdnUrl('badges/staff.svg?v=2'),
-					tooltip: i18n._(STAFF_DESCRIPTOR, {productName: PRODUCT_NAME}),
-					url: Routes.careers(),
-				});
-			}
 			if (!selfHosted && user.flags & PublicUserFlags.CTP_MEMBER) {
 				result.push({
 					type: 'icon',
@@ -171,7 +158,7 @@ export const UserProfileBadges: React.FC<UserProfileBadgesProps> = observer(
 			profile?.premiumLifetimeSequence,
 			i18n.locale,
 		]);
-		if (badges.length === 0) {
+		if (badges.length === 0 && !user.isStaff()) {
 			return null;
 		}
 		const containerClassName = isModal
@@ -202,6 +189,7 @@ export const UserProfileBadges: React.FC<UserProfileBadgesProps> = observer(
 		};
 		return (
 			<div className={containerClassName} data-flx="user.user-profile-badges.div">
+				<LumeOwnerBadge user={user} size={isModal && isMobile ? 'lg' : 'md'} />
 				{badges.map((badge) => {
 					const sequenceClassName = isModal && isMobile ? styles.sequenceBadgeMobile : styles.sequenceBadgeDesktop;
 					const badgeContent =

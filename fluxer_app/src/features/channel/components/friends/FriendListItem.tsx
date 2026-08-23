@@ -33,7 +33,9 @@ import {StatusAwareAvatar} from '@app/features/ui/components/StatusAwareAvatar';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import {useContextMenuTrigger} from '@app/features/ui/hooks/useContextMenuTrigger';
 import ContextMenu, {isContextMenuNodeTarget} from '@app/features/ui/state/ContextMenu';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import Users from '@app/features/user/state/Users';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import type {StatusType} from '@fluxer/constants/src/StatusConstants';
 import {isOfflineStatus} from '@fluxer/constants/src/StatusConstants';
@@ -369,8 +371,9 @@ export const FriendListItem: React.FC<FriendListItemProps> = observer((props) =>
 							<span className={styles.friendName} data-flx="channel.friends.friend-list-item.friend-name">
 								{NicknameUtils.getNickname(user, null)}
 							</span>
+							<LumeOwnerBadge user={user} />
 							<span className={styles.friendTag} data-flx="channel.friends.friend-list-item.friend-tag">
-								{NicknameUtils.formatTagForStreamerMode(user.tag)}
+								{formatLumePublicTagForStreamerMode(user)}
 							</span>
 						</div>
 						{hasCustomStatus ? (

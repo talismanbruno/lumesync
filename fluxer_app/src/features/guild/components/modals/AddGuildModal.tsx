@@ -11,13 +11,10 @@ import {
 	ADD_GUILD_VIEW_ORDER,
 	type AddGuildModalView,
 	CREATE_A_COMMUNITY_DESCRIPTOR,
-	IMPORT_THE_OTHER_PLATFORM_TEMPLATE_DESCRIPTOR,
 	JOIN_A_COMMUNITY_DESCRIPTOR,
 	ModalFooterContext,
 } from '@app/features/guild/components/modals/add_guild_modal/shared';
-import {TemplateImportForm} from '@app/features/guild/components/modals/add_guild_modal/TemplateImportForm';
 import {SteppedCarousel} from '@app/features/ui/stepped_carousel/SteppedCarousel';
-import {THE_OTHER_PLATFORM} from '@fluxer/constants/src/ExternalPlatformConstants';
 import {useLingui} from '@lingui/react/macro';
 import {AnimatePresence, motion, type Transition, useReducedMotion} from 'framer-motion';
 import {observer} from 'mobx-react-lite';
@@ -49,8 +46,6 @@ export const AddGuildModal = observer(({initialView = 'landing'}: {initialView?:
 				return i18n._(CREATE_A_COMMUNITY_DESCRIPTOR);
 			case 'join_guild':
 				return i18n._(JOIN_A_COMMUNITY_DESCRIPTOR);
-			case 'import_template':
-				return i18n._(IMPORT_THE_OTHER_PLATFORM_TEMPLATE_DESCRIPTOR, {theOtherPlatform: THE_OTHER_PLATFORM});
 			default:
 				return i18n._(ADD_A_COMMUNITY_DESCRIPTOR);
 		}
@@ -68,8 +63,6 @@ export const AddGuildModal = observer(({initialView = 'landing'}: {initialView?:
 				return <GuildCreateForm data-flx="guild.add-guild-modal.render-view.guild-create-form" />;
 			case 'join_guild':
 				return <GuildJoinForm data-flx="guild.add-guild-modal.render-view.guild-join-form" />;
-			case 'import_template':
-				return <TemplateImportForm data-flx="guild.add-guild-modal.render-view.template-import-form" />;
 		}
 	};
 	return (

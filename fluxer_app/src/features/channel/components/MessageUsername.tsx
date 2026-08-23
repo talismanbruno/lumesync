@@ -10,6 +10,7 @@ import type {Message} from '@app/features/messaging/models/MessagingMessage';
 import styles from '@app/features/theme/styles/Message.module.css';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import KeyboardMode from '@app/features/ui/state/KeyboardMode';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import type {User} from '@app/features/user/models/User';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {clsx} from 'clsx';
@@ -79,6 +80,7 @@ export const MessageUsername = observer(
 						data-flx="channel.message-username.context-menu-underline.key-down"
 					>
 						{displayName}
+						<LumeOwnerBadge user={user} />
 					</span>
 				</FocusRing>
 			</PreloadableUserPopout>

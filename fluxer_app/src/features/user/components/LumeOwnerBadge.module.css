@@ -1,0 +1,50 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	vertical-align: -0.12em;
+	color: #00d1ff;
+	filter: drop-shadow(0 0 0.3rem rgb(0 209 255 / 0.45));
+}
+
+.badge svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.sm {
+	width: 0.875rem;
+	height: 0.875rem;
+}
+
+.md {
+	width: 1.125rem;
+	height: 1.125rem;
+}
+
+.lg {
+	width: 1.625rem;
+	height: 1.625rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.badge {
+		animation: lumeOwnerBadgeIn 260ms var(--lume-easing) both;
+	}
+}
+
+@keyframes lumeOwnerBadgeIn {
+	from {
+		opacity: 0;
+		transform: scale(0.72) rotate(-12deg);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1) rotate(0);
+	}
+}

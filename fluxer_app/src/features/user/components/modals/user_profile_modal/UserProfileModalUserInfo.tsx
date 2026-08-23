@@ -8,7 +8,7 @@ import {LimitedProfileNotice} from '@app/features/user/components/popouts/Limite
 import {UserProfileBadges} from '@app/features/user/components/popouts/UserProfileBadges';
 import {UserProfileDataWarning} from '@app/features/user/components/popouts/UserProfileDataWarning';
 import {useAutoplayExpandedProfileAnimations} from '@app/features/user/hooks/useAutoplayExpandedProfileAnimations';
-import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import {
 	getProfileMembershipDisplayName,
 	resolveProfileGuildMembership,
@@ -61,7 +61,7 @@ export const UserInfo: React.FC<UserInfoProps> = observer(({user, profile, guild
 					</div>
 					<div className={userProfileModalStyles.tagBadgeRow} data-flx="user.user-profile-modal.user-info.div--6">
 						<div className={userProfileModalStyles.usernameRow} data-flx="user.user-profile-modal.user-info.div--7">
-							{NicknameUtils.formatTagForStreamerMode(user.tag)}
+							{formatLumePublicTagForStreamerMode(user)}
 						</div>
 						<div className={userProfileModalStyles.badgesWrapper} data-flx="user.user-profile-modal.user-info.div--8">
 							<UserProfileBadges

@@ -4,9 +4,10 @@ import {UserTag} from '@app/features/channel/components/ChannelUserTag';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import {useTextOverflow} from '@app/features/ui/hooks/useTextOverflow';
 import {Tooltip} from '@app/features/ui/tooltip/Tooltip';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import styles from '@app/features/user/components/profile/profile_card/ProfileCardUserInfo.module.css';
 import type {User} from '@app/features/user/models/User';
-import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import {Trans} from '@lingui/react/macro';
 import {clsx} from 'clsx';
 import {observer} from 'mobx-react-lite';
@@ -88,6 +89,7 @@ export const ProfileCardUserInfo: React.FC<ProfileCardUserInfoProps> = observer(
 						className={styles.badgeContainer}
 						data-flx="user.profile.profile-card.profile-card-user-info.badge-container"
 					>
+						<LumeOwnerBadge user={user} size="md" />
 						{(user.bot || isWebhook) && (
 							<UserTag
 								className={styles.userTagWrapper}
@@ -114,7 +116,7 @@ export const ProfileCardUserInfo: React.FC<ProfileCardUserInfoProps> = observer(
 								className={styles.usernameButton}
 								data-flx="user.profile.profile-card.profile-card-user-info.username-button.username-click"
 							>
-								{NicknameUtils.formatTagForStreamerMode(user.tag)}
+								{formatLumePublicTagForStreamerMode(user)}
 							</button>
 						</FocusRing>
 						{usernameActions}

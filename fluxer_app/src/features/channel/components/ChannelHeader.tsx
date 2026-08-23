@@ -59,21 +59,12 @@ import {EditGroupModal} from '@app/features/channel/components/modals/EditGroupM
 import type {Channel} from '@app/features/channel/models/Channel';
 import * as ChannelUtils from '@app/features/channel/utils/ChannelUtils';
 import {isGroupDmFull} from '@app/features/channel/utils/GroupDmUtils';
-import {
-	ADD_TO_FAVORITES_DESCRIPTOR,
-	CHANNEL_ADDED_TO_FAVORITES_DESCRIPTOR,
-	CHANNEL_REMOVED_FROM_FAVORITES_DESCRIPTOR,
-	HIDE_FAVORITES_DESCRIPTOR,
-	REMOVE_FROM_FAVORITES_DESCRIPTOR,
-} from '@app/features/i18n/utils/CommonMessageDescriptors';
 import {isKeyboardActivationKey} from '@app/features/input/utils/KeyboardUtils';
 import type {LexicalSearchInputHandle} from '@app/features/lexical/search/LexicalSearchInput';
 import {useCanFitMemberList} from '@app/features/member/hooks/useMemberListVisible';
 import MemberList from '@app/features/member/state/MemberList';
-import * as FavoritesCommands from '@app/features/messaging/commands/FavoritesCommands';
 import {SafeMarkdown} from '@app/features/messaging/components/markdown';
 import {MarkdownContext} from '@app/features/messaging/components/markdown/renderers/RendererTypes';
-import Favorites from '@app/features/messaging/state/Favorites';
 import * as NavigationCommands from '@app/features/navigation/commands/NavigationCommands';
 import * as RouterUtils from '@app/features/navigation/utils/RouterUtils';
 import {goBackOr} from '@app/features/platform/components/router/NavigationAdapter';
@@ -86,13 +77,10 @@ import markupStyles from '@app/features/theme/styles/Markup.module.css';
 import {ChannelContextMenu} from '@app/features/ui/action_menu/ChannelContextMenu';
 import {DMContextMenu} from '@app/features/ui/action_menu/DMContextMenu';
 import {GroupDMContextMenu} from '@app/features/ui/action_menu/GroupDMContextMenu';
-import {MenuGroup} from '@app/features/ui/action_menu/MenuGroup';
-import {MenuItem} from '@app/features/ui/action_menu/MenuItem';
 import * as ContextMenuCommands from '@app/features/ui/commands/ContextMenuCommands';
 import * as LayoutCommands from '@app/features/ui/commands/LayoutCommands';
 import * as ModalCommands from '@app/features/ui/commands/ModalCommands';
 import {modal} from '@app/features/ui/commands/ModalCommands';
-import * as ToastCommands from '@app/features/ui/commands/ToastCommands';
 import {StatusAwareAvatar} from '@app/features/ui/components/StatusAwareAvatar';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import ContextMenuState, {isContextMenuNodeTarget} from '@app/features/ui/state/ContextMenu';
@@ -106,19 +94,16 @@ import CallState from '@app/features/voice/state/CallState';
 import {computeChannelE2EEStatus} from '@app/features/voice/state/ChannelE2EEStatus';
 import * as CallUtils from '@app/features/voice/utils/CallUtils';
 import {VOICE_CALL_DESCRIPTOR} from '@app/features/voice/utils/VoiceMessageDescriptors';
-import {ME} from '@fluxer/constants/src/AppConstants';
 import {ChannelTypes} from '@fluxer/constants/src/ChannelConstants';
 import {RelationshipTypes} from '@fluxer/constants/src/UserConstants';
 import {useLingui} from '@lingui/react/macro';
 import {
 	ArrowLeftIcon,
 	CaretRightIcon,
-	EyeSlashIcon,
 	ListIcon,
 	MagnifyingGlassIcon,
 	PencilIcon,
 	PhoneIcon,
-	StarIcon,
 	UserPlusIcon,
 	UsersIcon,
 	VideoCameraIcon,
@@ -240,7 +225,6 @@ export const ChannelHeader = observer(
 		const {isDM, isGroupDM, isPersonalNotes, isGuildChannel, recipient, directMessageName, groupDMName, channelName} =
 			useChannelHeaderData(channel);
 		const isBotDMRecipient = isDM && (recipient?.bot || recipient?.system);
-		const isFavorited = channel && !isPersonalNotes ? !!Favorites.getChannel(channel.id) : false;
 		const channelDetailsLabel =
 			isDM && directMessageName
 				? i18n._(OPEN_DIRECT_MESSAGE_DETAILS_FOR_DESCRIPTOR, {directMessageName})
@@ -483,38 +467,6 @@ export const ChannelHeader = observer(
 				}
 			},
 			[channel, i18n],
-		);
-		const handleToggleFavorite = useCallback(() => {
-			if (!channel || isPersonalNotes) return;
-			if (isFavorited) {
-				Favorites.removeChannel(channel.id);
-				ToastCommands.createToast({type: 'success', children: i18n._(CHANNEL_REMOVED_FROM_FAVORITES_DESCRIPTOR)});
-			} else {
-				Favorites.addChannel(channel.id, channel.guildId ?? ME);
-				ToastCommands.createToast({type: 'success', children: i18n._(CHANNEL_ADDED_TO_FAVORITES_DESCRIPTOR)});
-			}
-		}, [channel, isPersonalNotes, isFavorited]);
-		const handleFavoriteContextMenu = useCallback(
-			(event: React.MouseEvent) => {
-				event.preventDefault();
-				event.stopPropagation();
-				ContextMenuCommands.openFromEvent(event, ({onClose}) => (
-					<MenuGroup data-flx="channel.channel-header.handle-favorite-context-menu.menu-group">
-						<MenuItem
-							icon={<EyeSlashIcon data-flx="channel.channel-header.handle-favorite-context-menu.eye-slash-icon" />}
-							onClick={() => {
-								onClose();
-								FavoritesCommands.confirmHideFavorites(undefined, i18n);
-							}}
-							danger
-							data-flx="channel.channel-header.handle-favorite-context-menu.menu-item.close"
-						>
-							{i18n._(HIDE_FAVORITES_DESCRIPTOR)}
-						</MenuItem>
-					</MenuGroup>
-				));
-			},
-			[i18n],
 		);
 		const isGroupDMFull = isGroupDmFull(channel);
 		const isFriendDM =
@@ -920,27 +872,6 @@ export const ChannelHeader = observer(
 									{voiceCallHeaderSupplement}
 								</div>
 							)}
-							{isMobile && channel && !isPersonalNotes && Accessibility.showFavorites && (
-								<FocusRing offset={-2} data-flx="channel.channel-header.focus-ring--7">
-									<button
-										type="button"
-										className={styles.iconButtonMobile}
-										aria-label={
-											isFavorited ? i18n._(REMOVE_FROM_FAVORITES_DESCRIPTOR) : i18n._(ADD_TO_FAVORITES_DESCRIPTOR)
-										}
-										aria-pressed={isFavorited}
-										onClick={handleToggleFavorite}
-										onContextMenu={handleFavoriteContextMenu}
-										data-flx="channel.channel-header.icon-button-mobile.toggle-favorite"
-									>
-										<StarIcon
-											className={styles.buttonIconMobile}
-											weight={isFavorited ? 'fill' : 'bold'}
-											data-flx="channel.channel-header.button-icon-mobile"
-										/>
-									</button>
-								</FocusRing>
-							)}
 							{isMobile && (isDM || isGroupDM) && !isPersonalNotes && (
 								<>
 									<FocusRing offset={-2} data-flx="channel.channel-header.focus-ring--8">
@@ -1020,33 +951,6 @@ export const ChannelHeader = observer(
 									onClick={handleOpenAddFriendsToGroup}
 									data-flx="channel.channel-header.channel-header-icon.open-add-friends-to-group"
 								/>
-							)}
-							{channel && !isMobile && !isPersonalNotes && Accessibility.showFavorites && (
-								<Tooltip
-									text={isFavorited ? i18n._(REMOVE_FROM_FAVORITES_DESCRIPTOR) : i18n._(ADD_TO_FAVORITES_DESCRIPTOR)}
-									position="bottom"
-									data-flx="channel.channel-header.tooltip--9"
-								>
-									<FocusRing offset={-2} data-flx="channel.channel-header.focus-ring--11">
-										<button
-											type="button"
-											className={isFavorited ? styles.iconButtonSelected : styles.iconButtonDefault}
-											aria-label={
-												isFavorited ? i18n._(REMOVE_FROM_FAVORITES_DESCRIPTOR) : i18n._(ADD_TO_FAVORITES_DESCRIPTOR)
-											}
-											aria-pressed={isFavorited}
-											onClick={handleToggleFavorite}
-											onContextMenu={handleFavoriteContextMenu}
-											data-flx="channel.channel-header.icon-button.toggle-favorite"
-										>
-											<StarIcon
-												className={styles.buttonIcon}
-												weight={isFavorited ? 'fill' : 'bold'}
-												data-flx="channel.channel-header.button-icon"
-											/>
-										</button>
-									</FocusRing>
-								</Tooltip>
 							)}
 							{showMembersToggle && !isMobile && (
 								<ChannelHeaderIcon

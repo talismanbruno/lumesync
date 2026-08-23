@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import Accessibility from '@app/features/accessibility/state/Accessibility';
 import guildStyles from '@app/features/app/components/layout/GuildsLayout.module.css';
 import styles from '@app/features/app/components/layout/sidebar_nav/AddGuildButton.module.css';
 import {useContextMenuHoverState} from '@app/features/app/hooks/useContextMenuHoverState';
@@ -24,7 +23,6 @@ import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
 import {HouseIcon, LinkIcon, PlusIcon} from '@phosphor-icons/react';
 import {clsx} from 'clsx';
-import {motion} from 'framer-motion';
 import {observer} from 'mobx-react-lite';
 import type React from 'react';
 import {useRef} from 'react';
@@ -97,7 +95,11 @@ export const AddGuildButton = observer(() => {
 	}
 	return (
 		<div
-			className={clsx(guildStyles.createGuildButton, contextMenuOpen && guildStyles.contextMenuHover)}
+			className={clsx(
+				guildStyles.createGuildButton,
+				contextMenuOpen && guildStyles.contextMenuHover,
+				shouldShowHoverState && guildStyles.createGuildButtonActive,
+			)}
 			data-flx="app.sidebar-nav.add-guild-button.div"
 		>
 			<Tooltip
@@ -129,12 +131,9 @@ export const AddGuildButton = observer(() => {
 						ref={mergedButtonRef}
 						data-flx="app.sidebar-nav.add-guild-button.button.add-guild"
 					>
-						<motion.div
+						<div
 							ref={iconRef}
 							className={guildStyles.createGuildButtonIcon}
-							animate={{borderRadius: shouldShowHoverState ? '30%' : '50%'}}
-							initial={{borderRadius: shouldShowHoverState ? '30%' : '50%'}}
-							transition={{duration: Accessibility.useReducedMotion ? 0 : 0.07, ease: 'easeOut'}}
 							data-flx="app.sidebar-nav.add-guild-button.div--2"
 						>
 							<PlusIcon
@@ -142,7 +141,7 @@ export const AddGuildButton = observer(() => {
 								className={styles.iconText}
 								data-flx="app.sidebar-nav.add-guild-button.icon-text"
 							/>
-						</motion.div>
+						</div>
 					</button>
 				</FocusRing>
 			</Tooltip>

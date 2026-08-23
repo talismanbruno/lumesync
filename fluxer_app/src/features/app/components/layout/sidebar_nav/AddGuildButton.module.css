@@ -13,7 +13,19 @@
 .iconText {
 	height: 1.25rem;
 	width: 1.25rem;
-	color: var(--text-primary);
+	color: currentColor;
+	transition: transform 220ms var(--lume-easing);
+}
+
+.button:hover .iconText,
+.button:focus-visible .iconText {
+	transform: rotate(90deg) scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.iconText {
+		transition: none;
+	}
 }
 
 .menuIcon {

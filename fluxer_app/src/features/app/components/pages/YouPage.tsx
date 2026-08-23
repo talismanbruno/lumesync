@@ -17,6 +17,7 @@ import {normalizeCustomStatus} from '@app/features/user/state/CustomStatus';
 import UserNote from '@app/features/user/state/UserNote';
 import Users from '@app/features/user/state/Users';
 import * as AvatarUtils from '@app/features/user/utils/AvatarUtils';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {createMockProfile} from '@app/features/user/utils/ProfileUtils';
 import {msg} from '@lingui/core/macro';
@@ -114,7 +115,7 @@ export const YouPage = observer(({onAvatarClick}: YouPageProps) => {
 									</div>
 									<div className={styles.tagBadgeRow} data-flx="app.you-page.tag-badge-row">
 										<span className={styles.fullTag} data-flx="app.you-page.full-tag">
-											{NicknameUtils.formatTagForStreamerMode(`${user.username}#${user.discriminator}`)}
+											{formatLumePublicTagForStreamerMode(user)}
 										</span>
 										<div className={styles.badgesWrapper} data-flx="app.you-page.badges-wrapper">
 											<UserProfileBadges

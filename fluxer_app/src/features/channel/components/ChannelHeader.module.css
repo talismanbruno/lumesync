@@ -180,6 +180,12 @@
 	.headerContainer {
 		height: var(--layout-header-height-mobile);
 		min-height: var(--layout-header-height-mobile);
+		padding-inline: max(0.625rem, env(safe-area-inset-left)) max(0.625rem, env(safe-area-inset-right));
+		gap: 0.5rem;
+	}
+
+	.headerRightSection {
+		gap: 0.375rem;
 	}
 }
 
@@ -569,10 +575,23 @@
 	height: var(--channel-header-action-size-mobile);
 	width: var(--channel-header-action-size-mobile);
 	flex-shrink: 0;
-	border-radius: var(--radius-full);
-	background-color: var(--background-tertiary);
+	border-radius: 0.875rem;
+	border: 0.0625rem solid rgb(0 209 255 / 0.16);
+	background: radial-gradient(circle at 70% 28%, rgb(0 209 255 / 0.12), transparent 44%), var(--lume-bg-elevated);
 	color: var(--channel-header-text-primary);
 	cursor: pointer;
+	touch-action: manipulation;
+	transition:
+		border-color 160ms var(--lume-easing),
+		background-color 160ms var(--lume-easing),
+		color 160ms var(--lume-easing),
+		transform 160ms var(--lume-easing);
+}
+
+.iconButtonMobile:active {
+	border-color: rgb(0 209 255 / 0.62);
+	color: #7deaff;
+	transform: scale(0.94);
 }
 
 .buttonIcon {

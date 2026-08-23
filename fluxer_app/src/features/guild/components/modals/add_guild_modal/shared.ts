@@ -8,14 +8,9 @@ import type {TemplateSerializedGuild} from '@fluxer/schema/src/domains/guild/Gui
 import {msg} from '@lingui/core/macro';
 import React from 'react';
 
-export type AddGuildModalView = 'landing' | 'create_guild' | 'join_guild' | 'import_template';
+export type AddGuildModalView = 'landing' | 'create_guild' | 'join_guild';
 
-export const ADD_GUILD_VIEW_ORDER: ReadonlyArray<AddGuildModalView> = [
-	'landing',
-	'create_guild',
-	'join_guild',
-	'import_template',
-];
+export const ADD_GUILD_VIEW_ORDER: ReadonlyArray<AddGuildModalView> = ['landing', 'create_guild', 'join_guild'];
 
 export interface ModalFooterContextValue {
 	setFooterContent: (content: React.ReactNode) => void;

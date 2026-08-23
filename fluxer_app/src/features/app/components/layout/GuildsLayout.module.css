@@ -464,6 +464,7 @@
 }
 
 .createGuildButtonIcon {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -471,13 +472,33 @@
 	width: var(--guild-icon-size);
 	flex-shrink: 0;
 	cursor: pointer;
-	border-radius: var(--radius-full);
-	border: 0.125rem dashed var(--background-modifier-accent);
-	background-color: transparent;
-	color: var(--text-primary);
-	transition-property: border-radius, border-color;
-	transition-duration: 70ms;
-	transition-timing-function: ease-out;
+	border-radius: 1rem;
+	border: 0.0625rem solid rgb(0 209 255 / 0.24);
+	background: radial-gradient(circle at 68% 28%, rgb(0 209 255 / 0.18), transparent 38%), #0b0e11;
+	color: rgb(199 246 255);
+	box-shadow:
+		inset 0 0 0 0.0625rem rgb(255 255 255 / 0.025),
+		0 0.5rem 1.5rem rgb(0 0 0 / 0.24);
+	overflow: visible;
+	transition:
+		border-color 180ms var(--lume-easing),
+		box-shadow 180ms var(--lume-easing),
+		transform 180ms var(--lume-easing),
+		background-color 180ms var(--lume-easing);
+}
+
+.createGuildButtonIcon::after {
+	content: '';
+	position: absolute;
+	top: 0.3rem;
+	right: 0.3rem;
+	width: 0.3125rem;
+	height: 0.3125rem;
+	border-radius: 999px;
+	background: #00d1ff;
+	box-shadow: 0 0 0.625rem rgb(0 209 255 / 0.9);
+	transform-origin: calc(-0.75rem) calc(0.75rem);
+	transition: transform 420ms var(--lume-easing);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -487,7 +508,23 @@
 	:global(:where(html.window-focused, html.unfocused-fully-interactive):not(.window-focus-activation-guard))
 		.createGuildButtonIcon:hover,
 	.createGuildButton.contextMenuHover .createGuildButtonIcon {
-		border-color: var(--text-primary);
+		border-color: rgb(0 209 255 / 0.72);
+		box-shadow:
+			inset 0 0 0 0.0625rem rgb(255 255 255 / 0.04),
+			0 0 1.25rem rgb(0 209 255 / 0.18);
+		transform: translateY(-0.0625rem);
+	}
+
+	.createGuildButton:hover .createGuildButtonIcon::after,
+	.createGuildButtonActive .createGuildButtonIcon::after {
+		transform: rotate(180deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.createGuildButtonIcon,
+	.createGuildButtonIcon::after {
+		transition: none;
 	}
 }
 

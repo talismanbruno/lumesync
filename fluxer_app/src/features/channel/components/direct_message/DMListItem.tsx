@@ -40,6 +40,7 @@ import {MenuBottomSheet} from '@app/features/ui/menu_bottom_sheet/MenuBottomShee
 import KeyboardMode from '@app/features/ui/state/KeyboardMode';
 import MobileLayout from '@app/features/ui/state/MobileLayout';
 import {Tooltip} from '@app/features/ui/tooltip/Tooltip';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import type {User} from '@app/features/user/models/User';
 import UserGuildSettings from '@app/features/user/state/UserGuildSettings';
 import Users from '@app/features/user/state/Users';
@@ -408,6 +409,7 @@ const ResolvedDMListItem = observer(function ResolvedDMListItem({
 										dataFlx="channel.direct-message.dm-list-item.dm-item-name-text"
 										data-flx="channel.direct-message.dm-list-item.resolved-dm-list-item.dm-list-item-name-text"
 									/>
+									{!isGroupDM && recipient && <LumeOwnerBadge user={recipient} />}
 									{!isGroupDM && isBotDM && (
 										<UserTag
 											className={styles.dmItemUserTag}
@@ -572,6 +574,7 @@ const ResolvedDMListItem = observer(function ResolvedDMListItem({
 									dataFlx="channel.direct-message.dm-list-item.dm-item-name-text--2"
 									data-flx="channel.direct-message.dm-list-item.resolved-dm-list-item.dm-list-item-name-text--2"
 								/>
+								{!isGroupDM && recipient && <LumeOwnerBadge user={recipient} />}
 								{!isGroupDM && isBotDM && (
 									<UserTag
 										className={styles.dmItemUserTag}

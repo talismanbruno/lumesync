@@ -82,6 +82,9 @@
 }
 
 .userName {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
 	font-weight: 500;
 	font-size: 0.875rem;
 	line-height: 1.125rem;
@@ -90,6 +93,11 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
+}
+
+.userName > span:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .userStatus {

@@ -159,13 +159,15 @@ export class EntityAssetService {
 			};
 		}
 		let uploadBuffer = imageBuffer;
-		try {
-			const isJpeg = format === 'jpg' || format === 'jpeg';
-			uploadBuffer = isJpeg
-				? await sharp(imageBuffer).jpeg({quality: 100}).toBuffer()
-				: await stripNonJpegImageMetadata(imageBuffer);
-		} catch (error) {
-			Logger.error({error, assetType, entityType}, 'Failed to strip metadata from entity asset, uploading original');
+		if (!animated) {
+			try {
+				const isJpeg = format === 'jpg' || format === 'jpeg';
+				uploadBuffer = isJpeg
+					? await sharp(imageBuffer).jpeg({quality: 100}).toBuffer()
+					: await stripNonJpegImageMetadata(imageBuffer);
+			} catch (error) {
+				Logger.error({error, assetType, entityType}, 'Failed to strip metadata from entity asset, uploading original');
+			}
 		}
 		await this.uploadToS3(assetType, entityType, newS3Key, uploadBuffer);
 		const exists = await this.verifyAssetExistsWithRetry(assetType, entityType, newS3Key);

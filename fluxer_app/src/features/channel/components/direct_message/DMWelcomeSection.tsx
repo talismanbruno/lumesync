@@ -26,6 +26,7 @@ import * as UserProfileCommands from '@app/features/user/commands/UserProfileCom
 import {UserProfileBadges} from '@app/features/user/components/popouts/UserProfileBadges';
 import type {Profile} from '@app/features/user/models/Profile';
 import Users from '@app/features/user/state/Users';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import {RelationshipTypes} from '@fluxer/constants/src/UserConstants';
 import {msg, ph, plural} from '@lingui/core/macro';
@@ -96,7 +97,7 @@ export const DMWelcomeSection: React.FC<DMWelcomeSectionProps> = observer(functi
 		return null;
 	}
 	const displayName = NicknameUtils.getNickname(user, null, channel?.id);
-	const fluxerTag = NicknameUtils.formatTagForStreamerMode(user.tag);
+	const lumeTag = formatLumePublicTagForStreamerMode(user);
 	const handleSendFriendRequest = () => {
 		RelationshipActionUtils.sendFriendRequest(i18n, user.id);
 	};
@@ -282,7 +283,7 @@ export const DMWelcomeSection: React.FC<DMWelcomeSectionProps> = observer(functi
 						data-flx="channel.direct-message.dm-welcome-section.username-button.open-full-profile"
 					>
 						<span className={styles.username} data-flx="channel.direct-message.dm-welcome-section.username">
-							{fluxerTag}
+							{lumeTag}
 						</span>
 					</button>
 				</FocusRing>

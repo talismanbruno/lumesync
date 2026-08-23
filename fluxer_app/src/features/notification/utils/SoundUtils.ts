@@ -4,15 +4,11 @@ import * as CustomSoundDB from '@app/features/notification/utils/CustomSoundDB';
 import {Logger} from '@app/features/platform/utils/AppLogger';
 import cameraOffSound from '@app/media/sounds/camera-off.mp3';
 import cameraOnSound from '@app/media/sounds/camera-on.mp3';
-import deafSound from '@app/media/sounds/deaf.mp3';
 import sameChannelMessageSound from '@app/media/sounds/in-channel-notification.ogg';
 import incomingRingSound from '@app/media/sounds/incoming-ring.mp3';
 import messageSound from '@app/media/sounds/message.mp3';
-import muteSound from '@app/media/sounds/mute.mp3';
 import streamSound from '@app/media/sounds/stream-start.mp3';
 import streamStopSound from '@app/media/sounds/stream-stop.mp3';
-import undeafSound from '@app/media/sounds/undeaf.mp3';
-import unmuteSound from '@app/media/sounds/unmute.mp3';
 import userJoinSound from '@app/media/sounds/user-join.mp3';
 import userLeaveSound from '@app/media/sounds/user-leave.mp3';
 import userMoveSound from '@app/media/sounds/user-move.mp3';
@@ -27,6 +23,89 @@ const MASTER_HEADROOM = 0.8;
 const MIN_GAIN = 0.0001;
 const DEFAULT_FADE_DURATION = 0.08;
 const MAX_ACTIVE_ONE_SHOT_SOUNDS = 4;
+
+interface LumeToneOptions {
+	startFrequency: number;
+	endFrequency: number;
+	durationMs: number;
+	harmonicMix?: number;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	let output = '';
+	for (let index = 0; index < bytes.length; index += 3) {
+		const byte1 = bytes[index] ?? 0;
+		const byte2 = bytes[index + 1];
+		const byte3 = bytes[index + 2];
+		const triplet = (byte1 << 16) | ((byte2 ?? 0) << 8) | (byte3 ?? 0);
+		output += alphabet[(triplet >> 18) & 63];
+		output += alphabet[(triplet >> 12) & 63];
+		output += byte2 === undefined ? '=' : alphabet[(triplet >> 6) & 63];
+		output += byte3 === undefined ? '=' : alphabet[triplet & 63];
+	}
+	return output;
+}
+
+function createLumeToneDataUrl({
+	startFrequency,
+	endFrequency,
+	durationMs,
+	harmonicMix = 0.12,
+}: LumeToneOptions): string {
+	const sampleRate = 24000;
+	const sampleCount = Math.max(1, Math.floor((sampleRate * durationMs) / 1000));
+	const bytesPerSample = 2;
+	const dataLength = sampleCount * bytesPerSample;
+	const buffer = new ArrayBuffer(44 + dataLength);
+	const view = new DataView(buffer);
+	const writeAscii = (offset: number, value: string) => {
+		for (let index = 0; index < value.length; index++) view.setUint8(offset + index, value.charCodeAt(index));
+	};
+	writeAscii(0, 'RIFF');
+	view.setUint32(4, 36 + dataLength, true);
+	writeAscii(8, 'WAVE');
+	writeAscii(12, 'fmt ');
+	view.setUint32(16, 16, true);
+	view.setUint16(20, 1, true);
+	view.setUint16(22, 1, true);
+	view.setUint32(24, sampleRate, true);
+	view.setUint32(28, sampleRate * bytesPerSample, true);
+	view.setUint16(32, bytesPerSample, true);
+	view.setUint16(34, 16, true);
+	writeAscii(36, 'data');
+	view.setUint32(40, dataLength, true);
+
+	let phase = 0;
+	for (let index = 0; index < sampleCount; index++) {
+		const progress = index / sampleCount;
+		const frequency = startFrequency + (endFrequency - startFrequency) * progress;
+		phase += (Math.PI * 2 * frequency) / sampleRate;
+		const attack = Math.min(1, progress / 0.08);
+		const release = Math.min(1, (1 - progress) / 0.3);
+		const envelope = attack * release;
+		const sample = (Math.sin(phase) + Math.sin(phase * 2.01) * harmonicMix) * envelope * 0.27;
+		view.setInt16(44 + index * bytesPerSample, Math.round(sample * 32767), true);
+	}
+
+	return `data:audio/wav;base64,${bytesToBase64(new Uint8Array(buffer))}`;
+}
+
+const lumeMuteSound = createLumeToneDataUrl({startFrequency: 660, endFrequency: 310, durationMs: 92});
+const lumeUnmuteSound = createLumeToneDataUrl({startFrequency: 330, endFrequency: 760, durationMs: 112});
+const lumeDeafSound = createLumeToneDataUrl({
+	startFrequency: 570,
+	endFrequency: 220,
+	durationMs: 142,
+	harmonicMix: 0.2,
+});
+const lumeUndeafSound = createLumeToneDataUrl({
+	startFrequency: 250,
+	endFrequency: 640,
+	durationMs: 156,
+	harmonicMix: 0.2,
+});
+
 export const SoundType = {
 	Deaf: 'deaf',
 	Undeaf: 'undeaf',
@@ -51,10 +130,10 @@ export const SoundType = {
 export type SoundType = ValueOf<typeof SoundType>;
 
 const SOUND_FILES: Record<SoundType, string> = {
-	[SoundType.Deaf]: deafSound,
-	[SoundType.Undeaf]: undeafSound,
-	[SoundType.Mute]: muteSound,
-	[SoundType.Unmute]: unmuteSound,
+	[SoundType.Deaf]: lumeDeafSound,
+	[SoundType.Undeaf]: lumeUndeafSound,
+	[SoundType.Mute]: lumeMuteSound,
+	[SoundType.Unmute]: lumeUnmuteSound,
 	[SoundType.Message]: messageSound,
 	[SoundType.DirectMessage]: messageSound,
 	[SoundType.SameChannelMessage]: sameChannelMessageSound,

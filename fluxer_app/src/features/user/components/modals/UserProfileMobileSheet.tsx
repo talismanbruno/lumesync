@@ -66,6 +66,7 @@ import UserNote from '@app/features/user/state/UserNote';
 import UserProfile from '@app/features/user/state/UserProfile';
 import UserProfileMobile from '@app/features/user/state/UserProfileMobile';
 import Users from '@app/features/user/state/Users';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import * as NicknameUtils from '@app/features/user/utils/NicknameUtils';
 import * as ProfileDisplayUtils from '@app/features/user/utils/ProfileDisplayUtils';
 import {
@@ -614,7 +615,9 @@ const UserProfileMobileSheetContent: React.FC<UserProfileMobileSheetContentProps
 															className={styles.discriminator}
 															data-flx="user.user-profile-mobile-sheet.user-profile-mobile-sheet-content.discriminator"
 														>
-															{NicknameUtils.formatTagForStreamerMode(`#${user.discriminator}`)}
+															{user.isStaff()
+																? ` ${String(Number.parseInt(user.discriminator, 10)).padStart(2, '0')}`
+																: NicknameUtils.formatTagForStreamerMode(`#${user.discriminator}`)}
 														</span>
 													)}
 												</div>
@@ -627,7 +630,7 @@ const UserProfileMobileSheetContent: React.FC<UserProfileMobileSheetContentProps
 															className={styles.fullTag}
 															data-flx="user.user-profile-mobile-sheet.user-profile-mobile-sheet-content.full-tag"
 														>
-															{NicknameUtils.formatTagForStreamerMode(`${user.username}#${user.discriminator}`)}
+															{formatLumePublicTagForStreamerMode(user)}
 														</span>
 													)}
 													<div

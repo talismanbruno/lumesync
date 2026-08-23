@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import {Avatar} from '@app/features/ui/components/Avatar';
+import {LumeOwnerBadge} from '@app/features/user/components/LumeOwnerBadge';
 import styles from '@app/features/user/components/UserIdentityRow.module.css';
 import type {User} from '@app/features/user/models/User';
 import * as DisplayNameUtils from '@app/features/user/utils/DisplayNameUtils';
+import {formatLumePublicTagForStreamerMode} from '@app/features/user/utils/LumeIdentityUtils';
 import {flxElementClassName} from '@app/lib/react';
 import {observer} from 'mobx-react-lite';
 
@@ -30,9 +32,10 @@ export const UserIdentityRow = observer(
 				<flx-user-identity-row-info className={flxElementClassName(styles.info)} data-flx="user.user-identity-row.info">
 					<span className={styles.name} data-flx="user.user-identity-row.name">
 						{displayName}
+						<LumeOwnerBadge user={user} />
 					</span>
 					<span className={styles.tag} data-flx="user.user-identity-row.tag">
-						{user.tag}
+						{formatLumePublicTagForStreamerMode(user)}
 					</span>
 				</flx-user-identity-row-info>
 			</>
