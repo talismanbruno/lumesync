@@ -19,6 +19,16 @@ for command in curl docker gzip sha256sum; do
 	}
 done
 
+docker_command=(docker)
+if ! docker info >/dev/null 2>&1; then
+	if command -v sudo >/dev/null 2>&1 && sudo -n docker info >/dev/null 2>&1; then
+		docker_command=(sudo -n docker)
+	else
+		printf 'Deployment stopped: Docker is not accessible to the current user.\n' >&2
+		exit 1
+	fi
+fi
+
 available_kib="$(df -Pk . | awk 'NR == 2 {print $4}')"
 if [[ -z "${available_kib}" || "${available_kib}" -lt 1572864 ]]; then
 	printf 'Deployment stopped: at least 1.5 GiB of free disk is required.\n' >&2
@@ -52,8 +62,8 @@ if [[ "${image_ref}" != lume-orbital:* ]]; then
 fi
 
 printf 'Loading %s without rebuilding on the server...\n' "${image_ref}"
-gzip --decompress --stdout "${artifact_dir}/lume-orbital-amd64.tar.gz" | docker load
-docker image inspect "${image_ref}" >/dev/null
+gzip --decompress --stdout "${artifact_dir}/lume-orbital-amd64.tar.gz" | "${docker_command[@]}" load
+"${docker_command[@]}" image inspect "${image_ref}" >/dev/null
 
 if [[ -f "${OVERRIDE_FILE}" ]]; then
 	backup_override="$(mktemp)"
@@ -71,7 +81,7 @@ restore_previous_release() {
 	if [[ -f "${OVERRIDE_FILE}" ]]; then
 		compose_args+=(-f "${OVERRIDE_FILE}")
 	fi
-	docker compose "${compose_args[@]}" up --detach --no-deps app-proxy
+	"${docker_command[@]}" compose "${compose_args[@]}" up --detach --no-deps app-proxy
 }
 
 cat > "${OVERRIDE_FILE}.next" <<EOF
@@ -81,18 +91,18 @@ services:
 EOF
 mv -- "${OVERRIDE_FILE}.next" "${OVERRIDE_FILE}"
 
-docker compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" config --quiet
-docker compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" \
+"${docker_command[@]}" compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" config --quiet
+"${docker_command[@]}" compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" \
 	up --detach --no-deps app-proxy
 
-container_id="$(docker compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" ps --quiet app-proxy)"
+container_id="$("${docker_command[@]}" compose --env-file .env -f "${COMPOSE_FILE}" -f "${OVERRIDE_FILE}" ps --quiet app-proxy)"
 if [[ -z "${container_id}" ]]; then
 	restore_previous_release
 	exit 1
 fi
 
 for _attempt in $(seq 1 45); do
-	status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${container_id}")"
+	status="$("${docker_command[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${container_id}")"
 	case "${status}" in
 		healthy)
 			printf 'Lume app-proxy is healthy on %s.\n' "${image_ref}"
@@ -105,6 +115,6 @@ for _attempt in $(seq 1 45); do
 	sleep 2
 done
 
-docker logs --tail 80 "${container_id}" >&2 || true
+"${docker_command[@]}" logs --tail 80 "${container_id}" >&2 || true
 restore_previous_release
 exit 1
