@@ -3,7 +3,7 @@
 import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
 import DeveloperOptions from '@app/features/devtools/state/DeveloperOptions';
 import {buildMediaProxyURL} from '@app/features/messaging/utils/MediaProxyUtils';
-import {cdnUrl, mediaUrl, setPathQueryParams} from '@app/features/messaging/utils/MessagingUrlUtils';
+import {mediaUrl, setPathQueryParams} from '@app/features/messaging/utils/MessagingUrlUtils';
 import type {User} from '@app/features/user/models/User';
 import {
 	getDefaultAvatarIndex,
@@ -11,13 +11,14 @@ import {
 	normalizeEndpoint,
 	parseAvatarHash,
 } from '@app/features/user/utils/AvatarMediaUtils';
+import LumeLogoAsset from '@app/media/images/lume-logo.png';
 import {
 	MEDIA_PROXY_AVATAR_SIZE_DEFAULT,
 	MEDIA_PROXY_ICON_SIZE_DEFAULT,
 } from '@fluxer/constants/src/MediaProxyAssetSizes';
 import type {MediaProxyImageSize} from '@fluxer/constants/src/MediaProxyImageSizes';
 
-const getDefaultAvatar = (index: number): string => cdnUrl(`avatars/${index}.png`);
+const getDefaultAvatar = (): string => LumeLogoAsset;
 
 export function getDefaultAvatarPrimaryColor(id: string) {
 	return getSharedDefaultAvatarPrimaryColor(id);

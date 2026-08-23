@@ -36,6 +36,7 @@ import * as LayoutCommands from '@app/features/ui/commands/LayoutCommands';
 import * as ModalCommands from '@app/features/ui/commands/ModalCommands';
 import {modal} from '@app/features/ui/commands/ModalCommands';
 import * as ToastCommands from '@app/features/ui/commands/ToastCommands';
+import {FluxerWordmark} from '@app/features/ui/components/icons/FluxerWordmark';
 import {MentionBadge} from '@app/features/ui/components/MentionBadge';
 import {Scroller} from '@app/features/ui/components/Scroller';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
@@ -100,6 +101,7 @@ const CREATE_DM_DESCRIPTOR = msg({
 });
 const logger = new Logger('DMList');
 const DM_ROW_INFO_SELECTOR = `.${styles.dmItemInfo}`;
+const SHOW_PERSONAL_NOTES = false;
 
 function readDMRowSubtextFlags(container: HTMLElement | null, rowCount: number): ReadonlyArray<boolean> {
 	const flags: Array<boolean> = [];
@@ -262,7 +264,7 @@ export const DMList = observer(() => {
 		(routeDmChannelId === currentUserId || (isMobileDmIndexRoute && lastSelectedDmChannelId === currentUserId));
 	const showPremiumFeatures = shouldShowPremiumFeatures();
 	const showMobilePlutoniumButton = showPremiumFeatures && !isMobile;
-	const personalNotesVisible = currentUserId != null;
+	const personalNotesVisible = SHOW_PERSONAL_NOTES && currentUserId != null;
 	const displayedDmChannelCount = filteredDmChannels.length;
 	const dmRowsContainerRef = useRef<HTMLDivElement | null>(null);
 	const dmChannelListRef = useMergeRefs<HTMLDivElement>([dmListNavigationRef, dmRowsContainerRef]);
@@ -364,7 +366,7 @@ export const DMList = observer(() => {
 						className={styles.mobileScrollerContent}
 						data-flx="channel.direct-message.dm-list.mobile-scroller-content"
 					>
-						{currentUserId && (
+						{SHOW_PERSONAL_NOTES && currentUserId && (
 							<FocusRing offset={-2} data-flx="channel.direct-message.dm-list.focus-ring--3">
 								<LongPressable
 									onLongPress={() => setPersonalNotesSheetOpen(true)}
@@ -512,13 +514,15 @@ export const DMList = observer(() => {
 					data-flx="channel.direct-message.dm-list.dm-list-header.show.button"
 				>
 					<div className={styles.dmListHeaderButton} data-flx="channel.direct-message.dm-list.dm-list-header-button">
-						<span className={styles.dmListHeaderText} data-flx="channel.direct-message.dm-list.dm-list-header-text">
-							<Trans>Quick switcher</Trans>
+						<span className={styles.lumeHeaderIdentity} data-flx="channel.direct-message.dm-list.lume-header-identity">
+							<FluxerWordmark className={styles.lumeHeaderWordmark} />
+							<span className={styles.lumeOfficialBadge}>OFICIAL</span>
 						</span>
 						<div
 							className={styles.dmListHeaderShortcut}
 							data-flx="channel.direct-message.dm-list.dm-list-header-shortcut"
 						>
+							<MagnifyingGlassIcon weight="bold" className={styles.lumeHeaderSearchIcon} />
 							<KeybindHint action="nav_quick_switcher" data-flx="channel.direct-message.dm-list.keybind-hint" />
 						</div>
 					</div>
@@ -558,7 +562,7 @@ export const DMList = observer(() => {
 							<MentionBadge mentionCount={pendingCount} data-flx="channel.direct-message.dm-list.mention-badge" />
 						</div>
 					</ClickableItem>
-					{currentUserId && (
+					{SHOW_PERSONAL_NOTES && currentUserId && (
 						<ClickableItem
 							isSelected={shouldHighlightPersonalNotes}
 							onClick={navigateTo(personalNotesPath)}

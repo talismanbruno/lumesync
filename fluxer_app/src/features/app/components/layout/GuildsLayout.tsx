@@ -204,13 +204,13 @@ interface GuildNavigationVisibility {
 function useGuildNavigationVisibility(): GuildNavigationVisibility {
 	const communityActionsVisible = !RuntimeConfig.singleCommunityEnabled;
 	const fluxerVisible = !RuntimeConfig.directMessagesDisabled;
-	const favoritesVisible = Accessibility.showFavorites;
+	const favoritesVisible = false;
 	return useMemo(
 		() =>
 			Object.freeze({
 				fluxerVisible,
 				favoritesVisible,
-				discoveryVisible: communityActionsVisible,
+				discoveryVisible: false,
 				addGuildVisible: communityActionsVisible,
 			}),
 		[communityActionsVisible, favoritesVisible, fluxerVisible],

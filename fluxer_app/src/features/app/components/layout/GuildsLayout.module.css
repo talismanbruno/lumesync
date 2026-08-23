@@ -424,15 +424,21 @@
 
 .fluxerButtonIcon {
 	composes: guildIcon;
-	background-color: var(--guilds-layout-item-bg);
+	background: radial-gradient(circle at 68% 32%, rgb(0 209 255 / 0.14), transparent 42%), var(--guilds-layout-item-bg);
+	border: 1px solid rgb(0 209 255 / 0.18);
 	color: var(--text-primary);
-	transition-property: background-color, color, border-radius;
-	transition-duration: 70ms;
-	transition-timing-function: ease-out;
+	box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.025);
+	transition-property: background-color, color, border-color, border-radius, box-shadow, transform;
+	transition-duration: 180ms;
+	transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .fluxerButtonIconSelected {
-	background-color: var(--brand-primary);
+	background: radial-gradient(circle at 68% 32%, rgb(0 209 255 / 0.22), transparent 44%), #08080a;
+	border-color: rgb(0 209 255 / 0.66);
+	box-shadow:
+		0 0 18px rgb(0 209 255 / 0.18),
+		inset 0 0 0 1px rgb(255 255 255 / 0.04);
 	color: white;
 }
 
@@ -443,7 +449,12 @@
 	:global(:where(html.window-focused, html.unfocused-fully-interactive):not(.window-focus-activation-guard))
 		.fluxerButtonIcon:hover,
 	.fluxerButton.contextMenuHover .fluxerButtonIcon {
-		background-color: var(--brand-primary);
+		background: radial-gradient(circle at 68% 32%, rgb(0 209 255 / 0.22), transparent 44%), #0d0d10;
+		border-color: rgb(0 209 255 / 0.58);
+		box-shadow:
+			0 0 16px rgb(0 209 255 / 0.16),
+			inset 0 0 0 1px rgb(255 255 255 / 0.04);
+		transform: translateY(-1px);
 		color: white;
 	}
 }
@@ -527,6 +538,13 @@
 	height: 1.75rem;
 	width: 1.75rem;
 	color: currentColor;
+}
+
+.lumeHomeIcon {
+	height: 2rem;
+	width: 2rem;
+	object-fit: contain;
+	filter: drop-shadow(0 0 0.35rem rgb(0 209 255 / 0.2));
 }
 
 .relative {

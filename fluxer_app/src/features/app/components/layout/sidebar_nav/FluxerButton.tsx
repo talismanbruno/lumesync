@@ -17,6 +17,7 @@ import ReadStates from '@app/features/read_state/state/ReadStates';
 import Relationships from '@app/features/relationship/state/Relationships';
 import {FluxerButtonContextMenu} from '@app/features/ui/action_menu/FluxerButtonContextMenu';
 import * as ContextMenuCommands from '@app/features/ui/commands/ContextMenuCommands';
+import {FluxerIcon} from '@app/features/ui/components/icons/FluxerIcon';
 import {MentionBadgeAnimated} from '@app/features/ui/components/MentionBadge';
 import FocusRing from '@app/features/ui/focus_ring/FocusRing';
 import MobileLayout from '@app/features/ui/state/MobileLayout';
@@ -26,7 +27,6 @@ import {ME} from '@fluxer/constants/src/AppConstants';
 import {RelationshipTypes} from '@fluxer/constants/src/UserConstants';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
-import {ChatCircleIcon} from '@phosphor-icons/react';
 import {clsx} from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {observer} from 'mobx-react-lite';
@@ -129,7 +129,7 @@ export const FluxerButton = observer(() => {
 		<Tooltip
 			position="right"
 			size="large"
-			text={i18n._(DIRECT_MESSAGES_DESCRIPTOR)}
+			text={`Lume · ${i18n._(DIRECT_MESSAGES_DESCRIPTOR)}`}
 			data-flx="app.sidebar-nav.fluxer-button.tooltip"
 		>
 			<FocusRing
@@ -172,11 +172,7 @@ export const FluxerButton = observer(() => {
 							transition={{duration: 0.07, ease: 'easeOut'}}
 							data-flx="app.sidebar-nav.fluxer-button.fluxer-button-icon"
 						>
-							<ChatCircleIcon
-								weight="fill"
-								className={styles.messageBubbleIcon}
-								data-flx="app.sidebar-nav.fluxer-button.message-bubble-icon"
-							/>
+							<FluxerIcon className={styles.lumeHomeIcon} data-flx="app.sidebar-nav.fluxer-button.lume-home-icon" />
 						</motion.div>
 						<div
 							className={clsx(styles.guildBadge, badgeCount > 0 && styles.guildBadgeActive)}

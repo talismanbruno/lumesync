@@ -64,6 +64,40 @@
 	white-space: nowrap;
 }
 
+.lumeHeaderIdentity {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.lumeHeaderWordmark {
+	height: 1.125rem;
+	width: auto;
+	max-width: 4.75rem;
+	object-fit: contain;
+}
+
+.lumeOfficialBadge {
+	display: inline-flex;
+	height: 1rem;
+	align-items: center;
+	border: 1px solid rgb(0 209 255 / 0.28);
+	border-radius: var(--radius-full);
+	background: rgb(0 209 255 / 0.08);
+	padding: 0 0.35rem;
+	color: var(--lume-cyan);
+	font-size: 0.5rem;
+	font-weight: 800;
+	letter-spacing: 0.1em;
+}
+
+.lumeHeaderSearchIcon {
+	height: 0.875rem;
+	width: 0.875rem;
+	color: var(--text-primary-muted);
+}
+
 .dmListHeaderShortcut {
 	position: absolute;
 	right: var(--spacing-2);
