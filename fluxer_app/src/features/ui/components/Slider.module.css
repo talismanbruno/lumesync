@@ -160,8 +160,8 @@
 .barFill {
 	background: linear-gradient(
 		90deg,
-		var(--brand-primary, #5865f2),
-		color-mix(in srgb, var(--brand-primary-light, #7983f5) 84%, #fff 16%)
+		var(--brand-primary, #00d1ff),
+		color-mix(in srgb, var(--brand-primary-light, #55e1ff) 84%, #fff 16%)
 	);
 	border-radius: inherit;
 	box-shadow: inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.12);
@@ -171,8 +171,8 @@
 .vertical .barFill {
 	background: linear-gradient(
 		0deg,
-		var(--brand-primary, #5865f2),
-		color-mix(in srgb, var(--brand-primary-light, #7983f5) 84%, #fff 16%)
+		var(--brand-primary, #00d1ff),
+		color-mix(in srgb, var(--brand-primary-light, #55e1ff) 84%, #fff 16%)
 	);
 	width: 100%;
 }
@@ -180,8 +180,8 @@
 :global(.theme-light) .barFill {
 	background: linear-gradient(
 		90deg,
-		var(--brand-primary, #5865f2),
-		color-mix(in srgb, var(--brand-primary, #5865f2) 72%, #111 28%)
+		var(--brand-primary, #00d1ff),
+		color-mix(in srgb, var(--brand-primary, #00d1ff) 72%, #111 28%)
 	);
 	box-shadow: none;
 }
@@ -189,15 +189,15 @@
 :global(.theme-light) .vertical .barFill {
 	background: linear-gradient(
 		0deg,
-		var(--brand-primary, #5865f2),
-		color-mix(in srgb, var(--brand-primary, #5865f2) 72%, #111 28%)
+		var(--brand-primary, #00d1ff),
+		color-mix(in srgb, var(--brand-primary, #00d1ff) 72%, #111 28%)
 	);
 }
 
 .grabber {
 	background:
 		linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 246, 248, 0.92)), var(--background-primary, #fff);
-	border: 0.125rem solid color-mix(in srgb, var(--background-primary, #fff) 80%, var(--brand-primary, #5865f2));
+	border: 0.125rem solid color-mix(in srgb, var(--background-primary, #fff) 80%, var(--brand-primary, #00d1ff));
 	border-radius: 999px;
 	box-shadow:
 		0 0.0625rem 0.125rem rgba(0, 0, 0, 0.22),
@@ -223,7 +223,7 @@
 }
 
 .slider:not([data-disabled]) .sliderControl:hover .grabber {
-	border-color: color-mix(in srgb, var(--brand-primary, #5865f2) 62%, var(--background-primary, #fff));
+	border-color: color-mix(in srgb, var(--brand-primary, #00d1ff) 62%, var(--background-primary, #fff));
 	box-shadow:
 		0 0.0625rem 0.125rem rgba(0, 0, 0, 0.22),
 		0 0.5rem 1rem rgba(0, 0, 0, 0.22);

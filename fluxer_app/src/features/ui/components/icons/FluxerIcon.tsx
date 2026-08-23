@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import RuntimeConfig from '@app/features/app/state/RuntimeConfig';
+import {PRODUCT_NAME} from '@app/features/app/config/I18nDisplayConstants';
 import LumeLogoAsset from '@app/media/images/lume-logo.png';
 import {msg} from '@lingui/core/macro';
 import {useLingui} from '@lingui/react/macro';
@@ -14,17 +14,7 @@ const APPLICATION_ICON_DESCRIPTOR = msg({
 });
 export const FluxerIcon = observer((props: React.SVGProps<SVGSVGElement>) => {
 	const {i18n} = useLingui();
-	const ariaLabel = i18n._(APPLICATION_ICON_DESCRIPTOR, {productName: RuntimeConfig.productName});
-	if (RuntimeConfig.iconUrl) {
-		return (
-			<img
-				{...getImageSizingProps(props)}
-				src={RuntimeConfig.iconUrl}
-				alt={ariaLabel}
-				data-flx={getDataFlx(props, 'ui.icons.fluxer-icon.img')}
-			/>
-		);
-	}
+	const ariaLabel = i18n._(APPLICATION_ICON_DESCRIPTOR, {productName: PRODUCT_NAME});
 	return (
 		<img
 			{...getImageSizingProps(props)}

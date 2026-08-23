@@ -20,10 +20,10 @@
 
 .privacyMark {
 	align-items: center;
-	background: #5865f2;
+	background: #00d1ff;
 	border-radius: 62.4375rem;
-	box-shadow: 0 1.125rem 3.25rem rgb(88 101 242 / 32%);
-	color: #fff;
+	box-shadow: 0 1.125rem 3.25rem rgb(0 209 255 / 24%);
+	color: #001014;
 	display: flex;
 	height: 5.5rem;
 	justify-content: center;

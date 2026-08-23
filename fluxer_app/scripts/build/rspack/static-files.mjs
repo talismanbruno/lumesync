@@ -4,58 +4,49 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {sources} from '@rspack/core';
 
-const STATIC_CDN_ENDPOINT_PLACEHOLDER = '{{STATIC_CDN_ENDPOINT}}';
-
 const FONT_LICENSE_FILES = [
 	{source: 'NOTICE.md', asset: 'assets/fonts-NOTICE.txt'},
 	{source: 'LICENSE-IBM-PLEX.txt', asset: 'assets/fonts-LICENSE-IBM-PLEX.txt'},
 ];
 
-function resolveStaticCdnEndpoint(staticCdnEndpoint) {
-	const value = staticCdnEndpoint?.trim().replace(/\/+$/, '');
-	return value || STATIC_CDN_ENDPOINT_PLACEHOLDER;
-}
-
-function generateManifest(staticCdnEndpoint) {
-	const cdn = resolveStaticCdnEndpoint(staticCdnEndpoint);
+function generateManifest() {
 	const manifest = {
-		name: 'Fluxer',
-		short_name: 'Fluxer',
-		description:
-			'Fluxer is a free and open source instant messaging and VoIP platform built for friends, groups, and communities.',
+		name: 'Lume',
+		short_name: 'Lume',
+		description: 'Lume é comunicação em tempo real para amigos, grupos e comunidades.',
 		start_url: '/',
 		display: 'standalone',
 		orientation: 'portrait-primary',
-		theme_color: '#4641D9',
-		background_color: '#2b2d31',
+		theme_color: '#00D1FF',
+		background_color: '#050505',
 		categories: ['social', 'communication'],
-		lang: 'en',
+		lang: 'pt-BR',
 		scope: '/',
 		icons: [
 			{
-				src: `${cdn}/web/android-chrome-192x192.png`,
+				src: '/lume/lume-logo.png',
 				sizes: '192x192',
 				type: 'image/png',
-				purpose: 'maskable any',
+				purpose: 'any',
 			},
 			{
-				src: `${cdn}/web/android-chrome-512x512.png`,
+				src: '/lume/lume-logo.png',
 				sizes: '512x512',
 				type: 'image/png',
-				purpose: 'maskable any',
+				purpose: 'any',
 			},
 			{
-				src: `${cdn}/web/apple-touch-icon.png`,
+				src: '/lume/lume-logo.png',
 				sizes: '180x180',
 				type: 'image/png',
 			},
 			{
-				src: `${cdn}/web/favicon-32x32.png`,
+				src: '/lume/lume-logo.png',
 				sizes: '32x32',
 				type: 'image/png',
 			},
 			{
-				src: `${cdn}/web/favicon-16x16.png`,
+				src: '/lume/lume-logo.png',
 				sizes: '16x16',
 				type: 'image/png',
 			},
@@ -65,14 +56,13 @@ function generateManifest(staticCdnEndpoint) {
 	return JSON.stringify(manifest, null, 2);
 }
 
-function generateBrowserConfig(staticCdnEndpoint) {
-	const cdn = resolveStaticCdnEndpoint(staticCdnEndpoint);
+function generateBrowserConfig() {
 	return `<?xml version="1.0" encoding="utf-8"?>
 <browserconfig>
   <msapplication>
     <tile>
-      <square150x150logo src="${cdn}/web/mstile-150x150.png"/>
-      <TileColor>#4641D9</TileColor>
+      <square150x150logo src="/lume/lume-logo.png"/>
+      <TileColor>#050505</TileColor>
     </tile>
   </msapplication>
 </browserconfig>`;
@@ -84,8 +74,8 @@ function generateRobotsTxt() {
 
 export class StaticFilesPlugin {
 	constructor(options = {}) {
-		this.staticCdnEndpoint = options.staticCdnEndpoint;
 		this.fontsDir = options.fontsDir;
+		this.brandingLogoPath = options.brandingLogoPath;
 	}
 
 	emitFontLicenses(compilation) {
@@ -103,6 +93,13 @@ export class StaticFilesPlugin {
 		}
 	}
 
+	emitBrandingAssets(compilation) {
+		if (!this.brandingLogoPath || !fs.existsSync(this.brandingLogoPath)) {
+			throw new Error(`StaticFilesPlugin: Lume logo is missing at ${this.brandingLogoPath}.`);
+		}
+		compilation.emitAsset('lume/lume-logo.png', new sources.RawSource(fs.readFileSync(this.brandingLogoPath)));
+	}
+
 	apply(compiler) {
 		compiler.hooks.thisCompilation.tap('StaticFilesPlugin', (compilation) => {
 			compilation.hooks.processAssets.tap(
@@ -111,13 +108,11 @@ export class StaticFilesPlugin {
 					stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
 				},
 				() => {
-					compilation.emitAsset('manifest.json', new sources.RawSource(generateManifest(this.staticCdnEndpoint)));
-					compilation.emitAsset(
-						'browserconfig.xml',
-						new sources.RawSource(generateBrowserConfig(this.staticCdnEndpoint)),
-					);
+					compilation.emitAsset('manifest.json', new sources.RawSource(generateManifest()));
+					compilation.emitAsset('browserconfig.xml', new sources.RawSource(generateBrowserConfig()));
 					compilation.emitAsset('robots.txt', new sources.RawSource(generateRobotsTxt()));
 					this.emitFontLicenses(compilation);
+					this.emitBrandingAssets(compilation);
 				},
 			);
 		});

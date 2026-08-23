@@ -412,8 +412,8 @@ export default () => {
 				],
 			}),
 			staticFilesPlugin({
-				staticCdnEndpoint: normalizedStaticCdnEndpoint,
 				fontsDir: path.join(MONOREPO_ROOT, 'packages', 'fonts'),
+				brandingLogoPath: path.join(SRC_DIR, 'media', 'images', 'lume-logo.png'),
 			}),
 			new DefinePlugin({
 				__FLUXER_PRECACHE_MANIFEST__: JSON.stringify([]),
