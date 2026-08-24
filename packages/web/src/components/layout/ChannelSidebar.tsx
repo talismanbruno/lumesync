@@ -434,7 +434,7 @@ export function ChannelSidebar() {
   if (!space) {
     return (
       <>
-      <div className="w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
+      <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
         <div className="h-14 px-[10px] flex items-center border-b border-border-hard z-10">
           <DmSearchBar />
         </div>
@@ -453,24 +453,6 @@ export function ChannelSidebar() {
               <path d="M3.5 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" opacity=".5" />
             </svg>
             <span className="font-medium text-[16px]">Friends</span>
-          </div>
-
-          {/* Placeholder nav items */}
-          <div
-            className="flex items-center gap-3 px-2 h-[42px] rounded-[6px] mb-[2px] text-txt-tertiary cursor-default opacity-50"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-            </svg>
-            <span className="font-medium text-[16px]">Coming Soon</span>
-          </div>
-          <div
-            className="flex items-center gap-3 px-2 h-[42px] rounded-[6px] mb-[2px] text-txt-tertiary cursor-default opacity-50"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" />
-            </svg>
-            <span className="font-medium text-[16px]">Coming Soon</span>
           </div>
 
           <div className="mt-[18px] px-2 mb-1 flex items-center justify-between group">
@@ -548,7 +530,7 @@ export function ChannelSidebar() {
 
   return (
     <>
-    <div className="w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
+    <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
       {/* Space header */}
       <div className="h-14 flex items-stretch border-b border-border-hard z-10 group/header">
         <button

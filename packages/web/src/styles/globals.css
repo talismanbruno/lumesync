@@ -585,3 +585,210 @@
 /* ── Electron window drag regions ── */
 .titlebar-drag { -webkit-app-region: drag; }
 .titlebar-no-drag { -webkit-app-region: no-drag; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * LUME ORBITAL WORKSPACE
+ * A structural identity layer: the app is a collection of floating orbital
+ * surfaces instead of a single stack of flat communication columns.
+ * ────────────────────────────────────────────────────────────────────────── */
+.lume-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(0, 209, 255, 0.09), transparent 24rem),
+    radial-gradient(circle at 88% 86%, rgba(25, 111, 136, 0.07), transparent 30rem),
+    #030405;
+}
+
+.lume-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.28;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 45%, black, transparent 78%);
+}
+
+.lume-navigation-shell,
+.lume-content-stage,
+.lume-context-panel,
+.lume-orbit-rail {
+  transition:
+    border-color var(--lume-normal) var(--lume-ease),
+    box-shadow var(--lume-slow) var(--lume-ease),
+    background-color var(--lume-normal) var(--lume-ease);
+}
+
+.lume-content-stage {
+  background:
+    radial-gradient(circle at 48% -20%, rgba(0, 209, 255, 0.055), transparent 38rem),
+    rgb(var(--bg-chat));
+}
+
+.lume-content-stage > div {
+  background-color: transparent;
+}
+
+.lume-content-stage [class*="h-14"][class*="border-b"] {
+  min-height: 58px;
+  height: 58px;
+  border-bottom-color: rgba(255, 255, 255, 0.055);
+  background: linear-gradient(180deg, rgba(13, 16, 19, 0.92), rgba(7, 9, 11, 0.72));
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.lume-context-panel {
+  background:
+    linear-gradient(180deg, rgba(13, 16, 19, 0.97), rgba(7, 9, 11, 0.96));
+}
+
+.lume-context-panel [class*="rounded-[6px]"] {
+  border-radius: 12px;
+}
+
+.lume-context-panel [class*="bg-interactive-selected"] {
+  background:
+    linear-gradient(90deg, rgba(0, 209, 255, 0.15), rgba(0, 209, 255, 0.035));
+  box-shadow: inset 2px 0 0 rgba(0, 209, 255, 0.9);
+}
+
+.lume-orbit-rail {
+  background:
+    linear-gradient(180deg, rgba(7, 10, 12, 0.92), rgba(3, 4, 5, 0.96));
+}
+
+.lume-orbit-rail button {
+  transition:
+    transform var(--lume-normal) var(--lume-ease),
+    border-radius var(--lume-normal) var(--lume-ease),
+    background-color var(--lume-normal) var(--lume-ease),
+    box-shadow var(--lume-normal) var(--lume-ease);
+}
+
+.lume-orbit-rail button:hover {
+  transform: translateY(-2px) scale(1.035);
+  box-shadow: 0 8px 22px rgba(0, 209, 255, 0.1);
+}
+
+.lume-message-row {
+  margin-left: 12px;
+  margin-right: 12px;
+  padding-left: 14px;
+  padding-right: 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition:
+    background-color var(--lume-fast) var(--lume-ease),
+    border-color var(--lume-fast) var(--lume-ease),
+    transform var(--lume-fast) var(--lume-ease);
+}
+
+.lume-message-row:hover {
+  background: rgba(255, 255, 255, 0.027) !important;
+  border-color: rgba(255, 255, 255, 0.035);
+}
+
+.lume-message-group-start {
+  margin-top: 14px;
+  padding-top: 10px;
+  position: relative;
+}
+
+.lume-message-group-start::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 12px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(180deg, #00d1ff, rgba(0, 209, 255, 0));
+  transition: opacity var(--lume-normal) var(--lume-ease);
+}
+
+.lume-message-group-start:hover::before { opacity: 0.8; }
+
+.lume-composer {
+  border-color: rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(180deg, rgba(18, 22, 25, 0.94), rgba(10, 12, 14, 0.96));
+  box-shadow:
+    0 16px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition:
+    border-color var(--lume-normal) var(--lume-ease),
+    box-shadow var(--lume-normal) var(--lume-ease),
+    transform var(--lume-normal) var(--lume-ease);
+}
+
+.lume-composer:focus-within {
+  border-color: rgba(0, 209, 255, 0.42);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.38),
+    0 0 0 3px rgba(0, 209, 255, 0.055),
+    0 0 34px rgba(0, 209, 255, 0.065);
+  transform: translateY(-1px);
+}
+
+.lume-mobile-dock {
+  margin: 0 10px 8px;
+  border-radius: 20px;
+  border-color: rgba(0, 209, 255, 0.13);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42);
+}
+
+@media (min-width: 768px) {
+  .lume-shell {
+    gap: 10px;
+    padding: 10px;
+    grid-template-columns: 312px minmax(0, 1fr);
+  }
+
+  .lume-navigation-shell {
+    height: calc(100vh - 20px);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+  }
+
+  .lume-orbit-rail {
+    top: 10px !important;
+    left: 10px !important;
+    bottom: 10px !important;
+    border-radius: 22px 0 0 22px;
+    border-right: 1px solid rgba(0, 209, 255, 0.08);
+  }
+
+  .lume-context-panel {
+    border-right: 0;
+    border-radius: 0 22px 22px 0;
+  }
+
+  .lume-content-stage {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow:
+      0 22px 70px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  }
+}
+
+@media (max-width: 767px) {
+  .lume-content-stage { border-radius: 0; }
+  .lume-message-row { margin-left: 5px; margin-right: 5px; padding-left: 10px; padding-right: 10px; }
+  .lume-composer { border-radius: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lume-orbit-rail button:hover,
+  .lume-composer:focus-within { transform: none; }
+}

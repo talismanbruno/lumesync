@@ -90,7 +90,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="glass-bubble flex items-center justify-around shrink-0"
+      className="lume-mobile-dock glass-bubble flex items-center justify-around shrink-0"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom)',
         height: 'calc(56px + env(safe-area-inset-bottom))',

@@ -637,7 +637,7 @@ export function MessageInput({ channelId, channelName, placeholder }: MessageInp
       }
     : undefined;
   const composerClass =
-    'absolute left-2 right-2 z-[110] glass-bubble rounded-[14px]' +
+    'lume-composer absolute left-2 right-2 z-[110] glass-bubble rounded-[18px]' +
     ' md:left-3 md:right-3 md:bottom-3';
 
   // Dynamic message-list bottom padding ("composer clearance"):
