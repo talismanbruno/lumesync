@@ -787,6 +787,212 @@
     0 0 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
+.lume-rail-node {
+  position: relative;
+  border-radius: 15px 15px 24px 15px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition:
+    transform var(--lume-normal) var(--lume-ease),
+    border-radius var(--lume-normal) var(--lume-ease),
+    border-color var(--lume-normal) var(--lume-ease),
+    box-shadow var(--lume-normal) var(--lume-ease) !important;
+}
+
+.lume-rail-node:hover {
+  border-radius: 21px 15px 15px 15px !important;
+  border-color: rgba(0, 209, 255, 0.24);
+}
+
+.lume-rail-node-active {
+  border-radius: 14px 14px 25px 14px !important;
+  border-color: rgba(0, 209, 255, 0.48);
+  box-shadow:
+    0 0 0 3px rgba(0, 209, 255, 0.055),
+    0 9px 28px rgba(0, 209, 255, 0.12) !important;
+}
+
+.lume-connection-orb {
+  overflow: hidden;
+  border-color: rgba(0, 209, 255, 0.17);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(0, 209, 255, 0.12), transparent 9rem),
+    linear-gradient(155deg, rgba(13, 18, 21, 0.98), rgba(7, 9, 11, 0.98));
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.lume-voice-status::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.34), transparent 76%);
+}
+
+.lume-voice-action {
+  border: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.lume-voice-action:hover {
+  border-color: rgba(0, 209, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.lume-orbit-disconnect {
+  color: rgb(var(--txt-danger));
+  background: rgba(255, 79, 102, 0.075);
+  border: 1px solid rgba(255, 79, 102, 0.14);
+}
+
+.lume-orbit-disconnect:hover {
+  background: rgba(255, 79, 102, 0.22);
+  border-color: rgba(255, 79, 102, 0.34);
+}
+
+.lume-settings-shell {
+  background:
+    radial-gradient(circle at 78% 0%, rgba(0, 209, 255, 0.065), transparent 28rem),
+    rgb(7, 9, 11);
+}
+
+.lume-settings-nav {
+  position: relative;
+  border-right: 1px solid rgba(0, 209, 255, 0.09);
+  background: linear-gradient(180deg, rgba(12, 16, 19, 0.94), rgba(6, 8, 10, 0.96));
+}
+
+.lume-settings-nav::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  right: -1px;
+  width: 1px;
+  background: linear-gradient(transparent, rgba(0, 209, 255, 0.32), transparent);
+}
+
+.lume-settings-nav [class*="bg-interactive-selected"] {
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.16), rgba(0, 209, 255, 0.025));
+  box-shadow: inset 2px 0 0 #00d1ff;
+  color: white;
+}
+
+.lume-auth-shell {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(0, 209, 255, 0.12), transparent 24rem),
+    radial-gradient(circle at 82% 82%, rgba(0, 94, 117, 0.10), transparent 28rem),
+    #030506;
+}
+
+.lume-auth-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(circle, black, transparent 76%);
+}
+
+.lume-auth-layout {
+  border: 1px solid rgba(0, 209, 255, 0.13);
+  border-radius: 30px;
+  overflow: hidden;
+  background: rgba(6, 8, 10, 0.78);
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.58), 0 0 60px rgba(0, 209, 255, 0.04);
+}
+
+.lume-auth-intro {
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.055);
+  background:
+    radial-gradient(circle at 78% 35%, rgba(0, 209, 255, 0.13), transparent 17rem),
+    linear-gradient(145deg, rgba(12, 17, 20, 0.96), rgba(5, 7, 9, 0.98));
+}
+
+.lume-auth-intro::after {
+  content: '';
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  right: -150px;
+  top: 80px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 209, 255, 0.15);
+  box-shadow: 0 0 80px rgba(0, 209, 255, 0.06), inset 0 0 80px rgba(0, 209, 255, 0.035);
+  animation: lume-orbit-drift 9s ease-in-out infinite alternate;
+}
+
+.lume-auth-kicker {
+  display: inline-flex;
+  padding: 7px 11px;
+  border: 1px solid rgba(0, 209, 255, 0.2);
+  border-radius: 999px;
+  color: #68e6ff;
+  background: rgba(0, 209, 255, 0.055);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+
+.lume-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00d1ff;
+  box-shadow: 0 0 0 5px rgba(0, 209, 255, 0.08), 0 0 18px rgba(0, 209, 255, 0.6);
+}
+
+.lume-auth-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  background: rgba(8, 10, 12, 0.88);
+}
+
+.lume-auth-card input {
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.lume-auth-card input:focus {
+  border-color: rgba(0, 209, 255, 0.46);
+  box-shadow: 0 0 0 3px rgba(0, 209, 255, 0.06);
+}
+
+.lume-auth-card button[type="submit"] {
+  min-height: 46px;
+  border-radius: 13px;
+  color: #001016;
+  font-weight: 800;
+  box-shadow: 0 12px 32px rgba(0, 209, 255, 0.14);
+}
+
+.lume-auth-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 209, 255, 0.08);
+  pointer-events: none;
+}
+.lume-auth-orbit-a { width: 620px; height: 620px; left: -310px; top: -210px; }
+.lume-auth-orbit-b { width: 440px; height: 440px; right: -190px; bottom: -210px; }
+
+@keyframes lume-orbit-drift {
+  from { transform: translate3d(0, -8px, 0) rotate(-4deg); }
+  to { transform: translate3d(-18px, 12px, 0) rotate(4deg); }
+}
+
 @media (min-width: 768px) {
   .lume-shell {
     gap: 10px;
@@ -831,7 +1037,13 @@
   .lume-composer { border-radius: 17px; }
 }
 
+@media (max-width: 1023px) {
+  .lume-auth-layout { max-width: 440px; border-radius: 24px; }
+  .lume-auth-card { border-radius: 24px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lume-orbit-rail button:hover,
-  .lume-composer:focus-within { transform: none; }
+  .lume-composer:focus-within,
+  .lume-auth-intro::after { transform: none; animation: none; }
 }

@@ -95,13 +95,13 @@ export function VoiceControls() {
           ? 'text-txt-danger'
           : statusColor; // 'unknown' falls back to connection-state color
 
-  const btnBase = 'flex-1 h-[34px] flex items-center justify-center rounded-[4px] transition-colors';
-  const btnDefaultStyle = 'bg-surface-base text-txt-tertiary hover:bg-surface-channel hover:text-txt-secondary';
+  const btnBase = 'lume-voice-action flex-1 h-[36px] flex items-center justify-center rounded-xl transition-colors';
+  const btnDefaultStyle = 'bg-white/[0.035] text-txt-tertiary hover:bg-white/[0.07] hover:text-txt-secondary';
 
   return (
     <>
       {/* Row 1: Signal icon + status text + disconnect */}
-      <div className="relative flex items-center gap-2 px-3 pt-3 pb-1">
+      <div className="lume-voice-status relative flex items-center gap-2 px-3 pt-3 pb-2">
         <button
           ref={connectionBtnRef}
           onClick={() => {
@@ -117,8 +117,8 @@ export function VoiceControls() {
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className={`text-[13px] font-semibold leading-[18px] ${statusColor}`}>
-            {connectionError ? 'Connection Failed' : isLiveKitConnected ? 'Voice Connected' : 'Connecting...'}
+          <div className={`text-[11px] uppercase tracking-[0.16em] font-bold leading-[18px] ${statusColor}`}>
+            {connectionError ? 'Orbit interrupted' : isLiveKitConnected ? 'Orbit online' : 'Aligning orbit...'}
           </div>
           <div className="text-[12px] text-txt-tertiary truncate leading-[16px]">
             {connectionError ? connectionError : channelName}
@@ -128,7 +128,7 @@ export function VoiceControls() {
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <button
             onClick={handleDisconnect}
-            className="w-7 h-7 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded"
+            className="lume-orbit-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
             title="Disconnect"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -146,7 +146,7 @@ export function VoiceControls() {
       </div>
 
       {/* Row 2: Camera, Screen Share, Video Quality, Noise Suppression */}
-      <div className="relative flex items-center gap-1 px-3 pb-2 pt-1">
+      <div className="lume-voice-actions relative grid grid-cols-4 gap-1.5 px-3 pb-3 pt-1">
         {canSpeak && (
           <button
             onClick={handleCameraAction}
@@ -215,23 +215,12 @@ export function VoiceControls() {
               ? 'bg-surface-base text-status-online hover:bg-surface-channel'
               : btnDefaultStyle
           }`}
-          title={rnnoiseEnabled ? 'Disable AI Noise Suppression' : 'Enable AI Noise Suppression'}
+          title={rnnoiseEnabled ? 'Disable Lume Clear' : 'Enable Lume Clear'}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" opacity={rnnoiseEnabled ? 0.15 : 0.08} />
-            <path d="M12 1a2 2 0 012 2v1a2 2 0 01-4 0V3a2 2 0 012-2z" />
-            <path d="M12 7c-1.66 0-3 1.34-3 3v2c0 1.66 1.34 3 3 3s3-1.34 3-3v-2c0-1.66-1.34-3-3-3z" />
-            <path d="M17 11v1c0 2.76-2.24 5-5 5s-5-2.24-5-5v-1H5v1c0 3.53 2.61 6.43 6 6.92V21h2v-2.08c3.39-.49 6-3.39 6-6.92v-1h-2z" />
-            {rnnoiseEnabled ? (
-              <>
-                <circle cx="18" cy="5" r="1.2" fill="currentColor" />
-                <circle cx="20" cy="8" r="0.9" fill="currentColor" opacity="0.7" />
-                <circle cx="6" cy="5" r="1.2" fill="currentColor" />
-                <circle cx="4" cy="8" r="0.9" fill="currentColor" opacity="0.7" />
-              </>
-            ) : (
-              <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-            )}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M4 9c2.2 0 2.2-3 4.4-3s2.2 6 4.4 6 2.2-4 4.4-4 2.2 2 2.8 2" />
+            <path d="M4 15c1.7 0 2-2 3.7-2s2.1 4 4 4 2.1-3 4-3 2 1 4.3 1" opacity=".7" />
+            {rnnoiseEnabled && <path d="m17.5 4 1 1 2-2" strokeWidth="2.2" />}
           </svg>
         </button>
 

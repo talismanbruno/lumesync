@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient } from '../../utils/gradients';
@@ -14,6 +14,45 @@ interface AvatarProps {
   userId?: string;
   ring?: { width: number; color: string };
   avatarColor?: string | null;
+  freezeAnimation?: boolean;
+}
+
+const frozenAvatarCache = new Map<string, string>();
+
+function useFrozenAvatar(src: string | null, freeze: boolean): string | null {
+  const [frozenSrc, setFrozenSrc] = useState<string | null>(() => src ? frozenAvatarCache.get(src) ?? null : null);
+
+  useEffect(() => {
+    if (!src || !freeze) return;
+    const cached = frozenAvatarCache.get(src);
+    if (cached) {
+      setFrozenSrc(cached);
+      return;
+    }
+
+    let cancelled = false;
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+      if (cancelled) return;
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth || 128;
+        canvas.height = image.naturalHeight || 128;
+        canvas.getContext('2d')?.drawImage(image, 0, 0);
+        const still = canvas.toDataURL('image/webp', 0.9);
+        frozenAvatarCache.set(src, still);
+        setFrozenSrc(still);
+      } catch {
+        setFrozenSrc(src);
+      }
+    };
+    image.onerror = () => { if (!cancelled) setFrozenSrc(src); };
+    image.src = src;
+    return () => { cancelled = true; };
+  }, [src, freeze]);
+
+  return freeze ? frozenSrc : src;
 }
 
 const statusColors: Record<string, string> = {
@@ -55,11 +94,17 @@ function getDotMetrics(avatarSize: number, ringWidth: number = 0) {
   return { dot, gap, inset: avatarInset + ringWidth };
 }
 
-export function Avatar({ src, name, size = 40, status, className = '', onClick, user, userId, ring, avatarColor }: AvatarProps) {
+export function Avatar({ src, name, size = 40, status, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false }: AvatarProps) {
   const openUserProfile = useUIStore((s) => s.openUserProfile);
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
+  const resolvedSrc = useMemo(() => {
+    if (!src) return null;
+    return (src.startsWith('http') || src.startsWith('blob:') || src.startsWith('data:') || src.startsWith('/'))
+      ? src : `/api/uploads/${src}`;
+  }, [src]);
+  const displaySrc = useFrozenAvatar(resolvedSrc, freezeAnimation);
 
   const ringWidth = ring?.width ?? 0;
   const outerSize = size + ringWidth * 2;
@@ -101,10 +146,9 @@ export function Avatar({ src, name, size = 40, status, className = '', onClick, 
           ...maskStyle,
         }}
       >
-        {src ? (
+        {displaySrc ? (
           <img
-            src={(src.startsWith('http') || src.startsWith('blob:') || src.startsWith('data:') || src.startsWith('/'))
-              ? src : `/api/uploads/${src}`}
+            src={displaySrc}
             alt={name}
             loading="lazy"
             className="w-full h-full rounded-full object-cover"
@@ -119,8 +163,8 @@ export function Avatar({ src, name, size = 40, status, className = '', onClick, 
           />
         ) : null}
         <div
-          className={`avatar-fallback w-full h-full rounded-full flex items-center justify-center font-bold text-white ${src ? 'hidden' : 'flex'}`}
-          style={{ background: gradient.gradient, fontSize: fontPx, ...(src ? { display: 'none' } : {}) }}
+          className={`avatar-fallback w-full h-full rounded-full flex items-center justify-center font-bold text-white ${displaySrc ? 'hidden' : 'flex'}`}
+          style={{ background: gradient.gradient, fontSize: fontPx, ...(displaySrc ? { display: 'none' } : {}) }}
         >
           {initials}
         </div>

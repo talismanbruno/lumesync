@@ -91,21 +91,21 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
   }, [type, id, name, icon, avatarColor, isHovered, active]);
 
   const getButtonClasses = () => {
-    const base = 'w-10 h-10 flex items-center justify-center duration-200 overflow-hidden [transition:border-radius_0.2s,background_0.2s,color_0.2s]';
+    const base = `lume-rail-node ${active ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 overflow-hidden`;
 
     if (type === 'dm') {
-      return `${base} text-white ${active ? 'rounded-[13px]' : 'rounded-[20px] hover:rounded-[13px]'}`;
+      return `${base} text-white`;
     }
 
     if (type === 'action') {
-      return `${base} rounded-[20px] hover:rounded-[13px] text-accent-mint`;
+      return `${base} text-accent-primary`;
     }
 
     if (icon) {
-      return `${base} ${active ? 'rounded-[13px]' : 'rounded-[20px] hover:rounded-[13px]'}`;
+      return base;
     }
 
-    return `${base} text-white ${active ? 'rounded-[13px]' : 'rounded-[20px] hover:rounded-[13px]'}`;
+    return `${base} text-white`;
   };
 
   const buttonContent = (

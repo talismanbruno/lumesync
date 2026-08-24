@@ -114,9 +114,9 @@ export function UserSettingsModal() {
   return (
     <Modal isOpen={isOpen} onClose={closeModal} size="settings" mobileStyle="fullscreen">
       <SettingsSectionsProvider>
-      <div className="flex h-full">
+      <div className="lume-settings-shell flex h-full">
         {/* Desktop Sidebar */}
-        <div className="hidden md:flex w-52 flex-shrink-0 flex-col p-4 gap-3">
+        <div className="lume-settings-nav hidden md:flex w-56 flex-shrink-0 flex-col p-4 gap-3">
           {/* User card */}
           <div className="glass-bubble rounded-lg p-3 flex items-center gap-3">
             <Avatar

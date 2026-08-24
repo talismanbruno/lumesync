@@ -74,12 +74,30 @@ export function LoginPage() {
   const isDisabled = isLoading || retryAfter > 0;
 
   return (
-    <div className="min-h-full flex items-center justify-center bg-surface-base relative overflow-hidden px-4">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(0,209,255,0.10)_0%,transparent_42%)]" />
-      <div className="absolute w-[520px] h-[520px] rounded-full border border-accent-primary/[0.06] shadow-[0_0_100px_rgba(0,209,255,0.04)]" />
-      <div className="w-full max-w-[440px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-8 shadow-elevation-high relative z-10 backdrop-blur-xl">
+    <div className="lume-auth-shell min-h-full flex items-center justify-center bg-surface-base relative overflow-hidden px-4 py-8">
+      <div className="lume-auth-orbit lume-auth-orbit-a" />
+      <div className="lume-auth-orbit lume-auth-orbit-b" />
+      <div className="lume-auth-layout w-full max-w-[1040px] relative z-10 grid lg:grid-cols-[1.15fr_0.85fr] items-stretch">
+        <section className="lume-auth-intro hidden lg:flex flex-col justify-between p-12 min-h-[600px]">
+          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto self-start object-contain" />
+          <div>
+            <span className="lume-auth-kicker">COMUNICAÇÃO EM ÓRBITA</span>
+            <h2 className="mt-5 text-[44px] leading-[1.04] font-bold tracking-[-0.045em] text-white">
+              Sua galera,<br /><span className="text-accent-primary">no mesmo ritmo.</span>
+            </h2>
+            <p className="mt-5 max-w-[430px] text-[15px] leading-7 text-txt-tertiary">
+              Converse, compartilhe e entre em chamada num espaço leve, direto e feito para pertencer a vocês.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-txt-tertiary">
+            <span className="lume-live-dot" />
+            <span>Lume Orbital está online</span>
+          </div>
+        </section>
+
+      <div className="lume-auth-card w-full max-w-[440px] lg:max-w-none bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-8 shadow-elevation-high relative backdrop-blur-xl">
         <div className="text-center mb-6">
-          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto mx-auto mb-6 object-contain" />
+          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto mx-auto mb-6 object-contain lg:hidden" />
           <h1 className="text-2xl font-bold text-txt-primary">Bem-vindo de volta</h1>
           <p className="text-txt-tertiary mt-1">Sua galera está te esperando.</p>
         </div>
@@ -150,6 +168,7 @@ export function LoginPage() {
             <SourceCodeLink sourceCodeUrl={instanceInfo.sourceCodeUrl} version={instanceInfo.version} commit={instanceInfo.commit} />
           </div>
         )}
+      </div>
       </div>
     </div>
   );
