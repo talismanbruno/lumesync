@@ -21,31 +21,31 @@
 @layer base {
   :root {
     /* ── Matte Surfaces (RGB channels for Tailwind opacity support) ── */
-    --bg-base: 11 11 16;
-    --bg-channel: 26 26 35;
-    --bg-chat: 19 19 26;
-    --bg-members: 26 26 35;
-    --bg-elevated: 37 37 48;
-    --bg-input: 17 17 24;
+    --bg-base: 5 5 5;
+    --bg-channel: 9 10 12;
+    --bg-chat: 6 7 8;
+    --bg-members: 9 10 12;
+    --bg-elevated: 14 16 18;
+    --bg-input: 10 12 14;
     --bg-overlay: rgba(0, 0, 0, 0.85);
 
     /* ── Borders ── */
-    --border-hard: 34 34 44;
-    --border-soft: 42 42 54;
+    --border-hard: 22 27 30;
+    --border-soft: 31 39 43;
 
     /* ── Pastel Accents ── */
-    --accent-mint: 134 239 172;
+    --accent-mint: 0 209 255;
     --accent-peach: 252 165 165;
     --accent-lavender: 196 181 253;
-    --accent-sky: 125 211 252;
+    --accent-sky: 0 209 255;
     --accent-amber: 252 211 77;
     --accent-rose: 253 164 175;
     --accent-coral: 251 146 60;
 
     /* ── Primary Action (replaces blurple) ── */
-    --accent-primary: 124 108 246;
-    --accent-primary-hover: 107 92 224;
-    --accent-primary-active: 95 79 208;
+    --accent-primary: 0 209 255;
+    --accent-primary-hover: 38 218 255;
+    --accent-primary-active: 0 174 214;
 
     /* ── Text Hierarchy ── */
     --text-primary: 239 239 239;
@@ -53,8 +53,8 @@
     --text-tertiary: 92 92 104;
     --text-category: 72 72 84;
     --text-message: 216 216 222;
-    --text-link: 125 211 252;
-    --text-positive: 134 239 172;
+    --text-link: 0 209 255;
+    --text-positive: 80 225 190;
     --text-warning: 252 211 77;
     --text-danger: 252 165 165;
 
@@ -71,9 +71,9 @@
     --status-offline: 58 58 68;
 
     /* ── Glass Material ── */
-    --glass-bg: rgba(20, 20, 26, 0.52);
-    --glass-modal-bg: rgba(20, 20, 26, 0.82);
-    --glass-border: rgba(255, 255, 255, 0.07);
+    --glass-bg: rgba(8, 11, 13, 0.70);
+    --glass-modal-bg: rgba(8, 10, 12, 0.92);
+    --glass-border: rgba(0, 209, 255, 0.10);
     --glass-highlight: rgba(255, 255, 255, 0.05);
 
     /* ── Notification ── */
@@ -86,7 +86,7 @@
   }
 
   ::selection {
-    background: rgba(134, 239, 172, 0.25);
+    background: rgba(0, 209, 255, 0.24);
     color: rgb(var(--text-primary));
   }
 
@@ -97,6 +97,21 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  :root {
+    --lume-fast: 150ms;
+    --lume-normal: 210ms;
+    --lume-slow: 280ms;
+    --lume-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  button, a, [role="button"] {
+    transition-timing-function: var(--lume-ease) !important;
+  }
+
+  button:active:not(:disabled), [role="button"]:active {
+    transform: scale(0.975);
   }
 
   /* Suppress native text selection and callout on mobile interactive elements.
@@ -145,6 +160,15 @@
     -webkit-text-fill-color: #ffffff;
     -webkit-box-shadow: 0 0 0px 1000px #111118 inset;
     transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

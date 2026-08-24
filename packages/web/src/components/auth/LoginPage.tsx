@@ -74,12 +74,14 @@ export function LoginPage() {
   const isDisabled = isLoading || retryAfter > 0;
 
   return (
-    <div className="min-h-full flex items-center justify-center bg-surface-base relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,108,246,0.06)_0%,transparent_50%)]" />
-      <div className="w-full max-w-[480px] bg-surface-elevated rounded-md p-8 shadow-elevation-high relative z-10">
+    <div className="min-h-full flex items-center justify-center bg-surface-base relative overflow-hidden px-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(0,209,255,0.10)_0%,transparent_42%)]" />
+      <div className="absolute w-[520px] h-[520px] rounded-full border border-accent-primary/[0.06] shadow-[0_0_100px_rgba(0,209,255,0.04)]" />
+      <div className="w-full max-w-[440px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-8 shadow-elevation-high relative z-10 backdrop-blur-xl">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-txt-primary">Welcome back!</h1>
-          <p className="text-txt-tertiary mt-1">We're so excited to see you again!</p>
+          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto mx-auto mb-6 object-contain" />
+          <h1 className="text-2xl font-bold text-txt-primary">Bem-vindo de volta</h1>
+          <p className="text-txt-tertiary mt-1">Sua galera está te esperando.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -98,7 +100,7 @@ export function LoginPage() {
 
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Username <span className="text-txt-danger">*</span>
+              Usuário <span className="text-txt-danger">*</span>
             </label>
             <input
               type="text"
@@ -112,7 +114,7 @@ export function LoginPage() {
 
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Password <span className="text-txt-danger">*</span>
+              Senha <span className="text-txt-danger">*</span>
             </label>
             <input
               type="password"
@@ -131,14 +133,14 @@ export function LoginPage() {
             {retryAfter > 0
               ? `Try again in ${retryAfter}s`
               : isLoading
-                ? 'Logging in...'
-                : 'Log In'}
+                ? 'Entrando...'
+                : 'Entrar'}
           </button>
 
           <p className="mt-3 text-sm text-txt-tertiary">
-            Need an account?{' '}
+            Ainda não tem uma conta?{' '}
             <Link to={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">
-              Register
+              Criar conta
             </Link>
           </p>
         </form>

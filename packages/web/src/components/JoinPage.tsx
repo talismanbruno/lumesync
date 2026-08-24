@@ -230,7 +230,7 @@ export function JoinPage() {
               onClick={() => navigate('/channels/@me')}
               className="px-6 py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors"
             >
-              Back to Backspace
+              Voltar para o Lume
             </button>
           ) : (
             <Link

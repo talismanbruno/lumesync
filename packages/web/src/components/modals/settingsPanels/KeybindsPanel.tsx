@@ -292,7 +292,7 @@ export function KeybindsPanel() {
         <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3.5">
           <div className="text-sm text-amber-200 font-medium">Accessibility Permission Required</div>
           <div className="text-xs text-amber-200/70 mt-1">
-            Backspace needs Accessibility permission for global shortcuts to work outside the app.
+            O Lume precisa da permissão de acessibilidade para usar atalhos globais fora do app.
           </div>
           <button
             onClick={() => {

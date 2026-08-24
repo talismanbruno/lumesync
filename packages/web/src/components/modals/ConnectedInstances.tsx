@@ -1367,7 +1367,7 @@ export function ConnectedInstances() {
       <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
         Connected Instances
       </div>
-      <p className="text-xs text-txt-tertiary mb-2">Link accounts across federated Backspace instances.</p>
+      <p className="text-xs text-txt-tertiary mb-2">Conecte suas contas entre instâncias compatíveis do Lume.</p>
 
       <div className="rounded-lg bg-white/[0.02] p-3 space-y-2">
         {/* Home instance (always pinned, non-filterable) */}

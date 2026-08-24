@@ -65,7 +65,7 @@ export function GeneralPanel() {
     <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
       <h2 className="text-lg font-semibold text-txt-primary">General</h2>
       <div className="text-xs text-txt-tertiary">
-        Configure your Backspace instance. These settings affect all users.
+        Configure esta instância do Lume. Estas opções afetam todos os usuários.
       </div>
 
       {/* Instance Name */}
@@ -77,7 +77,7 @@ export function GeneralPanel() {
             type="text"
             value={draft.instanceName}
             onChange={(e) => setDraft({ ...draft, instanceName: e.target.value.slice(0, 32) })}
-            placeholder="Backspace"
+            placeholder="Lume"
             className="input-standard w-full"
           />
           <div className="text-[11px] text-txt-tertiary text-right mt-1">{draft.instanceName.length}/32</div>

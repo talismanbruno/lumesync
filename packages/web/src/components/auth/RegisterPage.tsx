@@ -406,9 +406,10 @@ export function RegisterPage() {
     // `min-h-full`) makes this element exactly viewport-height; the inner flex wrapper
     // uses `min-h-full` so short content still centers vertically.
     <div className="h-full overflow-y-auto bg-surface-base relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(124,108,246,0.06)_0%,transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(0,209,255,0.10)_0%,transparent_42%)] pointer-events-none" />
       <div className="min-h-full flex items-center justify-center px-4 py-6 md:py-10 relative z-10">
-        <div className="w-full max-w-[480px] bg-surface-elevated rounded-md p-6 md:p-8 shadow-elevation-high overflow-hidden">
+        <div className="w-full max-w-[480px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-6 md:p-8 shadow-elevation-high overflow-hidden backdrop-blur-xl">
+        <img src="/icons/logo-wordmark.png" alt="Lume" className="h-9 w-auto mx-auto mb-5 object-contain" />
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-5">
           <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${step === 1 ? 'bg-accent-primary' : 'bg-txt-tertiary/30'}`} />
@@ -418,7 +419,7 @@ export function RegisterPage() {
         {step === 1 ? (
           <div key="step1" className={`w-full${direction === 'back' ? ' animate-step-back' : ''}`}>
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-txt-primary">Create an account</h1>
+              <h1 className="text-2xl font-bold text-txt-primary">Crie sua conta</h1>
             </div>
 
             <form onSubmit={handleContinue}>

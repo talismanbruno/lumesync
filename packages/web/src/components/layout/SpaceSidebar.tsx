@@ -111,7 +111,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
   const buttonContent = (
     <button onClick={onClick} className={`${getButtonClasses()} ${dimmed ? 'opacity-40 saturate-50' : ''}`} style={backgroundStyle} title={tooltipText ? undefined : name}>
       {type === 'dm' ? (
-        <img src="/icons/logo-mark.svg" alt="Backspace" className="w-[25px] h-auto" />
+        <img src="/icons/logo.png" alt="Lume" className="w-[27px] h-[27px] object-contain" />
       ) : type === 'action' ? (
         actionType === 'add' ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

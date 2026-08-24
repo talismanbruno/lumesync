@@ -51,7 +51,7 @@ function AutoLaunchSettings() {
         <div className="flex-1 mr-4">
           <div className="text-sm text-txt-primary">Start at boot</div>
           <div className="text-xs text-txt-tertiary mt-0.5">
-            Automatically launch Backspace when you log in
+            Abrir o Lume automaticamente ao entrar no sistema
           </div>
         </div>
         <Toggle enabled={openAtLogin} onChange={handleOpenAtLoginChange} disabled={busy} />
@@ -88,7 +88,7 @@ function UpdateSettings() {
     <div className="flex items-center justify-between py-1">
       <div className="flex-1 mr-4">
         <div className="text-sm text-txt-primary">
-          {version ? `Version ${version}` : 'Backspace Desktop'}
+          {version ? `Versão ${version}` : 'Lume Desktop'}
         </div>
         <div className="text-xs text-txt-tertiary mt-0.5">
           Check for new versions of the desktop app
