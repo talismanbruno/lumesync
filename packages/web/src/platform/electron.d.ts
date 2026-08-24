@@ -48,6 +48,7 @@ interface BackspaceElectronAPI {
     target?: { channelId?: string; spaceId?: string },
   ) => void;
   setBadgeCount: (count: number) => void;
+  setVoiceSessionActive: (active: boolean) => void;
 
   // Auto-update (Task 2.1)
   onUpdateAvailable: (callback: (info: { version: string }) => void) => void;

@@ -514,6 +514,13 @@ function registerIpcHandlers(): void {
     }
   });
 
+  // Keep WebRTC signaling, audio meters and call controls responsive while the
+  // window is hidden. Outside a call Chromium can throttle normally to save CPU.
+  ipcMain.on('set-voice-session-active', (_event, active: boolean) => {
+    if (typeof active !== 'boolean' || !mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.setBackgroundThrottling(!active);
+  });
+
   ipcMain.on('minimize-window', () => {
     mainWindow?.minimize();
   });
@@ -887,9 +894,12 @@ if (!gotTheLock) {
       ]));
     }
 
-    // Purge ALL stale caches so Electron always loads fresh code on launch
-    await session.defaultSession.clearStorageData({ storages: ['serviceworkers'] });
-    await session.defaultSession.clearCache();
+    // Keep the web cache between launches for fast startup and offline-tolerant
+    // loading. A manual recovery launch can still request a one-time reset.
+    if (process.argv.includes('--reset-web-cache')) {
+      await session.defaultSession.clearStorageData({ storages: ['serviceworkers'] });
+      await session.defaultSession.clearCache();
+    }
 
     // Intercept getDisplayMedia() — show custom picker in renderer.
     // Audio loopback controlled by user's shareAudio toggle.

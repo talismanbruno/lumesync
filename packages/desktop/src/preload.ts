@@ -22,6 +22,9 @@ contextBridge.exposeInMainWorld('backspace', {
   setBadgeCount: (count: number) => {
     ipcRenderer.send('set-badge-count', count);
   },
+  setVoiceSessionActive: (active: boolean) => {
+    ipcRenderer.send('set-voice-session-active', active);
+  },
 
   // Auto-update
   onUpdateAvailable: (callback: (info: { version: string }) => void) => {

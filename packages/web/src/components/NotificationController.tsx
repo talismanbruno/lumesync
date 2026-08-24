@@ -86,6 +86,27 @@ export function NotificationController() {
     return unsubscribe;
   }, []);
 
+  // Electron may throttle background renderer timers. Keep them running only
+  // for the lifetime of a voice session so minimized calls remain responsive.
+  useEffect(() => {
+    if (!isElectron() || !window.backspace) return;
+    const api = window.backspace;
+    const isVoiceActive = (state: ReturnType<typeof useVoiceStore.getState>) => Boolean(
+      state.currentVoiceChannelId || state.activeDmCall || state.outgoingCall,
+    );
+
+    api.setVoiceSessionActive(isVoiceActive(useVoiceStore.getState()));
+    const unsubscribe = useVoiceStore.subscribe((state, previous) => {
+      const active = isVoiceActive(state);
+      if (active !== isVoiceActive(previous)) api.setVoiceSessionActive(active);
+    });
+
+    return () => {
+      unsubscribe();
+      api.setVoiceSessionActive(false);
+    };
+  }, []);
+
   // DM call notification
   useEffect(() => {
     let prevIncoming: { dmChannelId: string | null; callerId: string; callerName: string } | null = null;
