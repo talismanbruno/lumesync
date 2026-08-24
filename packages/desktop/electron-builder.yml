@@ -18,8 +18,13 @@ asarUnpack:
   - "**/*.node"
 npmRebuild: false
 afterPack: ./scripts/afterPack.js
-# Updates are deliberately disabled for the beta build. Publishing will be
-# enabled only after Lume has its own release repository and signed artifacts.
+# Releases are published in the official Lume repository. Automatic updates
+# remain opt-in in the beta app until the Windows and macOS binaries are signed.
+publish:
+  provider: github
+  owner: talismanbruno
+  repo: lumesync
+  releaseType: release
 protocols:
   - name: Lume
     schemes:

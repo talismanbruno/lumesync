@@ -1,0 +1,96 @@
+name: Lume Desktop Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "lume-desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-2022
+            args: --win --x64
+            artifact: lume-windows-x64
+          - name: macOS Intel
+            os: macos-14
+            args: --mac --x64
+            artifact: lume-macos-x64
+          - name: macOS Apple Silicon
+            os: macos-14
+            args: --mac --arm64
+            artifact: lume-macos-arm64
+
+    steps:
+      - name: Checkout Lume
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @backspace/shared build
+
+      - name: Compile desktop app
+        run: pnpm --filter @backspace/desktop build:ts
+
+      - name: Package Lume
+        working-directory: packages/desktop
+        run: pnpm exec electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            packages/desktop/dist-electron/*.exe
+            packages/desktop/dist-electron/*.dmg
+            packages/desktop/dist-electron/*.zip
+            packages/desktop/dist-electron/*.yml
+            packages/desktop/dist-electron/*.blockmap
+
+  release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/lume-desktop-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --title "Lume Desktop ${GITHUB_REF_NAME#lume-desktop-v}" \
+            --generate-notes \
+            --verify-tag

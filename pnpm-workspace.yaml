@@ -1,2 +1,11 @@
 packages:
   - "packages/*"
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - electron
+  - sharp
+
+patchedDependencies:
+  uiohook-napi@1.5.5: patches/uiohook-napi@1.5.5.patch

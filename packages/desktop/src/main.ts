@@ -760,7 +760,7 @@ function initAutoUpdater(): void {
       if (updateConfirmed) {
         mainWindow?.webContents.send('update-error', {
           message,
-          releaseUrl: 'https://github.com/TheZwiss/backspace/releases/latest',
+          releaseUrl: 'https://github.com/talismanbruno/lumesync/releases/latest',
         });
       }
     });

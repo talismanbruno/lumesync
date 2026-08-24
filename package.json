@@ -1,14 +1,14 @@
 {
-  "name": "backspace",
+  "name": "lume",
   "version": "1.0.0",
   "private": true,
-  "description": "Open, self-hosted communication platform — text, voice, video, and federation",
+  "description": "Lume — comunicação em tempo real, voz, vídeo e comunidades",
   "license": "AGPL-3.0-only",
-  "author": "Jannis Braun",
-  "homepage": "https://github.com/TheZwiss/backspace",
+  "author": "Lume contributors",
+  "homepage": "https://lumesocial.online",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheZwiss/backspace.git"
+    "url": "https://github.com/talismanbruno/lumesync.git"
   },
   "scripts": {
     "dev:server": "pnpm --filter @backspace/server dev",
@@ -28,17 +28,6 @@
     "sharp": "^0.33.5",
     "png-to-ico": "^2.1.8",
     "png2icons": "^2.0.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild",
-      "electron",
-      "sharp"
-    ],
-    "patchedDependencies": {
-      "uiohook-napi@1.5.5": "patches/uiohook-napi@1.5.5.patch"
-    }
   },
   "packageManager": "pnpm@10.34.3",
   "engines": {
