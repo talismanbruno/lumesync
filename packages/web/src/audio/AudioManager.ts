@@ -168,17 +168,57 @@ export class AudioManager {
 
     if (!this.ctx) this.initContext();
     
-    try {
-      const response = await fetch(`/sounds/${name}.ogg`);
-      if (!response.ok) throw new Error(`Failed to load sound: ${name}`);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.ctx!.decodeAudioData(arrayBuffer);
-      this.soundBuffers.set(name, audioBuffer);
-      return audioBuffer;
-    } catch (err) {
-      console.error(`[AudioManager] Error loading sound ${name}:`, err);
-      return null;
+    const audioBuffer = this.createLumeSound(name);
+    this.soundBuffers.set(name, audioBuffer);
+    return audioBuffer;
+  }
+
+  /**
+   * Lume's sound language is synthesized locally: short glassy tones with a
+   * soft orbital tail. This keeps every cue original, instant and tiny while
+   * avoiding inherited sound files from the upstream interface.
+   */
+  private createLumeSound(name: string): AudioBuffer {
+    const signatures: Record<string, { duration: number; notes: Array<[number, number, number, number]> }> = {
+      message: { duration: 0.34, notes: [[0.00, 0.18, 740, 1040], [0.10, 0.22, 1110, 1420]] },
+      user_join: { duration: 0.48, notes: [[0.00, 0.24, 360, 560], [0.13, 0.28, 620, 980]] },
+      user_leave: { duration: 0.44, notes: [[0.00, 0.25, 820, 520], [0.12, 0.27, 480, 270]] },
+      mute: { duration: 0.28, notes: [[0.00, 0.23, 560, 280]] },
+      unmute: { duration: 0.28, notes: [[0.00, 0.23, 300, 680]] },
+      deafen: { duration: 0.34, notes: [[0.00, 0.22, 520, 260], [0.08, 0.22, 390, 190]] },
+      undeafen: { duration: 0.34, notes: [[0.00, 0.22, 230, 460], [0.08, 0.22, 350, 720]] },
+      disconnect: { duration: 0.52, notes: [[0.00, 0.30, 620, 310], [0.16, 0.30, 390, 150]] },
+      camera_on: { duration: 0.32, notes: [[0.00, 0.20, 420, 760], [0.10, 0.18, 700, 980]] },
+      camera_off: { duration: 0.30, notes: [[0.00, 0.22, 760, 360]] },
+      stream_started: { duration: 0.52, notes: [[0.00, 0.26, 330, 660], [0.15, 0.30, 660, 1180]] },
+      stream_ended: { duration: 0.48, notes: [[0.00, 0.27, 980, 560], [0.13, 0.28, 520, 260]] },
+      stream_user_joined: { duration: 0.38, notes: [[0.00, 0.20, 480, 720], [0.11, 0.20, 760, 1040]] },
+      stream_user_left: { duration: 0.38, notes: [[0.00, 0.20, 860, 560], [0.11, 0.20, 520, 340]] },
+      call_ringing: { duration: 3.2, notes: [[0.00, 0.42, 520, 820], [0.22, 0.42, 780, 1180], [1.62, 0.42, 520, 820], [1.84, 0.42, 780, 1180]] },
+      call_calling: { duration: 2.8, notes: [[0.00, 0.34, 390, 620], [0.36, 0.34, 520, 830], [1.42, 0.34, 390, 620], [1.78, 0.34, 520, 830]] },
+    };
+    const signature = signatures[name] ?? { duration: 0.3, notes: [[0, 0.24, 440, 660] as [number, number, number, number]] };
+    const sampleRate = this.ctx?.sampleRate ?? 48000;
+    const buffer = this.ctx!.createBuffer(2, Math.ceil(signature.duration * sampleRate), sampleRate);
+
+    for (let channel = 0; channel < 2; channel++) {
+      const data = buffer.getChannelData(channel);
+      for (const [start, length, fromHz, toHz] of signature.notes) {
+        const first = Math.floor(start * sampleRate);
+        const count = Math.floor(length * sampleRate);
+        let phase = channel === 0 ? 0 : 0.035;
+        for (let i = 0; i < count && first + i < data.length; i++) {
+          const progress = i / Math.max(1, count - 1);
+          const frequency = fromHz + (toHz - fromHz) * (progress * progress * (3 - 2 * progress));
+          phase += (Math.PI * 2 * frequency) / sampleRate;
+          const envelope = Math.pow(Math.sin(Math.PI * progress), 1.7);
+          const shimmer = Math.sin(phase) + Math.sin(phase * 2.01) * 0.16 + Math.sin(phase * 0.5) * 0.08;
+          const sampleIndex = first + i;
+          data[sampleIndex] = (data[sampleIndex] ?? 0) + shimmer * envelope * 0.19;
+        }
+      }
     }
+    return buffer;
   }
 
   async playSound(name: string, options: { loop?: boolean; volume?: number } = {}): Promise<AudioBufferSourceNode | null> {

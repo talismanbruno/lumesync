@@ -8,13 +8,16 @@ export function MemberListToggleButton() {
   return (
     <button
       onClick={toggleMemberList}
-      className={`w-8 h-8 flex items-center justify-center transition-colors rounded-[4px] hover:bg-interactive-hover ${
-        memberListOpen ? 'text-txt-primary' : 'text-txt-tertiary hover:text-txt-secondary'
+      className={`lume-header-orbit w-9 h-8 flex items-center justify-center transition-all rounded-xl ${
+        memberListOpen ? 'is-active text-cyan-200' : 'text-txt-tertiary hover:text-cyan-200'
       }`}
-      title="Toggle Member List"
+      title="Mostrar pessoas na órbita"
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58A2.01 2.01 0 0 0 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z" />
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M4.2 13.5a8 8 0 0 1 0-3M19.8 10.5a8 8 0 0 1 0 3M7.1 6.4a8 8 0 0 1 2.6-1.5M14.3 4.9a8 8 0 0 1 2.6 1.5M7.1 17.6a8 8 0 0 0 2.6 1.5M14.3 19.1a8 8 0 0 0 2.6-1.5" />
+        <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
+        <circle cx="20" cy="12" r="1.4" fill="currentColor" stroke="none" />
       </svg>
     </button>
   );

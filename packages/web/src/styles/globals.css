@@ -855,6 +855,94 @@
   border-color: rgba(255, 79, 102, 0.34);
 }
 
+/* ── Lume Orbital Controls ─────────────────────────────────────────────── */
+.lume-user-control-deck {
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 15px 7px 15px 7px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.lume-user-control-deck > button {
+  border-radius: 10px !important;
+}
+
+.lume-user-control-deck > button:nth-child(2),
+.lume-user-control-deck > button:nth-child(4) {
+  width: 14px !important;
+  opacity: 0.48;
+}
+
+.lume-user-control-deck > button:hover {
+  background: rgba(0, 209, 255, 0.075) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.1);
+}
+
+.lume-header-orbit {
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lume-header-orbit:hover,
+.lume-header-orbit.is-active {
+  border-color: rgba(0, 209, 255, 0.2);
+  background: radial-gradient(circle, rgba(0, 209, 255, 0.12), rgba(0, 209, 255, 0.025));
+  box-shadow: 0 0 18px rgba(0, 209, 255, 0.08);
+}
+
+.lume-rail-action {
+  border-radius: 15px 15px 25px 15px !important;
+  border: 1px solid rgba(0, 209, 255, 0.13);
+  background: rgba(0, 209, 255, 0.035) !important;
+}
+
+.lume-rail-action:hover {
+  border-color: rgba(0, 209, 255, 0.38);
+  background: rgba(0, 209, 255, 0.1) !important;
+  transform: rotate(-2deg) translateY(-1px);
+}
+
+.lume-orbit-roster {
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 12%, rgba(0, 209, 255, 0.055), transparent 10rem),
+    rgb(var(--bg-channel));
+}
+
+.lume-orbit-roster::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  top: -92px;
+  right: -95px;
+  border: 1px solid rgba(0, 209, 255, 0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.lume-orbit-person:hover {
+  transform: translateX(-2px);
+  box-shadow: inset 2px 0 rgba(0, 209, 255, 0.22);
+}
+
+.lume-voice-actions {
+  margin: 0 8px 9px;
+  padding: 5px !important;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 17px 8px 17px 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.lume-voice-actions .lume-voice-action {
+  border-radius: 12px 6px 12px 6px;
+}
+
+.lume-voice-status {
+  padding-bottom: 10px;
+}
+
 .lume-settings-shell {
   background:
     radial-gradient(circle at 78% 0%, rgba(0, 209, 255, 0.065), transparent 28rem),

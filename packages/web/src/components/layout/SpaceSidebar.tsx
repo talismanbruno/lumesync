@@ -91,7 +91,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
   }, [type, id, name, icon, avatarColor, isHovered, active]);
 
   const getButtonClasses = () => {
-    const base = `lume-rail-node ${active ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 overflow-hidden`;
+    const base = `lume-rail-node ${type === 'action' ? 'lume-rail-action' : ''} ${active ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 overflow-hidden`;
 
     if (type === 'dm') {
       return `${base} text-white`;
@@ -114,16 +114,16 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
         <img src="/icons/logo.png" alt="Lume" className="w-[27px] h-[27px] object-contain" />
       ) : type === 'action' ? (
         actionType === 'add' ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M12 4v16M4 12h16" /><circle cx="12" cy="12" r="9" opacity=".35" />
           </svg>
         ) : actionType === 'explore' ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z" />
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 17c3-7 7-10 14-11-1 7-4 11-11 13" /><path d="m9 15 6-6" /><circle cx="12" cy="12" r="9" opacity=".25" />
           </svg>
         ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h12" /><path d="m13 8 4 4-4 4" /><path d="M7 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
           </svg>
         )
       ) : icon ? (

@@ -1207,7 +1207,7 @@ function UserAreaPanel({
         </button>
 
         {/* Controls */}
-        <div className="flex items-center">
+        <div className="lume-user-control-deck flex items-center">
           {/* Mic */}
           <button
             onClick={onMicToggle}
