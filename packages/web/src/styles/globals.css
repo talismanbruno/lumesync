@@ -814,7 +814,8 @@
 }
 
 .lume-connection-orb {
-  overflow: hidden;
+  /* Presence and audio popovers are anchored inside this floating control. */
+  overflow: visible;
   border-color: rgba(0, 209, 255, 0.17);
   background:
     radial-gradient(circle at 10% 0%, rgba(0, 209, 255, 0.12), transparent 9rem),
