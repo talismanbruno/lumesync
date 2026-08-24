@@ -23,6 +23,7 @@ import { parseFederatedUsername, isFederationGlobeApplicable } from '../../utils
 import { useCanonicalUserView } from '../../utils/userViewLookup';
 import { Username } from '../ui/Username';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 const statusLabel: Record<string, string> = { online: 'Online', idle: 'Idle', dnd: 'Do Not Disturb', offline: 'Offline' };
 
@@ -345,19 +346,17 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
           <span className="font-semibold text-sm text-txt-primary">Friends</span>
         </div>
       ) : (
-        <div className="h-14 px-4 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
+        <div className="lume-friends-command h-16 px-5 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
           <div className="flex items-center gap-2 mr-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
-            <span className="font-bold text-txt-primary">Friends</span>
+            <span className="lume-friends-mark"><OrbitalIcon name="friends" size={21} /></span>
+            <span className="font-bold text-txt-primary">Pessoas</span>
           </div>
           <div className="w-[1px] h-6 bg-surface-elevated mx-2" />
           <div className="flex items-center gap-4 ml-2">
-            <TabButton active={activeTab === 'online'} onClick={() => setActiveTab('online')}>Online</TabButton>
-            <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>All</TabButton>
+            <TabButton active={activeTab === 'online'} onClick={() => setActiveTab('online')}>Disponíveis</TabButton>
+            <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>Todos</TabButton>
             <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
-              Pending
+              Pedidos
               {(pendingIncoming.length > 0) && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-rose text-white text-[10px] rounded-full leading-none">
                   {pendingIncoming.length}
@@ -370,7 +369,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
                 activeTab === 'add' ? 'text-status-online bg-transparent' : 'bg-status-online text-[#13131a] hover:bg-status-online/90'
               }`}
             >
-              Add Friend
+              Adicionar
             </button>
           </div>
           <div className="ml-auto flex items-center gap-1">
@@ -890,8 +889,8 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
   return (
     <button
       onClick={onClick}
-      className={`px-2 py-0.5 rounded-[4px] text-[16px] font-medium transition-colors ${
-        active ? 'bg-interactive-selected text-white' : 'text-txt-tertiary hover:bg-interactive-hover hover:text-txt-secondary'
+      className={`lume-friends-tab px-3 py-2 text-[13px] font-semibold transition-all ${
+        active ? 'is-active text-cyan-100' : 'text-txt-tertiary hover:text-txt-secondary'
       }`}
     >
       {children}

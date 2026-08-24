@@ -9,6 +9,7 @@ import { startScreenShare, stopScreenShare } from '../../utils/screenShare';
 import { hasPermissionBit, PermissionBits } from '../../utils/permissions';
 import { broadcastVoiceStatus } from '../../utils/voice';
 import { handleCameraAction } from '../../utils/voiceActions';
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 /**
  * VoiceControls renders the voice status + button rows.
@@ -131,9 +132,7 @@ export function VoiceControls() {
             className="lume-orbit-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
             title="Disconnect"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 9C10.4 9 8.85 9.25 7.4 9.72V12.82C7.4 13.22 7.17 13.56 6.84 13.72C5.86 14.21 4.97 14.84 4.18 15.57C4 15.75 3.75 15.85 3.48 15.85C3.2 15.85 2.95 15.74 2.77 15.56L0.29 13.08C0.11 12.9 0 12.65 0 12.38C0 12.1 0.11 11.85 0.29 11.67C3.34 8.78 7.46 7 12 7S20.66 8.78 23.71 11.67C23.89 11.85 24 12.1 24 12.38C24 12.65 23.89 12.9 23.71 13.08L21.23 15.56C21.05 15.74 20.8 15.85 20.52 15.85C20.25 15.85 20 15.75 19.82 15.57C19.03 14.84 18.14 14.21 17.16 13.72C16.83 13.56 16.6 13.22 16.6 12.82V9.72C15.15 9.25 13.6 9 12 9Z" />
-            </svg>
+            <OrbitalIcon name="hangup" size={19} />
           </button>
         </div>
 
@@ -157,16 +156,7 @@ export function VoiceControls() {
             }`}
             title={isCameraOn ? 'Turn Off Camera' : 'Turn On Camera'}
           >
-            {isCameraOn ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 10.5V7C17 6.45 16.55 6 16 6H4C3.45 6 3 6.45 3 7V17C3 17.55 3.45 18 4 18H16C16.55 18 17 17.55 17 17V13.5L21 17.5V6.5L17 10.5Z" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 10.5V7C17 6.45 16.55 6 16 6H4C3.45 6 3 6.45 3 7V17C3 17.55 3.45 18 4 18H16C16.55 18 17 17.55 17 17V13.5L21 17.5V6.5L17 10.5Z" />
-                <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-            )}
+            <OrbitalIcon name="camera" cut={!isCameraOn} />
           </button>
         )}
 
@@ -180,10 +170,7 @@ export function VoiceControls() {
             }`}
             title={isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 18C21.1 18 22 17.1 22 16V6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V16C2 17.1 2.9 18 4 18H0V20H24V18H20ZM4 6H20V16H4V6Z" />
-              <path d="M15 11L11 14V12H9V10H11V8L15 11Z" />
-            </svg>
+            <OrbitalIcon name="screen" />
           </button>
         )}
 
@@ -201,10 +188,7 @@ export function VoiceControls() {
           }`}
           title="Video Quality"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 5v14h18V5H3zm16 12H5V7h14v10z" />
-            <path d="M8 15l2.5-3.21L13 15l2-2.5L18 17H6z" />
-          </svg>
+          <OrbitalIcon name="image" />
         </button>
 
         {/* AI Noise Suppression (RNNoise) */}
@@ -217,11 +201,7 @@ export function VoiceControls() {
           }`}
           title={rnnoiseEnabled ? 'Disable Lume Clear' : 'Enable Lume Clear'}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M4 9c2.2 0 2.2-3 4.4-3s2.2 6 4.4 6 2.2-4 4.4-4 2.2 2 2.8 2" />
-            <path d="M4 15c1.7 0 2-2 3.7-2s2.1 4 4 4 2.1-3 4-3 2 1 4.3 1" opacity=".7" />
-            {rnnoiseEnabled && <path d="m17.5 4 1 1 2-2" strokeWidth="2.2" />}
-          </svg>
+          <OrbitalIcon name="clear" />
         </button>
 
         {/* Screen Share Settings Popover */}

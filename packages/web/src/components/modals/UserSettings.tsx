@@ -102,7 +102,7 @@ export function UserSettingsModal() {
   };
 
   const tabClass = (t: SettingsTab) =>
-    `w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+    `lume-settings-nav-item w-full text-left px-3 py-2.5 text-sm transition-all ${
       tab === t ? 'bg-interactive-selected text-txt-primary font-medium' : 'text-txt-tertiary hover:text-txt-secondary hover:bg-interactive-hover'
     }`;
 
@@ -116,9 +116,9 @@ export function UserSettingsModal() {
       <SettingsSectionsProvider>
       <div className="lume-settings-shell flex h-full">
         {/* Desktop Sidebar */}
-        <div className="lume-settings-nav hidden md:flex w-56 flex-shrink-0 flex-col p-4 gap-3">
+        <div className="lume-settings-nav hidden md:flex w-64 flex-shrink-0 flex-col p-4 gap-3">
           {/* User card */}
-          <div className="glass-bubble rounded-lg p-3 flex items-center gap-3">
+          <div className="lume-settings-identity p-3 flex items-center gap-3">
             <Avatar
               src={user?.avatar}
               name={user?.displayName || user?.username || ''}
@@ -133,16 +133,16 @@ export function UserSettingsModal() {
           </div>
 
           {/* Nav list */}
-          <div className="glass-bubble rounded-lg p-2 flex-1 flex flex-col">
-            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">User Settings</div>
-            <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Account</button>
-            <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voice &amp; Video</button>
-            <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacy</button>
+          <div className="lume-settings-orbit-map p-2 flex-1 flex flex-col">
+            <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
+            <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
+            <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
+            <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
 
             <div className="border-t border-white/[0.04] my-2 mx-2" />
-            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">App Settings</div>
-            <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Connections</button>
-            <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Keybinds</button>
+            <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">Sistema Lume</div>
+            <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Conexões</button>
+            <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Atalhos</button>
             {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>Desktop</button>}
 
             {isAdmin && (
@@ -161,7 +161,7 @@ export function UserSettingsModal() {
               onClick={handleLogout}
               className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
             >
-              Log Out
+              Sair do Lume
             </button>
 
             {instanceInfo && (
@@ -176,7 +176,7 @@ export function UserSettingsModal() {
         {isMobile && mobileView === 'tabs' && (
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {/* Mobile user card */}
-            <div className="glass-bubble rounded-lg p-3 flex items-center gap-3">
+            <div className="lume-settings-identity p-3 flex items-center gap-3">
               <Avatar
                 src={user?.avatar}
                 name={user?.displayName || user?.username || ''}
@@ -190,16 +190,16 @@ export function UserSettingsModal() {
               </div>
             </div>
 
-            <div className="glass-bubble rounded-lg p-2 space-y-0.5">
-              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">User Settings</div>
-              <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Account</button>
-              <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voice &amp; Video</button>
-              <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacy</button>
+            <div className="lume-settings-orbit-map p-2 space-y-0.5">
+              <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
+              <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
+              <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
+              <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
 
               <div className="border-t border-white/[0.04] my-2 mx-2" />
-              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">App Settings</div>
-              <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Connections</button>
-              <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Keybinds</button>
+              <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">Sistema Lume</div>
+              <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Conexões</button>
+              <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Atalhos</button>
               {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>Desktop</button>}
 
               {isAdmin && (
@@ -215,7 +215,7 @@ export function UserSettingsModal() {
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
               >
-                Log Out
+                Sair do Lume
               </button>
 
               {instanceInfo && (

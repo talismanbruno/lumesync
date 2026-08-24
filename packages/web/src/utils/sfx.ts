@@ -1,7 +1,7 @@
 import { useVoiceStore } from '../stores/voiceStore';
 
 /** Base gain applied to every sound effect before the user's SFX slider. */
-export const SFX_BASE_VOLUME = 0.8;
+export const SFX_BASE_VOLUME = 0.42;
 
 /**
  * Effective sound-effect gain: the base SFX volume scaled by the user's SFX

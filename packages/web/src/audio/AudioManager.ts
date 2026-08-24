@@ -209,12 +209,12 @@ export class AudioManager {
         let phase = channel === 0 ? 0 : 0.035;
         for (let i = 0; i < count && first + i < data.length; i++) {
           const progress = i / Math.max(1, count - 1);
-          const frequency = fromHz + (toHz - fromHz) * (progress * progress * (3 - 2 * progress));
+          const frequency = (fromHz + (toHz - fromHz) * (progress * progress * (3 - 2 * progress))) * 0.82;
           phase += (Math.PI * 2 * frequency) / sampleRate;
           const envelope = Math.pow(Math.sin(Math.PI * progress), 1.7);
-          const shimmer = Math.sin(phase) + Math.sin(phase * 2.01) * 0.16 + Math.sin(phase * 0.5) * 0.08;
+          const shimmer = Math.sin(phase) + Math.sin(phase * 2.01) * 0.07 + Math.sin(phase * 0.5) * 0.1;
           const sampleIndex = first + i;
-          data[sampleIndex] = (data[sampleIndex] ?? 0) + shimmer * envelope * 0.19;
+          data[sampleIndex] = (data[sampleIndex] ?? 0) + shimmer * envelope * 0.12;
         }
       }
     }

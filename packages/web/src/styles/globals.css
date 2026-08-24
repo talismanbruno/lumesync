@@ -943,6 +943,123 @@
   padding-bottom: 10px;
 }
 
+.lume-header-actions {
+  padding: 3px 5px;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 16px 7px 16px 7px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.lume-header-actions > button,
+.lume-header-actions > div > button {
+  border-radius: 11px !important;
+}
+
+.lume-header-actions > button:hover,
+.lume-header-actions > div > button:hover {
+  color: rgb(124, 231, 255);
+  background: rgba(0, 209, 255, 0.065) !important;
+}
+
+.lume-settings-identity {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 209, 255, 0.16);
+  border-radius: 18px 8px 18px 8px;
+  background: radial-gradient(circle at 0 0, rgba(0, 209, 255, 0.12), transparent 8rem), rgba(255, 255, 255, 0.025);
+}
+
+.lume-settings-identity::after {
+  content: '';
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  right: -28px;
+  top: -30px;
+  border: 1px solid rgba(0, 209, 255, 0.18);
+  border-radius: 50%;
+}
+
+.lume-settings-orbit-map {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9px 20px 9px 20px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.lume-settings-nav-item {
+  position: relative;
+  border-radius: 5px 14px 5px 14px;
+}
+
+.lume-settings-nav-item::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.45;
+  vertical-align: 1px;
+}
+
+.lume-settings-nav-item.bg-interactive-selected {
+  color: rgb(190, 244, 255);
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.13), rgba(0, 209, 255, 0.025));
+  box-shadow: inset 2px 0 rgb(0, 209, 255);
+}
+
+.lume-settings-nav-item.bg-interactive-selected::before {
+  background: rgb(0, 209, 255);
+  border-color: rgb(0, 209, 255);
+  box-shadow: 0 0 9px rgba(0, 209, 255, 0.65);
+  opacity: 1;
+}
+
+.lume-friends-command {
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.025), transparent 35%), rgb(var(--bg-chat));
+}
+
+.lume-friends-mark {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  color: rgb(120, 232, 255);
+  border: 1px solid rgba(0, 209, 255, 0.17);
+  border-radius: 12px 5px 12px 5px;
+  background: rgba(0, 209, 255, 0.055);
+}
+
+.lume-friends-tab {
+  position: relative;
+  border-radius: 12px 5px 12px 5px;
+}
+
+.lume-friends-tab:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lume-friends-tab.is-active {
+  background: rgba(0, 209, 255, 0.075);
+  box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.14);
+}
+
+.lume-friends-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 28%;
+  right: 28%;
+  bottom: -5px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgb(0, 209, 255);
+  box-shadow: 0 0 8px rgba(0, 209, 255, 0.6);
+}
+
 .lume-settings-shell {
   background:
     radial-gradient(circle at 78% 0%, rgba(0, 209, 255, 0.065), transparent 28rem),

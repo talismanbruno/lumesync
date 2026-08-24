@@ -23,6 +23,7 @@ import { DmDeletedNotice } from '../chat/DmDeletedNotice';
 import { useCanonicalUserView } from '../../utils/userViewLookup';
 import type { User } from '@backspace/shared';
 import { Tooltip } from '../ui/Tooltip';
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { joinVoiceChannel } from '../../utils/voice';
 import { SearchPopover } from '../chat/SearchPopover';
 import { isDmChannel, getChannelOrigin } from '../../stores/spaceStore';
@@ -321,16 +322,14 @@ export function MainContent() {
               </button>
             )}
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="lume-header-actions flex items-center gap-1 flex-shrink-0">
             <button
               onClick={handleStartVoiceCall}
               disabled={!!outgoingCall || !!activeDmCall}
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
               title="Start Voice Call"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
-              </svg>
+              <OrbitalIcon name="call" size={22} />
             </button>
             <button
               onClick={handleStartVoiceCall}
@@ -338,18 +337,14 @@ export function MainContent() {
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
               title="Start Video Call"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z" />
-              </svg>
+              <OrbitalIcon name="video" size={22} />
             </button>
             <button
               onClick={() => openModal('addDmMember', { dmChannelId: currentChannelId })}
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover"
               title="Add Friends to DM"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14 8.00598C14 10.211 12.206 12.006 10 12.006C7.795 12.006 6 10.211 6 8.00598C6 5.80098 7.794 4.00598 10 4.00598C12.206 4.00598 14 5.80098 14 8.00598ZM2 19.006C2 15.473 5.29 13.006 10 13.006C14.711 13.006 18 15.473 18 19.006V20.006H2V19.006ZM20 20.006H22V19.006C22 16.451 20.178 14.471 17.532 13.471C19.461 14.601 20 16.561 20 19.006V20.006Z" />
-              </svg>
+              <OrbitalIcon name="personAdd" size={22} />
             </button>
             <button
               ref={searchButtonRef}
@@ -357,9 +352,7 @@ export function MainContent() {
               className={`w-8 h-8 flex items-center justify-center transition-colors rounded-[6px] ${searchOpen ? 'text-txt-primary bg-interactive-active' : 'text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover'}`}
               title="Search"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21.707 20.293l-5.395-5.395A7.457 7.457 0 0018 10.5 7.5 7.5 0 1010.5 18c1.575 0 3.027-.486 4.228-1.31l5.476 5.476a.997.997 0 001.414 0l.089-.089a1 1 0 000-1.414l.001-.37zM10.5 16a5.5 5.5 0 110-11 5.5 5.5 0 010 11z" />
-              </svg>
+              <OrbitalIcon name="search" size={22} />
             </button>
             <TransferIndicator />
             <div className="w-[1px] h-5 bg-border-soft mx-1" />

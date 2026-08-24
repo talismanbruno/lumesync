@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTransferStore, type Transfer } from '../../stores/transferStore';
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 function fmt(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -67,9 +68,7 @@ export function TransferIndicator() {
         title="Transfers"
         aria-label="Transfers"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
-        </svg>
+        <OrbitalIcon name="transfer" />
         {active.length > 0 && (
           <span className={`absolute -top-0.5 -right-0.5 ${badgeColor} text-black text-[10px] font-medium rounded-full px-1.5 leading-4 min-w-[16px] text-center`}>
             {active.length}
