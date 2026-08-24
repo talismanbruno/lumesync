@@ -10,6 +10,7 @@ import { api, RateLimitError } from '../../api/client';
 import { useTransferStore } from '../../stores/transferStore';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
 import { SourceCodeLink } from '../ui/SourceCodeLink';
+import { DesktopDownloadLink } from './DesktopDownloadLink';
 
 // Single-source regex for extracting a bare invite token from a pasted full URL.
 // Token format: 22 chars base64url ([A-Za-z0-9_-]).
@@ -729,6 +730,8 @@ export function RegisterPage() {
             </div>
           </div>
         )}
+
+        <DesktopDownloadLink />
 
         {/* AGPL § 13: source offer for anonymous visitors, shown on both steps. */}
         {instanceInfo && (

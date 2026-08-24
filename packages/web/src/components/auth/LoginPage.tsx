@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { api, RateLimitError } from '../../api/client';
 import type { InstanceInfoResponse } from '@backspace/shared';
 import { SourceCodeLink } from '../ui/SourceCodeLink';
+import { DesktopDownloadLink } from './DesktopDownloadLink';
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
@@ -161,6 +162,7 @@ export function LoginPage() {
               Criar conta
             </Link>
           </p>
+          <DesktopDownloadLink />
         </form>
 
         {instanceInfo && (

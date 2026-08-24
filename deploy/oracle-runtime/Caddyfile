@@ -1,0 +1,30 @@
+www.lumesocial.online {
+    redir https://lumesocial.online{uri} permanent
+}
+
+lumesocial.online, 163-176-48-153.sslip.io {
+    encode zstd gzip
+
+    request_body {
+        max_size 50MB
+    }
+
+    handle_path /livekit/* {
+        reverse_proxy host.docker.internal:7880
+    }
+
+    handle_path /source/* {
+        root * /srv/source
+        file_server
+    }
+
+    handle_path /downloads/* {
+        root * /srv/downloads
+        header Content-Disposition "attachment"
+        file_server
+    }
+
+    handle {
+        reverse_proxy lume:3000
+    }
+}

@@ -1,0 +1,66 @@
+services:
+  lume:
+    build:
+      context: .
+      dockerfile: Dockerfile.lume
+    image: lume/backspace:foundation
+    container_name: lume-core
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DB_PATH: /app/data/backspace.db
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - ./data:/app/data
+    networks:
+      - lume-internal
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  caddy:
+    image: caddy:2.11.1-alpine
+    container_name: lume-edge
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./source:/srv/source:ro
+      - ./downloads:/srv/downloads:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - lume-internal
+    depends_on:
+      lume:
+        condition: service_healthy
+
+  livekit:
+    image: livekit/livekit-server:v1.9.11
+    container_name: lume-voice
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    command: --config /etc/livekit.yaml
+
+networks:
+  lume-internal:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:

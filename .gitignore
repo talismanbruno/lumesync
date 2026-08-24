@@ -76,6 +76,7 @@ packages/web/src/**/*.js
 .cache/
 tmp/
 lume-core-deploy.tgz
+lume-web-*.tgz
 deploy/*.tgz
 
 # Worktrees

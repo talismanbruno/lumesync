@@ -45,7 +45,7 @@ interface SidebarItemProps {
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   type?: 'space' | 'dm' | 'action';
-  actionType?: 'add' | 'join' | 'explore';
+  actionType?: 'add' | 'join' | 'explore' | 'download';
   hasUnread?: boolean;
   dimmed?: boolean;
   federationBadge?: boolean;
@@ -120,6 +120,10 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
         ) : actionType === 'explore' ? (
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 17c3-7 7-10 14-11-1 7-4 11-11 13" /><path d="m9 15 6-6" /><circle cx="12" cy="12" r="9" opacity=".25" />
+          </svg>
+        ) : actionType === 'download' ? (
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 4v10" /><path d="m8 10 4 4 4-4" /><path d="M5 19h14" />
           </svg>
         ) : (
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -1253,6 +1257,25 @@ export function SpaceSidebar() {
         type="action"
         actionType="explore"
       />
+
+      {!isElectron() && (
+        <SidebarItem
+          id="download-lume"
+          name="Baixar Lume Desktop"
+          tooltipText="Baixar Lume para Windows"
+          active={false}
+          onClick={() => {
+            const link = document.createElement('a');
+            link.href = '/downloads/Lume-Desktop-Beta-1.0.0-portable-win-x64.zip';
+            link.download = 'Lume-Desktop-Beta-1.0.0-portable-win-x64.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          }}
+          type="action"
+          actionType="download"
+        />
+      )}
 
       {transferModalSpaceId && (
         <TransferOwnershipModal
