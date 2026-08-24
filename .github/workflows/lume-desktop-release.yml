@@ -3,6 +3,8 @@ name: Lume Desktop Release
 on:
   workflow_dispatch:
   push:
+    branches:
+      - "release/lume-desktop-official"
     tags:
       - "lume-desktop-v*"
 
