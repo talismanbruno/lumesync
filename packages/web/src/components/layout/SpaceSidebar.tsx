@@ -14,6 +14,7 @@ import type { SpaceLayoutItem, SpaceFolder } from '@backspace/shared';
 
 import { getSpaceGradient } from '../../utils/gradients';
 import { isElectron } from '../../platform/platform';
+import { getDesktopDownload } from '../../config/desktopDownloads';
 import { useFloatingPosition } from '../../hooks/useFloatingPosition';
 
 // ─── Resolved layout types ─────────────────────────────────────────────────
@@ -1262,12 +1263,17 @@ export function SpaceSidebar() {
         <SidebarItem
           id="download-lume"
           name="Baixar Lume Desktop"
-          tooltipText="Baixar Lume para Windows"
+          tooltipText={getDesktopDownload().label}
           active={false}
           onClick={() => {
+            const download = getDesktopDownload();
             const link = document.createElement('a');
-            link.href = '/downloads/Lume-Desktop-Beta-1.0.0-portable-win-x64.zip';
-            link.download = 'Lume-Desktop-Beta-1.0.0-portable-win-x64.zip';
+            link.href = download.url;
+            if (download.filename) link.download = download.filename;
+            else {
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+            }
             document.body.appendChild(link);
             link.click();
             link.remove();
