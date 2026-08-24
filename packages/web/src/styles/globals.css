@@ -744,6 +744,49 @@
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42);
 }
 
+.lume-friends-hub {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(0, 209, 255, 0.065), transparent 27rem),
+    transparent;
+}
+
+.lume-friend-row {
+  margin-top: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.026), rgba(255, 255, 255, 0.012));
+  border-color: rgba(255, 255, 255, 0.04);
+  transition:
+    transform var(--lume-normal) var(--lume-ease),
+    background-color var(--lume-normal) var(--lume-ease),
+    border-color var(--lume-normal) var(--lume-ease),
+    box-shadow var(--lume-normal) var(--lume-ease);
+}
+
+.lume-friend-row:hover {
+  transform: translateX(3px);
+  border-color: rgba(0, 209, 255, 0.18);
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.075), rgba(255, 255, 255, 0.018));
+  box-shadow: -3px 0 0 rgba(0, 209, 255, 0.65);
+}
+
+.lume-member-panel {
+  margin: 10px 10px 10px 0;
+  height: calc(100% - 20px);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(12, 15, 18, 0.9), rgba(7, 9, 11, 0.94));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+.lume-profile-card {
+  border: 1px solid rgba(0, 209, 255, 0.16);
+  background:
+    radial-gradient(circle at 80% 0%, rgba(0, 209, 255, 0.095), transparent 19rem),
+    rgba(8, 10, 12, 0.96);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
 @media (min-width: 768px) {
   .lume-shell {
     gap: 10px;

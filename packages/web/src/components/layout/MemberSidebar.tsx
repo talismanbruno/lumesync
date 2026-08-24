@@ -185,7 +185,7 @@ export function MemberSidebar() {
   };
 
   return (
-    <div className="w-60 bg-surface-members flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
+    <div className="lume-member-panel w-60 bg-surface-members flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
       {showMemberSkeleton ? (
         <div className="px-3 pt-4" role="status" aria-label="Loading members">
           {/* Role group 1 */}

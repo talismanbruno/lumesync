@@ -332,7 +332,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
   const popMobileScreen = useUIStore((s) => s.popMobileScreen);
 
   return (
-    <div className="flex-1 flex flex-col bg-surface-chat h-full">
+    <div className="lume-friends-hub flex-1 flex flex-col bg-surface-chat h-full">
       {/* Header */}
       {mobile ? (
         <div className="h-12 px-3 flex items-center gap-2 border-b border-border-soft flex-shrink-0 z-10 bg-surface-base">
@@ -904,7 +904,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
   const { baseName: friendBaseName } = parseFederatedUsername(canonical.username);
   const friendDisplayName = canonical.displayName ?? friendBaseName;
   return (
-    <div className="flex items-center justify-between px-3 h-[62px] rounded-[8px] hover:bg-interactive-hover group transition-colors border-t border-interactive-muted mx-2">
+    <div className="lume-friend-row flex items-center justify-between px-3 h-[62px] rounded-[12px] hover:bg-interactive-hover group transition-colors border border-transparent mx-2">
       <div className="flex items-center gap-3">
         <Avatar src={canonical.avatar} name={friendDisplayName} size={32} status={canonical.status} userId={canonical.homeUserId ?? canonical.id} avatarColor={canonical.avatarColor} />
         <div className="flex flex-col leading-tight">
@@ -961,7 +961,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
   const reqDisplayName = user.displayName ?? reqBaseName;
 
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-interactive-hover group transition-colors border-t border-interactive-muted mx-2">
+    <div className="lume-friend-row flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-interactive-hover group transition-colors border border-transparent mx-2">
       <div className="flex items-center gap-3">
         <Avatar src={user.avatar} name={reqDisplayName} size={32} status={user.status as any} userId={user.homeUserId ?? user.id} avatarColor={user.avatarColor} />
         <div className="flex flex-col">
