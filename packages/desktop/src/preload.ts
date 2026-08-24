@@ -62,11 +62,15 @@ contextBridge.exposeInMainWorld('backspace', {
   },
 
   // Screen share picker coordination
-  onScreenShareSources: (callback: (sources: unknown[]) => void) => {
-    ipcRenderer.on('screen-share-sources', (_event, sources) => callback(sources));
+  onScreenShareSources: (callback: (request: { requestId: string; sources: unknown[] }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, request: { requestId: string; sources: unknown[] }) => {
+      callback(request);
+    };
+    ipcRenderer.on('screen-share-sources', handler);
+    return () => { ipcRenderer.removeListener('screen-share-sources', handler); };
   },
-  selectScreenSource: (sourceId: string | null, shareAudio?: boolean) => {
-    ipcRenderer.send('screen-share-selected', sourceId, shareAudio ?? true);
+  selectScreenSource: (requestId: string, sourceId: string | null, shareAudio?: boolean) => {
+    ipcRenderer.send('screen-share-selected', requestId, sourceId, shareAudio ?? true);
   },
 
   // Instance URL management

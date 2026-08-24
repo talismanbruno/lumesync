@@ -594,12 +594,6 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle('get-app-version', () => app.getVersion());
 
-  // Screen share picker coordination (used by setDisplayMediaRequestHandler)
-  ipcMain.on('screen-share-selected', (_event, _sourceId: string | null, _shareAudio?: boolean) => {
-    // Handled via ipcMain.once in the display media handler — this is just
-    // a safety net to prevent unhandled-message warnings
-  });
-
   // Auto-launch settings
   ipcMain.handle('get-auto-launch-settings', (): { openAtLogin: boolean; startMinimized: boolean } => {
     if (process.platform === 'win32') {
@@ -925,13 +919,30 @@ if (!gotTheLock) {
           isScreen: source.id.startsWith('screen:'),
         }));
 
-        // Send sources to renderer, wait for user selection
-        mainWindow?.webContents.send('screen-share-sources', serialized);
+        // Correlate each picker with its own request. Without this, overlapping
+        // getDisplayMedia calls can consume each other's selection.
+        const requestId = `screen-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        mainWindow?.webContents.send('screen-share-sources', { requestId, sources: serialized });
 
         const { sourceId, shareAudio } = await new Promise<{ sourceId: string | null; shareAudio: boolean }>((resolve) => {
-          ipcMain.once('screen-share-selected', (_event, id: string | null, wantAudio?: boolean) => {
+          const timeout = setTimeout(() => {
+            ipcMain.removeListener('screen-share-selected', onSelection);
+            resolve({ sourceId: null, shareAudio: false });
+          }, 120_000);
+
+          const onSelection = (
+            event: Electron.IpcMainEvent,
+            selectedRequestId: string,
+            id: string | null,
+            wantAudio?: boolean,
+          ) => {
+            if (selectedRequestId !== requestId || event.sender !== mainWindow?.webContents) return;
+            clearTimeout(timeout);
+            ipcMain.removeListener('screen-share-selected', onSelection);
             resolve({ sourceId: id, shareAudio: wantAudio ?? true });
-          });
+          };
+
+          ipcMain.on('screen-share-selected', onSelection);
         });
         console.log('[Main:ScreenShare] User selected:', sourceId, 'audio:', shareAudio);
 

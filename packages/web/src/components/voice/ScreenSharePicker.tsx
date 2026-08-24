@@ -11,11 +11,13 @@ import { usePortalContainer } from '../../hooks/usePortalContainer';
 
 interface ScreenPickerState {
   isOpen: boolean;
+  requestId: string | null;
   sources: ElectronScreenSource[];
 }
 
 const useScreenPickerStore = create<ScreenPickerState>(() => ({
   isOpen: false,
+  requestId: null,
   sources: [],
 }));
 
@@ -25,8 +27,9 @@ const useScreenPickerStore = create<ScreenPickerState>(() => ({
 
 function closePicker(sourceId: string | null, shareAudio?: boolean) {
   const api = getElectronAPI();
-  if (api) api.selectScreenSource(sourceId, shareAudio);
-  useScreenPickerStore.setState({ isOpen: false, sources: [] });
+  const requestId = useScreenPickerStore.getState().requestId;
+  if (api && requestId) api.selectScreenSource(requestId, sourceId, shareAudio);
+  useScreenPickerStore.setState({ isOpen: false, requestId: null, sources: [] });
 }
 
 // ---------------------------------------------------------------------------
@@ -50,10 +53,15 @@ export function ScreenSharePicker() {
     console.log('[Picker] Mounted, registering onScreenShareSources listener, hasAPI:', !!api);
     if (!api) return;
 
-    api.onScreenShareSources((incomingSources) => {
+    return api.onScreenShareSources(({ requestId, sources: incomingSources }) => {
       console.log('[Picker] Received', incomingSources.length, 'sources from main process');
+      const previousRequestId = useScreenPickerStore.getState().requestId;
+      if (previousRequestId && previousRequestId !== requestId) {
+        api.selectScreenSource(previousRequestId, null, false);
+      }
       useScreenPickerStore.setState({
         isOpen: true,
+        requestId,
         sources: incomingSources,
       });
     });

@@ -27,6 +27,11 @@ interface ElectronScreenSource {
   isScreen: boolean;               // true = display, false = window
 }
 
+interface ElectronScreenShareRequest {
+  requestId: string;
+  sources: ElectronScreenSource[];
+}
+
 interface BackspaceElectronAPI {
   // Platform info
   platform: NodeJS.Platform;
@@ -63,8 +68,8 @@ interface BackspaceElectronAPI {
   onOpenInternalRoute: (callback: (path: string) => void) => (() => void);
 
   // Screen share picker coordination
-  onScreenShareSources: (callback: (sources: ElectronScreenSource[]) => void) => void;
-  selectScreenSource: (sourceId: string | null, shareAudio?: boolean) => void;
+  onScreenShareSources: (callback: (request: ElectronScreenShareRequest) => void) => (() => void);
+  selectScreenSource: (requestId: string, sourceId: string | null, shareAudio?: boolean) => void;
 
   // Instance URL management
   getInstanceUrl: () => Promise<string | null>;
