@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
+import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { Username } from '../ui/Username';
 import { Tooltip } from '../ui/Tooltip';
 import { parseFederatedUsername, isFederationGlobeApplicable } from '../../utils/identity';
@@ -200,6 +201,7 @@ export function DmMemberRow({
               isOffline ? 'text-txt-tertiary' : 'text-txt-primary'
             }`}
           />
+          {canonical.isAdmin && <VerifiedBadge size={13} />}
           {showGlobe && (
             <Tooltip content={canonical.username} position="top">
               <span data-federation-globe className="inline-flex">

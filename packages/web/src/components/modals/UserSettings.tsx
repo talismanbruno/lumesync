@@ -148,8 +148,8 @@ export function UserSettingsModal() {
             {isAdmin && (
               <>
                 <div className="border-t border-white/[0.04] my-2 mx-2" />
-                <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">Administration</div>
-                <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Instance</button>
+                <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
+                <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
                 {tab === 'instance' && <SidebarSubLinks />}
               </>
             )}
@@ -205,8 +205,8 @@ export function UserSettingsModal() {
               {isAdmin && (
                 <>
                   <div className="border-t border-white/[0.04] my-2 mx-2" />
-                  <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">Administration</div>
-                  <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Instance</button>
+                  <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
+                  <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
                 </>
               )}
 

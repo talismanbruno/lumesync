@@ -4,6 +4,7 @@ import type { MessageWithUser, Embed, User } from '@backspace/shared';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { MentionBadge } from './MentionBadge';
 import { Avatar } from '../ui/Avatar';
+import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { useContextMenuStore } from '../../stores/contextMenuStore';
 import { buildMessageMenuItems } from './messageMenuItems';
 import { useAuthStore } from '../../stores/authStore';
@@ -464,6 +465,7 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
                 style={roleColor}
               />
             </span>
+            {displayIdentity.isAdmin && <VerifiedBadge size={14} />}
             <span className="text-[11px] text-txt-tertiary leading-tight hover:cursor-default">
               {formatTime(message.createdAt)}
             </span>

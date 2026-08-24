@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
 import { Username } from '../ui/Username';
+import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { useUIStore } from '../../stores/uiStore';
 import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/spaceStore';
 import { api } from '../../api/client';
@@ -287,10 +288,10 @@ export function UserProfileModal() {
           />
 
           <div className="mb-3">
-            <Username
-              username={displayName}
-              className="text-[20px] font-bold leading-tight"
-            />
+            <div className="flex items-center gap-1.5">
+              <Username username={displayName} className="text-[20px] font-bold leading-tight" />
+              {user.isAdmin && <VerifiedBadge size={17} />}
+            </div>
             <div className="text-[14px] text-txt-tertiary mt-0.5">
               <Username username={user.username} showAt className="text-[14px] text-txt-tertiary" />
             </div>

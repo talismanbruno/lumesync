@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
 import { Username } from '../ui/Username';
+import { VerifiedBadge } from './VerifiedBadge';
 import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/spaceStore';
 import { api } from '../../api/client';
 import { useUIStore } from '../../stores/uiStore';
@@ -121,10 +122,10 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
 
         {/* Name & info */}
         <div>
-          <Username
-            username={user.displayName ?? baseName}
-            className="text-[16px] font-semibold leading-tight"
-          />
+          <div className="flex items-center gap-1.5">
+            <Username username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
+            {user.isAdmin && <VerifiedBadge size={15} />}
+          </div>
           <div className="text-[13px] text-txt-tertiary">
             <Username username={user.username} showAt className="text-[13px] text-txt-tertiary" />
           </div>
