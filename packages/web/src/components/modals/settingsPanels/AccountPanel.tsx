@@ -162,9 +162,54 @@ export function AccountPanel() {
       })();
 
   // ── File selection handlers ──
+  const uploadAnimatedAvatar = async (file: File) => {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+    setAvatarCropSrc(null);
+    setError('');
+    setUploadingAvatar(true);
+    try {
+      const tid = await useTransferStore.getState().startUpload(file, { tray: false });
+      const { filename } = await waitForTransferAttachment(tid);
+      setAvatarFilename(filename);
+    } catch {
+      setError('Failed to upload animated avatar');
+      setAvatarPreview(null);
+      URL.revokeObjectURL(previewUrl);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const uploadAnimatedBanner = async (file: File) => {
+    if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+    const previewUrl = URL.createObjectURL(file);
+    setBannerPreview(previewUrl);
+    setBannerCropSrc(null);
+    setError('');
+    setUploadingBanner(true);
+    try {
+      const tid = await useTransferStore.getState().startUpload(file, { tray: false });
+      const { filename } = await waitForTransferAttachment(tid);
+      setBannerFilename(filename);
+    } catch {
+      setError('Failed to upload animated banner');
+      setBannerPreview(null);
+      URL.revokeObjectURL(previewUrl);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+      void uploadAnimatedAvatar(file);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setAvatarCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -174,6 +219,11 @@ export function AccountPanel() {
   const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+      void uploadAnimatedBanner(file);
+      if (bannerInputRef.current) bannerInputRef.current.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setBannerCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -441,10 +491,13 @@ export function AccountPanel() {
             <input
               ref={avatarInputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={handleAvatarSelect}
               className="hidden"
             />
+            <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
+              PNG, JPG, WebP or animated GIF. GIF animation is preserved across Lume.
+            </p>
           </div>
 
           {/* Banner upload */}
@@ -504,10 +557,13 @@ export function AccountPanel() {
             <input
               ref={bannerInputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={handleBannerSelect}
               className="hidden"
             />
+            <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
+              Static images can be cropped. Animated GIF banners are displayed in motion.
+            </p>
           </div>
 
           {/* Avatar Color */}
