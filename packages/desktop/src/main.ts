@@ -17,6 +17,7 @@ import os from 'os';
 import { startActivityDetection, stopActivityDetection, getCurrentActivity } from './activityDetector';
 import { KeybindManager } from './keybindManager';
 import { buildNotificationRoute, type NotificationNavigationTarget } from './notificationRoute';
+import { normalizeOrigin, shouldGrantAppPermission } from './permissionPolicy';
 import { deriveStartMinimizedFromArgs, parseExecPathFromDesktopFile, shouldReapplyAppImage } from './autoLaunch';
 import {
   loadInstanceUrl,
@@ -71,7 +72,7 @@ const knownInstanceOrigins = new Set<string>();
 // ─── AGPL-3.0 § 13 source offer ─────────────────────────────────────────────
 // Upstream fallback for the "Source code" menu items and the About panel.
 // Used when the connected instance can't be reached or advertises no source URL.
-const UPSTREAM_SOURCE_URL = 'https://github.com/TheZwiss/backspace';
+const UPSTREAM_SOURCE_URL = 'https://github.com/talismanbruno/lumesync';
 const LUME_INSTANCE_URL = 'https://lumesocial.online';
 
 /**
@@ -900,6 +901,21 @@ if (!gotTheLock) {
       await session.defaultSession.clearStorageData({ storages: ['serviceworkers'] });
       await session.defaultSession.clearCache();
     }
+
+    // Grant only the permissions the communication client needs, and only to
+    // the configured first-party origin. Everything else is denied by default.
+    const trustedPermissionOrigins = new Set<string>();
+    for (const candidate of [LUME_INSTANCE_URL, process.env.LUME_URL]) {
+      if (!candidate) continue;
+      const origin = normalizeOrigin(candidate);
+      if (origin) trustedPermissionOrigins.add(origin);
+    }
+    session.defaultSession.setPermissionCheckHandler((_contents, permission, requestingOrigin) => (
+      shouldGrantAppPermission(permission, requestingOrigin, trustedPermissionOrigins)
+    ));
+    session.defaultSession.setPermissionRequestHandler((_contents, permission, callback, details) => {
+      callback(shouldGrantAppPermission(permission, details.requestingUrl, trustedPermissionOrigins));
+    });
 
     // Intercept getDisplayMedia() — show custom picker in renderer.
     // Audio loopback controlled by user's shareAudio toggle.

@@ -33,6 +33,8 @@ mac:
   category: public.app-category.social-networking
   minimumSystemVersion: "12.0"
   extendInfo:
+    NSMicrophoneUsageDescription: "Lume precisa acessar o microfone para chamadas de voz."
+    NSCameraUsageDescription: "Lume precisa acessar a câmera para chamadas de vídeo."
     NSAudioCaptureUsageDescription: "Lume precisa acessar o áudio do sistema para compartilhar o som da tela."
   target:
     - dmg
