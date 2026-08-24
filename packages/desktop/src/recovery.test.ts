@@ -163,13 +163,13 @@ function defaultState(overrides?: Partial<RecoveryState>): RecoveryState {
 }
 
 describe('buildTrayMenuTemplate', () => {
-  it('includes Show/Hide/Change Instance/Quit base items', () => {
+  it('includes the branded Lume base items', () => {
     const items = buildTrayMenuTemplate(defaultState());
     const labels = items.map((i) => i.label);
-    expect(labels).toContain('Show Backspace');
-    expect(labels).toContain('Hide');
-    expect(labels).toContain('Change Instance');
-    expect(labels).toContain('Quit');
+    expect(labels).toContain('Abrir Lume');
+    expect(labels).toContain('Ocultar');
+    expect(labels).toContain('Reconectar ao Lume');
+    expect(labels).toContain('Sair do Lume');
   });
 
   it('includes Check for Updates with idle label when updateState=idle', () => {
@@ -233,13 +233,13 @@ describe('buildAppMenuTemplate', () => {
     expect(windowMenu!.label).toBe('Window');
   });
 
-  it('App submenu includes About and Change Instance', () => {
+  it('App submenu includes About and reconnect action', () => {
     const template = buildAppMenuTemplate('Backspace', defaultState());
     const [appMenu] = template;
     const appSub = appMenu!.submenu as MenuItemConstructorOptions[];
     const labels = appSub.map((i) => i.label).filter(Boolean);
     expect(appSub.find((i) => i.role === 'about')).toBeDefined();
-    expect(labels).toContain('Change Instance');
+    expect(labels).toContain('Reconectar ao Lume');
     expect(appSub.find((i) => i.role === 'quit')).toBeDefined();
   });
 

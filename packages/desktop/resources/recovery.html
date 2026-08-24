@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Backspace — Recovery</title>
+  <title>Lume — Recuperação</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { box-sizing: border-box; }
@@ -128,7 +128,7 @@
   <div class="content">
     <div class="container">
       <div class="card">
-        <h1>Backspace couldn't load.</h1>
+        <h1>O Lume não conseguiu iniciar.</h1>
         <p class="hint" id="hint">Loading…</p>
 
         <div class="actions">
@@ -136,7 +136,7 @@
           <button class="action" id="btn-restart" style="display:none">Restart to Install Update</button>
           <button class="action" id="btn-check">Check for Updates</button>
           <p class="check-result" id="check-result"></p>
-          <button class="action" id="btn-change">Change Instance</button>
+          <button class="action" id="btn-change">Reconectar ao Lume</button>
           <button class="action" id="btn-releases" style="display:none">Open Releases Page</button>
         </div>
 
@@ -147,7 +147,7 @@
           <pre id="diagnostic">loading…</pre>
         </details>
 
-        <button class="action subtle" id="btn-quit">Quit Backspace</button>
+        <button class="action subtle" id="btn-quit">Sair do Lume</button>
       </div>
     </div>
   </div>
@@ -270,7 +270,7 @@
 
     async function init() {
       if (!window.backspace) {
-        $('hint').textContent = 'Recovery bridge unavailable. Please quit and reinstall Backspace.';
+        $('hint').textContent = 'A recuperação não está disponível. Feche e reinstale o Lume.';
         return;
       }
       try {

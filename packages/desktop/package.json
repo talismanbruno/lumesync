@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "license": "AGPL-3.0-only",
-  "description": "Backspace",
+  "description": "Lume — comunicação em tempo real",
   "author": {
-    "name": "Jannis Braun",
-    "email": "backspace@backspace.chat"
+    "name": "Lume"
   },
-  "homepage": "https://github.com/TheZwiss/backspace",
+  "homepage": "https://lumesocial.online",
   "main": "dist/main.js",
   "scripts": {
     "build:ts": "tsc",

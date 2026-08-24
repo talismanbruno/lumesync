@@ -6,9 +6,9 @@ import { isElectron } from './platform';
  * Listens for deep link events from the Electron main process and navigates accordingly.
  *
  * Supported routes:
- *   backspace://join/{code}            → /join/{code}
- *   backspace://join/{code}@{host}     → /join/{code}@{host}
- *   backspace://channel/{spaceId}/{channelId} → /channels/{spaceId}/{channelId}
+ *   lume://join/{code}            → /join/{code}
+ *   lume://join/{code}@{host}     → /join/{code}@{host}
+ *   lume://channel/{spaceId}/{channelId} → /channels/{spaceId}/{channelId}
  */
 export function useDeepLinkHandler(): void {
   const navigate = useNavigate();
@@ -26,11 +26,11 @@ export function useDeepLinkHandler(): void {
         return;
       }
 
-      if (parsed.protocol !== 'backspace:') return;
+      if (parsed.protocol !== 'lume:') return;
 
       // URL host + pathname gives us the route
-      // backspace://join/code  → host="join", pathname="/code"
-      // backspace://channel/spaceId/channelId → host="channel", pathname="/spaceId/channelId"
+      // lume://join/code  → host="join", pathname="/code"
+      // lume://channel/spaceId/channelId → host="channel", pathname="/spaceId/channelId"
       const host = parsed.hostname;
       const pathParts = parsed.pathname.split('/').filter(Boolean);
 

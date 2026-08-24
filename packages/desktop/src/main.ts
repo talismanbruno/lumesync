@@ -20,8 +20,6 @@ import { deriveStartMinimizedFromArgs, parseExecPathFromDesktopFile, shouldReapp
 import {
   loadInstanceUrl,
   saveInstanceUrl,
-  clearInstanceUrl,
-  getPickerPath,
 } from './instanceUrl';
 import {
   recoveryStore,
@@ -42,7 +40,7 @@ import { migrateUserData } from './userDataMigration';
 // Override Electron's package.json-derived app name so userData lives at
 // "<appData>/Backspace" instead of leaking the monorepo's "@backspace/desktop"
 // package name. Must run before any app.getPath('userData') consumer.
-app.setName('Backspace');
+app.setName('Lume');
 
 // One-time migration from the historical scoped path. After the move the old
 // folder is gone, so subsequent launches hit the old-missing no-op branch.
@@ -51,7 +49,7 @@ app.setName('Backspace');
   const oldParent = path.join(appDataDir, '@backspace');
   const result = migrateUserData({
     oldDir: path.join(oldParent, 'desktop'),
-    newDir: path.join(appDataDir, 'Backspace'),
+    newDir: path.join(appDataDir, 'Lume'),
     oldParent,
   });
   if (result.kind === 'migrated') {
@@ -73,6 +71,7 @@ const knownInstanceOrigins = new Set<string>();
 // Upstream fallback for the "Source code" menu items and the About panel.
 // Used when the connected instance can't be reached or advertises no source URL.
 const UPSTREAM_SOURCE_URL = 'https://github.com/TheZwiss/backspace';
+const LUME_INSTANCE_URL = 'https://lumesocial.online';
 
 /**
  * Resolve the Corresponding Source URL for the instance the desktop app is
@@ -80,7 +79,7 @@ const UPSTREAM_SOURCE_URL = 'https://github.com/TheZwiss/backspace';
  * Falls back to the upstream repo when no instance is loaded or the probe fails.
  */
 async function resolveSourceUrl(): Promise<string> {
-  let base: string | null = process.env.BACKSPACE_URL ?? loadInstanceUrl();
+  let base: string | null = process.env.LUME_URL ?? process.env.BACKSPACE_URL ?? loadInstanceUrl() ?? LUME_INSTANCE_URL;
   if (!base && mainWindow && !mainWindow.isDestroyed()) {
     const current = mainWindow.webContents.getURL();
     if (current.startsWith('http://') || current.startsWith('https://')) base = current;
@@ -241,7 +240,7 @@ function applyLoginItemSettings(openAtLogin: boolean, startMinimized: boolean): 
       enabled: openAtLogin,
       path: process.execPath,
       args: startMinimized ? ['--hidden'] : [],
-      name: 'Backspace',
+      name: 'Lume',
     });
   } else {
     // Linux: setLoginItemSettings creates ~/.config/autostart/<name>.desktop.
@@ -253,7 +252,7 @@ function applyLoginItemSettings(openAtLogin: boolean, startMinimized: boolean): 
     //   but the runtime accepts them.
     const opts: Record<string, unknown> = {
       openAtLogin,
-      name: 'backspace',
+      name: 'lume',
     };
     if (process.env.APPIMAGE) {
       opts.path = process.env.APPIMAGE;
@@ -341,7 +340,7 @@ function createWindow(): void {
       : {}),
     minWidth: 940,
     minHeight: 500,
-    title: 'Backspace',
+    title: 'Lume',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     ...(process.platform !== 'darwin' ? {
@@ -351,7 +350,7 @@ function createWindow(): void {
         height: 32,
       },
     } : {}),
-    backgroundColor: '#313338',
+    backgroundColor: '#050505',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -369,21 +368,11 @@ function createWindow(): void {
     mainWindow.maximize();
   }
 
-  // URL resolution priority:
-  // 1. BACKSPACE_URL env var (managed deployments)
-  // 2. Saved instance URL from picker
-  // 3. No URL → show instance picker
-  const envUrl = process.env.BACKSPACE_URL;
-  if (envUrl) {
-    mainWindow.loadURL(envUrl);
-  } else {
-    const savedUrl = loadInstanceUrl();
-    if (savedUrl) {
-      mainWindow.loadURL(savedUrl);
-    } else {
-      mainWindow.loadFile(getPickerPath());
-    }
-  }
+  // Lume Desktop is a first-party client: connect directly to the official
+  // service. LUME_URL remains available for controlled test builds.
+  const instanceUrl = process.env.LUME_URL ?? LUME_INSTANCE_URL;
+  saveInstanceUrl(instanceUrl);
+  mainWindow.loadURL(instanceUrl);
 
   mainWindow.once('ready-to-show', () => {
     // Hidden-launch detection. We pass `args: ['--hidden']` on all three platforms
@@ -474,7 +463,7 @@ function createTray(): void {
   const icon = loadTrayIcon();
   tray = new Tray(icon);
 
-  tray.setToolTip('Backspace');
+  tray.setToolTip('Lume');
   // Context menu is set by the recoveryStore subscriber in app.whenReady,
   // which keeps the menu in sync with update/recovery state.
 
@@ -542,10 +531,10 @@ function registerIpcHandlers(): void {
   // Instance URL management
   ipcMain.handle('get-instance-url', () => loadInstanceUrl());
 
-  ipcMain.handle('set-instance-url', (_event, url: string) => {
-    saveInstanceUrl(url);
+  ipcMain.handle('set-instance-url', () => {
+    saveInstanceUrl(LUME_INSTANCE_URL);
     if (mainWindow) {
-      mainWindow.loadURL(url);
+      mainWindow.loadURL(LUME_INSTANCE_URL);
       // Force Electron to re-evaluate drag regions after navigation
       mainWindow.webContents.once('did-finish-load', () => {
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -558,9 +547,9 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('clear-instance-url', () => {
-    clearInstanceUrl();
+    saveInstanceUrl(LUME_INSTANCE_URL);
     if (mainWindow) {
-      mainWindow.loadFile(getPickerPath());
+      mainWindow.loadURL(LUME_INSTANCE_URL);
       // Force Electron to re-evaluate drag regions after navigation
       mainWindow.webContents.once('did-finish-load', () => {
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -608,7 +597,7 @@ function registerIpcHandlers(): void {
       // executableWillLaunchAtLogin to honour Task Manager's StartupApproved state.
       const osState = app.getLoginItemSettings({ path: process.execPath });
       const ownEntry = osState.launchItems?.find(
-        (item) => item.name === 'Backspace' || item.path?.toLowerCase() === process.execPath.toLowerCase(),
+        (item) => item.name === 'Lume' || item.path?.toLowerCase() === process.execPath.toLowerCase(),
       );
       // When the Run entry exists, its args are the source of truth for startMinimized.
       // When the entry is absent (autostart is off), there is no OS state to read, so we
@@ -643,7 +632,7 @@ function registerIpcHandlers(): void {
     if (process.platform === 'win32') {
       const osState = app.getLoginItemSettings({ path: process.execPath });
       const ownEntry = osState.launchItems?.find(
-        (item) => item.name === 'Backspace' || item.path?.toLowerCase() === process.execPath.toLowerCase(),
+        (item) => item.name === 'Lume' || item.path?.toLowerCase() === process.execPath.toLowerCase(),
       );
       currentOpenAtLogin = osState.executableWillLaunchAtLogin ?? false;
       // See `get-auto-launch-settings`: when the entry is absent, fall back to disk
@@ -703,6 +692,9 @@ function registerIpcHandlers(): void {
 // ─── Auto-Update ────────────────────────────────────────────────────────────
 
 function initAutoUpdater(): void {
+  // Beta builds are intentionally pinned until Lume owns a dedicated release
+  // feed. This prevents electron-updater from ever consuming upstream builds.
+  if (process.env.LUME_ENABLE_UPDATES !== '1') return;
   try {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;
@@ -743,7 +735,7 @@ function initAutoUpdater(): void {
       // (recovery mode) is visible — no need to also fire a native toast.
       if (!mainWindow?.isFocused()) {
         showNotification(
-          'Backspace update ready',
+          'Atualização do Lume pronta',
           `Click to restart and install version ${version}.`,
           () => autoUpdater.quitAndInstall(),
         );
@@ -794,7 +786,7 @@ function initAutoUpdater(): void {
 // ─── Deep Linking ───────────────────────────────────────────────────────────
 
 function handleDeepLink(url: string): void {
-  if (!url.startsWith('backspace://')) return;
+  if (!url.startsWith('lume://')) return;
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('deep-link', url);
@@ -821,7 +813,7 @@ if (process.platform === 'linux') {
 // Windows: AppUserModelId so toast notifications attribute correctly to Backspace
 // (without this, recovery / update notifications appear under "electron.exe").
 if (process.platform === 'win32') {
-  app.setAppUserModelId('com.backspace.desktop');
+  app.setAppUserModelId('online.lumesocial.desktop');
 }
 
 /**
@@ -836,7 +828,7 @@ export function requestQuit(): void {
 }
 
 // Set as default protocol handler
-app.setAsDefaultProtocolClient('backspace');
+app.setAsDefaultProtocolClient('lume');
 
 // macOS: open-url event
 app.on('open-url', (event, url) => {
@@ -852,7 +844,7 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', (_event, commandLine) => {
     // Find the deep link URL in the command line args
-    const deepLinkArg = commandLine.find((arg) => arg.startsWith('backspace://'));
+    const deepLinkArg = commandLine.find((arg) => arg.startsWith('lume://'));
     if (deepLinkArg) {
       handleDeepLink(deepLinkArg);
     }
@@ -971,7 +963,7 @@ if (!gotTheLock) {
 
     // AGPL-3.0 § 13: native About panel advertises the version + source repo.
     app.setAboutPanelOptions({
-      applicationName: 'Backspace',
+      applicationName: 'Lume',
       applicationVersion: app.getVersion(),
       copyright: `AGPL-3.0-only · Source: ${UPSTREAM_SOURCE_URL}`,
       website: UPSTREAM_SOURCE_URL,
@@ -1051,7 +1043,7 @@ if (!gotTheLock) {
     }
 
     // Check if the app was launched with a deep link (Windows/Linux)
-    const launchArg = process.argv.find((arg) => arg.startsWith('backspace://'));
+    const launchArg = process.argv.find((arg) => arg.startsWith('lume://'));
     if (launchArg) {
       pendingDeepLink = launchArg;
     }

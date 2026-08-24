@@ -2,7 +2,7 @@ import { app, shell } from 'electron';
 import type { BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import type { AppUpdater } from 'electron-updater';
 import path from 'path';
-import { loadInstanceUrl, clearInstanceUrl, getPickerPath } from './instanceUrl';
+import { loadInstanceUrl, clearInstanceUrl } from './instanceUrl';
 
 export type RecoveryReasonCode =
   | 'load-failed'
@@ -122,8 +122,8 @@ export function buildTrayMenuTemplate(
   actions?: Partial<MenuActions>,
 ): MenuItemConstructorOptions[] {
   const items: MenuItemConstructorOptions[] = [
-    { label: 'Show Backspace', click: actions?.onShow },
-    { label: 'Hide', click: actions?.onHide },
+    { label: 'Abrir Lume', click: actions?.onShow },
+    { label: 'Ocultar', click: actions?.onHide },
     { type: 'separator' },
     checkForUpdatesItem(state, () => actions?.onCheckForUpdates?.()),
   ];
@@ -139,10 +139,10 @@ export function buildTrayMenuTemplate(
 
   items.push(
     { type: 'separator' },
-    { label: 'Change Instance', click: actions?.onChangeInstance },
+    { label: 'Reconectar ao Lume', click: actions?.onChangeInstance },
     { label: 'Source code (AGPL)', click: actions?.onOpenSource },
     { type: 'separator' },
-    { label: 'Quit', click: actions?.onQuit },
+    { label: 'Sair do Lume', click: actions?.onQuit },
   );
 
   return items;
@@ -171,7 +171,7 @@ export function buildAppMenuTemplate(
 
   appSubmenu.push(
     { type: 'separator' },
-    { label: 'Change Instance', click: actions?.onChangeInstance },
+    { label: 'Reconectar ao Lume', click: actions?.onChangeInstance },
     { type: 'separator' },
     { role: 'hide' },
     { role: 'hideOthers' },
@@ -393,16 +393,12 @@ export function isValidRecoveryAction(action: unknown): action is RecoveryAction
 export function handleRecoveryAction(action: RecoveryAction): void {
   switch (action) {
     case 'reload': {
-      const url = loadInstanceUrl();
+      const url = loadInstanceUrl() ?? 'https://lumesocial.online';
       // Optimistic exit — clear recovery state BEFORE loading. If the load
       // fails, did-fail-load re-enters recovery. If it stalls, boot timer fires.
       recoveryStore.markRecoveryExited();
       recoveryStore.update({ mode: 'normal', reason: null });
       console.log('[recovery] exited (reload)');
-      if (!url) {
-        mainWindowRef?.loadFile(getPickerPath());
-        return;
-      }
       mainWindowRef?.loadURL(url);
       return;
     }
@@ -430,7 +426,8 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       recoveryStore.markRecoveryExited();
       recoveryStore.update({ mode: 'normal', reason: null });
       console.log('[recovery] exited (change-instance)');
-      mainWindowRef?.loadFile(getPickerPath());
+      clearInstanceUrl();
+      mainWindowRef?.loadURL('https://lumesocial.online');
       // Ensure visible — tray clicks may happen with window hidden, and the
       // recovery surface should also remain visible during the navigation.
       // When invoked from recovery.html (window already showing), these are
