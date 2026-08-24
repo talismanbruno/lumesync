@@ -16,8 +16,8 @@ contextBridge.exposeInMainWorld('backspace', {
   },
 
   // Notifications & badge
-  showNotification: (title: string, body: string) => {
-    ipcRenderer.send('show-notification', { title, body });
+  showNotification: (title: string, body: string, target?: { channelId?: string; spaceId?: string }) => {
+    ipcRenderer.send('show-notification', { title, body, target });
   },
   setBadgeCount: (count: number) => {
     ipcRenderer.send('set-badge-count', count);

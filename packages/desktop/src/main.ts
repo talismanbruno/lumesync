@@ -16,6 +16,7 @@ import fs from 'fs';
 import os from 'os';
 import { startActivityDetection, stopActivityDetection, getCurrentActivity } from './activityDetector';
 import { KeybindManager } from './keybindManager';
+import { buildNotificationRoute, type NotificationNavigationTarget } from './notificationRoute';
 import { deriveStartMinimizedFromArgs, parseExecPathFromDesktopFile, shouldReapplyAppImage } from './autoLaunch';
 import {
   loadInstanceUrl,
@@ -492,8 +493,19 @@ function showNotification(title: string, body: string, onClick?: () => void): vo
 // ─── IPC Handlers ───────────────────────────────────────────────────────────
 
 function registerIpcHandlers(): void {
-  ipcMain.on('show-notification', (_event, data: { title: string; body: string }) => {
-    showNotification(data.title, data.body);
+  ipcMain.on('show-notification', (
+    _event,
+    data: { title: string; body: string; target?: NotificationNavigationTarget },
+  ) => {
+    if (typeof data?.title !== 'string' || typeof data?.body !== 'string') return;
+    const route = buildNotificationRoute(data.target);
+    showNotification(data.title.slice(0, 160), data.body.slice(0, 500), () => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+      if (route) mainWindow.webContents.send('open-internal-route', route);
+    });
   });
 
   ipcMain.on('set-badge-count', (_event, count: number) => {

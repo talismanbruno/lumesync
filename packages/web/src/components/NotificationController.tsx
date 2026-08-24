@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useChatStore } from '../stores/chatStore';
 import { useVoiceStore } from '../stores/voiceStore';
 import { useAuthStore } from '../stores/authStore';
+import { useSpaceStore } from '../stores/spaceStore';
 import { isElectron } from '../platform/platform';
 import { sendNotification, updateBadgeCount } from '../platform/notifications';
 
@@ -63,6 +64,7 @@ export function NotificationController() {
               : 'Sent an attachment';
             sendNotification(displayName, body, {
               channelId: message.channelId,
+              spaceId: useSpaceStore.getState().channelToSpaceMap.get(message.channelId),
             });
             break; // one notification per batch
           }
@@ -90,7 +92,9 @@ export function NotificationController() {
 
     const unsubscribe = useVoiceStore.subscribe((state) => {
       if (state.incomingCall && !prevIncoming && !windowFocused.current) {
-        sendNotification('Incoming Call', `${state.incomingCall.callerName} is calling you`);
+        sendNotification('Incoming Call', `${state.incomingCall.callerName} is calling you`, {
+          channelId: state.incomingCall.dmChannelId ?? undefined,
+        });
       }
       prevIncoming = state.incomingCall;
     });

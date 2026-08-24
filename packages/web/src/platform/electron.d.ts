@@ -37,7 +37,11 @@ interface BackspaceElectronAPI {
   close: () => void;
 
   // Notifications & badge
-  showNotification: (title: string, body: string) => void;
+  showNotification: (
+    title: string,
+    body: string,
+    target?: { channelId?: string; spaceId?: string },
+  ) => void;
   setBadgeCount: (count: number) => void;
 
   // Auto-update (Task 2.1)

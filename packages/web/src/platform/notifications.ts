@@ -8,7 +8,7 @@ interface NotificationOptions {
 
 export function sendNotification(title: string, body: string, options?: NotificationOptions): void {
   if (isElectron()) {
-    window.backspace!.showNotification(title, body);
+    window.backspace!.showNotification(title, body, options);
   } else if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification(title, { body, icon: '/icons/icon-192.png' });
     notification.onclick = () => {
