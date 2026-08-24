@@ -1,0 +1,5 @@
+FROM ghcr.io/thezwiss/backspace:latest
+
+# Keep the stable upstream server runtime and replace only the compiled web UI.
+COPY web-dist/ /app/packages/web/dist/
+

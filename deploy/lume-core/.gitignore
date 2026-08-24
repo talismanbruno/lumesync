@@ -1,0 +1,5 @@
+.env
+livekit.yaml
+data/
+web-dist/
+
