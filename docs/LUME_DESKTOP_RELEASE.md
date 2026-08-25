@@ -22,8 +22,11 @@ lume-desktop-v1.0.0-beta.1
 ```
 
 O pipeline cria automaticamente uma Release no GitHub e anexa todos os
-instaladores. A atualização automática do aplicativo continuará desabilitada
-durante o beta, até os binários serem assinados para Windows e macOS.
+instaladores. No Windows, o Lume consulta essa versão ao abrir e a cada quatro
+horas, baixa em segundo plano e oferece a reinicialização quando estiver pronta.
+No macOS, os downloads Intel e Apple Silicon continuam manuais até termos uma
+conta Apple Developer, assinatura Developer ID e notarização; sem isso o macOS
+não aceita uma atualização automática confiável.
 
 ## Checklist antes de publicar
 
@@ -33,3 +36,6 @@ durante o beta, até os binários serem assinados para Windows e macOS.
 4. Microfone, câmera e compartilhamento de tela.
 5. Ícone, nome `Lume` e protocolo `lume://`.
 6. Instalação limpa e abertura após reiniciar o computador.
+7. Windows: versão anterior detecta, baixa e instala a nova versão.
+8. macOS: Gatekeeper abre o build e microfone, câmera, gravação de tela e
+   acessibilidade exibem os pedidos de permissão corretos.
