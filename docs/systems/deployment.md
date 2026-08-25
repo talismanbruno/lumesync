@@ -369,6 +369,8 @@ These are accepted constraints of the current deploy model, documented so operat
 
 The Oracle compose file pins the Lume application to the immutable `ghcr.io/talismanbruno/lumesync:1.0.0-lume.1` image. Upgrade the tag deliberately after the matching release image passes its health check; do not deploy from a mutable `latest` tag.
 
+`./web-dist` is mounted read-only over the frontend bundled in the image. This lets a reviewed web build be promoted independently without rebuilding the server image; replace the directory atomically and recreate only the `lume` service.
+
 The Oracle voice runtime uses the embedded LiveKit TURN/UDP server shown in `deploy/oracle-runtime/livekit.example.yaml`. The host firewall and Oracle VCN ingress must allow UDP `3478` and UDP `30000-30100`, in addition to LiveKit's TCP `7881` and UDP `7882`. The bounded relay range keeps the firewall surface small while supporting concurrent fallback calls.
 | List snapshots | `./restore.sh` |
 | Restore a snapshot | `./restore.sh <snapshot-filename>` |
