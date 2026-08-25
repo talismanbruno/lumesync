@@ -1,9 +1,6 @@
 services:
   lume:
-    build:
-      context: .
-      dockerfile: Dockerfile.lume
-    image: lume/backspace:foundation
+    image: ghcr.io/talismanbruno/lumesync:1.0.0-lume.1
     container_name: lume-core
     restart: unless-stopped
     env_file:
