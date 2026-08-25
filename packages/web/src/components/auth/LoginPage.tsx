@@ -47,11 +47,11 @@ export function LoginPage() {
     setError('');
 
     if (!username.trim()) {
-      setError('Username is required');
+      setError('Informe seu usuário');
       return;
     }
     if (!password) {
-      setError('Password is required');
+      setError('Informe sua senha');
       return;
     }
 
@@ -67,7 +67,7 @@ export function LoginPage() {
         setRetryAfter(err.retryAfter);
         setError('');
       } else {
-        setError(err instanceof Error ? err.message : 'Login failed');
+        setError(err instanceof Error ? err.message : 'Não foi possível entrar');
       }
     }
   };
@@ -106,8 +106,8 @@ export function LoginPage() {
         <form onSubmit={handleSubmit}>
           {retryAfter > 0 && (
             <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-sm">
-              <p className="font-medium text-accent-amber">Too many login attempts</p>
-              <p className="text-txt-secondary mt-0.5">Try again in {retryAfter}s</p>
+              <p className="font-medium text-accent-amber">Muitas tentativas de acesso</p>
+              <p className="text-txt-secondary mt-0.5">Tente novamente em {retryAfter}s</p>
             </div>
           )}
 
@@ -150,7 +150,7 @@ export function LoginPage() {
             className="w-full py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {retryAfter > 0
-              ? `Try again in ${retryAfter}s`
+              ? `Tente novamente em ${retryAfter}s`
               : isLoading
                 ? 'Entrando...'
                 : 'Entrar'}

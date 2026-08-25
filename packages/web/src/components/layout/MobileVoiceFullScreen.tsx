@@ -373,10 +373,10 @@ export function MobileVoiceFullScreen() {
           </svg>
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-medium text-accent-amber">
-              Microphone access denied
+              Microfone sem permissão
             </p>
             <p className="text-[11px] text-txt-tertiary leading-tight mt-0.5">
-              You're listening only — others can't hear you.
+              Você entrou apenas para ouvir — ninguém consegue te escutar.
             </p>
           </div>
           <button
@@ -386,7 +386,7 @@ export function MobileVoiceFullScreen() {
             }}
             className="text-[11px] font-medium px-3 py-1.5 rounded-md bg-accent-amber/20 text-accent-amber hover:bg-accent-amber/30 transition-colors shrink-0"
           >
-            Allow microphone
+            Permitir microfone
           </button>
         </div>
       )}

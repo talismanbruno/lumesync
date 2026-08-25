@@ -25,7 +25,7 @@ import { Username } from '../ui/Username';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 
-const statusLabel: Record<string, string> = { online: 'Online', idle: 'Idle', dnd: 'Do Not Disturb', offline: 'Offline' };
+const statusLabel: Record<string, string> = { online: 'Disponível', idle: 'Ausente', dnd: 'Não perturbe', offline: 'Offline' };
 
 function ActivityFriendItem({
   friend,
@@ -174,12 +174,12 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         return (
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
-              Online — {onlineFriends.length}
+              Disponíveis — {onlineFriends.length}
             </h2>
             {onlineFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
                 <Mascot state="idle" className="w-32 h-32 mb-4" />
-                <p className="text-txt-tertiary text-sm">No one's online right now.</p>
+                <p className="text-txt-tertiary text-sm">Ninguém está disponível agora.</p>
               </div>
             ) : (
               <>
@@ -194,12 +194,12 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         return (
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
-              All Friends — {friends.length}
+              Todas as pessoas — {friends.length}
             </h2>
             {friends.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
                 <Mascot state="lonely" className="w-32 h-32 mb-4" />
-                <p className="text-txt-tertiary text-sm">No friends yet — add someone!</p>
+                <p className="text-txt-tertiary text-sm">Sua lista ainda está vazia — adicione alguém!</p>
               </div>
             ) : (
               <>
@@ -214,12 +214,12 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         return (
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
-              Pending — {pendingIncoming.length + pendingOutgoing.length}
+              Pedidos — {pendingIncoming.length + pendingOutgoing.length}
             </h2>
             {[...pendingIncoming, ...pendingOutgoing].length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
                 <Mascot state="sleeping" className="w-32 h-32 mb-4" />
-                <p className="text-txt-tertiary text-sm">No pending requests — Nori is napping.</p>
+                <p className="text-txt-tertiary text-sm">Nenhum pedido pendente — Nori está descansando.</p>
               </div>
             ) : (
               <>
@@ -294,7 +294,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Mascot state="sleeping" className="w-[100px] h-[100px]" />
                 <div className="text-sm text-txt-tertiary mt-4 max-w-[240px]">
-                  It's quiet for now... When friends start an activity, we'll show it here!
+                  Tudo quieto por enquanto... Quando alguém iniciar uma atividade, ela aparece aqui.
                 </div>
               </div>
             ) : (
@@ -302,7 +302,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
                 {activeFriends.length > 0 && (
                   <div className="mb-4">
                     <h2 className="text-xs font-bold text-txt-tertiary mb-2 tracking-wider px-2">
-                      Active — {activeFriends.length}
+                      Em atividade — {activeFriends.length}
                     </h2>
                     {activeFriends.map(f => renderActivityFriend(f))}
                   </div>
@@ -310,7 +310,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
                 {idleFriends.length > 0 && (
                   <div className="mb-4">
                     <h2 className="text-xs font-bold text-txt-tertiary mb-2 tracking-wider px-2">
-                      Online — {idleFriends.length}
+                      Disponíveis — {idleFriends.length}
                     </h2>
                     {idleFriends.map(f => renderActivityFriend(f))}
                   </div>
@@ -343,7 +343,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
           </button>
-          <span className="font-semibold text-sm text-txt-primary">Friends</span>
+          <span className="font-semibold text-sm text-txt-primary">Pessoas</span>
         </div>
       ) : (
         <div className="lume-friends-command h-16 px-5 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
@@ -391,7 +391,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
                   : 'border-transparent text-txt-secondary hover:text-txt-primary'
               }`}
             >
-              {tab === 'add' ? 'Add Friend' : tab === 'activity' ? 'Activity' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'online' ? 'Disponíveis' : tab === 'all' ? 'Todos' : tab === 'pending' ? 'Pedidos' : tab === 'add' ? 'Adicionar' : 'Atividade'}
               {tab === 'pending' && pendingIncoming.length > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-notification text-white rounded-full">
                   {pendingIncoming.length}
@@ -413,9 +413,9 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
             setPendingUnfriend(null);
           }
         }}
-        title="Remove Friend"
-        description={`Are you sure you want to remove ${pendingUnfriend?.name ?? 'this user'} as a friend? You can always send them a new friend request later.`}
-        confirmLabel="Remove"
+        title="Remover contato"
+        description={`Quer mesmo remover ${pendingUnfriend?.name ?? 'esta pessoa'}? Você poderá enviar um novo pedido depois.`}
+        confirmLabel="Remover"
         variant="danger"
       />
     </div>
@@ -527,7 +527,7 @@ function AddFriendTab({
     setDirectAddLoading(true);
     try {
       await sendFriendRequest(query.trim());
-      addToast('Friend request sent!', 'success');
+      addToast('Pedido de amizade enviado!', 'success');
       setQuery('');
     } catch (err) {
       // The shared API client throws `new Error(body.error)` for non-2xx
@@ -548,8 +548,8 @@ function AddFriendTab({
   const displayUsers = isSearchMode ? enrichedSearchResults : discoverUsers;
   const displayLoading = isSearchMode ? searchLoading : discoverLoading;
   const emptyLabel = isSearchMode
-    ? 'No users match your search.'
-    : 'No discoverable users yet — invite people to join!';
+    ? 'Nenhuma pessoa encontrada nessa busca.'
+    : 'Ainda não há pessoas disponíveis — convide alguém para o Lume!';
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -559,15 +559,15 @@ function AddFriendTab({
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
             <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
           </svg>
-          <h2 className="text-base font-bold text-txt-primary">Find People</h2>
+            <h2 className="text-base font-bold text-txt-primary">Encontrar pessoas</h2>
         </div>
-        <p className="text-sm text-txt-tertiary mb-4">Search by username or use <span className="font-medium text-txt-secondary">user@instance</span> to add someone directly.</p>
+        <p className="text-sm text-txt-tertiary mb-4">Busque pelo usuário ou use <span className="font-medium text-txt-secondary">usuario@instancia</span> para adicionar alguém diretamente.</p>
 
         {/* Unified search input */}
         <div className="relative mb-4">
           <input
             type="text"
-            placeholder="Search or add by username..."
+            placeholder="Buscar ou adicionar pelo usuário..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="input-search w-full px-4 py-3 rounded-lg"
@@ -591,14 +591,14 @@ function AddFriendTab({
               <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
             <div className="flex-1 min-w-0 text-sm text-txt-secondary">
-              Send friend request to <span className="font-semibold text-txt-primary">{directAddDisplay}</span>
+              Enviar pedido para <span className="font-semibold text-txt-primary">{directAddDisplay}</span>
             </div>
             <button
               onClick={handleDirectAdd}
               disabled={directAddLoading}
               className="px-3 py-1.5 rounded-md bg-accent-primary hover:bg-accent-primary-hover text-white text-sm font-medium transition-colors disabled:opacity-50 flex-shrink-0"
             >
-              {directAddLoading ? 'Sending...' : 'Send Request'}
+              {directAddLoading ? 'Enviando...' : 'Enviar pedido'}
             </button>
           </div>
         )}
@@ -695,7 +695,7 @@ function UserDiscoverCard({
     } catch (err) {
       // See handleDirectAdd above — err.message is the server error code.
       const code = err instanceof Error ? err.message : undefined;
-      setError(mapServerErrorToMessage(code, code ?? 'Failed to send request', username));
+      setError(mapServerErrorToMessage(code, code ?? 'Não foi possível enviar o pedido', username));
     } finally {
       setActionLoading(false);
     }
@@ -709,7 +709,7 @@ function UserDiscoverCard({
       await updateFriendRequest(user.requestId, 'accepted');
       onRelationshipChange(user.id, user._instanceOrigin, 'friends');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to accept request');
+      setError(err instanceof Error ? err.message : 'Não foi possível aceitar o pedido');
     } finally {
       setActionLoading(false);
     }
@@ -723,7 +723,7 @@ function UserDiscoverCard({
       await updateFriendRequest(user.requestId, 'declined');
       onRelationshipChange(user.id, user._instanceOrigin, 'none');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to decline request');
+      setError(err instanceof Error ? err.message : 'Não foi possível recusar o pedido');
     } finally {
       setActionLoading(false);
     }
@@ -741,7 +741,7 @@ function UserDiscoverCard({
       await client.social.cancelRequest(user.requestId);
       onRelationshipChange(user.id, user._instanceOrigin, 'none');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel request');
+      setError(err instanceof Error ? err.message : 'Não foi possível cancelar o pedido');
     } finally {
       setActionLoading(false);
     }
@@ -849,7 +849,7 @@ function UserDiscoverCard({
             disabled={actionLoading || !user.requestId}
             className="w-full py-1.5 bg-accent-amber/15 hover:bg-accent-amber/25 text-accent-amber text-[13px] font-medium rounded transition-colors disabled:opacity-50"
           >
-            {actionLoading ? 'Cancelling...' : 'Request Pending'}
+            {actionLoading ? 'Cancelando...' : 'Pedido pendente'}
           </button>
         )}
         {user.relationship === 'inbound_pending' && (
@@ -859,14 +859,14 @@ function UserDiscoverCard({
               disabled={actionLoading}
               className="flex-1 py-1.5 bg-status-online/20 hover:bg-status-online/30 text-status-online text-[13px] font-medium rounded transition-colors disabled:opacity-50"
             >
-              Accept
+              Aceitar
             </button>
             <button
               onClick={handleDecline}
               disabled={actionLoading}
               className="flex-1 py-1.5 bg-accent-rose/15 hover:bg-accent-rose/25 text-accent-rose text-[13px] font-medium rounded transition-colors disabled:opacity-50"
             >
-              Decline
+              Recusar
             </button>
           </div>
         )}
@@ -875,7 +875,7 @@ function UserDiscoverCard({
             onClick={handleMessage}
             className="w-full py-1.5 bg-accent-mint/15 hover:bg-accent-mint/25 text-accent-mint text-[13px] font-medium rounded transition-colors"
           >
-            Message
+            Mensagem
           </button>
         )}
       </div>
@@ -924,7 +924,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
         <button
           onClick={(e) => { e.stopPropagation(); onDm(); }}
           className="w-9 h-9 flex items-center justify-center bg-surface-base rounded-full text-txt-tertiary hover:text-txt-primary transition-colors"
-          title="Message"
+          title="Mensagem"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-5H6V7h12v2z" />
@@ -933,7 +933,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
           className="w-9 h-9 flex items-center justify-center bg-surface-base rounded-full text-txt-tertiary hover:text-txt-danger transition-colors"
-          title="Remove Friend"
+          title="Remover contato"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -970,7 +970,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
             <span className="text-txt-tertiary text-xs">@{user.username}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-txt-tertiary">{type === 'incoming' ? 'Incoming Friend Request' : 'Outgoing Friend Request'}</span>
+            <span className="text-xs text-txt-tertiary">{type === 'incoming' ? 'Pedido recebido' : 'Pedido enviado'}</span>
             {instanceLabel && (
               <span className="text-[11px] text-txt-tertiary/60 font-medium">via {instanceLabel}</span>
             )}
@@ -983,7 +983,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
             <button
               onClick={() => onAccept?.()}
               className="p-2 bg-surface-base rounded-full text-status-online hover:bg-status-online hover:text-white transition-all"
-              title="Accept"
+              title="Aceitar"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -992,7 +992,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
             <button
               onClick={() => onDecline?.()}
               className="p-2 bg-surface-base rounded-full text-txt-danger hover:bg-accent-rose hover:text-white transition-all"
-              title="Decline"
+              title="Recusar"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -1003,7 +1003,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
           <button
             onClick={() => onCancel?.()}
             className="p-2 bg-surface-base rounded-full text-txt-tertiary hover:text-txt-danger transition-all"
-            title="Cancel Request"
+            title="Cancelar pedido"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />

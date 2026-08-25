@@ -59,10 +59,10 @@ interface BackspaceElectronAPI {
   getVersion: () => Promise<string>;
 
   // Window focus (Task 2.2)
-  onWindowFocusChange: (callback: (focused: boolean) => void) => void;
+  onWindowFocusChange: (callback: (focused: boolean) => void) => (() => void);
 
   // Deep linking (Task 2.3)
-  onDeepLink: (callback: (url: string) => void) => void;
+  onDeepLink: (callback: (url: string) => void) => (() => void);
 
   // Instance-origin-aware URL routing
   setConnectedOrigins: (origins: string[]) => void;

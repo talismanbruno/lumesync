@@ -3,6 +3,7 @@ import { useChatStore } from '../stores/chatStore';
 import { useVoiceStore } from '../stores/voiceStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSpaceStore } from '../stores/spaceStore';
+import { useSocialStore } from '../stores/socialStore';
 import { isElectron } from '../platform/platform';
 import { sendNotification, updateBadgeCount } from '../platform/notifications';
 
@@ -17,8 +18,9 @@ export function NotificationController() {
 
   // Track window focus state
   useEffect(() => {
+    let unsubscribeElectronFocus: (() => void) | undefined;
     if (isElectron() && window.backspace) {
-      window.backspace.onWindowFocusChange((focused) => {
+      unsubscribeElectronFocus = window.backspace.onWindowFocusChange((focused) => {
         windowFocused.current = focused;
       });
     }
@@ -38,6 +40,7 @@ export function NotificationController() {
     windowFocused.current = document.hasFocus();
 
     return () => {
+      unsubscribeElectronFocus?.();
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisibility);
@@ -58,10 +61,10 @@ export function NotificationController() {
         const newEvents = state.realtimeMessageEvents.slice(prevState.realtimeMessageEvents.length);
         for (const { message } of newEvents) {
           if (message.userId !== currentUser?.id) {
-            const displayName = message.user?.displayName || message.user?.username || 'Someone';
+            const displayName = message.user?.displayName || message.user?.username || 'Alguém';
             const body = message.content
               ? message.content.replace(/[*_~`>#\-\[\]]/g, '').slice(0, 100)
-              : 'Sent an attachment';
+              : 'Enviou um anexo';
             sendNotification(displayName, body, {
               channelId: message.channelId,
               spaceId: useSpaceStore.getState().channelToSpaceMap.get(message.channelId),
@@ -82,6 +85,22 @@ export function NotificationController() {
   useEffect(() => {
     const unsubscribe = useChatStore.subscribe((state) => {
       updateBadgeCount(state.unreadChannels.size);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Friend request notifications. Seed the known IDs at mount so loading the
+  // existing request list never produces a burst of stale notifications.
+  useEffect(() => {
+    let knownRequestIds = new Set(useSocialStore.getState().requests.map((request) => request.id));
+    const unsubscribe = useSocialStore.subscribe((state) => {
+      for (const request of state.requests) {
+        if (knownRequestIds.has(request.id) || request.status !== 'pending' || request.user?.id !== request.fromId) continue;
+        const sender = request.user?.displayName || request.user?.username || 'Alguém';
+        sendNotification('Novo pedido de amizade', `${sender} quer entrar na sua órbita.`);
+        break;
+      }
+      knownRequestIds = new Set(state.requests.map((request) => request.id));
     });
     return unsubscribe;
   }, []);
@@ -113,7 +132,7 @@ export function NotificationController() {
 
     const unsubscribe = useVoiceStore.subscribe((state) => {
       if (state.incomingCall && !prevIncoming && !windowFocused.current) {
-        sendNotification('Incoming Call', `${state.incomingCall.callerName} is calling you`, {
+        sendNotification('Chamada recebida', `${state.incomingCall.callerName} está ligando para você`, {
           channelId: state.incomingCall.dmChannelId ?? undefined,
         });
       }

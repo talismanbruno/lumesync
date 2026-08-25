@@ -12,6 +12,7 @@ export function sendNotification(title: string, body: string, options?: Notifica
   } else if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification(title, { body, icon: '/icons/icon-192.png' });
     notification.onclick = () => {
+      notification.close();
       window.focus();
       const { channelId, spaceId } = options ?? {};
       if (channelId) {
@@ -21,6 +22,10 @@ export function sendNotification(title: string, body: string, options?: Notifica
             channelId,
             spaceId: spaceId || '@me',
           });
+        } else {
+          const destination = `/channels/${encodeURIComponent(spaceId || '@me')}/${encodeURIComponent(channelId)}`;
+          window.history.pushState({}, '', destination);
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }
       }
     };

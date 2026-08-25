@@ -238,12 +238,12 @@ export async function requestMicPermission(): Promise<boolean> {
     const name = err instanceof Error ? err.name : '';
     if (name === 'NotAllowedError') {
       useUIStore.getState().addToast(
-        'Microphone permission still denied. Open Settings → Safari to grant access.',
+        'A permissão do microfone continua bloqueada. Libere o acesso nas configurações do navegador.',
         'warning',
       );
     } else if (name === 'NotFoundError') {
       useUIStore.getState().addToast(
-        'No microphone detected.',
+        'Nenhum microfone foi detectado.',
         'warning',
       );
     } else {

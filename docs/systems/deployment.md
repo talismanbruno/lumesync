@@ -220,7 +220,7 @@ Backspace takes **DB-only** SQLite snapshots via `VACUUM INTO`, which produces a
 | Trigger | Where | Reason tag | When |
 |---------|-------|-----------|------|
 | **Pre-migration** | `packages/server/src/db/index.ts` (`initDatabase`) | `pre-migration` | On startup, **only when a migration is actually pending** (see gating). |
-| **Scheduled** | `packages/server/src/utils/backupWorker.ts` (`startBackupWorker`) | `scheduled` | Every `BACKUP_INTERVAL_HOURS`, via an `unref`'d `setInterval`. |
+| **Scheduled** | `packages/server/src/utils/backupWorker.ts` (`startBackupWorker`) | `scheduled` | Every `BACKUP_INTERVAL_HOURS`. On boot, the worker inspects the newest scheduled snapshot and runs after a 30-second grace period when the interval is already overdue, so frequent deploys cannot postpone backups forever. |
 | **Manual** | `./backup.sh` → `src/scripts/snapshot.ts` | `manual` | On demand by the operator. |
 
 Snapshot filenames encode a millisecond-precision UTC timestamp and the reason tag — `backspace-<ts>-<reason>.db` — so they sort chronologically and never collide (`createSnapshot` disambiguates with a counter on the rare same-millisecond collision, since `VACUUM INTO` refuses to overwrite an existing file).
@@ -362,6 +362,12 @@ These are accepted constraints of the current deploy model, documented so operat
 | Bring stack up manually | `docker compose up -d` (proxy/tunnel: `.env`'s `COMPOSE_FILE` auto-adds the overlay) |
 | Check health | `curl -fsS https://<domain>/api/health` |
 | Take a manual snapshot | `./backup.sh` |
+
+### Lume Oracle runtime monitor
+
+`deploy/oracle-runtime/health-monitor.sh` checks public HTTPS, the three runtime containers, disk pressure, and database-backup freshness. `install-health-monitor.sh` installs a five-minute systemd timer. Failures go to the system journal under `lume-monitor`; setting `LUME_ALERT_WEBHOOK_URL` in `/home/ubuntu/lume-core/.monitor.env` additionally sends the warning to a compatible webhook.
+
+The Oracle voice runtime uses the embedded LiveKit TURN/UDP server shown in `deploy/oracle-runtime/livekit.example.yaml`. The host firewall and Oracle VCN ingress must allow UDP `3478` and UDP `30000-30100`, in addition to LiveKit's TCP `7881` and UDP `7882`. The bounded relay range keeps the firewall surface small while supporting concurrent fallback calls.
 | List snapshots | `./restore.sh` |
 | Restore a snapshot | `./restore.sh <snapshot-filename>` |
 | Rotate legacy seed admin | `docker exec -w /app/packages/server backspace node --import tsx/esm src/scripts/remediate-seed-admin.ts` |

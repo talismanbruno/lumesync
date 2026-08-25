@@ -23,21 +23,21 @@ export function buildCallUndeliverableToast(
 ): string {
   const primary = failures[0];
   const labelFor = (f: { peerLabel?: string; peerOrigin?: string }) =>
-    f.peerLabel ?? f.peerOrigin?.replace(/^https?:\/\//, '') ?? 'the remote instance';
+    f.peerLabel ?? f.peerOrigin?.replace(/^https?:\/\//, '') ?? 'a instância remota';
 
   if (phase === 'accept' && terminal) {
-    const label = primary ? labelFor(primary) : 'the host instance';
-    return `Couldn't confirm your accept with ${label} — the call was dropped.`;
+    const label = primary ? labelFor(primary) : 'a instância principal';
+    return `Não foi possível confirmar com ${label} — a chamada foi encerrada.`;
   }
 
   if (phase === 'reject') {
-    const labels = failures.map(labelFor).join(', ') || 'the host instance';
-    return `Couldn't notify ${labels} that you declined. Caller may still see you as ringing briefly.`;
+    const labels = failures.map(labelFor).join(', ') || 'a instância principal';
+    return `Não foi possível avisar ${labels} que você recusou. A chamada pode continuar aparecendo por alguns segundos.`;
   }
 
   if (phase === 'end') {
-    const labels = failures.map(labelFor).join(', ') || 'the host instance';
-    return `Couldn't notify ${labels} that you hung up. Remote participants may see the call for up to 60 seconds.`;
+    const labels = failures.map(labelFor).join(', ') || 'a instância principal';
+    return `Não foi possível avisar ${labels} que você saiu. A chamada pode continuar aparecendo por até 60 segundos.`;
   }
 
   // host_unreachable: call terminated because the host peer became unreachable.
@@ -46,39 +46,39 @@ export function buildCallUndeliverableToast(
   if (phase === 'host_unreachable') {
     const [f] = failures;
     if (!f || failures.length !== 1) {
-      return 'Call ended — host instance became unreachable.';
+      return 'Chamada encerrada — a instância principal ficou indisponível.';
     }
-    const label = f.peerLabel || f.peerOrigin?.replace(/^https?:\/\//, '') || 'the host instance';
+    const label = f.peerLabel || f.peerOrigin?.replace(/^https?:\/\//, '') || 'a instância principal';
     if (f.reason === 'peer_rejected') {
-      return `Call ended — this instance is no longer peered with ${label}.`;
+      return `Chamada encerrada — esta instância não está mais conectada a ${label}.`;
     }
-    return `Call ended — ${label} became unreachable.`;
+    return `Chamada encerrada — ${label} ficou indisponível.`;
   }
 
   // phase === 'start' (default + legacy)
   if (!terminal) {
     const labels = failures.map(labelFor).join(', ');
-    return `Some participants could not be reached: ${labels}.`;
+    return `Alguns participantes não puderam ser alcançados: ${labels}.`;
   }
   if (failures.length > 1) {
     const labels = failures.map(labelFor).join(', ');
-    return `Could not reach ${failures.length} instances: ${labels}.`;
+    return `Não foi possível alcançar ${failures.length} instâncias: ${labels}.`;
   }
-  if (!primary) return 'Call could not be placed.';
+  if (!primary) return 'Não foi possível iniciar a chamada.';
 
   const label = labelFor(primary);
   switch (primary.reason) {
     case 'peer_rejected':
-      return `Cannot reach ${label} — this instance requires manual peering approval.`;
+      return `Não foi possível alcançar ${label} — a conexão entre instâncias precisa de aprovação.`;
     case 'peer_awaiting_approval':
-      return `Waiting for ${label} admin to approve your instance. Calls will work once approved.`;
+      return `Aguardando a aprovação do administrador de ${label}. As chamadas funcionarão depois disso.`;
     case 'peer_transient_failure':
-      return `Could not reach ${label}. Try again in a moment.`;
+      return `Não foi possível alcançar ${label}. Tente novamente em instantes.`;
     case 'livekit_unavailable':
-      return 'Voice is not configured on this instance.';
+      return 'A voz não está configurada nesta instância.';
     case 'no_recipient':
-      return `${label} couldn't ring anyone.`;
+      return `${label} não encontrou ninguém disponível para receber a chamada.`;
     default:
-      return `Call to ${label} could not be placed.`;
+      return `Não foi possível ligar para ${label}.`;
   }
 }

@@ -11,13 +11,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/favicon-32.png', 'icons/favicon-16.png', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Backspace',
-        short_name: 'Backspace',
-        description: 'The self-hosted Discord and TeamSpeak alternative. HD voice, video, and screen share — open source and free (AGPL-3.0).',
+        name: 'Lume',
+        short_name: 'Lume',
+        description: 'Comunicação em tempo real para conversar, criar comunidades e compartilhar momentos.',
         display: 'standalone',
-        start_url: '/',
-        theme_color: '#0b0b10',
-        background_color: '#0b0b10',
+        start_url: '/channels/@me',
+        id: '/',
+        lang: 'pt-BR',
+        theme_color: '#050505',
+        background_color: '#050505',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -44,6 +46,20 @@ export default defineConfig({
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.mts', '.json'],
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('livekit') || id.includes('@sapphi-red')) return 'voice-runtime';
+          if (id.includes('@emoji-mart')) return 'emoji-picker';
+          if (id.includes('react-markdown') || id.includes('remark-') || id.includes('prism-react-renderer')) return 'rich-text';
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/') || id.includes('zustand')) return 'app-runtime';
+          return undefined;
+        },
+      },
     },
   },
   server: {

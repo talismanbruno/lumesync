@@ -266,7 +266,7 @@ export function RegisterPage() {
 
     const trimmed = username.trim();
     if (!trimmed) {
-      setError('Username is required');
+      setError('Informe seu usuário');
       return;
     }
     if (trimmed.length < 3 || trimmed.length > 32) {
@@ -281,7 +281,7 @@ export function RegisterPage() {
       return;
     }
     if (!password) {
-      setError('Password is required');
+      setError('Informe sua senha');
       return;
     }
     if (password.length < 6) {
@@ -605,7 +605,7 @@ export function RegisterPage() {
             {retryAfter > 0 && (
               <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-sm">
                 <p className="font-medium text-accent-amber">Too many attempts</p>
-                <p className="text-txt-secondary mt-0.5">Try again in {retryAfter}s</p>
+                <p className="text-txt-secondary mt-0.5">Tente novamente em {retryAfter}s</p>
               </div>
             )}
 
@@ -703,7 +703,7 @@ export function RegisterPage() {
               className="w-full py-3 md:py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {retryAfter > 0
-                ? `Try again in ${retryAfter}s`
+                ? `Tente novamente em ${retryAfter}s`
                 : isRegistering
                   ? 'Creating account...'
                   : 'Get Started'}

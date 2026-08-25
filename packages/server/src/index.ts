@@ -43,9 +43,20 @@ async function main(): Promise<void> {
     },
   });
 
+  app.addHook('onSend', async (_request, reply, payload) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    reply.header('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=()');
+    return payload;
+  });
+
   await app.register(cors, {
     origin: true,
-    credentials: true,
+    // Authentication uses an explicit Bearer token, never ambient cookies.
+    // Keeping credentialed CORS disabled prevents a future cookie from being
+    // exposed through reflected cross-origin requests.
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     // Tus-* and Upload-* headers are required for federated tus uploads
     // (cross-origin POST/HEAD/PATCH/DELETE on /api/files/*). Without them the

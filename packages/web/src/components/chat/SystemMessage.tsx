@@ -17,11 +17,11 @@ function resolveActorName(message: MessageWithUser, dm?: Pick<DmChannel, 'member
   if (dm) {
     const fromRoster = dm.members.find(m => m.id === message.userId) as User | undefined;
     if (fromRoster) {
-      return fromRoster.displayName ?? fromRoster.username ?? 'Unknown';
+      return fromRoster.displayName ?? fromRoster.username ?? 'Desconhecido';
     }
-    return 'Unknown';
+    return 'Desconhecido';
   }
-  return message.user?.displayName ?? message.user?.username ?? 'Someone';
+  return message.user?.displayName ?? message.user?.username ?? 'Alguém';
 }
 
 /**

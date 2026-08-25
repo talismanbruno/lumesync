@@ -52,12 +52,16 @@ contextBridge.exposeInMainWorld('backspace', {
 
   // Window focus
   onWindowFocusChange: (callback: (focused: boolean) => void) => {
-    ipcRenderer.on('window-focus-changed', (_event, focused) => callback(focused));
+    const handler = (_event: Electron.IpcRendererEvent, focused: boolean) => callback(focused);
+    ipcRenderer.on('window-focus-changed', handler);
+    return () => { ipcRenderer.removeListener('window-focus-changed', handler); };
   },
 
   // Deep linking
   onDeepLink: (callback: (url: string) => void) => {
-    ipcRenderer.on('deep-link', (_event, url) => callback(url));
+    const handler = (_event: Electron.IpcRendererEvent, url: string) => callback(url);
+    ipcRenderer.on('deep-link', handler);
+    return () => { ipcRenderer.removeListener('deep-link', handler); };
   },
 
   // Instance-origin-aware URL routing
