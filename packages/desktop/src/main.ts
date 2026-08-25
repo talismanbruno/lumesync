@@ -706,13 +706,15 @@ function registerIpcHandlers(): void {
 // ─── Auto-Update ────────────────────────────────────────────────────────────
 
 function initAutoUpdater(): void {
-  // Beta builds are intentionally pinned until Lume owns a dedicated release
-  // feed. This prevents electron-updater from ever consuming upstream builds.
-  if (process.env.LUME_ENABLE_UPDATES !== '1') return;
+  // Unsigned macOS apps cannot apply a trusted in-place update. Windows NSIS
+  // supports the complete flow today; other platforms keep manual downloads.
+  if (!app.isPackaged || process.platform !== 'win32' || process.env.LUME_DISABLE_UPDATES === '1') return;
   try {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.allowPrerelease = true;
+    autoUpdater.allowDowngrade = false;
 
     setAutoUpdater(autoUpdater);
 
@@ -750,7 +752,7 @@ function initAutoUpdater(): void {
       if (!mainWindow?.isFocused()) {
         showNotification(
           'Atualização do Lume pronta',
-          `Click to restart and install version ${version}.`,
+          `Clique para reiniciar e instalar a versão ${version}.`,
           () => autoUpdater.quitAndInstall(),
         );
       }

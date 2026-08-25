@@ -51,9 +51,9 @@ interface BackspaceElectronAPI {
   setVoiceSessionActive: (active: boolean) => void;
 
   // Auto-update (Task 2.1)
-  onUpdateAvailable: (callback: (info: { version: string }) => void) => void;
-  onUpdateDownloaded: (callback: (info: { version: string }) => void) => void;
-  onUpdateError: (callback: (error: { message: string; releaseUrl: string }) => void) => void;
+  onUpdateAvailable: (callback: (info: { version: string }) => void) => (() => void);
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) => (() => void);
+  onUpdateError: (callback: (error: { message: string; releaseUrl: string }) => void) => (() => void);
   installUpdate: () => void;
   checkForUpdates: () => void;
   getVersion: () => Promise<string>;

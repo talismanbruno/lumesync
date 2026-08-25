@@ -28,13 +28,19 @@ contextBridge.exposeInMainWorld('backspace', {
 
   // Auto-update
   onUpdateAvailable: (callback: (info: { version: string }) => void) => {
-    ipcRenderer.on('update-available', (_event, info) => callback(info));
+    const handler = (_event: Electron.IpcRendererEvent, info: { version: string }) => callback(info);
+    ipcRenderer.on('update-available', handler);
+    return () => { ipcRenderer.removeListener('update-available', handler); };
   },
   onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
-    ipcRenderer.on('update-downloaded', (_event, info) => callback(info));
+    const handler = (_event: Electron.IpcRendererEvent, info: { version: string }) => callback(info);
+    ipcRenderer.on('update-downloaded', handler);
+    return () => { ipcRenderer.removeListener('update-downloaded', handler); };
   },
   onUpdateError: (callback: (error: { message: string; releaseUrl: string }) => void) => {
-    ipcRenderer.on('update-error', (_event, error) => callback(error));
+    const handler = (_event: Electron.IpcRendererEvent, error: { message: string; releaseUrl: string }) => callback(error);
+    ipcRenderer.on('update-error', handler);
+    return () => { ipcRenderer.removeListener('update-error', handler); };
   },
   installUpdate: () => {
     ipcRenderer.send('install-update');

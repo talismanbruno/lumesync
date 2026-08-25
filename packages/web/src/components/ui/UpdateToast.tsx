@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isElectron } from '../../platform/platform';
+import { useVoiceStore } from '../../stores/voiceStore';
 
 interface UpdateError {
   message: string;
@@ -14,19 +15,33 @@ interface UpdateError {
 export function UpdateToast() {
   const [downloadedVersion, setDownloadedVersion] = useState<string | null>(null);
   const [failedUpdate, setFailedUpdate] = useState<UpdateError | null>(null);
+  const voiceActive = useVoiceStore((state) => Boolean(
+    state.currentVoiceChannelId || state.activeDmCall || state.outgoingCall,
+  ));
 
   useEffect(() => {
     if (!isElectron() || !window.backspace) return;
 
-    window.backspace.onUpdateDownloaded((info) => {
+    const offDownloaded = window.backspace.onUpdateDownloaded((info) => {
       setDownloadedVersion(info.version);
       // Auto-download succeeded — clear any previous error state
       setFailedUpdate(null);
     });
 
-    window.backspace.onUpdateError((error) => {
+    const offError = window.backspace.onUpdateError((error) => {
       setFailedUpdate(error);
     });
+
+    window.backspace.getRecoveryState().then((state) => {
+      if (state.updateState === 'downloaded' && state.updateVersion) {
+        setDownloadedVersion(state.updateVersion);
+      }
+    }).catch(() => {});
+
+    return () => {
+      offDownloaded();
+      offError();
+    };
   }, []);
 
   // Nothing to show
@@ -38,16 +53,19 @@ export function UpdateToast() {
       <div className="fixed bottom-6 left-6 z-[300] animate-slide-up">
         <div className="glass-pill rounded-xl px-4 py-3 flex items-center gap-3 max-w-[340px]">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-txt-primary">Update ready</p>
+            <p className="text-sm font-medium text-txt-primary">Atualização pronta</p>
             <p className="text-xs text-txt-secondary truncate">
-              Version {downloadedVersion} has been downloaded
+              {voiceActive
+                ? 'Finalize a chamada para reiniciar com segurança'
+                : `Versão ${downloadedVersion} baixada`}
             </p>
           </div>
           <button
             onClick={() => window.backspace?.installUpdate()}
-            className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-primary hover:bg-accent-primary/80 text-white transition-colors"
+            disabled={voiceActive}
+            className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-primary hover:bg-accent-primary/80 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Restart
+            {voiceActive ? 'Em chamada' : 'Reiniciar'}
           </button>
           <button
             onClick={() => setDownloadedVersion(null)}
