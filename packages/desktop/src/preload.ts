@@ -32,6 +32,14 @@ contextBridge.exposeInMainWorld('backspace', {
     ipcRenderer.on('update-available', handler);
     return () => { ipcRenderer.removeListener('update-available', handler); };
   },
+  onUpdateProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      progress: { percent: number; transferred: number; total: number },
+    ) => callback(progress);
+    ipcRenderer.on('update-progress', handler);
+    return () => { ipcRenderer.removeListener('update-progress', handler); };
+  },
   onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, info: { version: string }) => callback(info);
     ipcRenderer.on('update-downloaded', handler);

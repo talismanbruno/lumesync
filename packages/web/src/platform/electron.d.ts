@@ -52,6 +52,7 @@ interface BackspaceElectronAPI {
 
   // Auto-update (Task 2.1)
   onUpdateAvailable: (callback: (info: { version: string }) => void) => (() => void);
+  onUpdateProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => (() => void);
   onUpdateDownloaded: (callback: (info: { version: string }) => void) => (() => void);
   onUpdateError: (callback: (error: { message: string; releaseUrl: string }) => void) => (() => void);
   installUpdate: () => void;

@@ -66,6 +66,8 @@ const keybindManager = new KeybindManager();
 let tray: Tray | null = null;
 let isQuitting = false;
 let pendingDeepLink: string | null = null;
+let startupUpdateGateActive = false;
+let startupUpdateFallback: ReturnType<typeof setTimeout> | null = null;
 
 const knownInstanceOrigins = new Set<string>();
 
@@ -331,6 +333,21 @@ function loadTrayIcon(): Electron.NativeImage {
 
 // ─── Window & Tray Creation ─────────────────────────────────────────────────
 
+function shouldShowStartupUpdater(): boolean {
+  return app.isPackaged && process.platform === 'win32' && process.env.LUME_DISABLE_UPDATES !== '1';
+}
+
+function loadMainApp(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  startupUpdateGateActive = false;
+  if (startupUpdateFallback) {
+    clearTimeout(startupUpdateFallback);
+    startupUpdateFallback = null;
+  }
+  const instanceUrl = process.env.LUME_URL ?? LUME_INSTANCE_URL;
+  mainWindow.loadURL(instanceUrl);
+}
+
 function createWindow(): void {
   const savedState = validateWindowBounds(loadWindowState());
 
@@ -374,7 +391,15 @@ function createWindow(): void {
   // service. LUME_URL remains available for controlled test builds.
   const instanceUrl = process.env.LUME_URL ?? LUME_INSTANCE_URL;
   saveInstanceUrl(instanceUrl);
-  mainWindow.loadURL(instanceUrl);
+  if (shouldShowStartupUpdater()) {
+    startupUpdateGateActive = true;
+    mainWindow.loadFile(path.join(__dirname, '..', 'resources', 'update.html'));
+    // A blocked release host must never keep the user out of Lume. The updater
+    // continues in the background after this guard opens the normal app.
+    startupUpdateFallback = setTimeout(() => loadMainApp(), 12_000);
+  } else {
+    mainWindow.loadURL(instanceUrl);
+  }
 
   mainWindow.once('ready-to-show', () => {
     // Hidden-launch detection. We pass `args: ['--hidden']` on all three platforms
@@ -585,7 +610,7 @@ function registerIpcHandlers(): void {
   ipcMain.on('install-update', () => {
     try {
       const { autoUpdater } = require('electron-updater');
-      autoUpdater.quitAndInstall();
+      autoUpdater.quitAndInstall(true, true);
     } catch {
       // Auto-updater not available
     }
@@ -723,6 +748,7 @@ function initAutoUpdater(): void {
     autoUpdater.on('checking-for-update', () => {
       recoveryStore.update({ updateState: 'checking', lastCheckResult: null });
       updateConfirmed = false;
+      mainWindow?.webContents.send('update-checking');
     });
 
     autoUpdater.on('update-available', (info: { version: string }) => {
@@ -739,12 +765,31 @@ function initAutoUpdater(): void {
           recoveryStore.update({ lastCheckResult: null });
         }
       }, 5_000);
+      if (startupUpdateGateActive) {
+        mainWindow?.webContents.send('update-current');
+        setTimeout(() => loadMainApp(), 450);
+      }
+    });
+
+    autoUpdater.on('download-progress', (progress: { percent: number; transferred: number; total: number }) => {
+      mainWindow?.webContents.send('update-progress', {
+        percent: Math.max(0, Math.min(100, progress.percent)),
+        transferred: progress.transferred,
+        total: progress.total,
+      });
     });
 
     autoUpdater.on('update-downloaded', (info: { version: string }) => {
       const version = info.version.slice(0, 32);
       recoveryStore.update({ updateState: 'downloaded', updateVersion: version });
       mainWindow?.webContents.send('update-downloaded', { version });
+
+      if (startupUpdateGateActive) {
+        // NSIS updates can be applied completely silently. The second `true`
+        // starts Lume again after installation, matching the zero-click flow.
+        setTimeout(() => autoUpdater.quitAndInstall(true, true), 700);
+        return;
+      }
 
       // Symmetric focus-based suppression: if the user is looking at the
       // window, the in-app banner (normal mode) or recovery Restart button
@@ -773,19 +818,22 @@ function initAutoUpdater(): void {
       }, 5_000);
       // Existing behavior preserved: only push renderer error IPC after
       // confirmed update. Check-phase errors stay silent.
-      if (updateConfirmed) {
+      if (updateConfirmed || startupUpdateGateActive) {
         mainWindow?.webContents.send('update-error', {
           message,
           releaseUrl: 'https://github.com/talismanbruno/lumesync/releases/latest',
         });
       }
+      if (startupUpdateGateActive) {
+        setTimeout(() => loadMainApp(), 700);
+      }
     });
 
-    // Initial check with 10s delay (existing behavior)
+    // Check immediately while the branded startup screen is visible.
     setTimeout(() => {
       updateConfirmed = false;
       autoUpdater.checkForUpdates().catch(() => {});
-    }, 10_000);
+    }, startupUpdateGateActive ? 350 : 10_000);
 
     // Periodic check every 4 hours (existing behavior)
     setInterval(() => {

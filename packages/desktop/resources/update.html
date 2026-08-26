@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lume — Atualizando</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      display: grid;
+      place-items: center;
+      color: #f7fbff;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(0, 205, 238, .14), transparent 28%),
+        radial-gradient(circle at 14% 88%, rgba(123, 77, 255, .12), transparent 34%),
+        #05080b;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .shell { width: min(430px, calc(100vw - 64px)); text-align: center; }
+    .mark {
+      width: 88px; height: 88px; margin: 0 auto 30px; position: relative;
+      display: grid; place-items: center;
+    }
+    .halo, .halo::after {
+      position: absolute; inset: 0; border: 1px solid rgba(0, 216, 255, .34);
+      border-radius: 50%; content: "";
+    }
+    .halo { animation: orbit 2.8s linear infinite; }
+    .halo::after { inset: 9px; border-color: rgba(132, 94, 255, .26); animation: orbit 1.9s linear infinite reverse; }
+    .spark {
+      position: absolute; width: 9px; height: 9px; top: 4px; left: 40px;
+      border-radius: 50%; background: #12d9ff; box-shadow: 0 0 20px #12d9ff;
+    }
+    .glyph {
+      width: 48px; height: 31px; position: relative; z-index: 2;
+      border: 5px solid #eefcff; border-top: 0; border-radius: 0 0 24px 24px;
+    }
+    .glyph::after {
+      content: ""; position: absolute; width: 8px; height: 8px; right: -7px; top: -4px;
+      border-radius: 50%; background: #10d8f7; box-shadow: -35px 0 0 #eefcff;
+    }
+    .eyebrow { color: #53def7; font-size: 11px; font-weight: 750; letter-spacing: .22em; text-transform: uppercase; }
+    h1 { margin: 12px 0 8px; font-size: 27px; letter-spacing: -.035em; }
+    p { margin: 0; min-height: 24px; color: #8d9ba7; font-size: 14px; }
+    .track {
+      height: 5px; margin-top: 28px; overflow: hidden; border-radius: 99px;
+      background: rgba(255,255,255,.08);
+    }
+    .bar {
+      width: 18%; height: 100%; border-radius: inherit;
+      background: linear-gradient(90deg, #7966ff, #08d8f7);
+      box-shadow: 0 0 18px rgba(8,216,247,.55);
+      transition: width .28s ease;
+    }
+    .bar.indeterminate { animation: scan 1.35s ease-in-out infinite; }
+    .percent { margin-top: 11px; color: #61707d; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .note { position: fixed; bottom: 28px; color: #4f5b65; font-size: 11px; }
+    @keyframes orbit { to { transform: rotate(360deg); } }
+    @keyframes scan { 0% { transform: translateX(-120%); } 50% { transform: translateX(230%); } 100% { transform: translateX(520%); } }
+    @media (prefers-reduced-motion: reduce) { .halo, .halo::after, .bar { animation-duration: 4s; } }
+  </style>
+</head>
+<body>
+  <main class="shell" aria-live="polite">
+    <div class="mark" aria-hidden="true"><div class="halo"><span class="spark"></span></div><div class="glyph"></div></div>
+    <div class="eyebrow">Lume orbital</div>
+    <h1 id="title">Preparando o Lume</h1>
+    <p id="message">Procurando novidades para você…</p>
+    <div class="track"><div id="bar" class="bar indeterminate"></div></div>
+    <div id="percent" class="percent">VERIFICANDO</div>
+  </main>
+  <div class="note">Você não precisa fazer nada. O Lume abre sozinho.</div>
+  <script>
+    const title = document.getElementById('title');
+    const message = document.getElementById('message');
+    const bar = document.getElementById('bar');
+    const percent = document.getElementById('percent');
+
+    function downloading(version) {
+      title.textContent = 'Tem novidade chegando';
+      message.textContent = version ? `Baixando a versão ${version}…` : 'Baixando a atualização…';
+      percent.textContent = 'INICIANDO DOWNLOAD';
+    }
+    function installing(version) {
+      title.textContent = 'Tudo pronto';
+      message.textContent = version ? `Instalando a versão ${version}.` : 'Instalando a atualização.';
+      bar.classList.remove('indeterminate');
+      bar.style.width = '100%';
+      percent.textContent = 'REABRINDO O LUME';
+    }
+
+    window.backspace?.rendererReady();
+    window.backspace?.onUpdateAvailable(({ version }) => downloading(version));
+    window.backspace?.onUpdateProgress(({ percent: value }) => {
+      const rounded = Math.max(0, Math.min(100, Math.round(value)));
+      bar.classList.remove('indeterminate');
+      bar.style.width = `${Math.max(3, rounded)}%`;
+      percent.textContent = `${rounded}%`;
+    });
+    window.backspace?.onUpdateDownloaded(({ version }) => installing(version));
+    window.backspace?.onUpdateError(() => {
+      title.textContent = 'Abrindo o Lume';
+      message.textContent = 'A atualização fica para depois.';
+      percent.textContent = 'CONTINUANDO';
+    });
+    window.backspace?.getRecoveryState().then((state) => {
+      if (state.updateState === 'downloading') downloading(state.updateVersion);
+      if (state.updateState === 'downloaded') installing(state.updateVersion);
+    }).catch(() => {});
+  </script>
+</body>
+</html>
