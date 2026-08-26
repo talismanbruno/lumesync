@@ -14,6 +14,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { spawn } from 'child_process';
 import { startActivityDetection, stopActivityDetection, getCurrentActivity } from './activityDetector';
 import { KeybindManager } from './keybindManager';
 import { buildNotificationRoute, type NotificationNavigationTarget } from './notificationRoute';
@@ -68,6 +69,7 @@ let isQuitting = false;
 let pendingDeepLink: string | null = null;
 let startupUpdateGateActive = false;
 let startupUpdateFallback: ReturnType<typeof setTimeout> | null = null;
+let updateRelaunchGuardStarted = false;
 
 const knownInstanceOrigins = new Set<string>();
 
@@ -348,6 +350,32 @@ function loadMainApp(): void {
   mainWindow.loadURL(instanceUrl);
 }
 
+function installDownloadedUpdate(autoUpdater: { quitAndInstall: (isSilent?: boolean, isForceRunAfter?: boolean) => void }): void {
+  // electron-updater asks NSIS to relaunch Lume, but Windows can occasionally
+  // drop that final hand-off after the installer replaces the executable. A
+  // detached, hidden watchdog provides a safe second attempt. If Lume already
+  // reopened, the single-instance lock simply focuses that existing process.
+  if (process.platform === 'win32' && !updateRelaunchGuardStarted) {
+    updateRelaunchGuardStarted = true;
+    const target = process.execPath.replace(/'/g, "''");
+    const script = [
+      ` $target = '${target}'`,
+      'Start-Sleep -Seconds 20',
+      'for ($attempt = 0; $attempt -lt 24; $attempt++) {',
+      '  if (Test-Path -LiteralPath $target) { Start-Process -FilePath $target; exit 0 }',
+      '  Start-Sleep -Seconds 5',
+      '}',
+    ].join('; ');
+    const watchdog = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', script], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    watchdog.unref();
+  }
+  autoUpdater.quitAndInstall(true, true);
+}
+
 function createWindow(): void {
   const savedState = validateWindowBounds(loadWindowState());
 
@@ -610,7 +638,7 @@ function registerIpcHandlers(): void {
   ipcMain.on('install-update', () => {
     try {
       const { autoUpdater } = require('electron-updater');
-      autoUpdater.quitAndInstall(true, true);
+      installDownloadedUpdate(autoUpdater);
     } catch {
       // Auto-updater not available
     }
@@ -787,7 +815,7 @@ function initAutoUpdater(): void {
       if (startupUpdateGateActive) {
         // NSIS updates can be applied completely silently. The second `true`
         // starts Lume again after installation, matching the zero-click flow.
-        setTimeout(() => autoUpdater.quitAndInstall(true, true), 700);
+        setTimeout(() => installDownloadedUpdate(autoUpdater), 700);
         return;
       }
 

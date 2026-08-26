@@ -34,14 +34,7 @@
       position: absolute; width: 9px; height: 9px; top: 4px; left: 40px;
       border-radius: 50%; background: #12d9ff; box-shadow: 0 0 20px #12d9ff;
     }
-    .glyph {
-      width: 48px; height: 31px; position: relative; z-index: 2;
-      border: 5px solid #eefcff; border-top: 0; border-radius: 0 0 24px 24px;
-    }
-    .glyph::after {
-      content: ""; position: absolute; width: 8px; height: 8px; right: -7px; top: -4px;
-      border-radius: 50%; background: #10d8f7; box-shadow: -35px 0 0 #eefcff;
-    }
+    .brand-icon { width: 62px; height: 62px; position: relative; z-index: 2; object-fit: contain; }
     .eyebrow { color: #53def7; font-size: 11px; font-weight: 750; letter-spacing: .22em; text-transform: uppercase; }
     h1 { margin: 12px 0 8px; font-size: 27px; letter-spacing: -.035em; }
     p { margin: 0; min-height: 24px; color: #8d9ba7; font-size: 14px; }
@@ -65,7 +58,7 @@
 </head>
 <body>
   <main class="shell" aria-live="polite">
-    <div class="mark" aria-hidden="true"><div class="halo"><span class="spark"></span></div><div class="glyph"></div></div>
+    <div class="mark" aria-hidden="true"><div class="halo"><span class="spark"></span></div><img class="brand-icon" src="lume-mark.svg" alt="" /></div>
     <div class="eyebrow">Atualização Lume</div>
     <h1 id="title">Preparando o Lume</h1>
     <p id="message">Procurando novidades para você…</p>
