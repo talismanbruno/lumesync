@@ -222,6 +222,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       displayName: displayName?.trim() || null,
       passwordHash,
       isAdmin: isFirstUser ? 1 : 0,
+      // Native accounts created during the current pioneer phase receive the
+      // permanent badge automatically. Replicated identities are recognized by
+      // their home instance instead of being minted again here.
+      isPioneer: homeInstance ? 0 : 1,
       homeInstance: homeInstance || null,
       homeUserId: (homeInstance && homeUserId && typeof homeUserId === 'string') ? homeUserId : null,
       avatarColor,

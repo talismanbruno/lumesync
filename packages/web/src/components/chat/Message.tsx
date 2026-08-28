@@ -5,6 +5,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { MentionBadge } from './MentionBadge';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
+import { PioneerBadge } from '../ui/PioneerBadge';
 import { useContextMenuStore } from '../../stores/contextMenuStore';
 import { buildMessageMenuItems } from './messageMenuItems';
 import { useAuthStore } from '../../stores/authStore';
@@ -466,6 +467,7 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
               />
             </span>
             {displayIdentity.isAdmin && <VerifiedBadge size={14} />}
+            {displayIdentity.isPioneer && <PioneerBadge size={14} />}
             <span className="text-[11px] text-txt-tertiary leading-tight hover:cursor-default">
               {formatTime(message.createdAt)}
             </span>

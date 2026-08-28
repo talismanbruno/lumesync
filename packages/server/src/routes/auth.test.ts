@@ -513,6 +513,7 @@ describe('POST /api/auth/register — first-user-admin promotion', () => {
 
     const user = testDb.select().from(schema.users).where(eq(schema.users.username, 'firstuser')).get();
     expect(user?.isAdmin).toBe(1);
+    expect(user?.isPioneer).toBe(1);
   });
 
   it('second locally-registered user does NOT receive isAdmin', async () => {
@@ -530,6 +531,7 @@ describe('POST /api/auth/register — first-user-admin promotion', () => {
 
     const second = testDb.select().from(schema.users).where(eq(schema.users.username, 'seconduser')).get();
     expect(second?.isAdmin).toBe(0);
+    expect(second?.isPioneer).toBe(1);
   });
 
   it('federated user (homeInstance set) is never promoted to admin even if first in DB', async () => {
@@ -543,5 +545,6 @@ describe('POST /api/auth/register — first-user-admin promotion', () => {
 
     const user = testDb.select().from(schema.users).where(eq(schema.users.username, 'feduser@remote.example')).get();
     expect(user?.isAdmin).toBe(0);
+    expect(user?.isPioneer).toBe(0);
   });
 });

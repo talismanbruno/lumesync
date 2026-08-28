@@ -19,6 +19,8 @@ export interface User {
   status: UserStatus;
   customStatus: string | null;
   isAdmin: boolean;
+  /** Permanent recognition for accounts created during Lume's pioneer phase. */
+  isPioneer?: boolean;
   isDeleted?: boolean;
   discoverable?: boolean;
   profileUpdatedAt?: number;

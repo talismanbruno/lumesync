@@ -24,6 +24,7 @@ import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 import { useAudioDevices } from '../../hooks/useAudioDevices';
 import { DropdownItem } from '../modals/settingsPanels/_shared/SettingsPickerPrimitives';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
+import { PioneerBadge } from '../ui/PioneerBadge';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 export function ChannelSidebar() {
@@ -970,6 +971,7 @@ function UserAreaPanel({
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="truncate text-[14px] font-bold text-txt-primary">{user.displayName ?? user.username}</span>
                   {user.isAdmin && <VerifiedBadge size={15} />}
+                  {user.isPioneer && <PioneerBadge size={15} />}
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
@@ -1202,6 +1204,7 @@ function UserAreaPanel({
             <div className="flex items-center gap-1 min-w-0">
               <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight">{user.displayName ?? user.username}</span>
               {user.isAdmin && <VerifiedBadge size={13} />}
+              {user.isPioneer && <PioneerBadge size={13} />}
             </div>
             <div className="text-[11px] text-txt-tertiary truncate leading-tight group-hover:text-txt-secondary">@{user.username}</div>
           </div>

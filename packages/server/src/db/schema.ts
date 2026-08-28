@@ -10,6 +10,7 @@ export const users = sqliteTable('users', {
   status: text('status').default('offline'),
   customStatus: text('custom_status'),
   isAdmin: integer('is_admin').default(0),
+  isPioneer: integer('is_pioneer').notNull().default(0),
   homeInstance: text('home_instance'),
   homeUserId: text('home_user_id'),
   replicatedInstances: text('replicated_instances').default('[]'),
