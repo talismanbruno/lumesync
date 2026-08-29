@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
 import { buildVoiceModMenuItems, VolumeSliderItem } from './voiceMenuItems';
 import { VoiceUserRow } from './VoiceUserRow';
@@ -37,6 +38,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
   const currentVoiceChannel = useVoiceStore((s) => s.currentVoiceChannelId);
   const participants = useVoiceStore((s) => s.participants);
   const isLiveKitConnected = useVoiceStore((s) => s.isLiveKitConnected);
+  const openUserProfile = useUIStore((s) => s.openUserProfile);
 
   // For OUR channel: LiveKit participants are the single source of truth.
   // For other channels: use server-provided voiceUsers (only available source).
@@ -167,6 +169,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
             const displayName = member?.user.displayName ?? member?.user.username ?? participant?.username ?? userId;
             const avatar = member?.user.avatar ?? null;
             const avatarColor = member?.user.avatarColor;
+            const profileUser = member?.user ?? participant?.cachedUser ?? null;
             const wsStatus = voiceUserStates.get(userId);
             const isParticipantDeafened = userId === currentUserId
               ? localIsDeafened
@@ -189,12 +192,24 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
               <div
                 key={userId}
                 className={`px-[10px] py-1 rounded-[6px] hover:bg-interactive-hover transition-colors ${
-                  isDraggable ? 'cursor-grab active:cursor-grabbing' : ''
+                  isDraggable ? 'cursor-grab active:cursor-grabbing' : profileUser ? 'cursor-pointer' : ''
                 } ${isBeingDragged ? 'opacity-50' : ''}`}
                 draggable={isDraggable}
                 onDragStart={isDraggable ? userDrag!.onDragStart : undefined}
                 onDragEnd={isDraggable ? userDrag!.onDragEnd : undefined}
+                onClick={(event) => {
+                  if (!profileUser || isBeingDragged) return;
+                  openUserProfile(profileUser, { top: event.clientY, left: event.clientX + 12 });
+                }}
                 onContextMenu={(e) => handleContextMenu(e, userId)}
+                role={profileUser ? 'button' : undefined}
+                tabIndex={profileUser ? 0 : undefined}
+                onKeyDown={(event) => {
+                  if (!profileUser || (event.key !== 'Enter' && event.key !== ' ')) return;
+                  event.preventDefault();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  openUserProfile(profileUser, { top: rect.top, left: rect.right + 12 });
+                }}
               >
                 <VoiceUserRow
                   userId={member?.user.homeUserId ?? userId}

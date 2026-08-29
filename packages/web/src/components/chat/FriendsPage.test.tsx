@@ -8,11 +8,6 @@ import { useSpaceStore } from '../../stores/spaceStore';
 import { useUIStore } from '../../stores/uiStore';
 import type { Friend, FriendRequest } from '@backspace/shared';
 
-// Mock the mascot animation hook
-vi.mock('../../hooks/useMascotAnimation', () => ({
-  useMascotAnimation: vi.fn(),
-}));
-
 // Stub AudioManager to avoid AudioWorkletNode reference error in jsdom
 vi.mock('../../audio/AudioManager', () => ({
   AudioManager: {
@@ -497,7 +492,7 @@ describe('FriendsPage', () => {
     });
   });
 
-  describe('Empty state mascot messages', () => {
+  describe('Empty state messages', () => {
     it('shows "No one\'s online right now." in online tab when no friends online', () => {
       useSocialStore.setState({ friends: [], requests: [] });
       renderFriendsPage();
@@ -517,14 +512,14 @@ describe('FriendsPage', () => {
       expect(screen.queryByText(/Wumpus/)).not.toBeInTheDocument();
     });
 
-    it('shows "No pending requests — Nori is napping." in pending tab when empty', async () => {
+    it('shows "No pending requests." in pending tab when empty', async () => {
       const user = userEvent.setup();
       useSocialStore.setState({ friends: [], requests: [] });
       renderFriendsPage();
 
       await user.click(screen.getByText('Pedidos'));
 
-      expect(screen.getByText('Nenhum pedido pendente — Nori está descansando.')).toBeInTheDocument();
+      expect(screen.getByText('Nenhum pedido pendente.')).toBeInTheDocument();
       expect(screen.queryByText(/Wumpus/)).not.toBeInTheDocument();
     });
   });

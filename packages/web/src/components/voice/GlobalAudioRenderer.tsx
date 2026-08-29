@@ -88,6 +88,7 @@ export function GlobalAudioRenderer() {
 
   // Determine if someone is currently speaking (for stream attenuation)
   const someoneIsSpeaking = participants.some((p) => !p.isLocal && speakingParticipantIds.has(p.identity));
+  const localUserIsSpeaking = participants.some((p) => p.isLocal && speakingParticipantIds.has(p.identity));
 
   // Only render audio for remote participants
   const remoteParticipants = participants.filter((p) => !p.isLocal);
@@ -124,7 +125,10 @@ export function GlobalAudioRenderer() {
                 globalVolume={outputVolume}
                 perSourceVolume={streamVol}
                 isDeafened={isDeafened}
-                isMuted={isStreamMuted}
+                // Whole-screen loopback also captures Lume's own call output on
+                // desktop. Suppress the returned mix while the local person is
+                // speaking so their voice cannot come back as a delayed echo.
+                isMuted={isStreamMuted || localUserIsSpeaking}
                 attenuate={true}
                 someoneIsSpeaking={someoneIsSpeaking}
                 attenuationEnabled={streamAttenuationEnabled}

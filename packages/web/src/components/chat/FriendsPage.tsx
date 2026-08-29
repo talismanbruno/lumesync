@@ -17,7 +17,6 @@ import { MemberListToggleButton } from '../layout/MemberListToggleButton';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { getAvatarGradient } from '../../utils/gradients';
 import { api } from '../../api/client';
-import { Mascot } from '../ui/Mascot';
 import { useActivityStore } from '../../stores/activityStore';
 import { ActivityCard, hasRichActivity, getActivityAccentClass } from '../ui/ActivityCard';
 import { getPrimaryActivity } from '@backspace/shared/src/activities.js';
@@ -181,7 +180,6 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
             </h2>
             {onlineFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
-                <Mascot state="idle" className="w-32 h-32 mb-4" />
                 <p className="text-txt-tertiary text-sm">Ninguém está disponível agora.</p>
               </div>
             ) : (
@@ -201,7 +199,6 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
             </h2>
             {friends.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
-                <Mascot state="lonely" className="w-32 h-32 mb-4" />
                 <p className="text-txt-tertiary text-sm">Sua lista ainda está vazia — adicione alguém!</p>
               </div>
             ) : (
@@ -221,8 +218,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
             </h2>
             {[...pendingIncoming, ...pendingOutgoing].length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
-                <Mascot state="sleeping" className="w-32 h-32 mb-4" />
-                <p className="text-txt-tertiary text-sm">Nenhum pedido pendente — Nori está descansando.</p>
+                <p className="text-txt-tertiary text-sm">Nenhum pedido pendente.</p>
               </div>
             ) : (
               <>
@@ -295,8 +291,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
           <div className="flex-1 overflow-y-auto p-4">
             {activeFriends.length === 0 && idleFriends.length === 0 && offlineActivityFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Mascot state="sleeping" className="w-[100px] h-[100px]" />
-                <div className="text-sm text-txt-tertiary mt-4 max-w-[240px]">
+                <div className="text-sm text-txt-tertiary max-w-[240px]">
                   Tudo quieto por enquanto... Quando alguém iniciar uma atividade, ela aparece aqui.
                 </div>
               </div>

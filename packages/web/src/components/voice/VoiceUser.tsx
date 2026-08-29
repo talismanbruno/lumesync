@@ -4,6 +4,7 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
 import { buildVoiceModMenuItems, VolumeSliderItem } from './voiceMenuItems';
 import { useSpaceStore } from '../../stores/spaceStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useVoiceParticipantMeta } from '../../hooks/useVoiceParticipantMeta';
 import { getActiveRoom, setCameraSubscription } from '../../hooks/useLiveKit';
 import type { UserTile } from '../../hooks/useLiveKit';
@@ -28,6 +29,7 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
   const spaceId = useSpaceStore((s) => currentVoiceChannelId ? s.channelToSpaceMap.get(currentVoiceChannelId) : null);
 
   const openContextMenu = useContextMenuStore((s) => s.open);
+  const openUserProfile = useUIStore((s) => s.openUserProfile);
 
   const [, forceUpdate] = useState(0);
 
@@ -147,7 +149,19 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
           ? 'ring-[3px] ring-status-online shadow-[0_0_12px_rgba(134,239,172,0.25)]'
           : 'ring-1 ring-white/[0.06] hover:ring-white/10'
       } h-full w-full`}
+      onClick={(event) => {
+        if (!user) return;
+        openUserProfile(user, { top: event.clientY, left: event.clientX + 12 });
+      }}
       onContextMenu={handleContextMenu}
+      role={user ? 'button' : undefined}
+      tabIndex={user ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (!user || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        const rect = event.currentTarget.getBoundingClientRect();
+        openUserProfile(user, { top: rect.top, left: rect.right + 12 });
+      }}
     >
       {hasVideo ? (
         <video

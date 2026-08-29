@@ -10,7 +10,6 @@ import { VoiceChannel } from '../voice/VoiceChannel';
 import { VoiceControls } from '../voice/VoiceControls';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { Avatar } from '../ui/Avatar';
-import { Mascot } from '../ui/Mascot';
 import { wsSend } from '../../hooks/useWebSocket';
 import { AudioManager } from '../../audio/AudioManager';
 import { hasPermissionBit, PermissionBits } from '../../utils/permissions';
@@ -494,7 +493,6 @@ export function ChannelSidebar() {
             ))}
             {dmChannels.length === 0 && (
               <div className="flex flex-col items-center py-6 opacity-80">
-                <Mascot state="sleeping" className="w-20 h-20 mb-2" />
                 <p className="text-[13px] text-txt-tertiary">No conversations yet.</p>
               </div>
             )}

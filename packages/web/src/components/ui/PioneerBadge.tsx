@@ -12,15 +12,36 @@ export function PioneerBadge({
 }: PioneerBadgeProps) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center drop-shadow-[0_0_7px_rgba(103,232,249,0.42)] ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center drop-shadow-[0_1px_2px_rgba(161,104,0,0.35)] ${className}`}
       title={title}
       aria-label={title}
     >
-      <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <ellipse cx="9.5" cy="10" rx="6.8" ry="3.65" transform="rotate(-24 9.5 10)" stroke="#f6ca67" strokeWidth="1.55" />
-        <circle cx="9.5" cy="10" r="2.45" fill="#f6ca67" />
-        <circle cx="15.7" cy="6.2" r="1.6" fill="#38d9ff" />
-        <path d="M4.1 3.1v3.2M2.5 4.7h3.2" stroke="#fff2c6" strokeWidth="1.2" strokeLinecap="round" />
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="lume-pioneer-gold" x1="5" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#FFE477" />
+            <stop offset="0.48" stopColor="#F7BF2A" />
+            <stop offset="1" stopColor="#E69A12" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M12 1.4l2.25 2.05 3.02-.28.55 2.98 2.7 1.4-1.28 2.75 1.28 2.75-2.7 1.4-.55 2.98-3.02-.28L12 19.2l-2.25-2.05-3.02.28-.55-2.98-2.7-1.4 1.28-2.75-1.28-2.75 2.7-1.4.55-2.98 3.02.28L12 1.4z"
+          fill="url(#lume-pioneer-gold)"
+          stroke="#D48D0A"
+          strokeWidth="0.65"
+          strokeLinejoin="round"
+        />
+        <circle cx="12" cy="10.3" r="5.8" fill="#EBA619" fillOpacity="0.5" stroke="#FFF0A6" strokeWidth="0.65" />
+        <path
+          d="M12 5.85l.95 2.75 2.7.95-2.7.95L12 13.25l-.95-2.75-2.7-.95 2.7-.95L12 5.85z"
+          fill="white"
+        />
+        <path
+          d="M9.35 14.25c1.55.85 3.75.85 5.3 0"
+          stroke="white"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        />
       </svg>
     </span>
   );
