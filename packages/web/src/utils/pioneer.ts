@@ -1,10 +1,10 @@
 import type { User } from '@backspace/shared';
 
 /**
- * New server responses always carry `isPioneer`. The fallback only covers
- * sessions created before the field existed, while Lume's pioneer phase is
- * active for native accounts.
+ * Every native account belongs to Lume's current pioneer phase. Checking the
+ * origin as well keeps older sessions eligible even when they cached the old
+ * `isPioneer: false` default before this field existed on the server.
  */
 export function isPioneer(user: Pick<User, 'isPioneer' | 'homeInstance'> | null | undefined): boolean {
-  return user?.isPioneer === true || (user?.isPioneer === undefined && user?.homeInstance === null);
+  return user?.isPioneer === true || user?.homeInstance === null;
 }
