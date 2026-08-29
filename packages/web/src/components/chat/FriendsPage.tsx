@@ -12,6 +12,7 @@ import { useFederationStore } from '../../stores/federationStore';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
+import { isPioneer } from '../../utils/pioneer';
 import { MemberListToggleButton } from '../layout/MemberListToggleButton';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { getAvatarGradient } from '../../utils/gradients';
@@ -79,7 +80,7 @@ function ActivityFriendItem({
         <div className="flex min-w-0 items-center gap-1">
           <Username username={friendDisplayName} className={`text-sm leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`} />
           {canonical.isAdmin && <VerifiedBadge size={13} />}
-          {canonical.isPioneer && <PioneerBadge size={13} />}
+          {isPioneer(canonical) && <PioneerBadge size={14} />}
         </div>
         {!isOffline && isFederationGlobeApplicable(canonical) && (
           <div className="text-[10px] leading-[1.3] text-txt-tertiary truncate opacity-60">@{parseFederatedUsername(canonical.username).domain}</div>

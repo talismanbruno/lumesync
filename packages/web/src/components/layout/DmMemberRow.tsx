@@ -3,6 +3,7 @@ import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
+import { isPioneer } from '../../utils/pioneer';
 import { Username } from '../ui/Username';
 import { Tooltip } from '../ui/Tooltip';
 import { parseFederatedUsername, isFederationGlobeApplicable } from '../../utils/identity';
@@ -203,7 +204,7 @@ export function DmMemberRow({
             }`}
           />
           {canonical.isAdmin && <VerifiedBadge size={13} />}
-          {canonical.isPioneer && <PioneerBadge size={13} />}
+          {isPioneer(canonical) && <PioneerBadge size={14} />}
           {showGlobe && (
             <Tooltip content={canonical.username} position="top">
               <span data-federation-globe className="inline-flex">
