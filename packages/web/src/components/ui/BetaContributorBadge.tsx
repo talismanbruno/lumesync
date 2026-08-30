@@ -1,11 +1,12 @@
 import { useId } from 'react';
+import { BadgeTooltip } from './BadgeTooltip';
 
 /** A faceted cyan medal with a gold spark: distinct from the pioneer rosette. */
 export function BetaContributorBadge({ size = 16, className = '' }: { size?: number; className?: string }) {
   const gradientId = useId();
   const label = 'Colaborador Beta — ajudou a melhorar o Lume';
   return (
-    <span title={label} aria-label={label} className={`inline-flex shrink-0 items-center justify-center ${className}`}>
+    <BadgeTooltip name="Colaborador Beta" label={label} className={className}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="5" y1="2" x2="20" y2="23" gradientUnits="userSpaceOnUse">
@@ -19,6 +20,6 @@ export function BetaContributorBadge({ size = 16, className = '' }: { size?: num
         <path d="m12 3.5 5.8 3v6.3L12 16.5l-5.8-3.7V6.5L12 3.5Z" fill="#0D3D60" stroke="#8DEEE0" strokeWidth=".6" />
         <path d="m12 5.4 1.55 3.2 3.55.5-2.55 2.5.6 3.5L12 13.45 8.85 15.1l.6-3.5L6.9 9.1l3.55-.5L12 5.4Z" fill="#FFE18A" stroke="#FFF4CC" strokeWidth=".5" strokeLinejoin="round" />
       </svg>
-    </span>
+    </BadgeTooltip>
   );
 }

@@ -1,3 +1,5 @@
+import { BadgeTooltip } from './BadgeTooltip';
+
 interface PioneerBadgeProps {
   size?: number;
   className?: string;
@@ -11,10 +13,10 @@ export function PioneerBadge({
   title = 'Pioneiro do Lume — membro da fase beta',
 }: PioneerBadgeProps) {
   return (
-    <span
+    <BadgeTooltip
+      name={title === 'Pioneiro do Lume — membro da fase beta' ? 'Pioneiro do Lume' : title}
+      label={title}
       className={`inline-flex shrink-0 items-center justify-center drop-shadow-[0_1px_2px_rgba(161,104,0,0.35)] ${className}`}
-      title={title}
-      aria-label={title}
     >
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <defs>
@@ -43,6 +45,6 @@ export function PioneerBadge({
           strokeLinecap="round"
         />
       </svg>
-    </span>
+    </BadgeTooltip>
   );
 }
