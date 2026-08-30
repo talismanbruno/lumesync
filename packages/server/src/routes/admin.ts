@@ -5,7 +5,7 @@ import { authenticate, requireAdmin, hashPassword } from '../utils/auth.js';
 import { getStorageStats, getOrphanedFiles, cleanupStorage, cleanupOldMedia, cleanupStaleTusSessions } from '../utils/storageJanitor.js';
 import { getDb, schema } from '../db/index.js';
 import { connectionManager } from '../ws/handler.js';
-import { tombstoneUser, collectDeletionBroadcastTargets } from '../utils/userDeletion.js';
+import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse } from '@backspace/shared';
@@ -19,6 +19,7 @@ function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
     avatarColor: row.avatarColor,
     status: row.status ?? 'offline',
     isAdmin: row.isAdmin === 1,
+    isBetaContributor: row.isBetaContributor === 1,
     isDeleted: row.isDeleted === 1,
     homeInstance: row.homeInstance,
     createdAt: row.createdAt,
@@ -251,6 +252,37 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         user: sanitizeUser(updated),
       });
 
+      return reply.code(200).send(toAdminUser(updated));
+    },
+  );
+
+  // Recognition is independent of roles and cannot be granted through profile editing.
+  app.patch<{ Params: { id: string }; Body: { isBetaContributor: boolean } }>(
+    '/api/admin/users/:id/beta-contributor',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const enabled = request.body?.isBetaContributor;
+      if (typeof enabled !== 'boolean') {
+        return reply.code(400).send({ error: 'isBetaContributor must be a boolean', statusCode: 400 });
+      }
+      const db = getDb();
+      const target = db.select().from(schema.users).where(eq(schema.users.id, request.params.id)).get();
+      if (!target || target.isDeleted === 1) {
+        return reply.code(404).send({ error: 'Active user not found', statusCode: 404 });
+      }
+      if (target.homeInstance) {
+        return reply.code(400).send({ error: 'This badge can only be managed for local accounts', statusCode: 400 });
+      }
+      db.update(schema.users)
+        .set({ isBetaContributor: enabled ? 1 : 0, profileUpdatedAt: Date.now() })
+        .where(eq(schema.users.id, target.id)).run();
+      const updated = db.select().from(schema.users).where(eq(schema.users.id, target.id)).get()!;
+      const recipients = collectProfileBroadcastTargetIds(target.id);
+      recipients.add(target.id);
+      recipients.add(request.userId);
+      for (const userId of recipients) {
+        connectionManager.sendToUser(userId, { type: 'user_updated', user: sanitizeUser(updated) });
+      }
       return reply.code(200).send(toAdminUser(updated));
     },
   );

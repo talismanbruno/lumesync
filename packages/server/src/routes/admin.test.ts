@@ -104,6 +104,61 @@ function userToken(): string {
   return signJwt({ userId: USER_ID, username: USER_USERNAME });
 }
 
+describe('beta contributor recognition', () => {
+  const url = '/api/admin/users/user-1/beta-contributor';
+  it('requires authentication and administrator privileges', async () => {
+    expect((await app.inject({ method: 'PATCH', url, payload: { isBetaContributor: true } })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'PATCH', url, headers: { authorization: `Bearer ${userToken()}` }, payload: { isBetaContributor: true } })).statusCode).toBe(403);
+    expect(sqlite.prepare('SELECT is_beta_contributor FROM users WHERE id = ?').get(USER_ID)).toEqual({ is_beta_contributor: 0 });
+  });
+  it('grants and revokes persistently without changing roles or pioneer recognition', async () => {
+    const { connectionManager } = await import('../ws/handler.js');
+    const send = vi.spyOn(connectionManager, 'sendToUser');
+    for (const enabled of [true, true, false]) {
+      const response = await app.inject({ method: 'PATCH', url, headers: { authorization: `Bearer ${adminToken()}` }, payload: { isBetaContributor: enabled } });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({ id: USER_ID, isBetaContributor: enabled, isAdmin: false });
+      expect(sqlite.prepare('SELECT is_beta_contributor, is_admin, is_pioneer FROM users WHERE id = ?').get(USER_ID))
+        .toEqual({ is_beta_contributor: Number(enabled), is_admin: 0, is_pioneer: 0 });
+      expect(send).toHaveBeenCalledWith(USER_ID, expect.objectContaining({ type: 'user_updated', user: expect.objectContaining({ isBetaContributor: enabled }) }));
+      const list = await app.inject({ method: 'GET', url: '/api/admin/users', headers: { authorization: `Bearer ${adminToken()}` } });
+      expect(list.json().users.find((u: { id: string }) => u.id === USER_ID).isBetaContributor).toBe(enabled);
+    }
+    send.mockRestore();
+  });
+  it.each([{}, { isBetaContributor: 'true' }, { isBetaContributor: 1 }, { isBetaContributor: null }])('rejects invalid values %j', async (payload) => {
+    const response = await app.inject({ method: 'PATCH', url, headers: { authorization: `Bearer ${adminToken()}` }, payload });
+    expect(response.statusCode).toBe(400);
+  });
+  it('rejects unknown, deleted and federated accounts', async () => {
+    const headers = { authorization: `Bearer ${adminToken()}` };
+    const payload = { isBetaContributor: true };
+    expect((await app.inject({ method: 'PATCH', url: '/api/admin/users/missing/beta-contributor', headers, payload })).statusCode).toBe(404);
+    sqlite.prepare('UPDATE users SET is_deleted = 1 WHERE id = ?').run(USER_ID);
+    expect((await app.inject({ method: 'PATCH', url, headers, payload })).statusCode).toBe(404);
+    sqlite.prepare("UPDATE users SET is_deleted = 0, home_instance = 'https://other.example' WHERE id = ?").run(USER_ID);
+    expect((await app.inject({ method: 'PATCH', url, headers, payload })).statusCode).toBe(400);
+  });
+  it('hides recognition on deleted profiles', async () => {
+    const { sanitizeUser } = await import('../utils/sanitize.js');
+    sqlite.prepare('UPDATE users SET is_deleted = 1, is_beta_contributor = 1 WHERE id = ?').run(USER_ID);
+    const row = testDb.select().from(schema.users).all().find(u => u.id === USER_ID)!;
+    expect(sanitizeUser(row).isBetaContributor).toBe(false);
+  });
+  it('cannot be self-awarded through normal profile editing', async () => {
+    const { userRoutes } = await import('./users.js');
+    await app.register(userRoutes);
+    const response = await app.inject({
+      method: 'PATCH', url: '/api/users/@me',
+      headers: { authorization: `Bearer ${userToken()}` },
+      payload: { displayName: 'Still a normal user', isBetaContributor: true },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().isBetaContributor).toBe(false);
+    expect(sqlite.prepare('SELECT is_beta_contributor FROM users WHERE id = ?').get(USER_ID)).toEqual({ is_beta_contributor: 0 });
+  });
+});
+
 describe('POST /api/admin/storage/cleanup-tus', () => {
   it('rejects unauthenticated requests with 401', async () => {
     const res = await app.inject({

@@ -322,6 +322,7 @@ export class BackspaceApiClient {
     listUsers: (params?: { q?: string; page?: number; pageSize?: number; showDeleted?: boolean; homeInstance?: string; role?: string; joinedAfter?: string; joinedBefore?: string; sort?: string }) => Promise<AdminUserListResponse>;
     listInstances: () => Promise<{ instances: string[] }>;
     setUserRole: (userId: string, isAdmin: boolean) => Promise<AdminUser>;
+    setBetaContributor: (userId: string, isBetaContributor: boolean) => Promise<AdminUser>;
     resetUserPassword: (userId: string) => Promise<AdminResetPasswordResponse>;
     deleteUser: (userId: string) => Promise<{ success: boolean }>;
   };
@@ -810,6 +811,8 @@ export class BackspaceApiClient {
       listInstances: () => request<{ instances: string[] }>('GET', '/admin/users/instances'),
       setUserRole: (userId, isAdmin) =>
         request<AdminUser>('PATCH', `/admin/users/${userId}/role`, { isAdmin }),
+      setBetaContributor: (userId, isBetaContributor) =>
+        request<AdminUser>('PATCH', `/admin/users/${userId}/beta-contributor`, { isBetaContributor }),
       resetUserPassword: (userId) =>
         request<AdminResetPasswordResponse>('POST', `/admin/users/${userId}/reset-password`),
       deleteUser: (userId) =>

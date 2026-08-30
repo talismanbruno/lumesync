@@ -6,6 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { Username } from '../ui/Username';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
+import { BetaContributorBadge } from '../ui/BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { useUIStore } from '../../stores/uiStore';
 import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/spaceStore';
@@ -14,7 +15,7 @@ import { useSocialStore, type TaggedFriend, type TaggedFriendRequest } from '../
 import { mapServerErrorToMessage } from '../../utils/friendErrors';
 import { useAuthStore } from '../../stores/authStore';
 import { getAvatarGradient, getSpaceGradient, adjustColor, mutedGradient } from '../../utils/gradients';
-import { parseFederatedUsername, isSelf, canonicalUserMatch } from '../../utils/identity';
+import { parseFederatedUsername, isSelf, canonicalUserMatch, canonicalUserKey } from '../../utils/identity';
 import { loadFederatedMutuals, type TaggedMutualFriend, type MutualSpace } from '../../utils/mutuals';
 
 type Tab = 'about' | 'friends' | 'spaces';
@@ -67,7 +68,11 @@ export function UserProfileModal() {
   const cancelFriendRequest = useSocialStore((s) => s.cancelFriendRequest);
   const currentUser = useAuthStore((s) => s.user);
 
-  const [user, setUser] = useState<User | null>(null);
+  const [profileUser, setUser] = useState<User | null>(null);
+  // Keep open profiles in sync with admin recognition updates.
+  const user = useSpaceStore((state) => profileUser
+    ? state.userViews.get(canonicalUserKey(profileUser))?.user ?? profileUser
+    : null);
   const [userOrigin, setUserOrigin] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('about');
   const [mutualFriends, setMutualFriends] = useState<TaggedMutualFriend[]>([]);
@@ -294,6 +299,7 @@ export function UserProfileModal() {
               <Username username={displayName} className="text-[20px] font-bold leading-tight" />
               {user.isAdmin && <VerifiedBadge size={17} />}
               {isPioneer(user) && <PioneerBadge size={18} />}
+              {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={18} />}
             </div>
             <div className="text-[14px] text-txt-tertiary mt-0.5">
               <Username username={user.username} showAt className="text-[14px] text-txt-tertiary" />

@@ -25,7 +25,7 @@ export function InstancePanel() {
     { id: 'federation', label: 'Federation', badgeCount: approvalCount },
     { id: 'streaming', label: 'Streaming' },
     { id: 'storage', label: 'Storage' },
-    { id: 'users', label: 'Users' },
+    { id: 'users', label: 'Usuários e selos' },
   ], [approvalCount]);
 
   const handleNavigate = useCallback((id: string) => {

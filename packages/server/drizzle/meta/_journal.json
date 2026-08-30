@@ -85,6 +85,13 @@
       "when": 1787959894827,
       "tag": "0011_slippery_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788093884707,
+      "tag": "0012_beta_contributor",
+      "breakpoints": true
     }
   ]
 }

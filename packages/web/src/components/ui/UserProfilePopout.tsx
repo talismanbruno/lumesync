@@ -6,6 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { Username } from '../ui/Username';
 import { VerifiedBadge } from './VerifiedBadge';
 import { PioneerBadge } from './PioneerBadge';
+import { BetaContributorBadge } from './BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/spaceStore';
 import { api } from '../../api/client';
@@ -128,6 +129,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
             <Username username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
             {user.isAdmin && <VerifiedBadge size={15} />}
             {isPioneer(user) && <PioneerBadge size={16} />}
+            {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={16} />}
           </div>
           <div className="text-[13px] text-txt-tertiary">
             <Username username={user.username} showAt className="text-[13px] text-txt-tertiary" />

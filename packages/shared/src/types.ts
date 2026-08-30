@@ -21,6 +21,8 @@ export interface User {
   isAdmin: boolean;
   /** Permanent recognition for accounts created during Lume's pioneer phase. */
   isPioneer?: boolean;
+  /** Recognition granted by an instance admin for helping improve the beta. */
+  isBetaContributor?: boolean;
   isDeleted?: boolean;
   discoverable?: boolean;
   profileUpdatedAt?: number;
@@ -910,6 +912,7 @@ export interface AdminUser {
   avatarColor: string | null;
   status: string;
   isAdmin: boolean;
+  isBetaContributor?: boolean;
   isDeleted: boolean;
   homeInstance: string | null;
   createdAt: number;

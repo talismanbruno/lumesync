@@ -3,6 +3,7 @@ import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
+import { BetaContributorBadge } from '../ui/BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { Username } from '../ui/Username';
 import { Tooltip } from '../ui/Tooltip';
@@ -205,6 +206,7 @@ export function DmMemberRow({
           />
           {canonical.isAdmin && <VerifiedBadge size={13} />}
           {isPioneer(canonical) && <PioneerBadge size={14} />}
+          {canonical.isBetaContributor && !canonical.isDeleted && <BetaContributorBadge size={14} />}
           {showGlobe && (
             <Tooltip content={canonical.username} position="top">
               <span data-federation-globe className="inline-flex">

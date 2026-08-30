@@ -1,0 +1,10 @@
+# Reuse the deployed runtime only when package dependencies have not changed.
+# Pass its immutable local image ID/digest as BASE_IMAGE; keep the old image for rollback.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY packages/server/src/ /app/packages/server/src/
+COPY packages/server/drizzle/ /app/packages/server/drizzle/
+COPY packages/shared/src/ /app/packages/shared/src/
+COPY packages/web/dist/ /app/packages/web/dist/
+ARG BACKSPACE_COMMIT
+ENV BACKSPACE_COMMIT=${BACKSPACE_COMMIT}

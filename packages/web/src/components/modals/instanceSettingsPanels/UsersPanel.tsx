@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../../api/client';
 import { Avatar } from '../../ui/Avatar';
+import { BetaContributorBadge } from '../../ui/BetaContributorBadge';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { useAuthStore } from '../../../stores/authStore';
 import type { AdminUser, AdminUserListResponse } from '@backspace/shared';
@@ -26,6 +27,29 @@ export function UsersPanel() {
   // Confirm dialogs
   const [confirmAction, setConfirmAction] = useState<{ type: 'demote' | 'delete'; user: AdminUser } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [badgePendingId, setBadgePendingId] = useState<string | null>(null);
+  const [badgeNotice, setBadgeNotice] = useState('');
+
+  const handleToggleBetaContributor = async (user: AdminUser) => {
+    if (badgePendingId) return;
+    setBadgePendingId(user.id);
+    setBadgeNotice('');
+    setError('');
+    try {
+      const updated = await api.admin.setBetaContributor(user.id, !user.isBetaContributor);
+      setData((previous) => previous ? {
+        ...previous,
+        users: previous.users.map((entry) => entry.id === updated.id ? updated : entry),
+      } : previous);
+      setBadgeNotice(updated.isBetaContributor
+        ? `Selo Colaborador Beta concedido a @${updated.username}.`
+        : `Selo Colaborador Beta removido de @${updated.username}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível alterar o selo.');
+    } finally {
+      setBadgePendingId(null);
+    }
+  };
 
   // Temp password display
   const [tempPassword, setTempPassword] = useState<{ userId: string; password: string } | null>(null);
@@ -148,10 +172,18 @@ export function UsersPanel() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-txt-primary">Users</h2>
+      <h2 className="text-lg font-semibold text-txt-primary">Usuários</h2>
       <div className="text-xs text-txt-tertiary">
-        View and manage user accounts on this instance.
+        Gerencie as contas e os selos dos usuários do Lume.
       </div>
+      <div className="flex items-center gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] p-3">
+        <BetaContributorBadge size={32} />
+        <div className="min-w-0 text-xs text-txt-secondary">
+          <p className="font-semibold text-cyan-200">Colaborador Beta</p>
+          <p>Reconheça quem ajudou a melhorar o Lume com testes, ideias e relatos de bugs. O selo não concede permissões de admin.</p>
+        </div>
+      </div>
+      {badgeNotice && <p role="status" className="text-xs text-cyan-200">{badgeNotice}</p>}
 
       {/* Search */}
       <div className="flex items-center gap-3">
@@ -264,7 +296,7 @@ export function UsersPanel() {
 
             return (
               <div key={user.id}>
-                <div className={`flex items-center gap-3 rounded-lg bg-white/[0.02] p-3.5 ${hasTempPassword ? 'rounded-b-none' : ''}`}>
+                <div className={`flex flex-wrap items-center gap-3 rounded-lg bg-white/[0.02] p-3.5 ${hasTempPassword ? 'rounded-b-none' : ''}`}>
                   {/* Avatar */}
                   <div className={isDeleted ? 'opacity-50' : ''}>
                     <Avatar
@@ -284,6 +316,7 @@ export function UsersPanel() {
                       {user.displayName && !isDeleted && (
                         <span className="text-xs text-txt-tertiary truncate">{user.displayName}</span>
                       )}
+                      {user.isBetaContributor && !isDeleted && <BetaContributorBadge size={18} />}
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {user.isAdmin && (
@@ -309,7 +342,19 @@ export function UsersPanel() {
 
                   {/* Actions */}
                   {!isDeleted && (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex w-full flex-wrap items-center gap-1 shrink-0 sm:w-auto">
+                      {!isFederated && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBetaContributor(user)}
+                          disabled={badgePendingId !== null}
+                          aria-label={`${user.isBetaContributor ? 'Remover' : 'Conceder'} selo Colaborador Beta ${user.isBetaContributor ? 'de' : 'a'} @${user.username}`}
+                          className="flex items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2 py-1.5 text-[11px] text-cyan-200 hover:bg-cyan-300/10 disabled:opacity-40"
+                        >
+                          <BetaContributorBadge size={16} />
+                          {badgePendingId === user.id ? 'Salvando…' : user.isBetaContributor ? 'Remover selo' : 'Conceder selo'}
+                        </button>
+                      )}
                       {/* Toggle admin */}
                       <button
                         onClick={() => handleToggleAdmin(user)}

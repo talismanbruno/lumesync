@@ -24,6 +24,7 @@ import { useAudioDevices } from '../../hooks/useAudioDevices';
 import { DropdownItem } from '../modals/settingsPanels/_shared/SettingsPickerPrimitives';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
+import { BetaContributorBadge } from '../ui/BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 
@@ -971,6 +972,7 @@ function UserAreaPanel({
                   <span className="truncate text-[14px] font-bold text-txt-primary">{user.displayName ?? user.username}</span>
                   {user.isAdmin && <VerifiedBadge size={15} />}
                   {isPioneer(user) && <PioneerBadge size={16} />}
+                  {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={16} />}
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
@@ -1204,6 +1206,7 @@ function UserAreaPanel({
               <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight">{user.displayName ?? user.username}</span>
               {user.isAdmin && <VerifiedBadge size={13} />}
               {isPioneer(user) && <PioneerBadge size={14} />}
+              {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={14} />}
             </div>
             <div className="text-[11px] text-txt-tertiary truncate leading-tight group-hover:text-txt-secondary">@{user.username}</div>
           </div>
