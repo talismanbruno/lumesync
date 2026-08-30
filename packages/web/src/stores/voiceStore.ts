@@ -16,6 +16,7 @@ export interface ScreenShareConfig {
 
 interface VoiceState {
   voiceUsers: Map<string, string[]>; // channelId → userIds
+  departedVoiceUserIds: Set<string>; // Current server channel: suppress delayed LiveKit presence after WS leave.
   currentVoiceChannelId: string | null;
   isMuted: boolean;
   isDeafened: boolean;
@@ -157,6 +158,7 @@ export const useVoiceStore = create<VoiceState>()(
   persist(
     (set, get) => ({
       voiceUsers: new Map(),
+      departedVoiceUserIds: new Set(),
       currentVoiceChannelId: null,
       isMuted: false,
       pttActive: false,
@@ -249,7 +251,7 @@ export const useVoiceStore = create<VoiceState>()(
       setStreamVolume: (userId, volume) => {
         set((state) => {
           const newMap = new Map(state.streamVolumes);
-          newMap.set(userId, volume);
+          newMap.set(userId, Number.isFinite(volume) ? Math.max(0, Math.min(200, volume)) : 100);
           return { streamVolumes: newMap };
         });
       },
@@ -325,7 +327,11 @@ export const useVoiceStore = create<VoiceState>()(
         set((state) => {
           const newMap = new Map(state.voiceUsers);
           newMap.set(channelId, userIds);
-          return { voiceUsers: newMap };
+          const departedVoiceUserIds = new Set(state.departedVoiceUserIds);
+          if (state.currentVoiceChannelId === channelId) {
+            userIds.forEach(id => departedVoiceUserIds.delete(id));
+          }
+          return { voiceUsers: newMap, departedVoiceUserIds };
         });
       },
 
@@ -336,7 +342,9 @@ export const useVoiceStore = create<VoiceState>()(
           if (!current.includes(userId)) {
             newMap.set(channelId, [...current, userId]);
           }
-          return { voiceUsers: newMap };
+          const departedVoiceUserIds = new Set(state.departedVoiceUserIds);
+          if (state.currentVoiceChannelId === channelId) departedVoiceUserIds.delete(userId);
+          return { voiceUsers: newMap, departedVoiceUserIds };
         });
       },
 
@@ -345,16 +353,29 @@ export const useVoiceStore = create<VoiceState>()(
           const newMap = new Map(state.voiceUsers);
           const current = newMap.get(channelId) ?? [];
           newMap.set(channelId, current.filter(id => id !== userId));
-          return { voiceUsers: newMap };
+          if (state.currentVoiceChannelId !== channelId) return { voiceUsers: newMap };
+          const departedVoiceUserIds = new Set(state.departedVoiceUserIds);
+          departedVoiceUserIds.add(userId);
+          return {
+            voiceUsers: newMap,
+            departedVoiceUserIds,
+            participants: state.participants.filter(p => p.userId !== userId),
+          };
         });
       },
 
-      setCurrentVoiceChannel: (channelId) => set({ 
+      setCurrentVoiceChannel: (channelId) => set({
         currentVoiceChannelId: channelId,
+        departedVoiceUserIds: channelId === get().currentVoiceChannelId ? get().departedVoiceUserIds : new Set(),
         activeDmCall: null // Clear active DM call when joining a server channel
       }),
 
-      setParticipants: (participants) => set({ participants }),
+      setParticipants: (participants) => set((state) => ({
+        // A late SDK track event must not resurrect someone the server already removed.
+        participants: state.currentVoiceChannelId
+          ? participants.filter(p => !state.departedVoiceUserIds.has(p.userId))
+          : participants,
+      })),
       setSpeakingParticipants: (ids) => {
         const userIds = new Set<string>();
         for (const id of ids) {
@@ -508,9 +529,10 @@ export const useVoiceStore = create<VoiceState>()(
 
       getVoiceUsers: (channelId) => get().voiceUsers.get(channelId) ?? [],
 
-      clearAllVoiceUsers: () => set({ voiceUsers: new Map(), voiceUserStates: new Map() }),
+      clearAllVoiceUsers: () => set({ voiceUsers: new Map(), voiceUserStates: new Map(), departedVoiceUserIds: new Set() }),
 
       resetSession: () => set({
+        departedVoiceUserIds: new Set(),
         // Connection state
         hwOverdrive: false,
         voiceUsers: new Map(),
@@ -564,7 +586,8 @@ export const useVoiceStore = create<VoiceState>()(
       // Leave voice without wiping the voiceUsers map (so sidebar still shows others)
       leaveVoice: () => {
         const channelId = get().currentVoiceChannelId;
-        const myId = channelId ? getMyUserIdForOrigin(getChannelOrigin(channelId)) : undefined;
+        const myId = get().participants.find(p => p.isLocal)?.userId
+          ?? (channelId ? getMyUserIdForOrigin(getChannelOrigin(channelId)) : undefined);
 
         set((state) => {
           // Optimistic: immediately remove self from the channel's voice users
@@ -578,6 +601,7 @@ export const useVoiceStore = create<VoiceState>()(
 
           return {
             currentVoiceChannelId: null,
+            departedVoiceUserIds: new Set(),
             hwOverdrive: false,
             isCameraOn: false,
             isScreenSharing: false,
@@ -624,6 +648,7 @@ export const useVoiceStore = create<VoiceState>()(
       // where the server is the authority on who's actually in voice.
       handleForceDisconnect: () => {
         set({
+          departedVoiceUserIds: new Set(),
           currentVoiceChannelId: null,
           hwOverdrive: false,
           isCameraOn: false,
@@ -653,6 +678,7 @@ export const useVoiceStore = create<VoiceState>()(
       },
 
       reset: () => set({
+        departedVoiceUserIds: new Set(),
         voiceUsers: new Map(),
         currentVoiceChannelId: null,
         isMuted: false,
@@ -789,6 +815,7 @@ export const useVoiceStore = create<VoiceState>()(
         merged.spaceDeafenedUserIds = currentState.spaceDeafenedUserIds;
         merged.permissionMutedUserIds = currentState.permissionMutedUserIds;
         merged.voiceUsers = currentState.voiceUsers;
+        merged.departedVoiceUserIds = currentState.departedVoiceUserIds;
         merged.participants = currentState.participants;
         merged.speakingParticipantIds = currentState.speakingParticipantIds;
         merged.speakingUserIds = currentState.speakingUserIds;

@@ -40,7 +40,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
   const isLiveKitConnected = useVoiceStore((s) => s.isLiveKitConnected);
   const openUserProfile = useUIStore((s) => s.openUserProfile);
 
-  // For OUR channel: LiveKit participants are the single source of truth.
+  // For OUR channel: media participants, already filtered by authoritative WS leaves.
   // For other channels: use server-provided voiceUsers (only available source).
   const voiceUsers = useMemo(() => {
     if (currentVoiceChannel === channelId && isLiveKitConnected && participants.length > 0) {

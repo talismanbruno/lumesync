@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { useTransferStore, type Transfer } from '../../stores/transferStore';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 
@@ -30,6 +31,32 @@ export function TransferIndicator() {
 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const [position, setPosition] = useState({ top: 56, left: 8, maxHeight: 400 });
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const reposition = () => {
+      const anchor = buttonRef.current?.getBoundingClientRect();
+      if (!anchor) return;
+      const width = Math.min(300, window.innerWidth - 16);
+      const height = panelRef.current?.getBoundingClientRect().height ?? 400;
+      setPosition({
+        left: Math.max(8, Math.min(anchor.right - width, window.innerWidth - width - 8)),
+        top: Math.max(8, Math.min(anchor.bottom + 8, window.innerHeight - height - 8)),
+        maxHeight: Math.max(0, window.innerHeight - 16),
+      });
+    };
+    reposition();
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    return () => {
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
+    };
+  }, [open, visible.length]);
 
   // Click-outside-to-close. iOS Safari does not synthesize `mousedown` from
   // touch reliably, so we listen for `touchstart` alongside `mousedown` so the
@@ -38,13 +65,20 @@ export function TransferIndicator() {
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      if (!ref.current?.contains(e.target as Node) && !panelRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
     };
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('touchstart', onPointerDown, { passive: true });
+    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('touchstart', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
 
@@ -59,6 +93,7 @@ export function TransferIndicator() {
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
         className={`relative w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors ${
           idle
@@ -67,6 +102,8 @@ export function TransferIndicator() {
         }`}
         title="Transfers"
         aria-label="Transfers"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
       >
         <OrbitalIcon name="transfer" />
         {active.length > 0 && (
@@ -75,16 +112,15 @@ export function TransferIndicator() {
           </span>
         )}
       </button>
-      {open && (
-        // Desktop: anchor below the trigger via `absolute right-0 top-full`.
-        // Mobile (<768px): switch to `fixed` so the panel pins to the viewport
-        // right edge with an 8px margin instead of inheriting the trigger's
-        // x-position. This prevents left-edge clipping on narrow viewports
-        // (e.g. 320px) where the trigger sits well to the left of the
-        // viewport's right edge — `right-0` would otherwise anchor the
-        // panel to the trigger's right and let the 300px panel extend off
-        // the left of the viewport.
-        <div className="fixed right-2 top-14 md:absolute md:right-0 md:top-full md:mt-2 w-[min(300px,calc(100vw-16px))] glass z-50 rounded-lg overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={panelRef}
+          id={panelId}
+          role="dialog"
+          aria-label="Transfers"
+          style={position}
+          className="fixed w-[min(300px,calc(100vw-16px))] bg-surface-elevated border border-border-soft shadow-2xl z-[1000] rounded-lg overflow-y-auto"
+        >
           <div className="px-3 py-2 border-b border-border-soft text-xs flex justify-between items-center">
             <span className="text-txt-secondary">
               {visible.length} transfer{visible.length === 1 ? '' : 's'}
@@ -120,7 +156,8 @@ export function TransferIndicator() {
               />
             ))}
           </div>
-        </div>
+        </div>,
+        document.fullscreenElement ?? document.body,
       )}
     </div>
   );

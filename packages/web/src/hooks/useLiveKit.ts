@@ -334,7 +334,7 @@ export function useLiveKit() {
     processParticipant(r.localParticipant, true);
     r.remoteParticipants.forEach((p) => processParticipant(p, false));
     useVoiceStore.getState().setParticipants(allParticipants);
-    SpeakingDetector.getInstance().syncTracks(allParticipants);
+    SpeakingDetector.getInstance().syncTracks(useVoiceStore.getState().participants);
   }, []);
 
   const handleDataReceived = useCallback((payload: Uint8Array, participant?: RemoteParticipant) => {
@@ -860,6 +860,13 @@ export function useLiveKit() {
     deactivateHwOverdrive();
     connectedChannelRef.current = null;
     setConnectedChannelId(null);
+    // Clear visible/media state before the SDK's asynchronous teardown.
+    setRoom(null);
+    setIsConnected(false);
+    setIsConnecting(false);
+    setConnectionState(ConnectionState.Disconnected);
+    useVoiceStore.getState().setSpeakingParticipants(new Set());
+    useVoiceStore.setState({ participants: [], isLiveKitConnected: false });
     if (roomRef.current) {
       // Null out roomRef BEFORE destroying so that guardedUpdate() skips
       // during teardown. Without this, ParticipantDisconnected events fire
@@ -870,12 +877,7 @@ export function useLiveKit() {
       roomRef.current = null;
       _activeRoom = null;
       await destroyRoom(roomToDestroy);
-      setRoom(null);
-      setIsConnected(false);
-      setIsConnecting(false);
-      setConnectionState(ConnectionState.Disconnected);
-      useVoiceStore.getState().setSpeakingParticipants(new Set());
-      useVoiceStore.setState({ participants: [], isLiveKitConnected: false });
+      // A new connection may already have started; never clear state after this await.
     }
   }, []);
 
