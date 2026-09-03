@@ -71,6 +71,10 @@ import type {
   AttachProofResponse,
   ReattachRequest,
   ReattachResponse,
+  AdminInsights,
+  BugReportStatus,
+  CreateBugReportRequest,
+  VoiceDiagnosticRequest,
 } from '@backspace/shared';
 import { getApiForOrigin, getOwnerInstanceForDm } from '../utils/crossStoreResolvers';
 
@@ -325,6 +329,13 @@ export class BackspaceApiClient {
     setBetaContributor: (userId: string, isBetaContributor: boolean) => Promise<AdminUser>;
     resetUserPassword: (userId: string) => Promise<AdminResetPasswordResponse>;
     deleteUser: (userId: string) => Promise<{ success: boolean }>;
+    insights: () => Promise<AdminInsights>;
+    updateBugReport: (id: string, status: BugReportStatus) => Promise<{ success: boolean }>;
+  };
+
+  readonly feedback: {
+    reportBug: (data: CreateBugReportRequest) => Promise<{ id: string; success: boolean }>;
+    voiceDiagnostic: (data: VoiceDiagnosticRequest) => Promise<{ success: boolean }>;
   };
 
   constructor(baseUrl: string, getToken: () => string | null, onUnauthorized?: () => void) {
@@ -335,6 +346,16 @@ export class BackspaceApiClient {
       requireAuth = true,
     ): Promise<T> {
       const headers: Record<string, string> = {};
+
+      // Coarse regional context for the instance owner's aggregate dashboard.
+      // These values come from the browser itself; no raw IP is sent or stored.
+      if (typeof navigator !== 'undefined' && navigator.language) {
+        headers['X-Lume-Locale'] = navigator.language.slice(0, 35);
+      }
+      if (typeof Intl !== 'undefined') {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timeZone) headers['X-Lume-Timezone'] = timeZone.slice(0, 64);
+      }
 
       if (body) {
         headers['Content-Type'] = 'application/json';
@@ -386,7 +407,11 @@ export class BackspaceApiClient {
 
     this.auth = {
       register: (data: RegisterRequest) =>
-        request<AuthResponse>('POST', '/auth/register', data, false),
+        request<AuthResponse>('POST', '/auth/register', {
+          ...data,
+          locale: data.locale ?? (typeof navigator !== 'undefined' ? navigator.language : undefined),
+          timeZone: data.timeZone ?? (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined),
+        }, false),
       login: (data: LoginRequest) =>
         request<AuthResponse>('POST', '/auth/login', data, false),
       checkUsername: (username: string) =>
@@ -817,6 +842,14 @@ export class BackspaceApiClient {
         request<AdminResetPasswordResponse>('POST', `/admin/users/${userId}/reset-password`),
       deleteUser: (userId) =>
         request<{ success: boolean }>('DELETE', `/admin/users/${userId}`),
+      insights: () => request<AdminInsights>('GET', '/admin/insights'),
+      updateBugReport: (id, status) =>
+        request<{ success: boolean }>('PATCH', `/admin/bug-reports/${id}`, { status }),
+    };
+
+    this.feedback = {
+      reportBug: (data) => request<{ id: string; success: boolean }>('POST', '/feedback/bug-report', data),
+      voiceDiagnostic: (data) => request<{ success: boolean }>('POST', '/feedback/voice-diagnostic', data),
     };
   }
 }

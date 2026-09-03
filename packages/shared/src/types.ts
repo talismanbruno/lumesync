@@ -523,6 +523,9 @@ export interface RegisterRequest {
   homeInstance?: string;
   homeUserId?: string;
   inviteToken?: string;
+  /** Coarse, user-agent supplied signup context. Never contains an IP. */
+  locale?: string;
+  timeZone?: string;
 }
 
 export interface LoginRequest {
@@ -927,6 +930,61 @@ export interface AdminUserListResponse {
 
 export interface AdminResetPasswordResponse {
   temporaryPassword: string;
+}
+
+export type BugReportCategory = 'call' | 'audio' | 'screen_share' | 'messages' | 'interface' | 'other';
+export type BugReportStatus = 'open' | 'reviewing' | 'resolved';
+
+export interface BugReport {
+  id: string;
+  userId: string | null;
+  username: string | null;
+  category: BugReportCategory;
+  description: string;
+  diagnostics: Record<string, string | number | boolean | null> | null;
+  status: BugReportStatus;
+  createdAt: number;
+  resolvedAt: number | null;
+}
+
+export interface AdminInsights {
+  totals: {
+    users: number;
+    usersLast7Days: number;
+    onlineUsers: number;
+    spaces: number;
+    messages: number;
+    openBugReports: number;
+    voiceReconnectsLast24Hours: number;
+    voiceRecoveriesLast24Hours: number;
+    voiceDropsLast24Hours: number;
+  };
+  registrationsByRegion: Array<{ label: string; count: number }>;
+  registrationsByTimezone: Array<{ label: string; count: number }>;
+  recentRegistrations: Array<{
+    id: string;
+    username: string;
+    displayName: string | null;
+    countryCode: string | null;
+    timeZone: string | null;
+    createdAt: number;
+  }>;
+  bugReports: BugReport[];
+}
+
+export interface CreateBugReportRequest {
+  category: BugReportCategory;
+  description: string;
+  diagnostics?: Record<string, unknown>;
+}
+
+export interface VoiceDiagnosticRequest {
+  event: 'reconnecting' | 'recovered' | 'disconnected';
+  reason?: string;
+  channelKind?: 'server' | 'dm';
+  participantCount?: number;
+  connectionQuality?: string;
+  recoveryMs?: number;
 }
 
 // ─── Federation Relay Types ──────────────────────────────────────────────────

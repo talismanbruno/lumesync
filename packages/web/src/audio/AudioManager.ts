@@ -179,25 +179,28 @@ export class AudioManager {
    * avoiding inherited sound files from the upstream interface.
    */
   private createLumeSound(name: string): AudioBuffer {
-    const signatures: Record<string, { duration: number; notes: Array<[number, number, number, number]> }> = {
+    type SoundCharacter = 'glass' | 'warm' | 'hollow' | 'broadcast' | 'shutter';
+    const signatures: Record<string, { duration: number; character?: SoundCharacter; notes: Array<[number, number, number, number]> }> = {
       message: { duration: 0.34, notes: [[0.00, 0.18, 740, 1040], [0.10, 0.22, 1110, 1420]] },
-      user_join: { duration: 0.48, notes: [[0.00, 0.24, 360, 560], [0.13, 0.28, 620, 980]] },
-      user_leave: { duration: 0.44, notes: [[0.00, 0.25, 820, 520], [0.12, 0.27, 480, 270]] },
+      // Call events deliberately use different contours and timbres so they
+      // remain recognisable even on laptop speakers or at a low effects volume.
+      user_join: { duration: 0.43, character: 'glass', notes: [[0.00, 0.18, 390, 610], [0.10, 0.22, 660, 1050], [0.21, 0.17, 980, 1260]] },
+      user_leave: { duration: 0.47, character: 'warm', notes: [[0.00, 0.30, 690, 410], [0.18, 0.25, 390, 245]] },
       mute: { duration: 0.28, notes: [[0.00, 0.23, 560, 280]] },
       unmute: { duration: 0.28, notes: [[0.00, 0.23, 300, 680]] },
       deafen: { duration: 0.34, notes: [[0.00, 0.22, 520, 260], [0.08, 0.22, 390, 190]] },
       undeafen: { duration: 0.34, notes: [[0.00, 0.22, 230, 460], [0.08, 0.22, 350, 720]] },
-      disconnect: { duration: 0.52, notes: [[0.00, 0.30, 620, 310], [0.16, 0.30, 390, 150]] },
+      disconnect: { duration: 0.58, character: 'hollow', notes: [[0.00, 0.42, 330, 135], [0.22, 0.30, 170, 92]] },
       camera_on: { duration: 0.32, notes: [[0.00, 0.20, 420, 760], [0.10, 0.18, 700, 980]] },
       camera_off: { duration: 0.30, notes: [[0.00, 0.22, 760, 360]] },
-      stream_started: { duration: 0.52, notes: [[0.00, 0.26, 330, 660], [0.15, 0.30, 660, 1180]] },
-      stream_ended: { duration: 0.48, notes: [[0.00, 0.27, 980, 560], [0.13, 0.28, 520, 260]] },
+      stream_started: { duration: 0.62, character: 'broadcast', notes: [[0.00, 0.14, 520, 780], [0.19, 0.14, 520, 920], [0.38, 0.18, 660, 1320]] },
+      stream_ended: { duration: 0.42, character: 'shutter', notes: [[0.00, 0.09, 1220, 840], [0.12, 0.11, 720, 430], [0.25, 0.12, 390, 250]] },
       stream_user_joined: { duration: 0.38, notes: [[0.00, 0.20, 480, 720], [0.11, 0.20, 760, 1040]] },
       stream_user_left: { duration: 0.38, notes: [[0.00, 0.20, 860, 560], [0.11, 0.20, 520, 340]] },
       call_ringing: { duration: 3.2, notes: [[0.00, 0.42, 520, 820], [0.22, 0.42, 780, 1180], [1.62, 0.42, 520, 820], [1.84, 0.42, 780, 1180]] },
       call_calling: { duration: 2.8, notes: [[0.00, 0.34, 390, 620], [0.36, 0.34, 520, 830], [1.42, 0.34, 390, 620], [1.78, 0.34, 520, 830]] },
     };
-    const signature = signatures[name] ?? { duration: 0.3, notes: [[0, 0.24, 440, 660] as [number, number, number, number]] };
+    const signature = signatures[name] ?? { duration: 0.3, character: 'glass' as SoundCharacter, notes: [[0, 0.24, 440, 660] as [number, number, number, number]] };
     const sampleRate = this.ctx?.sampleRate ?? 48000;
     const buffer = this.ctx!.createBuffer(2, Math.ceil(signature.duration * sampleRate), sampleRate);
 
@@ -211,10 +214,29 @@ export class AudioManager {
           const progress = i / Math.max(1, count - 1);
           const frequency = (fromHz + (toHz - fromHz) * (progress * progress * (3 - 2 * progress))) * 0.82;
           phase += (Math.PI * 2 * frequency) / sampleRate;
-          const envelope = Math.pow(Math.sin(Math.PI * progress), 1.7);
-          const shimmer = Math.sin(phase) + Math.sin(phase * 2.01) * 0.07 + Math.sin(phase * 0.5) * 0.1;
+          const envelope = Math.pow(Math.sin(Math.PI * progress), signature.character === 'shutter' ? 3.2 : 1.7);
+          let tone: number;
+          switch (signature.character) {
+            case 'warm':
+              tone = Math.sin(phase) * 0.92 + Math.sin(phase * 0.5) * 0.18;
+              break;
+            case 'hollow':
+              tone = Math.sin(phase) * 0.58 + Math.sin(phase * 0.501) * 0.42;
+              break;
+            case 'broadcast': {
+              const pulse = 0.72 + 0.28 * Math.sin(progress * Math.PI * 6);
+              tone = (Math.sin(phase) + Math.sin(phase * 2.01) * 0.18) * pulse;
+              break;
+            }
+            case 'shutter':
+              tone = Math.sin(phase) * 0.72 + Math.sign(Math.sin(phase * 0.5)) * 0.12;
+              break;
+            default:
+              tone = Math.sin(phase) + Math.sin(phase * 2.01) * 0.08 + Math.sin(phase * 0.5) * 0.1;
+          }
           const sampleIndex = first + i;
-          data[sampleIndex] = (data[sampleIndex] ?? 0) + shimmer * envelope * 0.12;
+          const stereoWidth = signature.character === 'broadcast' ? (channel === 0 ? 0.95 : 1.08) : 1;
+          data[sampleIndex] = (data[sampleIndex] ?? 0) + tone * envelope * 0.12 * stereoWidth;
         }
       }
     }

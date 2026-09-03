@@ -17,6 +17,7 @@ type ModalType =
   | 'addDmMember'
   | 'groupDmSettings'
   | 'userProfile'
+  | 'bugReport'
   | null;
 
 interface MobileStackEntry {

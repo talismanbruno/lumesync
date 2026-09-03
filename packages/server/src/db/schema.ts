@@ -27,6 +27,9 @@ export const users = sqliteTable('users', {
   federationRegistryUpdatedAt: integer('federation_registry_updated_at').default(0),
   federationHealPending: integer('federation_heal_pending').default(0),
   federationHomeOrphaned: integer('federation_home_orphaned').default(0),
+  registrationLocale: text('registration_locale'),
+  registrationTimezone: text('registration_timezone'),
+  registrationCountryCode: text('registration_country_code'),
   createdAt: integer('created_at').notNull(),
 });
 
@@ -550,4 +553,37 @@ export const inviteRedemptions = sqliteTable('invite_redemptions', {
 }, (table) => ({
   inviteIdx: index('idx_invite_redemptions_invite_id').on(table.inviteId),
   userIdx: index('idx_invite_redemptions_user_id').on(table.userId),
+}));
+
+/** User-submitted feedback. Diagnostics are an intentionally small JSON
+ * snapshot (app version, platform and call health); message/audio content is
+ * never collected. */
+export const bugReports = sqliteTable('bug_reports', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  category: text('category').notNull(),
+  description: text('description').notNull(),
+  diagnostics: text('diagnostics'),
+  status: text('status').notNull().default('open'),
+  createdAt: integer('created_at').notNull(),
+  resolvedAt: integer('resolved_at'),
+}, (table) => ({
+  statusIdx: index('idx_bug_reports_status').on(table.status),
+  createdAtIdx: index('idx_bug_reports_created_at').on(table.createdAt),
+}));
+
+/** Privacy-minimal connection health events used to diagnose call drops. */
+export const voiceDiagnostics = sqliteTable('voice_diagnostics', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  event: text('event').notNull(),
+  reason: text('reason'),
+  channelKind: text('channel_kind'),
+  participantCount: integer('participant_count'),
+  connectionQuality: text('connection_quality'),
+  recoveryMs: integer('recovery_ms'),
+  createdAt: integer('created_at').notNull(),
+}, (table) => ({
+  createdAtIdx: index('idx_voice_diagnostics_created_at').on(table.createdAt),
+  userIdx: index('idx_voice_diagnostics_user_id').on(table.userId),
 }));

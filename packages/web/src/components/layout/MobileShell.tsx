@@ -28,6 +28,7 @@ import { FederationPanel } from '../modals/instanceSettingsPanels/FederationPane
 import { StreamingPanel } from '../modals/instanceSettingsPanels/StreamingPanel';
 import { StoragePanel } from '../modals/instanceSettingsPanels/StoragePanel';
 import { UsersPanel } from '../modals/instanceSettingsPanels/UsersPanel';
+import { InsightsPanel } from '../modals/instanceSettingsPanels/InsightsPanel';
 
 /**
  * Wrapper for the Federation sub-panel that forwards FederationPanel's
@@ -58,6 +59,12 @@ const screenMap: Record<string, (params?: Record<string, string>) => React.React
   'settings-keybinds': () => <MobileSettingsScreen initialPanel="keybinds" />,
   'settings-desktop': () => <MobileSettingsScreen initialPanel="desktop" />,
   'settings-instance': () => <MobileInstancePanel />,
+  'settings-instance-insights': () => (
+    <div className="flex flex-col h-full bg-surface-base">
+      <MobileScreenHeader title="Visão geral" rightActions={<TransferIndicator />} />
+      <div className="flex-1 overflow-y-auto p-4"><InsightsPanel /></div>
+    </div>
+  ),
   'settings-instance-general': () => (
     <div className="flex flex-col h-full bg-surface-base">
       <MobileScreenHeader title="General" rightActions={<TransferIndicator />} />

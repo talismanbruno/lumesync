@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull, or } from 'drizzle-orm';
 import { config } from '../config.js';
 import { getDb, schema } from '../db/index.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
@@ -110,6 +110,30 @@ export async function authenticate(
     (request as FastifyRequest & { userId: string; username: string }).userId = identity.userId;
     (request as FastifyRequest & { userId: string; username: string }).username = identity.username;
     (request as FastifyRequest & { userId: string; username: string }).homeInstance = identity.homeInstance;
+
+    // Backfill coarse signup-region metadata for existing native accounts on
+    // their next authenticated request. This makes the dashboard useful for
+    // the current community without retaining or exposing IP addresses.
+    if (!identity.homeInstance) {
+      const rawLocale = request.headers['x-lume-locale'];
+      const rawTimezone = request.headers['x-lume-timezone'];
+      const locale = typeof rawLocale === 'string' ? rawLocale.trim().slice(0, 35) : null;
+      const timeZone = typeof rawTimezone === 'string' && /^[A-Za-z0-9_+./-]{1,64}$/.test(rawTimezone) ? rawTimezone : null;
+      const localeParts = locale?.replace('_', '-').split('-') ?? [];
+      const possibleRegion = localeParts.length > 1
+        ? [...localeParts].reverse().find((part: string) => /^[A-Za-z]{2}$/.test(part))
+        : undefined;
+      if (locale || timeZone) {
+        getDb().update(schema.users).set({
+          registrationLocale: locale,
+          registrationTimezone: timeZone,
+          registrationCountryCode: possibleRegion?.toUpperCase() ?? null,
+        }).where(and(
+          eq(schema.users.id, identity.userId),
+          or(isNull(schema.users.registrationLocale), isNull(schema.users.registrationTimezone)),
+        )).run();
+      }
+    }
   } catch (err) {
     if (err instanceof AuthError) {
       return reply.code(err.statusCode).send({ error: err.message, statusCode: err.statusCode });

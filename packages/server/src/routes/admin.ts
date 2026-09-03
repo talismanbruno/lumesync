@@ -8,7 +8,7 @@ import { connectionManager } from '../ws/handler.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
-import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse } from '@backspace/shared';
+import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, BugReportStatus } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
   return {
@@ -27,6 +27,90 @@ function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
 }
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
+  // ─── Product health & feedback ──────────────────────────────────────────
+
+  app.get('/api/admin/insights', { preHandler: [authenticate, requireAdmin] }, async (_request, reply) => {
+    const db = getDb();
+    const now = Date.now();
+    const count = (table: any, where?: any) => db.select({ count: sql<number>`count(*)` }).from(table).where(where).get()?.count ?? 0;
+    const voiceCount = (event: string) => count(schema.voiceDiagnostics, and(
+      eq(schema.voiceDiagnostics.event, event),
+      gte(schema.voiceDiagnostics.createdAt, now - 86_400_000),
+    ));
+
+    const regionRows = db.select({ label: schema.users.registrationCountryCode, count: sql<number>`count(*)` })
+      .from(schema.users)
+      .where(and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0), isNotNull(schema.users.registrationCountryCode)))
+      .groupBy(schema.users.registrationCountryCode)
+      .orderBy(desc(sql<number>`count(*)`))
+      .all();
+    const timezoneRows = db.select({ label: schema.users.registrationTimezone, count: sql<number>`count(*)` })
+      .from(schema.users)
+      .where(and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0), isNotNull(schema.users.registrationTimezone)))
+      .groupBy(schema.users.registrationTimezone)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(12)
+      .all();
+    const recentRegistrations = db.select({
+      id: schema.users.id,
+      username: schema.users.username,
+      displayName: schema.users.displayName,
+      countryCode: schema.users.registrationCountryCode,
+      timeZone: schema.users.registrationTimezone,
+      createdAt: schema.users.createdAt,
+    }).from(schema.users)
+      .where(and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0)))
+      .orderBy(desc(schema.users.createdAt)).limit(12).all();
+
+    const reportRows = db.select().from(schema.bugReports).orderBy(desc(schema.bugReports.createdAt)).limit(50).all();
+    const authorIds = [...new Set(reportRows.flatMap((row) => row.userId ? [row.userId] : []))];
+    const authorRows = authorIds.length
+      ? db.select({ id: schema.users.id, username: schema.users.username }).from(schema.users)
+        .where(sql`${schema.users.id} IN (${sql.join(authorIds.map((id) => sql`${id}`), sql`, `)})`).all()
+      : [];
+    const authors = new Map(authorRows.map((row) => [row.id, row.username]));
+    const bugReports = reportRows.map((row) => {
+      let diagnostics = null;
+      try { diagnostics = row.diagnostics ? JSON.parse(row.diagnostics) : null; } catch { diagnostics = null; }
+      return { ...row, username: row.userId ? authors.get(row.userId) ?? null : null, diagnostics };
+    });
+
+    const response: AdminInsights = {
+      totals: {
+        users: count(schema.users, and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0))),
+        usersLast7Days: count(schema.users, and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0), gte(schema.users.createdAt, now - 7 * 86_400_000))),
+        onlineUsers: count(schema.users, and(isNull(schema.users.homeInstance), eq(schema.users.isDeleted, 0), ne(schema.users.status, 'offline'))),
+        spaces: count(schema.spaces),
+        messages: count(schema.messages) + count(schema.dmMessages),
+        openBugReports: count(schema.bugReports, ne(schema.bugReports.status, 'resolved')),
+        voiceReconnectsLast24Hours: voiceCount('reconnecting'),
+        voiceRecoveriesLast24Hours: voiceCount('recovered'),
+        voiceDropsLast24Hours: voiceCount('disconnected'),
+      },
+      registrationsByRegion: regionRows.map((row) => ({ label: row.label!, count: row.count })),
+      registrationsByTimezone: timezoneRows.map((row) => ({ label: row.label!, count: row.count })),
+      recentRegistrations,
+      bugReports: bugReports as AdminInsights['bugReports'],
+    };
+    return reply.code(200).send(response);
+  });
+
+  app.patch<{ Params: { id: string }; Body: { status: BugReportStatus } }>(
+    '/api/admin/bug-reports/:id',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const status = request.body?.status;
+      if (!['open', 'reviewing', 'resolved'].includes(status)) {
+        return reply.code(400).send({ error: 'Invalid report status', statusCode: 400 });
+      }
+      const resolvedAt = status === 'resolved' ? Date.now() : null;
+      const result = getDb().update(schema.bugReports).set({ status, resolvedAt })
+        .where(eq(schema.bugReports.id, request.params.id)).run();
+      if (result.changes === 0) return reply.code(404).send({ error: 'Bug report not found', statusCode: 404 });
+      return reply.code(200).send({ success: true });
+    },
+  );
+
   // ─── Storage Management ──────────────────────────────────────────────────
 
   // GET /api/admin/storage/stats — storage overview

@@ -41,6 +41,8 @@ import { useChatStore } from '../../stores/chatStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { AudioManager } from '../../audio/AudioManager';
+import { BugReportButton } from '../feedback/BugReportButton';
+import { BugReportModal } from '../modals/BugReportModal';
 
 export function AppLayout() {
   const { spaceId, channelId } = useParams<{ spaceId?: string; channelId?: string }>();
@@ -384,6 +386,8 @@ export function AppLayout() {
         <UpdateToast />
         <ToastContainer />
         <ContextMenuRenderer />
+        <BugReportButton />
+        <BugReportModal />
       </>
     );
   }
@@ -424,6 +428,8 @@ export function AppLayout() {
       <GlobalAudioRenderer />
       <NotificationController />
       <UpdateToast />
+      <BugReportButton />
+      <BugReportModal />
 
       {/* User Profile Popout */}
       {userProfilePopout.user && userProfilePopout.position && (

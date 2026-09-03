@@ -35,6 +35,7 @@ import {
 import { parseStreamWatch } from '../utils/streamWatchProtocol';
 import { getMediaStreamTrack } from '../utils/livekitInternals';
 import { deactivate as deactivateHwOverdrive } from '../utils/hwOverdrive';
+import { api } from '../api/client';
 
 let _activeRoom: Room | null = null;
 let _publishedScreenShareCodec: 'vp9' | 'h264' | null = null;
@@ -195,6 +196,7 @@ export function useLiveKit() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const roomRef = useRef<Room | null>(null);
   const connectedChannelRef = useRef<string | null>(null);
+  const reconnectStartedAtRef = useRef<number | null>(null);
   const switchCameraGenRef = useRef(0);
   
   const isMuted = useVoiceStore((s) => s.isMuted);
@@ -780,13 +782,40 @@ export function useLiveKit() {
           setConnectionState(state);
           const connected = state === ConnectionState.Connected;
           const connecting = state === ConnectionState.Connecting || state === ConnectionState.Reconnecting;
+          // A reconnecting room is still the active call. Keeping the session
+          // alive here lets LiveKit repair the transport without the UI briefly
+          // removing everyone or SoundController playing false leave/join cues.
+          const sessionActive = connected || state === ConnectionState.Reconnecting;
 
-          setIsConnected(connected);
+          setIsConnected(sessionActive);
           setIsConnecting(connecting);
 
-          useVoiceStore.getState().setIsLiveKitConnected(connected);
+          useVoiceStore.getState().setIsLiveKitConnected(sessionActive);
+
+          if (state === ConnectionState.Reconnecting && reconnectStartedAtRef.current === null) {
+            reconnectStartedAtRef.current = Date.now();
+            const voice = useVoiceStore.getState();
+            void api.feedback.voiceDiagnostic({
+              event: 'reconnecting',
+              channelKind: isDm ? 'dm' : 'server',
+              participantCount: voice.participants.length,
+              connectionQuality: voice.connectionQuality,
+            }).catch(() => {});
+          }
 
           if (connected) {
+            if (reconnectStartedAtRef.current !== null) {
+              const recoveryMs = Date.now() - reconnectStartedAtRef.current;
+              reconnectStartedAtRef.current = null;
+              const voice = useVoiceStore.getState();
+              void api.feedback.voiceDiagnostic({
+                event: 'recovered',
+                channelKind: isDm ? 'dm' : 'server',
+                participantCount: voice.participants.length,
+                connectionQuality: voice.connectionQuality,
+                recoveryMs,
+              }).catch(() => {});
+            }
             // On LiveKit reconnect, re-register with WS server (server may have restarted)
             if (connectedChannelRef.current) {
               registerWithServer();
@@ -797,6 +826,19 @@ export function useLiveKit() {
       });
       newRoom.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
         if (roomRef.current !== newRoom) return;
+        const reconnectWasPending = reconnectStartedAtRef.current !== null;
+        reconnectStartedAtRef.current = null;
+        if (reason !== DisconnectReason.CLIENT_INITIATED || reconnectWasPending) {
+          const voice = useVoiceStore.getState();
+          const reasonLabel = reason === undefined ? 'unknown' : String(DisconnectReason[reason] ?? reason);
+          void api.feedback.voiceDiagnostic({
+            event: 'disconnected',
+            reason: reasonLabel,
+            channelKind: isDm ? 'dm' : 'server',
+            participantCount: voice.participants.length,
+            connectionQuality: voice.connectionQuality,
+          }).catch(() => {});
+        }
         SpeakingDetector.getInstance().clear();
         setConnectionState(ConnectionState.Disconnected);
         setConnectedChannelId(null);

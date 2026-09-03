@@ -208,6 +208,21 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       ? requestedAvatarColor
       : AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
+    // Keep signup geography deliberately coarse. The browser locale/timezone
+    // helps admins understand their audience without storing a raw IP address.
+    const locale = !homeInstance && typeof request.body.locale === 'string'
+      ? request.body.locale.trim().slice(0, 35)
+      : null;
+    const timeZone = !homeInstance && typeof request.body.timeZone === 'string'
+      && /^[A-Za-z0-9_+./-]{1,64}$/.test(request.body.timeZone)
+      ? request.body.timeZone
+      : null;
+    const localeParts = locale?.replace('_', '-').split('-') ?? [];
+    const possibleRegion = localeParts.length > 1
+      ? [...localeParts].reverse().find((part: string) => /^[A-Za-z]{2}$/.test(part))
+      : undefined;
+    const countryCode = possibleRegion ? possibleRegion.toUpperCase() : null;
+
     // Note: status is left at the schema default ('offline') and is set to
     // 'online' exclusively by the WebSocket auth path (ws/handler.ts). A
     // successful REST /register does not by itself imply a live connection —
@@ -226,6 +241,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       // permanent badge automatically. Replicated identities are recognized by
       // their home instance instead of being minted again here.
       isPioneer: homeInstance ? 0 : 1,
+      registrationLocale: locale,
+      registrationTimezone: timeZone,
+      registrationCountryCode: countryCode,
       homeInstance: homeInstance || null,
       homeUserId: (homeInstance && homeUserId && typeof homeUserId === 'string') ? homeUserId : null,
       avatarColor,
