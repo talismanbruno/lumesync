@@ -25,10 +25,38 @@ export function UsersPanel() {
   const [instances, setInstances] = useState<string[]>([]);
 
   // Confirm dialogs
-  const [confirmAction, setConfirmAction] = useState<{ type: 'demote' | 'delete'; user: AdminUser } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'demote' | 'delete' | 'disconnect'; user: AdminUser } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [badgePendingId, setBadgePendingId] = useState<string | null>(null);
   const [badgeNotice, setBadgeNotice] = useState('');
+  const [moderationPendingId, setModerationPendingId] = useState<string | null>(null);
+  const regionNames = (() => {
+    try { return new Intl.DisplayNames(['pt-BR'], { type: 'region' }); } catch { return null; }
+  })();
+
+  const handleToggleSuspension = async (user: AdminUser) => {
+    if (moderationPendingId) return;
+    let reason: string | undefined;
+    if (!user.isSuspended) {
+      const entered = window.prompt(`Motivo da suspensão de @${user.username}:`, 'Revisão de segurança');
+      if (entered === null) return;
+      reason = entered.trim() || 'Revisão de segurança';
+    }
+    setModerationPendingId(user.id);
+    setError('');
+    try {
+      const updated = await api.admin.setUserSuspension(user.id, !user.isSuspended, reason);
+      setData((previous) => previous ? {
+        ...previous,
+        users: previous.users.map((entry) => entry.id === updated.id ? updated : entry),
+      } : previous);
+      setBadgeNotice(updated.isSuspended ? `@${updated.username} foi suspenso e desconectado.` : `@${updated.username} foi reativado.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível alterar a suspensão.');
+    } finally {
+      setModerationPendingId(null);
+    }
+  };
 
   const handleToggleBetaContributor = async (user: AdminUser) => {
     if (badgePendingId) return;
@@ -150,6 +178,9 @@ export function UsersPanel() {
     try {
       if (confirmAction.type === 'demote') {
         await api.admin.setUserRole(confirmAction.user.id, false);
+      } else if (confirmAction.type === 'disconnect') {
+        await api.admin.disconnectUser(confirmAction.user.id);
+        setBadgeNotice(`Sessões de @${confirmAction.user.username} foram encerradas.`);
       } else {
         await api.admin.deleteUser(confirmAction.user.id);
       }
@@ -334,15 +365,44 @@ export function UsersPanel() {
                           Deleted
                         </span>
                       )}
+                      {user.isSuspended && !isDeleted && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent-rose/20 text-accent-rose" title={user.suspensionReason || undefined}>
+                          Suspenso
+                        </span>
+                      )}
                       <span className="text-[10px] text-txt-tertiary">
                         {formatDate(user.createdAt)}
                       </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-txt-tertiary">
+                      <span>Região: {user.registrationCountryCode ? regionNames?.of(user.registrationCountryCode) ?? user.registrationCountryCode : 'pendente'}</span>
+                      <span>Fuso: {user.registrationTimezone || 'pendente'}</span>
+                      <span>IP: {user.lastIp || 'pendente'}</span>
+                      <span>Visto: {user.lastSeenAt ? new Date(user.lastSeenAt).toLocaleString('pt-BR') : 'pendente'}</span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   {!isDeleted && (
                     <div className="flex w-full flex-wrap items-center gap-1 shrink-0 sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => void handleToggleSuspension(user)}
+                        disabled={isSelf || moderationPendingId !== null}
+                        title={isSelf ? 'Você não pode suspender sua própria conta' : user.isSuspended ? 'Reativar conta' : 'Suspender e desconectar conta'}
+                        className={`rounded-lg border px-2 py-1.5 text-[11px] transition-colors disabled:opacity-40 ${user.isSuspended ? 'border-status-online/30 text-status-online hover:bg-status-online/10' : 'border-accent-rose/30 text-accent-rose hover:bg-accent-rose/10'}`}
+                      >
+                        {moderationPendingId === user.id ? 'Salvando…' : user.isSuspended ? 'Reativar' : 'Suspender'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmAction({ type: 'disconnect', user })}
+                        disabled={isSelf}
+                        title={isSelf ? 'Sua sessão atual não pode ser derrubada aqui' : 'Encerrar todas as sessões deste usuário'}
+                        className="rounded-lg border border-border-subtle px-2 py-1.5 text-[11px] text-txt-secondary hover:bg-white/[0.06] disabled:opacity-40"
+                      >
+                        Desconectar
+                      </button>
                       {!isFederated && (
                         <button
                           type="button"
@@ -466,6 +526,16 @@ export function UsersPanel() {
       )}
 
       {/* Confirm dialogs */}
+      <ConfirmDialog
+        isOpen={confirmAction?.type === 'disconnect'}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={handleConfirm}
+        title="Encerrar sessões"
+        description={<>Desconectar <strong>{confirmAction?.user.username}</strong> de todos os aparelhos? A senha não será alterada.</>}
+        confirmLabel="Desconectar"
+        variant="warning"
+        loading={actionLoading}
+      />
       <ConfirmDialog
         isOpen={!!resetConfirmUser}
         onClose={() => setResetConfirmUser(null)}

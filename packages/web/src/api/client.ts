@@ -73,6 +73,7 @@ import type {
   ReattachResponse,
   AdminInsights,
   AdminSpaceSummary,
+  AdminAuditLog,
   BugReportStatus,
   CreateBugReportRequest,
   VoiceDiagnosticRequest,
@@ -333,6 +334,10 @@ export class BackspaceApiClient {
     insights: () => Promise<AdminInsights>;
     listSpaces: () => Promise<{ spaces: AdminSpaceSummary[] }>;
     joinSpace: (spaceId: string) => Promise<{ success: boolean; joined: boolean; spaceId: string }>;
+    auditLog: (limit?: number) => Promise<{ events: AdminAuditLog[] }>;
+    setUserSuspension: (userId: string, suspended: boolean, reason?: string) => Promise<AdminUser>;
+    disconnectUser: (userId: string) => Promise<{ success: boolean }>;
+    transferSpaceOwner: (spaceId: string, username: string) => Promise<{ success: boolean; ownerId: string; ownerUsername: string; ownerDisplayName: string | null }>;
     updateBugReport: (id: string, status: BugReportStatus) => Promise<{ success: boolean }>;
   };
 
@@ -849,6 +854,12 @@ export class BackspaceApiClient {
       listSpaces: () => request<{ spaces: AdminSpaceSummary[] }>('GET', '/admin/spaces'),
       joinSpace: (spaceId) =>
         request<{ success: boolean; joined: boolean; spaceId: string }>('POST', `/admin/spaces/${spaceId}/join`),
+      auditLog: (limit = 80) => request<{ events: AdminAuditLog[] }>('GET', `/admin/audit-log?limit=${limit}`),
+      setUserSuspension: (userId, suspended, reason) =>
+        request<AdminUser>('PATCH', `/admin/users/${userId}/suspension`, { suspended, reason }),
+      disconnectUser: (userId) => request<{ success: boolean }>('POST', `/admin/users/${userId}/disconnect`),
+      transferSpaceOwner: (spaceId, username) =>
+        request<{ success: boolean; ownerId: string; ownerUsername: string; ownerDisplayName: string | null }>('POST', `/admin/spaces/${spaceId}/transfer-owner`, { username }),
       updateBugReport: (id, status) =>
         request<{ success: boolean }>('PATCH', `/admin/bug-reports/${id}`, { status }),
     };

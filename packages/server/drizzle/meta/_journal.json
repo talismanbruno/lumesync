@@ -99,6 +99,20 @@
       "when": 1788437159605,
       "tag": "0013_fearless_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1788473567054,
+      "tag": "0014_tranquil_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1788473694468,
+      "tag": "0015_volatile_wrecker",
+      "breakpoints": true
     }
   ]
 }

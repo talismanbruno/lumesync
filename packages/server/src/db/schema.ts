@@ -20,6 +20,9 @@ export const users = sqliteTable('users', {
   avatarColor: text('avatar_color'),
   bio: text('bio'),
   isDeleted: integer('is_deleted').default(0),
+  isSuspended: integer('is_suspended').notNull().default(0),
+  suspensionReason: text('suspension_reason'),
+  suspendedAt: integer('suspended_at'),
   discoverable: integer('discoverable').default(1),
   profileUpdatedAt: integer('profile_updated_at'),
   passwordChangedAt: integer('password_changed_at'),
@@ -30,6 +33,8 @@ export const users = sqliteTable('users', {
   registrationLocale: text('registration_locale'),
   registrationTimezone: text('registration_timezone'),
   registrationCountryCode: text('registration_country_code'),
+  lastIp: text('last_ip'),
+  lastSeenAt: integer('last_seen_at'),
   createdAt: integer('created_at').notNull(),
 });
 
@@ -586,4 +591,19 @@ export const voiceDiagnostics = sqliteTable('voice_diagnostics', {
 }, (table) => ({
   createdAtIdx: index('idx_voice_diagnostics_created_at').on(table.createdAt),
   userIdx: index('idx_voice_diagnostics_user_id').on(table.userId),
+}));
+
+/** Immutable trail of high-impact instance administration actions. */
+export const adminAuditLogs = sqliteTable('admin_audit_logs', {
+  id: text('id').primaryKey(),
+  adminId: text('admin_id').references(() => users.id, { onDelete: 'set null' }),
+  action: text('action').notNull(),
+  targetType: text('target_type').notNull(),
+  targetId: text('target_id').notNull(),
+  targetLabel: text('target_label'),
+  details: text('details'),
+  createdAt: integer('created_at').notNull(),
+}, (table) => ({
+  createdAtIdx: index('idx_admin_audit_logs_created_at').on(table.createdAt),
+  adminIdx: index('idx_admin_audit_logs_admin_id').on(table.adminId),
 }));

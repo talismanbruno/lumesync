@@ -917,7 +917,15 @@ export interface AdminUser {
   isAdmin: boolean;
   isBetaContributor?: boolean;
   isDeleted: boolean;
+  isSuspended: boolean;
+  suspensionReason: string | null;
+  suspendedAt: number | null;
   homeInstance: string | null;
+  registrationLocale: string | null;
+  registrationTimezone: string | null;
+  registrationCountryCode: string | null;
+  lastIp: string | null;
+  lastSeenAt: number | null;
   createdAt: number;
 }
 
@@ -945,6 +953,18 @@ export interface AdminSpaceSummary {
   memberCount: number;
   channelCount: number;
   joined: boolean;
+  createdAt: number;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  adminId: string | null;
+  adminUsername: string | null;
+  action: string;
+  targetType: string;
+  targetId: string;
+  targetLabel: string | null;
+  details: Record<string, unknown> | null;
   createdAt: number;
 }
 

@@ -8,7 +8,7 @@ import { connectionManager } from '../ws/handler.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
-import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, BugReportStatus, MemberWithUser } from '@backspace/shared';
+import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
   return {
@@ -21,9 +21,37 @@ function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
     isAdmin: row.isAdmin === 1,
     isBetaContributor: row.isBetaContributor === 1,
     isDeleted: row.isDeleted === 1,
+    isSuspended: row.isSuspended === 1,
+    suspensionReason: row.suspensionReason,
+    suspendedAt: row.suspendedAt,
     homeInstance: row.homeInstance,
+    registrationLocale: row.registrationLocale,
+    registrationTimezone: row.registrationTimezone,
+    registrationCountryCode: row.registrationCountryCode,
+    lastIp: row.lastIp,
+    lastSeenAt: row.lastSeenAt,
     createdAt: row.createdAt,
   };
+}
+
+function logAdminAction(
+  adminId: string,
+  action: string,
+  targetType: 'user' | 'space' | 'instance',
+  targetId: string,
+  targetLabel: string | null,
+  details?: Record<string, unknown>,
+): void {
+  getDb().insert(schema.adminAuditLogs).values({
+    id: crypto.randomUUID(),
+    adminId,
+    action,
+    targetType,
+    targetId,
+    targetLabel,
+    details: details ? JSON.stringify(details) : null,
+    createdAt: Date.now(),
+  }).run();
 }
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
@@ -203,9 +231,58 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
           };
           connectionManager.sendToSpace(space.id, { type: 'member_joined', spaceId: space.id, member });
         }
+        logAdminAction(request.userId, 'space.join_override', 'space', space.id, space.name);
       }
 
       return reply.code(200).send({ success: true, joined: !existing, spaceId: space.id });
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: { username?: string } }>(
+    '/api/admin/spaces/:id/transfer-owner',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const username = request.body?.username?.trim().toLowerCase();
+      if (!username) return reply.code(400).send({ error: 'username is required', statusCode: 400 });
+      const db = getDb();
+      const space = db.select().from(schema.spaces).where(eq(schema.spaces.id, request.params.id)).get();
+      if (!space) return reply.code(404).send({ error: 'Space not found', statusCode: 404 });
+      const target = db.select().from(schema.users).where(eq(schema.users.username, username)).get();
+      if (!target || target.isDeleted === 1) return reply.code(404).send({ error: 'Active user not found', statusCode: 404 });
+      const membership = db.select().from(schema.spaceMembers).where(and(
+        eq(schema.spaceMembers.spaceId, space.id),
+        eq(schema.spaceMembers.userId, target.id),
+      )).get();
+      if (!membership) return reply.code(400).send({ error: 'The new owner must already be a member of this space', statusCode: 400 });
+      const previousOwner = db.select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.id, space.ownerId)).get();
+      db.update(schema.spaces).set({ ownerId: target.id }).where(eq(schema.spaces.id, space.id)).run();
+      const members = db.select({ userId: schema.spaceMembers.userId }).from(schema.spaceMembers).where(eq(schema.spaceMembers.spaceId, space.id)).all();
+      for (const member of members) connectionManager.pushReadyPayload(member.userId);
+      logAdminAction(request.userId, 'space.transfer_owner', 'space', space.id, space.name, {
+        from: previousOwner?.username ?? space.ownerId,
+        to: target.username,
+      });
+      return reply.code(200).send({ success: true, ownerId: target.id, ownerUsername: target.username, ownerDisplayName: target.displayName });
+    },
+  );
+
+  app.get<{ Querystring: { limit?: string } }>(
+    '/api/admin/audit-log',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const limit = Math.min(200, Math.max(1, Number.parseInt(request.query.limit || '80', 10) || 80));
+      const db = getDb();
+      const rows = db.select().from(schema.adminAuditLogs)
+        .orderBy(desc(schema.adminAuditLogs.createdAt)).limit(limit).all();
+      const adminIds = new Set(rows.flatMap((row) => row.adminId ? [row.adminId] : []));
+      const adminNames = new Map(db.select({ id: schema.users.id, username: schema.users.username })
+        .from(schema.users).all().filter((user) => adminIds.has(user.id)).map((user) => [user.id, user.username]));
+      const events: AdminAuditLog[] = rows.map((row) => {
+        let details: Record<string, unknown> | null = null;
+        try { details = row.details ? JSON.parse(row.details) : null; } catch { details = null; }
+        return { ...row, adminUsername: row.adminId ? adminNames.get(row.adminId) ?? null : null, details };
+      });
+      return reply.code(200).send({ events });
     },
   );
 
@@ -434,6 +511,8 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         user: sanitizeUser(updated),
       });
 
+      logAdminAction(request.userId, isAdmin ? 'user.promote_admin' : 'user.demote_admin', 'user', target.id, target.username);
+
       return reply.code(200).send(toAdminUser(updated));
     },
   );
@@ -465,6 +544,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       for (const userId of recipients) {
         connectionManager.sendToUser(userId, { type: 'user_updated', user: sanitizeUser(updated) });
       }
+      logAdminAction(request.userId, enabled ? 'user.grant_beta_badge' : 'user.remove_beta_badge', 'user', target.id, target.username);
       return reply.code(200).send(toAdminUser(updated));
     },
   );
@@ -499,8 +579,51 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       // Force re-auth by disconnecting all sessions
       connectionManager.forceDisconnectUser(targetId);
 
+      logAdminAction(request.userId, 'user.reset_password', 'user', target.id, target.username);
+
       const response: AdminResetPasswordResponse = { temporaryPassword };
       return reply.code(200).send(response);
+    },
+  );
+
+  // Temporarily block a local or federated account without deleting its data.
+  app.patch<{ Params: { id: string }; Body: { suspended: boolean; reason?: string } }>(
+    '/api/admin/users/:id/suspension',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const suspended = request.body?.suspended;
+      const reason = typeof request.body?.reason === 'string' ? request.body.reason.trim().slice(0, 240) : '';
+      if (typeof suspended !== 'boolean') return reply.code(400).send({ error: 'suspended must be a boolean', statusCode: 400 });
+      if (request.params.id === request.userId) return reply.code(400).send({ error: 'You cannot suspend your own account', statusCode: 400 });
+      const db = getDb();
+      const target = db.select().from(schema.users).where(eq(schema.users.id, request.params.id)).get();
+      if (!target || target.isDeleted === 1) return reply.code(404).send({ error: 'Active user not found', statusCode: 404 });
+      db.update(schema.users).set({
+        isSuspended: suspended ? 1 : 0,
+        suspensionReason: suspended ? reason || 'Suspended by instance administration' : null,
+        suspendedAt: suspended ? Date.now() : null,
+        ...(suspended ? { passwordChangedAt: Date.now(), status: 'offline' } : {}),
+      }).where(eq(schema.users.id, target.id)).run();
+      if (suspended) connectionManager.forceDisconnectUser(target.id);
+      logAdminAction(request.userId, suspended ? 'user.suspend' : 'user.unsuspend', 'user', target.id, target.username, reason ? { reason } : undefined);
+      const updated = db.select().from(schema.users).where(eq(schema.users.id, target.id)).get()!;
+      return reply.code(200).send(toAdminUser(updated));
+    },
+  );
+
+  // Revoke active tokens and sockets while keeping the password unchanged.
+  app.post<{ Params: { id: string } }>(
+    '/api/admin/users/:id/disconnect',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      if (request.params.id === request.userId) return reply.code(400).send({ error: 'You cannot disconnect your own admin session here', statusCode: 400 });
+      const db = getDb();
+      const target = db.select().from(schema.users).where(eq(schema.users.id, request.params.id)).get();
+      if (!target || target.isDeleted === 1) return reply.code(404).send({ error: 'Active user not found', statusCode: 404 });
+      db.update(schema.users).set({ passwordChangedAt: Date.now(), status: 'offline' }).where(eq(schema.users.id, target.id)).run();
+      connectionManager.forceDisconnectUser(target.id);
+      logAdminAction(request.userId, 'user.force_disconnect', 'user', target.id, target.username);
+      return reply.code(200).send({ success: true });
     },
   );
 
@@ -565,6 +688,8 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       }
 
       connectionManager.forceDisconnectUser(targetId);
+
+      logAdminAction(request.userId, 'user.delete', 'user', target.id, target.username);
 
       return reply.code(200).send({ success: true });
     },

@@ -403,6 +403,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(401).send({ error: 'This account has been deleted', statusCode: 401 });
     }
 
+    if (user.isSuspended) {
+      return reply.code(403).send({
+        error: user.suspensionReason ? `Account suspended: ${user.suspensionReason}` : 'This account has been suspended',
+        statusCode: 403,
+      });
+    }
+
     const validPassword = await verifyPassword(password, user.passwordHash);
     if (!validPassword) {
       // For federated users, try verifying against the home instance.

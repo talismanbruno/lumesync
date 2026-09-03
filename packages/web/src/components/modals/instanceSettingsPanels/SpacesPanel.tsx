@@ -17,6 +17,7 @@ export function SpacesPanel() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
   const addToast = useUIStore((state) => state.addToast);
   const isMobile = useUIStore((state) => state.isMobile);
 
@@ -63,6 +64,40 @@ export function SpacesPanel() {
     }
   };
 
+  const copyId = async (space: AdminSpaceSummary) => {
+    await navigator.clipboard.writeText(space.id);
+    addToast('ID do servidor copiado.', 'success');
+  };
+
+  const copyInvite = async (space: AdminSpaceSummary) => {
+    setActionId(space.id);
+    try {
+      const { inviteCode } = await api.spaces.invite(space.id);
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${inviteCode}`);
+      addToast('Link de convite copiado.', 'success');
+    } catch {
+      addToast('Este servidor não aceita convite direto.', 'warning');
+    } finally { setActionId(null); }
+  };
+
+  const transferOwner = async (space: AdminSpaceSummary) => {
+    const username = window.prompt(`Novo dono de ${space.name} (usuário que já participa do servidor):`);
+    if (!username?.trim()) return;
+    setActionId(space.id);
+    try {
+      const result = await api.admin.transferSpaceOwner(space.id, username.trim());
+      setSpaces((current) => current.map((item) => item.id === space.id ? {
+        ...item,
+        ownerId: result.ownerId,
+        ownerUsername: result.ownerUsername,
+        ownerDisplayName: result.ownerDisplayName,
+      } : item));
+      addToast(`Dono de ${space.name} alterado.`, 'success');
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Não foi possível trocar o dono.', 'warning');
+    } finally { setActionId(null); }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,6 +141,11 @@ export function SpacesPanel() {
                   <span className="shrink-0 rounded-full bg-accent-primary/10 px-2 py-0.5 text-[9px] font-semibold text-accent-primary">{VISIBILITY_LABELS[space.visibility] ?? space.visibility}</span>
                 </div>
                 <p className="truncate text-[11px] text-txt-tertiary">Dono: {space.ownerDisplayName || `@${space.ownerUsername}`} · {space.memberCount} membros · {space.channelCount} canais</p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  <button onClick={() => void copyId(space)} className="text-[10px] text-txt-tertiary hover:text-txt-primary">Copiar ID</button>
+                  {space.visibility !== 'request' && <button disabled={actionId !== null} onClick={() => void copyInvite(space)} className="text-[10px] text-txt-tertiary hover:text-txt-primary disabled:opacity-40">Copiar convite</button>}
+                  <button disabled={actionId !== null} onClick={() => void transferOwner(space)} className="text-[10px] text-accent-amber hover:opacity-80 disabled:opacity-40">Trocar dono</button>
+                </div>
               </div>
               <button disabled={joiningId !== null} onClick={() => void openSpace(space)} className="shrink-0 rounded-lg bg-accent-primary px-3 py-2 text-xs font-semibold text-surface-base transition-opacity hover:opacity-90 disabled:opacity-50">
                 {joiningId === space.id ? 'Entrando…' : space.joined ? 'Abrir' : 'Entrar'}

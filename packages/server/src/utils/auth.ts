@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { and, eq, isNull, or } from 'drizzle-orm';
+import { and, eq, isNull, lte, ne, or } from 'drizzle-orm';
 import { config } from '../config.js';
 import { getDb, schema } from '../db/index.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
@@ -71,12 +71,20 @@ export async function verifyJwtAndUser(token: string): Promise<{
   const user = db.select({
     id: schema.users.id,
     isDeleted: schema.users.isDeleted,
+    isSuspended: schema.users.isSuspended,
+    suspensionReason: schema.users.suspensionReason,
     passwordChangedAt: schema.users.passwordChangedAt,
     homeInstance: schema.users.homeInstance,
   }).from(schema.users).where(eq(schema.users.id, payload.userId)).get();
 
   if (!user || user.isDeleted === 1) {
     throw new AuthError('This account has been deleted', 401);
+  }
+
+  if (user.isSuspended === 1) {
+    throw new AuthError(user.suspensionReason
+      ? `Account suspended: ${user.suspensionReason}`
+      : 'This account has been suspended', 403);
   }
 
   // Reject tokens issued before the last password change (token revocation).
@@ -110,6 +118,21 @@ export async function authenticate(
     (request as FastifyRequest & { userId: string; username: string }).userId = identity.userId;
     (request as FastifyRequest & { userId: string; username: string }).username = identity.username;
     (request as FastifyRequest & { userId: string; username: string }).homeInstance = identity.homeInstance;
+
+    // Keep a single, current moderation signal instead of retaining IP history.
+    // Fastify trustProxy is enabled at the app boundary, so request.ip resolves
+    // the original client supplied by the trusted Caddy proxy.
+    const clientIp = request.ip.replace(/^::ffff:/, '').slice(0, 64);
+    const seenAt = Date.now();
+    getDb().update(schema.users).set({ lastIp: clientIp, lastSeenAt: seenAt }).where(and(
+      eq(schema.users.id, identity.userId),
+      or(
+        isNull(schema.users.lastIp),
+        ne(schema.users.lastIp, clientIp),
+        isNull(schema.users.lastSeenAt),
+        lte(schema.users.lastSeenAt, seenAt - 15 * 60_000),
+      ),
+    )).run();
 
     // Backfill coarse signup-region metadata for existing native accounts on
     // their next authenticated request. This makes the dashboard useful for
