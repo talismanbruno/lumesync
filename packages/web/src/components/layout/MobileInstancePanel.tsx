@@ -7,7 +7,7 @@ import { api } from '../../api/client';
 import { onFederationPeersChanged } from '../../hooks/useWebSocket';
 
 type SectionDef = {
-  id: 'insights' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
+  id: 'insights' | 'spaces' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
   label: string;
   icon: React.ReactNode;
 };
@@ -19,6 +19,15 @@ const sections: SectionDef[] = [
     icon: (
       <svg className="w-5 h-5 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.5h4.5V21H3v-7.5Zm6.75-6H14V21H9.75V7.5Zm6.75-4.5H21v18h-4.5V3Z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'spaces',
+    label: 'Servidores',
+    icon: (
+      <svg className="w-5 h-5 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5M6.75 4.5v4.5m0 0v6m0 0v4.5" />
       </svg>
     ),
   },

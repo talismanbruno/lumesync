@@ -8,7 +8,7 @@ import { connectionManager } from '../ws/handler.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
-import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, BugReportStatus } from '@backspace/shared';
+import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, BugReportStatus, MemberWithUser } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
   return {
@@ -108,6 +108,104 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         .where(eq(schema.bugReports.id, request.params.id)).run();
       if (result.changes === 0) return reply.code(404).send({ error: 'Bug report not found', statusCode: 404 });
       return reply.code(200).send({ success: true });
+    },
+  );
+
+  // ─── Space Management ───────────────────────────────────────────────────
+
+  // Instance admins can audit every local space, including private ones.
+  app.get('/api/admin/spaces', { preHandler: [authenticate, requireAdmin] }, async (request, reply) => {
+    const db = getDb();
+    const spaceRows = db.select().from(schema.spaces).orderBy(desc(schema.spaces.createdAt)).all();
+    const userRows = db.select({
+      id: schema.users.id,
+      username: schema.users.username,
+      displayName: schema.users.displayName,
+    }).from(schema.users).all();
+    const memberRows = db.select({
+      spaceId: schema.spaceMembers.spaceId,
+      userId: schema.spaceMembers.userId,
+    }).from(schema.spaceMembers).all();
+    const channelRows = db.select({ spaceId: schema.channels.spaceId }).from(schema.channels).all();
+
+    const usersById = new Map(userRows.map((user) => [user.id, user]));
+    const memberCounts = new Map<string, number>();
+    const channelCounts = new Map<string, number>();
+    const joinedSpaceIds = new Set<string>();
+    for (const member of memberRows) {
+      memberCounts.set(member.spaceId, (memberCounts.get(member.spaceId) ?? 0) + 1);
+      if (member.userId === request.userId) joinedSpaceIds.add(member.spaceId);
+    }
+    for (const channel of channelRows) {
+      channelCounts.set(channel.spaceId, (channelCounts.get(channel.spaceId) ?? 0) + 1);
+    }
+
+    const spaces: AdminSpaceSummary[] = spaceRows.map((space) => {
+      const owner = usersById.get(space.ownerId);
+      return {
+        id: space.id,
+        name: space.name,
+        icon: space.icon,
+        avatarColor: space.avatarColor,
+        visibility: space.visibility ?? 'private',
+        description: space.description,
+        ownerId: space.ownerId,
+        ownerUsername: owner?.username ?? 'conta-removida',
+        ownerDisplayName: owner?.displayName ?? null,
+        memberCount: memberCounts.get(space.id) ?? 0,
+        channelCount: channelCounts.get(space.id) ?? 0,
+        joined: joinedSpaceIds.has(space.id),
+        createdAt: space.createdAt,
+      };
+    });
+
+    return reply.code(200).send({ spaces });
+  });
+
+  // Administrative override: join any local space without an invite or approval.
+  app.post<{ Params: { id: string } }>(
+    '/api/admin/spaces/:id/join',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const db = getDb();
+      const space = db.select().from(schema.spaces).where(eq(schema.spaces.id, request.params.id)).get();
+      if (!space) return reply.code(404).send({ error: 'Space not found', statusCode: 404 });
+
+      const existing = db.select().from(schema.spaceMembers).where(and(
+        eq(schema.spaceMembers.spaceId, space.id),
+        eq(schema.spaceMembers.userId, request.userId),
+      )).get();
+
+      if (!existing) {
+        const joinedAt = Date.now();
+        db.transaction((tx) => {
+          tx.delete(schema.bans).where(and(
+            eq(schema.bans.spaceId, space.id),
+            eq(schema.bans.userId, request.userId),
+          )).run();
+          tx.insert(schema.spaceMembers).values({
+            spaceId: space.id,
+            userId: request.userId,
+            joinedAt,
+          }).run();
+        });
+
+        connectionManager.addUserSpace(request.userId, space.id);
+        const joiningUser = db.select().from(schema.users).where(eq(schema.users.id, request.userId)).get();
+        if (joiningUser) {
+          const member: MemberWithUser = {
+            spaceId: space.id,
+            userId: request.userId,
+            nickname: null,
+            joinedAt,
+            user: sanitizeUser(joiningUser),
+            roles: [],
+          };
+          connectionManager.sendToSpace(space.id, { type: 'member_joined', spaceId: space.id, member });
+        }
+      }
+
+      return reply.code(200).send({ success: true, joined: !existing, spaceId: space.id });
     },
   );
 

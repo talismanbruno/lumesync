@@ -10,8 +10,9 @@ import { StreamingPanel } from '../instanceSettingsPanels/StreamingPanel';
 import { StoragePanel } from '../instanceSettingsPanels/StoragePanel';
 import { UsersPanel } from '../instanceSettingsPanels/UsersPanel';
 import { InsightsPanel } from '../instanceSettingsPanels/InsightsPanel';
+import { SpacesPanel } from '../instanceSettingsPanels/SpacesPanel';
 
-type SubTab = 'insights' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
+type SubTab = 'insights' | 'spaces' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
 
 export function InstancePanel() {
   const fetchInstanceSettings = useSettingsStore((s) => s.fetchInstanceSettings);
@@ -22,6 +23,7 @@ export function InstancePanel() {
 
   const sections = useMemo<SettingsSection[]>(() => [
     { id: 'insights', label: 'Visão geral' },
+    { id: 'spaces', label: 'Servidores' },
     { id: 'general', label: 'General' },
     { id: 'registration', label: 'Registration' },
     { id: 'federation', label: 'Federation', badgeCount: approvalCount },
@@ -47,6 +49,7 @@ export function InstancePanel() {
       <SettingsTabBar />
 
       {subTab === 'insights' && <InsightsPanel />}
+      {subTab === 'spaces' && <SpacesPanel />}
       {subTab === 'general' && <GeneralPanel />}
       {subTab === 'registration' && <RegistrationPanel />}
       {subTab === 'federation' && <FederationPanel onApprovalCountChange={setApprovalCount} />}

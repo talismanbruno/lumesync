@@ -72,6 +72,7 @@ import type {
   ReattachRequest,
   ReattachResponse,
   AdminInsights,
+  AdminSpaceSummary,
   BugReportStatus,
   CreateBugReportRequest,
   VoiceDiagnosticRequest,
@@ -330,6 +331,8 @@ export class BackspaceApiClient {
     resetUserPassword: (userId: string) => Promise<AdminResetPasswordResponse>;
     deleteUser: (userId: string) => Promise<{ success: boolean }>;
     insights: () => Promise<AdminInsights>;
+    listSpaces: () => Promise<{ spaces: AdminSpaceSummary[] }>;
+    joinSpace: (spaceId: string) => Promise<{ success: boolean; joined: boolean; spaceId: string }>;
     updateBugReport: (id: string, status: BugReportStatus) => Promise<{ success: boolean }>;
   };
 
@@ -843,6 +846,9 @@ export class BackspaceApiClient {
       deleteUser: (userId) =>
         request<{ success: boolean }>('DELETE', `/admin/users/${userId}`),
       insights: () => request<AdminInsights>('GET', '/admin/insights'),
+      listSpaces: () => request<{ spaces: AdminSpaceSummary[] }>('GET', '/admin/spaces'),
+      joinSpace: (spaceId) =>
+        request<{ success: boolean; joined: boolean; spaceId: string }>('POST', `/admin/spaces/${spaceId}/join`),
       updateBugReport: (id, status) =>
         request<{ success: boolean }>('PATCH', `/admin/bug-reports/${id}`, { status }),
     };

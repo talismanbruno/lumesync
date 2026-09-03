@@ -932,6 +932,22 @@ export interface AdminResetPasswordResponse {
   temporaryPassword: string;
 }
 
+export interface AdminSpaceSummary {
+  id: string;
+  name: string;
+  icon: string | null;
+  avatarColor: string | null;
+  visibility: string;
+  description: string | null;
+  ownerId: string;
+  ownerUsername: string;
+  ownerDisplayName: string | null;
+  memberCount: number;
+  channelCount: number;
+  joined: boolean;
+  createdAt: number;
+}
+
 export type BugReportCategory = 'call' | 'audio' | 'screen_share' | 'messages' | 'interface' | 'other';
 export type BugReportStatus = 'open' | 'reviewing' | 'resolved';
 
