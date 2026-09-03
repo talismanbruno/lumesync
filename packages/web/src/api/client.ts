@@ -73,6 +73,7 @@ import type {
   ReattachResponse,
   AdminInsights,
   AdminSpaceSummary,
+  AdminSpacePreview,
   AdminAuditLog,
   BugReportStatus,
   CreateBugReportRequest,
@@ -333,6 +334,7 @@ export class BackspaceApiClient {
     deleteUser: (userId: string) => Promise<{ success: boolean }>;
     insights: () => Promise<AdminInsights>;
     listSpaces: () => Promise<{ spaces: AdminSpaceSummary[] }>;
+    previewSpace: (spaceId: string, channelId?: string) => Promise<AdminSpacePreview>;
     joinSpace: (spaceId: string) => Promise<{ success: boolean; joined: boolean; spaceId: string }>;
     auditLog: (limit?: number) => Promise<{ events: AdminAuditLog[] }>;
     setUserSuspension: (userId: string, suspended: boolean, reason?: string) => Promise<AdminUser>;
@@ -852,6 +854,7 @@ export class BackspaceApiClient {
         request<{ success: boolean }>('DELETE', `/admin/users/${userId}`),
       insights: () => request<AdminInsights>('GET', '/admin/insights'),
       listSpaces: () => request<{ spaces: AdminSpaceSummary[] }>('GET', '/admin/spaces'),
+      previewSpace: (spaceId, channelId) => request<AdminSpacePreview>('GET', `/admin/spaces/${spaceId}/preview${channelId ? `?channelId=${encodeURIComponent(channelId)}` : ''}`),
       joinSpace: (spaceId) =>
         request<{ success: boolean; joined: boolean; spaceId: string }>('POST', `/admin/spaces/${spaceId}/join`),
       auditLog: (limit = 80) => request<{ events: AdminAuditLog[] }>('GET', `/admin/audit-log?limit=${limit}`),

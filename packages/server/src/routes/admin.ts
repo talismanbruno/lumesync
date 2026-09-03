@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import crypto from 'crypto';
-import { eq, like, or, and, ne, sql, isNull, isNotNull, gte, lte, asc, desc } from 'drizzle-orm';
+import { eq, like, or, and, ne, sql, isNull, isNotNull, gte, lte, asc, desc, inArray } from 'drizzle-orm';
 import { authenticate, requireAdmin, hashPassword } from '../utils/auth.js';
 import { getStorageStats, getOrphanedFiles, cleanupStorage, cleanupOldMedia, cleanupStaleTusSessions } from '../utils/storageJanitor.js';
 import { getDb, schema } from '../db/index.js';
@@ -8,7 +8,7 @@ import { connectionManager } from '../ws/handler.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
-import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
+import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, AdminSpacePreview, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
   return {
@@ -235,6 +235,103 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       }
 
       return reply.code(200).send({ success: true, joined: !existing, spaceId: space.id });
+    },
+  );
+
+  // Read-only administrative preview. It deliberately does not create a
+  // membership, read state, presence event, or WebSocket subscription.
+  app.get<{ Params: { id: string }; Querystring: { channelId?: string } }>(
+    '/api/admin/spaces/:id/preview',
+    { preHandler: [authenticate, requireAdmin] },
+    async (request, reply) => {
+      const db = getDb();
+      const space = db.select().from(schema.spaces).where(eq(schema.spaces.id, request.params.id)).get();
+      if (!space) return reply.code(404).send({ error: 'Space not found', statusCode: 404 });
+
+      const channelRows = db.select().from(schema.channels)
+        .where(eq(schema.channels.spaceId, space.id)).orderBy(asc(schema.channels.position)).all();
+      const categoryRows = db.select().from(schema.channelCategories)
+        .where(eq(schema.channelCategories.spaceId, space.id)).orderBy(asc(schema.channelCategories.position)).all();
+      const requestedChannel = request.query.channelId
+        ? channelRows.find((channel) => channel.id === request.query.channelId && channel.type === 'text')
+        : undefined;
+      if (request.query.channelId && !requestedChannel) {
+        return reply.code(404).send({ error: 'Text channel not found in this space', statusCode: 404 });
+      }
+      const selectedChannel = requestedChannel ?? channelRows.find((channel) => channel.type === 'text') ?? null;
+
+      const memberRows = db.select({
+        id: schema.users.id,
+        username: schema.users.username,
+        displayName: schema.users.displayName,
+        avatar: schema.users.avatar,
+        status: schema.users.status,
+      }).from(schema.spaceMembers).innerJoin(schema.users, eq(schema.spaceMembers.userId, schema.users.id))
+        .where(eq(schema.spaceMembers.spaceId, space.id)).orderBy(asc(schema.users.username)).limit(200).all();
+      const memberCount = db.select({ count: sql<number>`count(*)` }).from(schema.spaceMembers)
+        .where(eq(schema.spaceMembers.spaceId, space.id)).get()?.count ?? 0;
+
+      const rawMessages = selectedChannel
+        ? db.select().from(schema.messages).where(eq(schema.messages.channelId, selectedChannel.id))
+          .orderBy(desc(schema.messages.createdAt)).limit(50).all().reverse()
+        : [];
+      const authorIds = new Set(rawMessages.map((message) => message.userId));
+      const authors = new Map(db.select({
+        id: schema.users.id,
+        username: schema.users.username,
+        displayName: schema.users.displayName,
+        avatar: schema.users.avatar,
+      }).from(schema.users).all().filter((user) => authorIds.has(user.id)).map((user) => [user.id, user]));
+      const messageIds = rawMessages.map((message) => message.id);
+      const attachmentRows = messageIds.length
+        ? db.select({
+          id: schema.attachments.id,
+          messageId: schema.attachments.messageId,
+          filename: schema.attachments.filename,
+          originalName: schema.attachments.originalName,
+          mimetype: schema.attachments.mimetype,
+          size: schema.attachments.size,
+        }).from(schema.attachments).where(inArray(schema.attachments.messageId, messageIds)).all()
+        : [];
+      const attachmentsByMessage = new Map<string, typeof attachmentRows>();
+      for (const attachment of attachmentRows) {
+        if (!attachment.messageId) continue;
+        const entries = attachmentsByMessage.get(attachment.messageId) ?? [];
+        entries.push(attachment);
+        attachmentsByMessage.set(attachment.messageId, entries);
+      }
+
+      const owner = db.select({ username: schema.users.username, displayName: schema.users.displayName })
+        .from(schema.users).where(eq(schema.users.id, space.ownerId)).get();
+      const membership = db.select().from(schema.spaceMembers).where(and(
+        eq(schema.spaceMembers.spaceId, space.id), eq(schema.spaceMembers.userId, request.userId),
+      )).get();
+      const response: AdminSpacePreview = {
+        space: {
+          id: space.id, name: space.name, icon: space.icon, avatarColor: space.avatarColor,
+          visibility: space.visibility ?? 'private', description: space.description,
+          ownerId: space.ownerId, ownerUsername: owner?.username ?? 'conta-removida',
+          ownerDisplayName: owner?.displayName ?? null, memberCount,
+          channelCount: channelRows.length, joined: !!membership, createdAt: space.createdAt,
+        },
+        categories: categoryRows.map((category) => ({ id: category.id, name: category.name, position: category.position ?? 0 })),
+        channels: channelRows.map((channel) => ({
+          id: channel.id, name: channel.name, type: channel.type, topic: channel.topic,
+          categoryId: channel.categoryId, position: channel.position ?? 0,
+        })),
+        members: memberRows.map((member) => ({ ...member, status: member.status ?? 'offline' })),
+        selectedChannelId: selectedChannel?.id ?? null,
+        messages: rawMessages.map((message) => ({
+          id: message.id,
+          content: message.content,
+          editedAt: message.editedAt,
+          createdAt: message.createdAt,
+          author: authors.get(message.userId) ?? { id: message.userId, username: 'conta-removida', displayName: null, avatar: null },
+          attachments: (attachmentsByMessage.get(message.id) ?? []).map(({ messageId: _messageId, ...attachment }) => attachment),
+        })),
+      };
+      logAdminAction(request.userId, 'space.preview', 'space', space.id, space.name, selectedChannel ? { channel: selectedChannel.name } : undefined);
+      return reply.code(200).send(response);
     },
   );
 

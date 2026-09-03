@@ -5,6 +5,7 @@ import { useUIStore } from '../../../stores/uiStore';
 
 const ACTION_LABELS: Record<string, string> = {
   'space.join_override': 'Entrou em servidor',
+  'space.preview': 'Visualizou prévia do servidor',
   'space.transfer_owner': 'Trocou dono do servidor',
   'user.promote_admin': 'Promoveu a admin',
   'user.demote_admin': 'Removeu admin',

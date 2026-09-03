@@ -956,6 +956,35 @@ export interface AdminSpaceSummary {
   createdAt: number;
 }
 
+export interface AdminSpacePreview {
+  space: AdminSpaceSummary;
+  categories: Array<{ id: string; name: string; position: number }>;
+  channels: Array<{
+    id: string;
+    name: string;
+    type: string;
+    topic: string | null;
+    categoryId: string | null;
+    position: number;
+  }>;
+  members: Array<{
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatar: string | null;
+    status: string;
+  }>;
+  selectedChannelId: string | null;
+  messages: Array<{
+    id: string;
+    content: string | null;
+    editedAt: number | null;
+    createdAt: number;
+    author: { id: string; username: string; displayName: string | null; avatar: string | null };
+    attachments: Array<{ id: string; filename: string; originalName: string; mimetype: string; size: number }>;
+  }>;
+}
+
 export interface AdminAuditLog {
   id: string;
   adminId: string | null;
