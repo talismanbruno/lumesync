@@ -12,8 +12,9 @@ import { UsersPanel } from '../instanceSettingsPanels/UsersPanel';
 import { InsightsPanel } from '../instanceSettingsPanels/InsightsPanel';
 import { SpacesPanel } from '../instanceSettingsPanels/SpacesPanel';
 import { AuditPanel } from '../instanceSettingsPanels/AuditPanel';
+import { HealthPanel } from '../instanceSettingsPanels/HealthPanel';
 
-type SubTab = 'insights' | 'spaces' | 'audit' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
+type SubTab = 'insights' | 'health' | 'spaces' | 'audit' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
 
 export function InstancePanel() {
   const fetchInstanceSettings = useSettingsStore((s) => s.fetchInstanceSettings);
@@ -24,6 +25,7 @@ export function InstancePanel() {
 
   const sections = useMemo<SettingsSection[]>(() => [
     { id: 'insights', label: 'Visão geral' },
+    { id: 'health', label: 'Saúde do sistema' },
     { id: 'spaces', label: 'Servidores' },
     { id: 'audit', label: 'Histórico admin' },
     { id: 'general', label: 'General' },
@@ -51,6 +53,7 @@ export function InstancePanel() {
       <SettingsTabBar />
 
       {subTab === 'insights' && <InsightsPanel />}
+      {subTab === 'health' && <HealthPanel />}
       {subTab === 'spaces' && <SpacesPanel />}
       {subTab === 'audit' && <AuditPanel />}
       {subTab === 'general' && <GeneralPanel />}

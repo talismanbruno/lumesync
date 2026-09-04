@@ -31,6 +31,7 @@ import { UsersPanel } from '../modals/instanceSettingsPanels/UsersPanel';
 import { InsightsPanel } from '../modals/instanceSettingsPanels/InsightsPanel';
 import { SpacesPanel } from '../modals/instanceSettingsPanels/SpacesPanel';
 import { AuditPanel } from '../modals/instanceSettingsPanels/AuditPanel';
+import { HealthPanel } from '../modals/instanceSettingsPanels/HealthPanel';
 
 /**
  * Wrapper for the Federation sub-panel that forwards FederationPanel's
@@ -65,6 +66,12 @@ const screenMap: Record<string, (params?: Record<string, string>) => React.React
     <div className="flex flex-col h-full bg-surface-base">
       <MobileScreenHeader title="Visão geral" rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><InsightsPanel /></div>
+    </div>
+  ),
+  'settings-instance-health': () => (
+    <div className="flex flex-col h-full bg-surface-base">
+      <MobileScreenHeader title="Saúde do sistema" rightActions={<TransferIndicator />} />
+      <div className="flex-1 overflow-y-auto p-4"><HealthPanel /></div>
     </div>
   ),
   'settings-instance-spaces': () => (

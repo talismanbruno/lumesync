@@ -1037,6 +1037,25 @@ export interface AdminInsights {
   bugReports: BugReport[];
 }
 
+export interface AdminSystemHealth {
+  status: 'healthy' | 'warning' | 'critical';
+  generatedAt: number;
+  uptimeSeconds: number;
+  database: { status: 'ok' | 'error'; latencyMs: number; message: string };
+  memory: { rssBytes: number; heapUsedBytes: number; heapTotalBytes: number; heapUsagePercent: number };
+  realtime: {
+    onlineUsers: number;
+    connections: number;
+    voiceRooms: number;
+    voiceParticipants: number;
+    spaceVoiceRooms: number;
+    dmVoiceRooms: number;
+  };
+  storage: { totalBytes: number; totalFiles: number; orphanedFiles: number; staleUploads: number };
+  last24Hours: { voiceReconnects: number; voiceRecoveries: number; voiceDrops: number; bugReports: number };
+  alerts: Array<{ level: 'warning' | 'critical'; code: string; message: string }>;
+}
+
 export interface CreateBugReportRequest {
   category: BugReportCategory;
   description: string;

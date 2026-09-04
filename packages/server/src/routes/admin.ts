@@ -3,12 +3,13 @@ import crypto from 'crypto';
 import { eq, like, or, and, ne, sql, isNull, isNotNull, gte, lte, asc, desc, inArray } from 'drizzle-orm';
 import { authenticate, requireAdmin, hashPassword } from '../utils/auth.js';
 import { getStorageStats, getOrphanedFiles, cleanupStorage, cleanupOldMedia, cleanupStaleTusSessions } from '../utils/storageJanitor.js';
-import { getDb, schema } from '../db/index.js';
+import { getDb, getRawDb, schema } from '../db/index.js';
 import { connectionManager } from '../ws/handler.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
-import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSpaceSummary, AdminSpacePreview, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
+import { buildSystemHealthAlerts } from '../utils/systemHealth.js';
+import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSystemHealth, AdminSpaceSummary, AdminSpacePreview, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
   return {
@@ -119,6 +120,72 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       registrationsByTimezone: timezoneRows.map((row) => ({ label: row.label!, count: row.count })),
       recentRegistrations,
       bugReports: bugReports as AdminInsights['bugReports'],
+    };
+    return reply.code(200).send(response);
+  });
+
+  app.get('/api/admin/system-health', { preHandler: [authenticate, requireAdmin] }, async (_request, reply) => {
+    const started = performance.now();
+    let dbStatus: 'ok' | 'error' = 'ok';
+    let dbMessage = 'Banco íntegro';
+    try {
+      const result = getRawDb().pragma('quick_check', { simple: true });
+      if (result !== 'ok') {
+        dbStatus = 'error';
+        dbMessage = String(result);
+      }
+    } catch (error) {
+      dbStatus = 'error';
+      dbMessage = error instanceof Error ? error.message : 'Falha ao verificar o banco';
+    }
+    const dbLatencyMs = Math.max(0, Math.round((performance.now() - started) * 10) / 10);
+    const memory = process.memoryUsage();
+    const heapUsagePercent = memory.heapTotal > 0 ? Math.round((memory.heapUsed / memory.heapTotal) * 1000) / 10 : 0;
+    const realtime = connectionManager.getOperationalStats();
+    let storage = { totalSize: 0, totalFiles: 0, orphanedFiles: 0, staleTusSessions: 0 };
+    let storageError: string | null = null;
+    try {
+      const stats = getStorageStats();
+      storage = {
+        totalSize: stats.totalSize,
+        totalFiles: stats.totalFiles,
+        orphanedFiles: stats.orphanedFiles,
+        staleTusSessions: stats.staleTusSessions,
+      };
+    } catch (error) {
+      storageError = error instanceof Error ? error.message : 'erro desconhecido';
+    }
+    const db = getDb();
+    const since = Date.now() - 86_400_000;
+    const count = (table: any, where?: any) => db.select({ count: sql<number>`count(*)` }).from(table).where(where).get()?.count ?? 0;
+    const voiceCount = (event: string) => count(schema.voiceDiagnostics, and(eq(schema.voiceDiagnostics.event, event), gte(schema.voiceDiagnostics.createdAt, since)));
+    const last24Hours = {
+      voiceReconnects: voiceCount('reconnecting'),
+      voiceRecoveries: voiceCount('recovered'),
+      voiceDrops: voiceCount('disconnected'),
+      bugReports: count(schema.bugReports, gte(schema.bugReports.createdAt, since)),
+    };
+    const alerts = buildSystemHealthAlerts({
+      databaseStatus: dbStatus,
+      databaseMessage: dbMessage,
+      heapUsagePercent,
+      voiceDrops: last24Hours.voiceDrops,
+      voiceReconnects: last24Hours.voiceReconnects,
+      voiceRecoveries: last24Hours.voiceRecoveries,
+      orphanedFiles: storage.orphanedFiles,
+      staleUploads: storage.staleTusSessions,
+      storageError,
+    });
+    const response: AdminSystemHealth = {
+      status: alerts.some((alert) => alert.level === 'critical') ? 'critical' : alerts.length ? 'warning' : 'healthy',
+      generatedAt: Date.now(),
+      uptimeSeconds: Math.round(process.uptime()),
+      database: { status: dbStatus, latencyMs: dbLatencyMs, message: dbMessage },
+      memory: { rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, heapTotalBytes: memory.heapTotal, heapUsagePercent },
+      realtime,
+      storage: { totalBytes: storage.totalSize, totalFiles: storage.totalFiles, orphanedFiles: storage.orphanedFiles, staleUploads: storage.staleTusSessions },
+      last24Hours,
+      alerts,
     };
     return reply.code(200).send(response);
   });

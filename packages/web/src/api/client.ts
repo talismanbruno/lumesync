@@ -72,6 +72,7 @@ import type {
   ReattachRequest,
   ReattachResponse,
   AdminInsights,
+  AdminSystemHealth,
   AdminSpaceSummary,
   AdminSpacePreview,
   AdminAuditLog,
@@ -333,6 +334,7 @@ export class BackspaceApiClient {
     resetUserPassword: (userId: string) => Promise<AdminResetPasswordResponse>;
     deleteUser: (userId: string) => Promise<{ success: boolean }>;
     insights: () => Promise<AdminInsights>;
+    systemHealth: () => Promise<AdminSystemHealth>;
     listSpaces: () => Promise<{ spaces: AdminSpaceSummary[] }>;
     previewSpace: (spaceId: string, channelId?: string) => Promise<AdminSpacePreview>;
     joinSpace: (spaceId: string) => Promise<{ success: boolean; joined: boolean; spaceId: string }>;
@@ -853,6 +855,7 @@ export class BackspaceApiClient {
       deleteUser: (userId) =>
         request<{ success: boolean }>('DELETE', `/admin/users/${userId}`),
       insights: () => request<AdminInsights>('GET', '/admin/insights'),
+      systemHealth: () => request<AdminSystemHealth>('GET', '/admin/system-health'),
       listSpaces: () => request<{ spaces: AdminSpaceSummary[] }>('GET', '/admin/spaces'),
       previewSpace: (spaceId, channelId) => request<AdminSpacePreview>('GET', `/admin/spaces/${spaceId}/preview${channelId ? `?channelId=${encodeURIComponent(channelId)}` : ''}`),
       joinSpace: (spaceId) =>

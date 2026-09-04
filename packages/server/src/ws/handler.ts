@@ -1055,6 +1055,34 @@ class ConnectionManager {
     return this.connections;
   }
 
+  getOperationalStats(): {
+    onlineUsers: number;
+    connections: number;
+    voiceRooms: number;
+    voiceParticipants: number;
+    spaceVoiceRooms: number;
+    dmVoiceRooms: number;
+  } {
+    let connections = 0;
+    for (const sockets of this.connections.values()) connections += sockets.size;
+    let voiceParticipants = 0;
+    let spaceVoiceRooms = 0;
+    let dmVoiceRooms = 0;
+    for (const room of this.voiceRooms.values()) {
+      voiceParticipants += room.participants.size;
+      if (room.roomType === 'space') spaceVoiceRooms++;
+      else dmVoiceRooms++;
+    }
+    return {
+      onlineUsers: this.connections.size,
+      connections,
+      voiceRooms: this.voiceRooms.size,
+      voiceParticipants,
+      spaceVoiceRooms,
+      dmVoiceRooms,
+    };
+  }
+
   /** Send an event to all connected admin users. */
   sendToAdmins(event: ServerEvent): void {
     const db = getDb();
