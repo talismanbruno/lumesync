@@ -1042,7 +1042,7 @@ export interface AdminSystemHealth {
   generatedAt: number;
   uptimeSeconds: number;
   database: { status: 'ok' | 'error'; latencyMs: number; message: string };
-  memory: { rssBytes: number; heapUsedBytes: number; heapTotalBytes: number; heapUsagePercent: number };
+  memory: { rssBytes: number; heapUsedBytes: number; heapTotalBytes: number; heapLimitBytes: number; heapUsagePercent: number };
   realtime: {
     onlineUsers: number;
     connections: number;

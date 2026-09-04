@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import crypto from 'crypto';
+import { getHeapStatistics } from 'node:v8';
 import { eq, like, or, and, ne, sql, isNull, isNotNull, gte, lte, asc, desc, inArray } from 'drizzle-orm';
 import { authenticate, requireAdmin, hashPassword } from '../utils/auth.js';
 import { getStorageStats, getOrphanedFiles, cleanupStorage, cleanupOldMedia, cleanupStaleTusSessions } from '../utils/storageJanitor.js';
@@ -140,7 +141,8 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     }
     const dbLatencyMs = Math.max(0, Math.round((performance.now() - started) * 10) / 10);
     const memory = process.memoryUsage();
-    const heapUsagePercent = memory.heapTotal > 0 ? Math.round((memory.heapUsed / memory.heapTotal) * 1000) / 10 : 0;
+    const heapLimitBytes = getHeapStatistics().heap_size_limit;
+    const heapUsagePercent = heapLimitBytes > 0 ? Math.round((memory.heapUsed / heapLimitBytes) * 1000) / 10 : 0;
     const realtime = connectionManager.getOperationalStats();
     let storage = { totalSize: 0, totalFiles: 0, orphanedFiles: 0, staleTusSessions: 0 };
     let storageError: string | null = null;
@@ -181,7 +183,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       generatedAt: Date.now(),
       uptimeSeconds: Math.round(process.uptime()),
       database: { status: dbStatus, latencyMs: dbLatencyMs, message: dbMessage },
-      memory: { rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, heapTotalBytes: memory.heapTotal, heapUsagePercent },
+      memory: { rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, heapTotalBytes: memory.heapTotal, heapLimitBytes, heapUsagePercent },
       realtime,
       storage: { totalBytes: storage.totalSize, totalFiles: storage.totalFiles, orphanedFiles: storage.orphanedFiles, staleUploads: storage.staleTusSessions },
       last24Hours,
