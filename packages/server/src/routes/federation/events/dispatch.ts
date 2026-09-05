@@ -113,7 +113,7 @@ export async function processRelayEvents(
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'unknown_error';
-      console.error(`[federation-relay] Error processing event ${event.messageId}:`, errMsg);
+      console.error('[federation-relay] Error processing event %s: %s', event.messageId, errMsg);
       rejected.push({ messageId: event.messageId, reason: 'processing_error' });
     }
   }

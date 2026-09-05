@@ -218,9 +218,16 @@ export function normalizeOriginForCompare(value: string | null | undefined): str
   // Strip scheme if present
   s = s.replace(/^https?:\/\//i, '');
   // Strip trailing slashes
-  s = s.replace(/\/+$/, '');
+  s = stripTrailingSlashes(s);
   if (!s) return null;
   return s.toLowerCase();
+}
+
+/** Remove trailing slashes in one pass without regular-expression backtracking. */
+function stripTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+  return end === value.length ? value : value.slice(0, end);
 }
 
 /**
@@ -243,7 +250,7 @@ export function canonicalizeHomeInstance(value: string | null | undefined): stri
   if (!s) return null;
   if (/^https?:\/\//i.test(s)) {
     // Strip trailing slashes only — preserve the explicit scheme.
-    return s.replace(/\/+$/, '');
+    return stripTrailingSlashes(s);
   }
-  return `https://${s.replace(/\/+$/, '')}`;
+  return `https://${stripTrailingSlashes(s)}`;
 }

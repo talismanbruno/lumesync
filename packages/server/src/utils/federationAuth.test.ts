@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { verifyPeerSignature, signRequest, ROTATION_GRACE_PERIOD_MS, normalizeOriginForCompare } from './federationAuth.js';
+import {
+  verifyPeerSignature,
+  signRequest,
+  ROTATION_GRACE_PERIOD_MS,
+  normalizeOriginForCompare,
+  canonicalizeHomeInstance,
+} from './federationAuth.js';
 
 describe('verifyPeerSignature', () => {
   const primarySecret = 'a'.repeat(64);
@@ -107,5 +113,15 @@ describe('normalizeOriginForCompare', () => {
   it('treats bare and full-URL forms as equal', () => {
     expect(normalizeOriginForCompare('nova.ddns.net'))
       .toBe(normalizeOriginForCompare('https://nova.ddns.net'));
+  });
+
+  it('handles a long non-matching slash suffix without regex backtracking', () => {
+    const value = `example.test/${'/'.repeat(50_000)}x`;
+    expect(normalizeOriginForCompare(value)).toBe(value);
+  });
+
+  it('removes a long trailing slash suffix in one pass', () => {
+    expect(canonicalizeHomeInstance(`example.test${'/'.repeat(50_000)}`))
+      .toBe('https://example.test');
   });
 });

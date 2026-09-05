@@ -428,7 +428,7 @@ export async function onPeerDeactivated(
 
       connectionManager.sendToAdmins({ type: 'federation_peers_changed' as const });
     } catch (err) {
-      console.error(`[federation] onPeerDeactivated(${peerId}, ${reason}) failed:`, err);
+      console.error('[federation] onPeerDeactivated(%s, %s) failed:', peerId, reason, err);
     }
   })();
 
