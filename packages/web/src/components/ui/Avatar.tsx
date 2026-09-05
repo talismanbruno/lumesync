@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient } from '../../utils/gradients';
+import { resolveAvatarSource } from '../../utils/safeUrls';
 
 interface AvatarProps {
   src?: string | null;
@@ -100,9 +101,7 @@ export function Avatar({ src, name, size = 40, status, className = '', onClick, 
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
   const resolvedSrc = useMemo(() => {
-    if (!src) return null;
-    return (src.startsWith('http') || src.startsWith('blob:') || src.startsWith('data:') || src.startsWith('/'))
-      ? src : `/api/uploads/${src}`;
+    return resolveAvatarSource(src);
   }, [src]);
   const displaySrc = useFrozenAvatar(resolvedSrc, freezeAnimation);
 

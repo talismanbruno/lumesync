@@ -6,6 +6,7 @@ import { useInstanceStore, DifferentPasswordError } from '../stores/instanceStor
 import { api, createApiClient } from '../api/client';
 import { parseInviteInput } from '../utils/inviteParser';
 import { Avatar } from './ui/Avatar';
+import { buildExternalJoinUrl } from '../utils/safeUrls';
 import type { InvitePreview } from '@backspace/shared';
 
 type JoinPhase = 'preview' | 'connect' | 'fallback' | 'other-instance' | 'already-member';
@@ -183,8 +184,12 @@ export function JoinPage() {
     const originHost = parsed?.origin ? new URL(parsed.origin).host : window.location.host;
     const code = parsed?.code || rawInviteCode || '';
     const qualifiedCode = `${code}@${originHost}`;
-    const targetUrl = `https://${domain}/join/${encodeURIComponent(qualifiedCode)}`;
-    window.location.href = targetUrl;
+    const targetUrl = buildExternalJoinUrl(domain, qualifiedCode);
+    if (!targetUrl) {
+      setError('Enter a valid instance domain, such as lume.example');
+      return;
+    }
+    window.location.assign(targetUrl);
   };
 
   let hostDisplay = '';

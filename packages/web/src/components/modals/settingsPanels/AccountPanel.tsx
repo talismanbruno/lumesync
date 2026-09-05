@@ -9,6 +9,7 @@ import { DeleteAccountModal } from '../DeleteAccountModal';
 import { api } from '../../../api/client';
 import { useTransferStore } from '../../../stores/transferStore';
 import { waitForTransferAttachment } from '../../../utils/waitForTransfer';
+import { sanitizeImageSource } from '../../../utils/safeUrls';
 import { getAvatarGradient, adjustColor, mutedGradient, AVATAR_GRADIENT_MAP, BANNER_COLOR_PRESETS } from '../../../utils/gradients';
 import { AVATAR_COLORS } from '@backspace/shared';
 import type { User, UserStatus, AvatarColor } from '@backspace/shared';
@@ -145,13 +146,17 @@ export function AccountPanel() {
   const currentBannerUrl = user.banner
     ? (user.banner.startsWith('http') ? user.banner : api.uploads.url(user.banner))
     : null;
-  const displayBannerSrc = bannerPreview ?? (bannerFilename === '' ? null : currentBannerUrl);
+  const displayBannerSrc = sanitizeImageSource(
+    bannerPreview ?? (bannerFilename === '' ? null : currentBannerUrl),
+  );
 
   // Compute avatar display
   const currentAvatarSrc = user.avatar
     ? (user.avatar.startsWith('http') ? user.avatar : api.uploads.url(user.avatar))
     : null;
-  const displayAvatarSrc = avatarPreview ?? (avatarFilename === '' ? null : currentAvatarSrc);
+  const displayAvatarSrc = sanitizeImageSource(
+    avatarPreview ?? (avatarFilename === '' ? null : currentAvatarSrc),
+  );
 
   // Banner fallback: accent gradient or avatar gradient (alpha baked into gradient colors)
   const bannerFallback = effectiveAccent
