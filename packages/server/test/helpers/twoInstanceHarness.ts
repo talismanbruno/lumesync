@@ -130,7 +130,11 @@ export async function spawnInstance(opts: {
   }
   // From packages/server/test/helpers → packages/server is up two levels.
   const serverDir = path.resolve(__dirname, '../../');
-  const proc = spawn('pnpm', ['exec', 'tsx', 'src/index.ts'], {
+  // Invoke tsx with the current Node process instead of spawning through pnpm.
+  // This keeps the integration harness independent from package-manager wrappers
+  // that may try to reinstall the entire workspace before every child server.
+  const tsxCli = path.resolve(serverDir, 'node_modules/tsx/dist/cli.mjs');
+  const proc = spawn(process.execPath, [tsxCli, 'src/index.ts'], {
     cwd: serverDir,
     env,
     stdio: ['ignore', 'pipe', 'pipe'],

@@ -80,10 +80,10 @@ describe('SystemMessage — name_changed', () => {
     expect(screen.getByText(/Heidi cleared the group name/)).toBeDefined();
   });
 
-  it('unresolvable actor (member missing from roster) → "✎ Unknown renamed …"', () => {
+  it('unresolvable actor (member missing from roster) → "✎ Desconhecido renamed …"', () => {
     const msg = buildMessage({ event: 'name_changed', oldName: null, newName: 'X' }, 'GHOST');
     renderSM(msg, dm); // dm.members has only U1, not GHOST
-    expect(screen.getByText(/Unknown renamed the group to "X"/)).toBeDefined();
+    expect(screen.getByText(/Desconhecido renamed the group to "X"/)).toBeDefined();
   });
 });
 

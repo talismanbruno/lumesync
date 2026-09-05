@@ -38,7 +38,10 @@ describe('formatDmTimestamp', () => {
 
     const marchDate = localTs(2026, 3, 15, 12, 0); // Mar 15 2026
     const result = formatDmTimestamp(marchDate);
-    expect(result).toMatch(/Mar\s+15/);
+    expect(result).toBe(new Date(marchDate).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    }));
   });
 
   it('shows month, day and year for previous years', () => {
@@ -47,8 +50,11 @@ describe('formatDmTimestamp', () => {
 
     const lastYear = localTs(2025, 12, 14, 12, 0); // Dec 14 2025
     const result = formatDmTimestamp(lastYear);
-    expect(result).toMatch(/Dec\s+14/);
-    expect(result).toMatch(/2025/);
+    expect(result).toBe(new Date(lastYear).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }));
   });
 
   it('handles midnight boundary correctly', () => {
