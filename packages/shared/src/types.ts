@@ -782,6 +782,9 @@ export interface InstanceAdminSettings {
   gifApiKey?: string;
   gifEnabled?: boolean;
   maxUploadSizeMb: number;
+  maxUserStorageMb: number;
+  maxDailyUploadMb: number;
+  minFreeDiskMb: number;
   federationRelayEnabled: boolean;
   federationRelayTtlDays: number;
   defaultAutoRotateIntervalDays: number;
@@ -1051,7 +1054,15 @@ export interface AdminSystemHealth {
     spaceVoiceRooms: number;
     dmVoiceRooms: number;
   };
-  storage: { totalBytes: number; totalFiles: number; orphanedFiles: number; staleUploads: number };
+  storage: {
+    totalBytes: number;
+    totalFiles: number;
+    orphanedFiles: number;
+    staleUploads: number;
+    diskTotalBytes: number;
+    diskFreeBytes: number;
+    diskUsagePercent: number;
+  };
   last24Hours: { voiceReconnects: number; voiceRecoveries: number; voiceDrops: number; bugReports: number };
   alerts: Array<{ level: 'warning' | 'critical'; code: string; message: string }>;
 }

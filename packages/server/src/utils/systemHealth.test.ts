@@ -53,4 +53,19 @@ describe('buildSystemHealthAlerts', () => {
       'stale_uploads',
     ]);
   });
+
+  it('warns and becomes critical as disk usage crosses the safety thresholds', () => {
+    expect(buildSystemHealthAlerts({ ...healthyInput, diskUsagePercent: 80 }))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ code: 'disk_pressure', level: 'warning' })]));
+    expect(buildSystemHealthAlerts({ ...healthyInput, diskUsagePercent: 90 }))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ code: 'disk_pressure', level: 'critical' })]));
+  });
+
+  it('blocks uploads visibly when free disk falls below the configured reserve', () => {
+    expect(buildSystemHealthAlerts({
+      ...healthyInput,
+      diskFreeBytes: 4 * 1024,
+      minFreeDiskBytes: 5 * 1024,
+    })).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'disk_reserve', level: 'critical' })]));
+  });
 });

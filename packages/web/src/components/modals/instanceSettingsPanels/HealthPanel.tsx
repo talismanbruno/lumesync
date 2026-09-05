@@ -54,7 +54,7 @@ export function HealthPanel() {
     ['Calls ativas', data.realtime.voiceRooms, `${data.realtime.voiceParticipants} participantes`],
     ['Memória', `${data.memory.heapUsagePercent}%`, `${formatBytes(data.memory.heapUsedBytes)} de ${formatBytes(data.memory.heapLimitBytes)}`],
     ['Banco', data.database.status === 'ok' ? 'OK' : 'Erro', `${data.database.latencyMs} ms`],
-    ['Arquivos', data.storage.totalFiles, formatBytes(data.storage.totalBytes)],
+    ['Disco', `${data.storage.diskUsagePercent}%`, `${formatBytes(data.storage.diskFreeBytes)} livres de ${formatBytes(data.storage.diskTotalBytes)}`],
     ['Uptime', formatUptime(data.uptimeSeconds), 'processo atual'],
   ] as const;
 

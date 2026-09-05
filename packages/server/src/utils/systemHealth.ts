@@ -9,6 +9,9 @@ export interface SystemHealthAlertInput {
   voiceRecoveries: number;
   orphanedFiles: number;
   staleUploads: number;
+  diskUsagePercent?: number | null;
+  diskFreeBytes?: number | null;
+  minFreeDiskBytes?: number | null;
   storageError?: string | null;
 }
 
@@ -20,6 +23,18 @@ export function buildSystemHealthAlerts(input: SystemHealthAlertInput): AdminSys
   }
   if (input.storageError) {
     alerts.push({ level: 'warning', code: 'storage_unavailable', message: `Não foi possível medir o armazenamento: ${input.storageError}` });
+  }
+  if (input.diskUsagePercent !== null && input.diskUsagePercent !== undefined) {
+    if (input.diskUsagePercent >= 90) {
+      alerts.push({ level: 'critical', code: 'disk_pressure', message: `Disco em ${input.diskUsagePercent}% de uso.` });
+    } else if (input.diskUsagePercent >= 80) {
+      alerts.push({ level: 'warning', code: 'disk_pressure', message: `Uso do disco elevado: ${input.diskUsagePercent}%.` });
+    }
+  }
+  if (input.diskFreeBytes !== null && input.diskFreeBytes !== undefined
+      && input.minFreeDiskBytes !== null && input.minFreeDiskBytes !== undefined
+      && input.diskFreeBytes < input.minFreeDiskBytes) {
+    alerts.push({ level: 'critical', code: 'disk_reserve', message: 'A margem mínima de espaço livre foi atingida; novos uploads estão bloqueados.' });
   }
   if (input.heapUsagePercent >= 90) {
     alerts.push({ level: 'critical', code: 'heap_pressure', message: `Memória interna em ${input.heapUsagePercent}%.` });

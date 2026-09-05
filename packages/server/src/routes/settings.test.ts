@@ -169,3 +169,37 @@ describe('PATCH /api/settings/instance — federatedRegistrationOpen', () => {
     expect(row?.federatedRegistrationOpen).toBe(0);
   });
 });
+
+describe('instance capacity guardrails', () => {
+  it('returns the default quotas', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/settings/instance' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      maxUserStorageMb: 1024,
+      maxDailyUploadMb: 500,
+      minFreeDiskMb: 5120,
+    });
+  });
+
+  it('updates all capacity guardrails', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/settings/instance',
+      payload: { maxUserStorageMb: 2048, maxDailyUploadMb: 750, minFreeDiskMb: 4096 },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      maxUserStorageMb: 2048,
+      maxDailyUploadMb: 750,
+      minFreeDiskMb: 4096,
+    });
+  });
+
+  it('rejects a per-file limit larger than a quota', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/settings/instance',
+      payload: { maxUploadSizeMb: 600, maxDailyUploadMb: 500 },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toMatch(/per-file limit/);
+  });
+});

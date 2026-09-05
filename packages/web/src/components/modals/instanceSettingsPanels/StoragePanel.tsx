@@ -43,6 +43,10 @@ export function StoragePanel() {
   const [uploadUnit, setUploadUnit] = useState<UploadUnit>('MB');
   const [uploadLimitInput, setUploadLimitInput] = useState<string>('100');
   const [uploadLimitSaving, setUploadLimitSaving] = useState(false);
+  const [userQuotaGbInput, setUserQuotaGbInput] = useState('1');
+  const [dailyQuotaMbInput, setDailyQuotaMbInput] = useState('500');
+  const [diskReserveGbInput, setDiskReserveGbInput] = useState('5');
+  const [guardrailsSaving, setGuardrailsSaving] = useState(false);
 
   // Media retention state
   const [mediaAgeDays, setMediaAgeDays] = useState(90);
@@ -80,10 +84,25 @@ export function StoragePanel() {
       setUploadUnit(unit);
       setUploadLimitInput(unit === 'GB' ? formatUnitValue(mb / 1024) : String(mb));
     }
+    if (instanceSettings) {
+      setUserQuotaGbInput(formatUnitValue(instanceSettings.maxUserStorageMb / 1024));
+      setDailyQuotaMbInput(String(instanceSettings.maxDailyUploadMb));
+      setDiskReserveGbInput(formatUnitValue(instanceSettings.minFreeDiskMb / 1024));
+    }
   }, [instanceSettings]);
 
   const parsedUploadMb = parseDisplayMb(uploadLimitInput, uploadUnit);
   const uploadLimitDirty = parsedUploadMb !== null && parsedUploadMb !== instanceSettings?.maxUploadSizeMb;
+  const parsedUserQuotaMb = parseDisplayMb(userQuotaGbInput, 'GB');
+  const parsedDailyQuotaMb = parseDisplayMb(dailyQuotaMbInput, 'MB');
+  const parsedDiskReserveMb = parseDisplayMb(diskReserveGbInput, 'GB');
+  const guardrailsDirty = !!instanceSettings
+    && parsedUserQuotaMb !== null
+    && parsedDailyQuotaMb !== null
+    && parsedDiskReserveMb !== null
+    && (parsedUserQuotaMb !== instanceSettings.maxUserStorageMb
+      || parsedDailyQuotaMb !== instanceSettings.maxDailyUploadMb
+      || parsedDiskReserveMb !== instanceSettings.minFreeDiskMb);
 
   const handleUploadUnitChange = (next: UploadUnit) => {
     if (next === uploadUnit) return;
@@ -106,6 +125,23 @@ export function StoragePanel() {
       addToast('Failed to update upload limit', 'warning');
     } finally {
       setUploadLimitSaving(false);
+    }
+  };
+
+  const handleGuardrailsSave = async () => {
+    if (parsedUserQuotaMb === null || parsedDailyQuotaMb === null || parsedDiskReserveMb === null) return;
+    setGuardrailsSaving(true);
+    try {
+      await updateInstanceSettings({
+        maxUserStorageMb: parsedUserQuotaMb,
+        maxDailyUploadMb: parsedDailyQuotaMb,
+        minFreeDiskMb: parsedDiskReserveMb,
+      });
+      addToast('Limites de capacidade atualizados', 'success');
+    } catch {
+      addToast('Não foi possível atualizar os limites de capacidade', 'warning');
+    } finally {
+      setGuardrailsSaving(false);
     }
   };
 
@@ -296,6 +332,33 @@ export function StoragePanel() {
               className="px-3 py-1 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ml-auto"
             >
               {uploadLimitSaving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Capacity Guardrails */}
+      <div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Proteção de capacidade</div>
+        <div className="rounded-lg bg-white/[0.02] p-3.5 space-y-3">
+          <p className="text-xs text-txt-tertiary">Impede que uma conta ou vários uploads simultâneos consumam todo o disco do servidor.</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="space-y-1 text-xs text-txt-secondary">
+              <span>Por usuário (GB)</span>
+              <input type="number" min="0.001" step="0.5" value={userQuotaGbInput} onChange={(event) => setUserQuotaGbInput(event.target.value)} className="input-standard w-full px-2 py-1.5 text-sm" />
+            </label>
+            <label className="space-y-1 text-xs text-txt-secondary">
+              <span>Por 24 horas (MB)</span>
+              <input type="number" min="1" step="1" value={dailyQuotaMbInput} onChange={(event) => setDailyQuotaMbInput(event.target.value)} className="input-standard w-full px-2 py-1.5 text-sm" />
+            </label>
+            <label className="space-y-1 text-xs text-txt-secondary">
+              <span>Espaço livre mínimo (GB)</span>
+              <input type="number" min="0.001" step="0.5" value={diskReserveGbInput} onChange={(event) => setDiskReserveGbInput(event.target.value)} className="input-standard w-full px-2 py-1.5 text-sm" />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={handleGuardrailsSave} disabled={!guardrailsDirty || guardrailsSaving} className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
+              {guardrailsSaving ? 'Salvando…' : 'Salvar proteções'}
             </button>
           </div>
         </div>

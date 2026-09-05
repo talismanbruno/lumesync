@@ -379,4 +379,76 @@ describe('POST /api/files — tus upload endpoint', () => {
     });
     expect(res.statusCode).toBe(413);
   });
+
+  it('rejects an upload that would exceed the per-user storage quota', async () => {
+    testDb.update(schema.instanceSettings).set({
+      maxUploadSizeBytes: 100,
+      maxUserStorageBytes: 100,
+      maxDailyUploadBytes: 1000,
+      minFreeDiskBytes: 1,
+    }).run();
+    testDb.insert(schema.attachments).values({
+      id: 'existing-user-storage', uploaderId: USER_A_ID, filename: 'existing.bin',
+      originalName: 'existing.bin', mimetype: 'application/octet-stream', size: 60,
+      createdAt: Date.now() - 2 * 86_400_000,
+    }).run();
+
+    const token = signJwt({ userId: USER_A_ID, username: 'user_a' });
+    const res = await app.inject({
+      method: 'POST', url: '/api/files',
+      headers: {
+        authorization: `Bearer ${token}`, 'tus-resumable': '1.0.0',
+        'upload-length': '50', 'upload-metadata': tusMetadata({ originalName: 'next.bin' }),
+        'content-length': '0',
+      },
+    });
+    expect(res.statusCode).toBe(413);
+    expect(res.body).toContain('User storage quota exceeded');
+  });
+
+  it('rejects an upload that would exceed the rolling 24-hour quota', async () => {
+    testDb.update(schema.instanceSettings).set({
+      maxUploadSizeBytes: 100,
+      maxUserStorageBytes: 1000,
+      maxDailyUploadBytes: 100,
+      minFreeDiskBytes: 1,
+    }).run();
+    testDb.insert(schema.attachments).values({
+      id: 'existing-daily-storage', uploaderId: USER_A_ID, filename: 'today.bin',
+      originalName: 'today.bin', mimetype: 'application/octet-stream', size: 60,
+      createdAt: Date.now(),
+    }).run();
+
+    const token = signJwt({ userId: USER_A_ID, username: 'user_a' });
+    const res = await app.inject({
+      method: 'POST', url: '/api/files',
+      headers: {
+        authorization: `Bearer ${token}`, 'tus-resumable': '1.0.0',
+        'upload-length': '50', 'upload-metadata': tusMetadata({ originalName: 'next.bin' }),
+        'content-length': '0',
+      },
+    });
+    expect(res.statusCode).toBe(429);
+    expect(res.body).toContain('Daily upload quota exceeded');
+  });
+
+  it('counts simultaneous upload reservations against the user quota', async () => {
+    testDb.update(schema.instanceSettings).set({
+      maxUploadSizeBytes: 100,
+      maxUserStorageBytes: 100,
+      maxDailyUploadBytes: 1000,
+      minFreeDiskBytes: 1,
+    }).run();
+    const token = signJwt({ userId: USER_A_ID, username: 'user_a' });
+    const headers = {
+      authorization: `Bearer ${token}`, 'tus-resumable': '1.0.0',
+      'upload-length': '60', 'upload-metadata': tusMetadata({ originalName: 'pending.bin' }),
+      'content-length': '0',
+    };
+    const first = await app.inject({ method: 'POST', url: '/api/files', headers });
+    const second = await app.inject({ method: 'POST', url: '/api/files', headers });
+    expect(first.statusCode).toBe(201);
+    expect(second.statusCode).toBe(413);
+    expect(second.body).toContain('User storage quota exceeded');
+  });
 });

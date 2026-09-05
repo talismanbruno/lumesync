@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { Server as TusServer } from '@tus/server';
 import { FileStore } from '@tus/file-store';
 import { config } from '../config.js';
-import { getDb, schema } from '../db/index.js';
+import { getDb, getRawDb, schema } from '../db/index.js';
 import { generateSnowflake } from '../utils/snowflake.js';
 import { verifyJwtAndUser, AuthError } from '../utils/auth.js';
 import {
@@ -26,10 +26,11 @@ import type { Attachment } from '@backspace/shared';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// ─── Per-user rate limit for upload creation (30 creates / min) ─────────────
-const UPLOAD_CREATE_LIMIT = 30;
+// ─── Per-user rate limit for upload creation (10 creates / min) ─────────────
+const UPLOAD_CREATE_LIMIT = 10;
 const UPLOAD_CREATE_WINDOW_MS = 60_000;
 const createCounts = new Map<string, { count: number; windowStart: number }>();
+const pendingUploadReservations = new Map<string, { userId: string; size: number; createdAt: number }>();
 
 function checkCreateRateLimit(userId: string): boolean {
   const now = Date.now();
@@ -74,6 +75,9 @@ function startRateLimitPruner(): void {
     for (const [k, v] of patchCounts) {
       if (now - v.windowStart > PATCH_WINDOW_MS) patchCounts.delete(k);
     }
+    for (const [uploadId, reservation] of pendingUploadReservations) {
+      if (now - reservation.createdAt > config.tusExpirationMs) pendingUploadReservations.delete(uploadId);
+    }
   }, 60_000);
   // Don't keep the event loop alive solely for this timer
   if (typeof rateLimitPruneTimer.unref === 'function') rateLimitPruneTimer.unref();
@@ -100,6 +104,13 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
   // Ensure tus staging directory exists
   fs.mkdirSync(config.tusUploadDir, { recursive: true });
   startRateLimitPruner();
+  app.addHook('onClose', async () => {
+    if (rateLimitPruneTimer) clearInterval(rateLimitPruneTimer);
+    rateLimitPruneTimer = null;
+    createCounts.clear();
+    patchCounts.clear();
+    pendingUploadReservations.clear();
+  });
 
   const tusServer = new TusServer({
     path: '/api/files',
@@ -177,14 +188,53 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
       // Read dynamic upload limit from instance_settings, fall back to config
       const db = getDb();
       const settings = db
-        .select({ maxUploadSizeBytes: schema.instanceSettings.maxUploadSizeBytes })
+        .select({
+          maxUploadSizeBytes: schema.instanceSettings.maxUploadSizeBytes,
+          maxUserStorageBytes: schema.instanceSettings.maxUserStorageBytes,
+          maxDailyUploadBytes: schema.instanceSettings.maxDailyUploadBytes,
+          minFreeDiskBytes: schema.instanceSettings.minFreeDiskBytes,
+        })
         .from(schema.instanceSettings)
         .where(eq(schema.instanceSettings.id, 1))
         .get();
       const maxSize = settings?.maxUploadSizeBytes ?? config.maxUploadSize;
+      const maxUserStorageBytes = settings?.maxUserStorageBytes ?? 1024 * 1024 * 1024;
+      const maxDailyUploadBytes = settings?.maxDailyUploadBytes ?? 500 * 1024 * 1024;
+      const minFreeDiskBytes = settings?.minFreeDiskBytes ?? 5 * 1024 * 1024 * 1024;
 
       if (upload.size !== undefined && upload.size > maxSize) {
         throw { status_code: 413, body: 'File too large' };
+      }
+      if (upload.size === undefined || !Number.isSafeInteger(upload.size) || upload.size < 0) {
+        throw { status_code: 400, body: 'Upload-Length is required' };
+      }
+
+      const rawDb = getRawDb();
+      const stored = rawDb.prepare(
+        'SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE uploader_id = ?',
+      ).get(userId) as { bytes: number };
+      const uploadedToday = rawDb.prepare(
+        'SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE uploader_id = ? AND created_at >= ?',
+      ).get(userId, Date.now() - 86_400_000) as { bytes: number };
+      let reservedByUser = 0;
+      let reservedTotal = 0;
+      for (const reservation of pendingUploadReservations.values()) {
+        reservedTotal += reservation.size;
+        if (reservation.userId === userId) reservedByUser += reservation.size;
+      }
+
+      if (stored.bytes + reservedByUser + upload.size > maxUserStorageBytes) {
+        throw { status_code: 413, body: 'User storage quota exceeded' };
+      }
+      if (uploadedToday.bytes + reservedByUser + upload.size > maxDailyUploadBytes) {
+        throw { status_code: 429, body: 'Daily upload quota exceeded' };
+      }
+
+      fs.mkdirSync(config.uploadDir, { recursive: true });
+      const disk = fs.statfsSync(config.uploadDir);
+      const freeBytes = Number(disk.bavail) * Number(disk.bsize);
+      if (freeBytes - reservedTotal - upload.size < minFreeDiskBytes) {
+        throw { status_code: 507, body: 'Server storage safety reserve reached' };
       }
 
       // Extract originalName from existing metadata (decoded by tus already)
@@ -197,6 +247,8 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
           body: 'Upload-Metadata missing required field: filename',
         };
       }
+
+      pendingUploadReservations.set(upload.id, { userId, size: upload.size, createdAt: Date.now() });
 
       // Assign snowflake and embed userId into tus metadata
       const snowflakeId = generateSnowflake();
@@ -237,6 +289,39 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
       const filename = `${snowflakeId}${ext}`;
       const srcPath = path.join(config.tusUploadDir, upload.id);
       const dstPath = path.join(config.uploadDir, filename);
+      const declaredSize = upload.size ?? fs.statSync(srcPath).size;
+
+      // Re-check at completion so an upload created before a restart or an
+      // admin quota reduction cannot bypass the current capacity policy.
+      const quotaSettings = getDb().select({
+        maxUserStorageBytes: schema.instanceSettings.maxUserStorageBytes,
+        maxDailyUploadBytes: schema.instanceSettings.maxDailyUploadBytes,
+        minFreeDiskBytes: schema.instanceSettings.minFreeDiskBytes,
+      }).from(schema.instanceSettings).where(eq(schema.instanceSettings.id, 1)).get();
+      const rawDb = getRawDb();
+      const stored = rawDb.prepare(
+        'SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE uploader_id = ?',
+      ).get(storedUserId) as { bytes: number };
+      const uploadedToday = rawDb.prepare(
+        'SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE uploader_id = ? AND created_at >= ?',
+      ).get(storedUserId, Date.now() - 86_400_000) as { bytes: number };
+      let otherReservedByUser = 0;
+      for (const [reservedUploadId, reservation] of pendingUploadReservations) {
+        if (reservedUploadId !== upload.id && reservation.userId === storedUserId) {
+          otherReservedByUser += reservation.size;
+        }
+      }
+      if (stored.bytes + otherReservedByUser + declaredSize > (quotaSettings?.maxUserStorageBytes ?? 1024 * 1024 * 1024)) {
+        throw { status_code: 413, body: 'User storage quota exceeded' };
+      }
+      if (uploadedToday.bytes + otherReservedByUser + declaredSize > (quotaSettings?.maxDailyUploadBytes ?? 500 * 1024 * 1024)) {
+        throw { status_code: 429, body: 'Daily upload quota exceeded' };
+      }
+      const disk = fs.statfsSync(config.uploadDir);
+      const freeBytes = Number(disk.bavail) * Number(disk.bsize);
+      if (freeBytes < (quotaSettings?.minFreeDiskBytes ?? 5 * 1024 * 1024 * 1024)) {
+        throw { status_code: 507, body: 'Server storage safety reserve reached' };
+      }
 
       // Ensure upload dir exists (may differ from tus staging dir) — needed
       // before media processing because thumbnails are written there.
@@ -324,7 +409,7 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
         try { fs.unlinkSync(sidecarPath); } catch { /* ignore */ }
       }
 
-      const size = upload.size ?? fs.statSync(dstPath).size;
+      const size = declaredSize;
       const now = Date.now();
 
       // ── Insert attachments row ───────────────────────────────────────────
@@ -346,6 +431,7 @@ export async function filesRoutes(app: FastifyInstance): Promise<void> {
           playable,
           createdAt: now,
         }).run();
+        pendingUploadReservations.delete(upload.id);
       } catch (err) {
         // INSERT failed after the rename succeeded — best-effort delete the
         // committed file + thumbnail so we don't leak an orphan. The

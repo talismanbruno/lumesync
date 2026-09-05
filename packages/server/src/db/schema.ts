@@ -125,6 +125,7 @@ export const attachments = sqliteTable('attachments', {
 }, (table) => ({
   messageIdx: index('idx_attachments_message_id').on(table.messageId),
   dmMessageIdx: index('idx_attachments_dm_message_id').on(table.dmMessageId),
+  uploaderCreatedIdx: index('idx_attachments_uploader_created_at').on(table.uploaderId, table.createdAt),
 }));
 
 export const embeds = sqliteTable('embeds', {
@@ -335,6 +336,9 @@ export const instanceSettings = sqliteTable('instance_settings', {
   bitrateMatrixOverrides: text('bitrate_matrix_overrides'),
   allowCustomBitrate: integer('allow_custom_bitrate').notNull().default(1),
   maxUploadSizeBytes: integer('max_upload_size_bytes'),
+  maxUserStorageBytes: integer('max_user_storage_bytes').notNull().default(1024 * 1024 * 1024),
+  maxDailyUploadBytes: integer('max_daily_upload_bytes').notNull().default(500 * 1024 * 1024),
+  minFreeDiskBytes: integer('min_free_disk_bytes').notNull().default(5 * 1024 * 1024 * 1024),
   federationRelayEnabled: integer('federation_relay_enabled').notNull().default(1),
   federationRelayTtlDays: integer('federation_relay_ttl_days').notNull().default(30),
   defaultAutoRotateIntervalDays: integer('default_auto_rotate_interval_days').notNull().default(90),

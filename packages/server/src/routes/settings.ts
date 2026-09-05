@@ -190,6 +190,9 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       gifApiKey: gifKey ? `****${gifKey.slice(-4)}` : undefined,
       gifEnabled: !!gifKey,
       maxUploadSizeMb: Math.round(maxUploadBytes / (1024 * 1024)),
+      maxUserStorageMb: Math.round(row.maxUserStorageBytes / (1024 * 1024)),
+      maxDailyUploadMb: Math.round(row.maxDailyUploadBytes / (1024 * 1024)),
+      minFreeDiskMb: Math.round(row.minFreeDiskBytes / (1024 * 1024)),
       federationRelayEnabled: row.federationRelayEnabled === 1,
       federationRelayTtlDays: row.federationRelayTtlDays,
       defaultAutoRotateIntervalDays: row.defaultAutoRotateIntervalDays,
@@ -248,6 +251,21 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       updateData.maxUploadSizeBytes = mb * 1024 * 1024;
     }
 
+    const quotaFields = [
+      ['maxUserStorageMb', 'maxUserStorageBytes'],
+      ['maxDailyUploadMb', 'maxDailyUploadBytes'],
+      ['minFreeDiskMb', 'minFreeDiskBytes'],
+    ] as const;
+    for (const [bodyKey, columnKey] of quotaFields) {
+      if (body[bodyKey] === undefined) continue;
+      const mb = Number(body[bodyKey]);
+      const MAX_MB = Math.floor(Number.MAX_SAFE_INTEGER / (1024 * 1024));
+      if (!Number.isFinite(mb) || !Number.isInteger(mb) || mb < 1 || mb > MAX_MB) {
+        return reply.code(400).send({ error: `${bodyKey} must be a positive integer (1 - ${MAX_MB})`, statusCode: 400 });
+      }
+      updateData[columnKey] = mb * 1024 * 1024;
+    }
+
     if (body.federationRelayEnabled !== undefined) {
       updateData.federationRelayEnabled = body.federationRelayEnabled ? 1 : 0;
     }
@@ -272,6 +290,21 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       updateData.autoAcceptPeering = body.autoAcceptPeering ? 1 : 0;
     }
 
+    const currentRow = db.select().from(schema.instanceSettings).where(eq(schema.instanceSettings.id, 1)).get();
+    if (!currentRow) {
+      return reply.code(500).send({ error: 'Instance settings not initialized', statusCode: 500 });
+    }
+    const effectiveFileLimit = (updateData.maxUploadSizeBytes as number | undefined)
+      ?? currentRow.maxUploadSizeBytes
+      ?? config.maxUploadSize;
+    const effectiveDailyLimit = (updateData.maxDailyUploadBytes as number | undefined)
+      ?? currentRow.maxDailyUploadBytes;
+    const effectiveUserLimit = (updateData.maxUserStorageBytes as number | undefined)
+      ?? currentRow.maxUserStorageBytes;
+    if (effectiveFileLimit > effectiveDailyLimit || effectiveFileLimit > effectiveUserLimit) {
+      return reply.code(400).send({ error: 'The per-file limit cannot exceed the daily or per-user quota', statusCode: 400 });
+    }
+
     db.update(schema.instanceSettings).set(updateData).where(eq(schema.instanceSettings.id, 1)).run();
 
     const updatedRow = db.select().from(schema.instanceSettings).where(eq(schema.instanceSettings.id, 1)).get();
@@ -289,6 +322,9 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       gifApiKey: updatedGifKey ? `****${updatedGifKey.slice(-4)}` : undefined,
       gifEnabled: !!updatedGifKey,
       maxUploadSizeMb: Math.round(updatedMaxUploadBytes / (1024 * 1024)),
+      maxUserStorageMb: Math.round(updatedRow.maxUserStorageBytes / (1024 * 1024)),
+      maxDailyUploadMb: Math.round(updatedRow.maxDailyUploadBytes / (1024 * 1024)),
+      minFreeDiskMb: Math.round(updatedRow.minFreeDiskBytes / (1024 * 1024)),
       federationRelayEnabled: updatedRow.federationRelayEnabled === 1,
       federationRelayTtlDays: updatedRow.federationRelayTtlDays,
       defaultAutoRotateIntervalDays: updatedRow.defaultAutoRotateIntervalDays,

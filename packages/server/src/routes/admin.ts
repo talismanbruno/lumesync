@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import crypto from 'crypto';
 import { getHeapStatistics } from 'node:v8';
+import { statfsSync } from 'node:fs';
 import { eq, like, or, and, ne, sql, isNull, isNotNull, gte, lte, asc, desc, inArray } from 'drizzle-orm';
 import { authenticate, requireAdmin, hashPassword } from '../utils/auth.js';
 import { getStorageStats, getOrphanedFiles, cleanupStorage, cleanupOldMedia, cleanupStaleTusSessions } from '../utils/storageJanitor.js';
@@ -10,6 +11,7 @@ import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcast
 import { deleteUploadFile } from '../utils/fileCleanup.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { buildSystemHealthAlerts } from '../utils/systemHealth.js';
+import { config } from '../config.js';
 import type { AdminUser, AdminUserListResponse, AdminResetPasswordResponse, AdminInsights, AdminSystemHealth, AdminSpaceSummary, AdminSpacePreview, AdminAuditLog, BugReportStatus, MemberWithUser } from '@backspace/shared';
 
 function toAdminUser(row: typeof schema.users.$inferSelect): AdminUser {
@@ -145,6 +147,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const heapUsagePercent = heapLimitBytes > 0 ? Math.round((memory.heapUsed / heapLimitBytes) * 1000) / 10 : 0;
     const realtime = connectionManager.getOperationalStats();
     let storage = { totalSize: 0, totalFiles: 0, orphanedFiles: 0, staleTusSessions: 0 };
+    let disk = { totalBytes: 0, freeBytes: 0, usagePercent: 0 };
     let storageError: string | null = null;
     try {
       const stats = getStorageStats();
@@ -154,10 +157,18 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         orphanedFiles: stats.orphanedFiles,
         staleTusSessions: stats.staleTusSessions,
       };
+      const filesystem = statfsSync(config.uploadDir);
+      disk.totalBytes = Number(filesystem.blocks) * Number(filesystem.bsize);
+      disk.freeBytes = Number(filesystem.bavail) * Number(filesystem.bsize);
+      disk.usagePercent = disk.totalBytes > 0
+        ? Math.round(((disk.totalBytes - disk.freeBytes) / disk.totalBytes) * 1000) / 10
+        : 0;
     } catch (error) {
       storageError = error instanceof Error ? error.message : 'erro desconhecido';
     }
     const db = getDb();
+    const instanceSettings = db.select({ minFreeDiskBytes: schema.instanceSettings.minFreeDiskBytes })
+      .from(schema.instanceSettings).where(eq(schema.instanceSettings.id, 1)).get();
     const since = Date.now() - 86_400_000;
     const count = (table: any, where?: any) => db.select({ count: sql<number>`count(*)` }).from(table).where(where).get()?.count ?? 0;
     const voiceCount = (event: string) => count(schema.voiceDiagnostics, and(eq(schema.voiceDiagnostics.event, event), gte(schema.voiceDiagnostics.createdAt, since)));
@@ -176,6 +187,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       voiceRecoveries: last24Hours.voiceRecoveries,
       orphanedFiles: storage.orphanedFiles,
       staleUploads: storage.staleTusSessions,
+      diskUsagePercent: disk.usagePercent,
+      diskFreeBytes: disk.freeBytes,
+      minFreeDiskBytes: instanceSettings?.minFreeDiskBytes ?? null,
       storageError,
     });
     const response: AdminSystemHealth = {
@@ -185,7 +199,15 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       database: { status: dbStatus, latencyMs: dbLatencyMs, message: dbMessage },
       memory: { rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, heapTotalBytes: memory.heapTotal, heapLimitBytes, heapUsagePercent },
       realtime,
-      storage: { totalBytes: storage.totalSize, totalFiles: storage.totalFiles, orphanedFiles: storage.orphanedFiles, staleUploads: storage.staleTusSessions },
+      storage: {
+        totalBytes: storage.totalSize,
+        totalFiles: storage.totalFiles,
+        orphanedFiles: storage.orphanedFiles,
+        staleUploads: storage.staleTusSessions,
+        diskTotalBytes: disk.totalBytes,
+        diskFreeBytes: disk.freeBytes,
+        diskUsagePercent: disk.usagePercent,
+      },
       last24Hours,
       alerts,
     };
