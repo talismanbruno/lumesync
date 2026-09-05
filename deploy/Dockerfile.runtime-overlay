@@ -20,3 +20,8 @@ COPY packages/web/dist/ /app/packages/web/dist/
 # the running instance always advertises the code that was actually deployed.
 ARG LUME_RELEASE_COMMIT
 ENV BACKSPACE_COMMIT=${LUME_RELEASE_COMMIT}
+
+# Installing the workspace dependencies happens from /app, but the inherited
+# startup command resolves `tsx` from the server package. Restore the runtime
+# working directory used by the base image before the container starts.
+WORKDIR /app/packages/server
