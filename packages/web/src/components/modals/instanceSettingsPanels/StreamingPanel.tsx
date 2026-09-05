@@ -169,6 +169,50 @@ export function StreamingPanel() {
         These limits apply to all users on this instance. Users can pick values within these bounds.
       </div>
 
+      {/* Voice capacity */}
+      <div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Call capacity</div>
+        <p className="text-xs text-txt-tertiary mb-2">
+          Safety limits protect call quality and keep one busy room from exhausting the whole instance.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg bg-white/[0.02] p-3.5">
+          <label className="space-y-1.5">
+            <span className="text-xs text-txt-secondary block">Participants per call</span>
+            <input
+              type="number"
+              min={2}
+              max={100}
+              step={1}
+              value={draft.maxVoiceParticipantsPerRoom}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (Number.isInteger(value) && value >= 2 && value <= 100) {
+                  setDraft({ ...draft, maxVoiceParticipantsPerRoom: value });
+                }
+              }}
+              className="input-standard w-full px-2.5 py-1.5 text-sm"
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs text-txt-secondary block">Participants across instance</span>
+            <input
+              type="number"
+              min={2}
+              max={500}
+              step={1}
+              value={draft.maxConcurrentVoiceParticipants}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (Number.isInteger(value) && value >= 2 && value <= 500) {
+                  setDraft({ ...draft, maxConcurrentVoiceParticipants: value });
+                }
+              }}
+              className="input-standard w-full px-2.5 py-1.5 text-sm"
+            />
+          </label>
+        </div>
+      </div>
+
       {/* Bandwidth */}
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Bandwidth</div>

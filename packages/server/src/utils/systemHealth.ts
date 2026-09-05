@@ -7,6 +7,8 @@ export interface SystemHealthAlertInput {
   voiceDrops: number;
   voiceReconnects: number;
   voiceRecoveries: number;
+  voiceParticipants?: number;
+  maxConcurrentVoiceParticipants?: number;
   orphanedFiles: number;
   staleUploads: number;
   diskUsagePercent?: number | null;
@@ -46,6 +48,14 @@ export function buildSystemHealthAlerts(input: SystemHealthAlertInput): AdminSys
   }
   if (input.voiceReconnects >= 25 && input.voiceRecoveries < input.voiceReconnects * 0.7) {
     alerts.push({ level: 'warning', code: 'voice_recovery', message: 'Taxa de recuperação das calls está abaixo de 70%.' });
+  }
+  if (input.voiceParticipants !== undefined && input.maxConcurrentVoiceParticipants
+      && input.voiceParticipants >= Math.ceil(input.maxConcurrentVoiceParticipants * 0.85)) {
+    alerts.push({
+      level: 'warning',
+      code: 'voice_capacity',
+      message: `Calls usando ${input.voiceParticipants} de ${input.maxConcurrentVoiceParticipants} vagas simultâneas.`,
+    });
   }
   if (input.orphanedFiles >= 100) {
     alerts.push({ level: 'warning', code: 'orphaned_files', message: `${input.orphanedFiles} arquivos órfãos aguardando limpeza.` });

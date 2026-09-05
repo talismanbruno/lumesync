@@ -167,7 +167,11 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       storageError = error instanceof Error ? error.message : 'erro desconhecido';
     }
     const db = getDb();
-    const instanceSettings = db.select({ minFreeDiskBytes: schema.instanceSettings.minFreeDiskBytes })
+    const instanceSettings = db.select({
+      minFreeDiskBytes: schema.instanceSettings.minFreeDiskBytes,
+      maxVoiceParticipantsPerRoom: schema.instanceSettings.maxVoiceParticipantsPerRoom,
+      maxConcurrentVoiceParticipants: schema.instanceSettings.maxConcurrentVoiceParticipants,
+    })
       .from(schema.instanceSettings).where(eq(schema.instanceSettings.id, 1)).get();
     const since = Date.now() - 86_400_000;
     const count = (table: any, where?: any) => db.select({ count: sql<number>`count(*)` }).from(table).where(where).get()?.count ?? 0;
@@ -185,6 +189,8 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       voiceDrops: last24Hours.voiceDrops,
       voiceReconnects: last24Hours.voiceReconnects,
       voiceRecoveries: last24Hours.voiceRecoveries,
+      voiceParticipants: realtime.voiceParticipants,
+      maxConcurrentVoiceParticipants: instanceSettings?.maxConcurrentVoiceParticipants ?? 20,
       orphanedFiles: storage.orphanedFiles,
       staleUploads: storage.staleTusSessions,
       diskUsagePercent: disk.usagePercent,
@@ -198,7 +204,11 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       uptimeSeconds: Math.round(process.uptime()),
       database: { status: dbStatus, latencyMs: dbLatencyMs, message: dbMessage },
       memory: { rssBytes: memory.rss, heapUsedBytes: memory.heapUsed, heapTotalBytes: memory.heapTotal, heapLimitBytes, heapUsagePercent },
-      realtime,
+      realtime: {
+        ...realtime,
+        maxVoiceParticipantsPerRoom: instanceSettings?.maxVoiceParticipantsPerRoom ?? 15,
+        maxConcurrentVoiceParticipants: instanceSettings?.maxConcurrentVoiceParticipants ?? 20,
+      },
       storage: {
         totalBytes: storage.totalSize,
         totalFiles: storage.totalFiles,

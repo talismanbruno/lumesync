@@ -477,7 +477,7 @@ export type ServerEvent =
   | { type: 'voice_space_deafened'; userId: string; channelId: string; spaceId: string; deafened: boolean }
   | { type: 'voice_permission_muted'; userId: string; spaceId: string; muted: boolean }
   | { type: 'voice_moved'; userId: string; oldChannelId: string; newChannelId: string }
-  | { type: 'voice_disconnected'; userId: string; channelId: string; reason?: 'displaced' | 'session_closed' }
+  | { type: 'voice_disconnected'; userId: string; channelId: string; reason?: 'displaced' | 'session_closed' | 'capacity' }
   | { type: 'user_updated'; user: User }
   | { type: 'member_banned'; spaceId: string; reason: string | null }
   | { type: 'category_created'; category: ChannelCategory; spaceId: string }
@@ -793,6 +793,8 @@ export interface InstanceAdminSettings {
 
 export interface InstanceStreamingLimits {
   maxBitrateKbps: number;
+  maxVoiceParticipantsPerRoom: number;
+  maxConcurrentVoiceParticipants: number;
   minBitrateKbps: number;
   bitrateStepKbps: number;
   allowedResolutions: (number | 'native')[];
@@ -1051,6 +1053,8 @@ export interface AdminSystemHealth {
     connections: number;
     voiceRooms: number;
     voiceParticipants: number;
+    maxVoiceParticipantsPerRoom: number;
+    maxConcurrentVoiceParticipants: number;
     spaceVoiceRooms: number;
     dmVoiceRooms: number;
   };

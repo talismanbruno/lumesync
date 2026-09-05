@@ -16,7 +16,13 @@ import { deleteAttachmentFiles } from '../utils/fileCleanup.js';
 import { resolveEmbeds, reResolveEmbeds, embedRowToEmbed } from '../utils/embedResolver.js';
 import { appendMutationLog, queueOutboxEvent, queueDmRelay, getGroupDmTargetOrigins, sendCallRelay, computeFederatedId, sendTypingRelay, queueReadStateRelay } from '../utils/federationOutbox.js';
 import { getOurOrigin } from '../utils/federationAuth.js';
-import { generateFederatedCallToken } from '../routes/livekit.js';
+import { generateFederatedCallToken } from '../utils/livekitToken.js';
+import {
+  clearVoiceCapacityReservation,
+  evaluateVoiceCapacity,
+  getVoiceReservationCounts,
+  readVoiceCapacityLimits,
+} from '../utils/voiceCapacity.js';
 import { config } from '../config.js';
 import crypto from 'node:crypto';
 
@@ -591,7 +597,38 @@ function handleVoiceJoin(event: Record<string, unknown>, userId: string, ws: Web
   }
 
   if (!hasPermission(userId, spaceId, PermissionBits.CONNECT, channelId)) {
+    clearVoiceCapacityReservation(userId);
     connectionManager.sendToUser(userId, { type: 'error', message: 'Missing CONNECT permission' });
+    return;
+  }
+
+  // Backstop the token endpoint reservation. The WebSocket state is the
+  // authoritative source for presence, so a modified client cannot bypass it.
+  const currentRoomId = connectionManager.getUserRoom(userId)?.roomId ?? null;
+  const reservations = getVoiceReservationCounts(userId, channelId);
+  const capacityRejection = evaluateVoiceCapacity({
+    ...readVoiceCapacityLimits(),
+    targetRoomId: channelId,
+    currentRoomId,
+    roomParticipants: connectionManager.getRoomParticipants(channelId).size,
+    totalParticipants: connectionManager.getOperationalStats().voiceParticipants,
+    reservedForRoom: reservations.room,
+    reservedTotal: reservations.total,
+  });
+  if (capacityRejection) {
+    clearVoiceCapacityReservation(userId);
+    connectionManager.sendToUser(userId, {
+      type: 'voice_disconnected',
+      userId,
+      channelId,
+      reason: 'capacity',
+    });
+    connectionManager.sendToUser(userId, {
+      type: 'error',
+      message: capacityRejection === 'room_full'
+        ? 'Esta call atingiu o limite de participantes.'
+        : 'A capacidade de calls está cheia no momento. Tente novamente em instantes.',
+    });
     return;
   }
 
@@ -616,6 +653,7 @@ function handleVoiceJoin(event: Record<string, unknown>, userId: string, ws: Web
   // skip the leave+join broadcast to avoid visual flicker for other users.
   const currentRoom = connectionManager.getUserRoom(userId);
   if (currentRoom && currentRoom.roomId === channelId) {
+    clearVoiceCapacityReservation(userId);
     const status = connectionManager.getVoiceUserStatus(userId);
     if (status) {
       connectionManager.sendToRoom(channelId, {
@@ -712,6 +750,7 @@ function handleVoiceJoin(event: Record<string, unknown>, userId: string, ws: Web
 
   // Join room
   connectionManager.joinRoom(channelId, userId);
+  clearVoiceCapacityReservation(userId);
 
   // Broadcast join
   connectionManager.sendToRoom(channelId, {
@@ -784,6 +823,7 @@ function handleVoiceJoin(event: Record<string, unknown>, userId: string, ws: Web
 }
 
 function handleVoiceLeave(userId: string): void {
+  clearVoiceCapacityReservation(userId);
   connectionManager.clearVoiceWs(userId);
   const left = connectionManager.leaveCurrentRoom(userId);
   if (left) {
@@ -1496,11 +1536,35 @@ async function handleDmCallAccept(event: Record<string, unknown>, userId: string
     if (room && room.roomType === 'dm') {
       const meta = room.metadata as DmRoomMeta;
 
+      const joiningUsers = new Set([meta.callerId, userId]);
+      let roomAdditions = 0;
+      let instanceAdditions = 0;
+      for (const joiningUserId of joiningUsers) {
+        const current = connectionManager.getUserRoom(joiningUserId);
+        if (current?.roomId !== dmChannelId) roomAdditions += 1;
+        if (!current) instanceAdditions += 1;
+      }
+      const limits = readVoiceCapacityLimits();
+      const projectedRoomParticipants = room.participants.size + roomAdditions;
+      const projectedInstanceParticipants = connectionManager.getOperationalStats().voiceParticipants + instanceAdditions;
+      if (projectedRoomParticipants > limits.maxVoiceParticipantsPerRoom
+          || projectedInstanceParticipants > limits.maxConcurrentVoiceParticipants) {
+        clearVoiceCapacityReservation(userId);
+        connectionManager.sendToUser(userId, {
+          type: 'error',
+          message: projectedRoomParticipants > limits.maxVoiceParticipantsPerRoom
+            ? 'Esta call atingiu o limite de participantes.'
+            : 'A capacidade de calls está cheia no momento. Tente novamente em instantes.',
+        });
+        return;
+      }
+
       if (meta.state === 'ringing') {
         connectionManager.activateDmRoom(dmChannelId);
         const callerLeft = connectionManager.leaveCurrentRoom(meta.callerId);
         if (callerLeft) broadcastRoomLeave(callerLeft.roomId, callerLeft.room, meta.callerId);
         connectionManager.joinRoom(dmChannelId, meta.callerId);
+        clearVoiceCapacityReservation(meta.callerId);
         connectionManager.sendToDmMembers(dmChannelId, {
           type: 'voice_state_update',
           channelId: dmChannelId,
@@ -1512,6 +1576,7 @@ async function handleDmCallAccept(event: Record<string, unknown>, userId: string
       const acceptorLeft = connectionManager.leaveCurrentRoom(userId);
       if (acceptorLeft) broadcastRoomLeave(acceptorLeft.roomId, acceptorLeft.room, userId);
       connectionManager.joinRoom(dmChannelId, userId);
+      clearVoiceCapacityReservation(userId);
       connectionManager.setVoiceWs(userId, ws);
       // Look up federatedId for the broadcast so all clients (including remote) can match
       const fedIdRow = getDb().select({ federatedId: schema.dmChannels.federatedId })

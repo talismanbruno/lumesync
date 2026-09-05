@@ -203,3 +203,36 @@ describe('instance capacity guardrails', () => {
     expect(res.json().error).toMatch(/per-file limit/);
   });
 });
+
+describe('voice and streaming capacity guardrails', () => {
+  it('returns safe defaults for the current instance size', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/settings/streaming' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      maxBitrateKbps: 6000,
+      maxVoiceParticipantsPerRoom: 15,
+      maxConcurrentVoiceParticipants: 20,
+    });
+  });
+
+  it('updates both voice limits together', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/settings/streaming',
+      payload: { maxVoiceParticipantsPerRoom: 12, maxConcurrentVoiceParticipants: 18 },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      maxVoiceParticipantsPerRoom: 12,
+      maxConcurrentVoiceParticipants: 18,
+    });
+  });
+
+  it('rejects a per-room limit larger than the whole-instance limit', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/api/settings/streaming',
+      payload: { maxVoiceParticipantsPerRoom: 21, maxConcurrentVoiceParticipants: 20 },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toMatch(/Room participant limit/);
+  });
+});

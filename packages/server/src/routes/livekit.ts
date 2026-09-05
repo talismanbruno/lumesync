@@ -6,38 +6,14 @@ import { getChannelSpaceId, hasPermission, computePermissions, isDmMember, Permi
 import type { LiveKitTokenRequest, LiveKitTokenResponse } from '@backspace/shared';
 import { getDb, schema } from '../db/index.js';
 import { eq } from 'drizzle-orm';
-
-/**
- * Generate a LiveKit token for a federated call participant.
- * Uses homeUserId as identity (stable across instances).
- * Short TTL (5 min) — must join quickly.
- */
-export async function generateFederatedCallToken(
-  roomName: string,
-  homeUserId: string,
-  displayName: string,
-): Promise<string> {
-  const token = new AccessToken(config.livekit.apiKey!, config.livekit.apiSecret!, {
-    identity: `${homeUserId}:${displayName}`,
-    ttl: '5m',
-  });
-
-  token.addGrant({
-    room: roomName,
-    roomJoin: true,
-    canPublish: true,
-    canPublishSources: [
-      TrackSource.MICROPHONE,
-      TrackSource.CAMERA,
-      TrackSource.SCREEN_SHARE,
-      TrackSource.SCREEN_SHARE_AUDIO,
-    ],
-    canSubscribe: true,
-    canPublishData: true,
-  });
-
-  return token.toJwt();
-}
+import { connectionManager } from '../ws/handler.js';
+import {
+  clearVoiceCapacityReservation,
+  evaluateVoiceCapacity,
+  getVoiceReservationCounts,
+  readVoiceCapacityLimits,
+  reserveVoiceCapacity,
+} from '../utils/voiceCapacity.js';
 
 export async function livekitRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: LiveKitTokenRequest & { dmChannelId?: string } }>('/api/livekit/token', {
@@ -51,6 +27,7 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
 
     // Determine room name based on channel type
     let roomName: string;
+    let capacityRoomId: string;
 
     // Default: full publish (DM calls always get full permissions)
     let canSpeak = true;
@@ -71,6 +48,7 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
         .get();
 
       roomName = channel?.federatedId ? channel.federatedId : `dm-${dmChannelId}`;
+      capacityRoomId = dmChannelId;
     } else if (channelId && typeof channelId === 'string') {
       // Space voice channel token
       const spaceId = getChannelSpaceId(channelId);
@@ -85,9 +63,32 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
       canSpeak = (perms & PermissionBits.SPEAK) !== 0n || (perms & PermissionBits.ADMINISTRATOR) !== 0n;
       canStream = (perms & PermissionBits.STREAM) !== 0n || (perms & PermissionBits.ADMINISTRATOR) !== 0n;
       roomName = channelId;
+      capacityRoomId = channelId;
     } else {
       return reply.code(400).send({ error: 'channelId or dmChannelId is required', statusCode: 400 });
     }
+
+    const currentRoomId = connectionManager.getUserRoom(request.userId)?.roomId ?? null;
+    const reservations = getVoiceReservationCounts(request.userId, capacityRoomId);
+    const rejection = evaluateVoiceCapacity({
+      ...readVoiceCapacityLimits(),
+      targetRoomId: capacityRoomId,
+      currentRoomId,
+      roomParticipants: connectionManager.getRoomParticipants(capacityRoomId).size,
+      totalParticipants: connectionManager.getOperationalStats().voiceParticipants,
+      reservedForRoom: reservations.room,
+      reservedTotal: reservations.total,
+    });
+    if (rejection) {
+      const error = rejection === 'room_full'
+        ? 'This call has reached its participant limit'
+        : 'Voice capacity is temporarily full on this instance';
+      return reply.code(429).send({ error, statusCode: 429, reason: rejection });
+    }
+    reserveVoiceCapacity(request.userId, capacityRoomId, {
+      addsToRoom: currentRoomId !== capacityRoomId,
+      addsToInstance: currentRoomId === null,
+    });
 
     const identity = `${request.userId}:${request.username}`;
 
@@ -115,7 +116,13 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
       canPublishData: true,
     });
 
-    const jwt = await token.toJwt();
+    let jwt: string;
+    try {
+      jwt = await token.toJwt();
+    } catch (error) {
+      clearVoiceCapacityReservation(request.userId);
+      throw error;
+    }
 
     const livekitUrl = config.livekit.url ?? '';
 

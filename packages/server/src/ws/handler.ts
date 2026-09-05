@@ -22,6 +22,7 @@ import type {
 } from '@backspace/shared';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
+import { clearVoiceCapacityReservation } from '../utils/voiceCapacity.js';
 
 // ─── Heartbeat State ──────────────────────────────────────────────────────────
 const wsIsAlive: WeakMap<WebSocket, boolean> = new WeakMap();
@@ -149,6 +150,7 @@ class ConnectionManager {
 
       // ── Immediate voice cleanup if this was the voice-active socket ──
       if (this.voiceWs.get(userId) === ws) {
+        clearVoiceCapacityReservation(userId);
         this.voiceWs.delete(userId);
 
         // Leave voice room (space or DM)
@@ -209,6 +211,7 @@ class ConnectionManager {
       }
 
       if (userConnections.size === 0) {
+        clearVoiceCapacityReservation(userId);
         this.connections.delete(userId);
         // Schedule disconnect cleanup (presence/offline, NOT voice — already handled above)
         this.scheduleDisconnect(userId);

@@ -51,7 +51,7 @@ export function HealthPanel() {
       : 'border-accent-rose/30 bg-accent-rose/10 text-accent-rose';
   const cards = [
     ['Usuários online', data.realtime.onlineUsers, `${data.realtime.connections} conexões abertas`],
-    ['Calls ativas', data.realtime.voiceRooms, `${data.realtime.voiceParticipants} participantes`],
+    ['Calls ativas', data.realtime.voiceRooms, `${data.realtime.voiceParticipants}/${data.realtime.maxConcurrentVoiceParticipants} vagas em uso`],
     ['Memória', `${data.memory.heapUsagePercent}%`, `${formatBytes(data.memory.heapUsedBytes)} de ${formatBytes(data.memory.heapLimitBytes)}`],
     ['Banco', data.database.status === 'ok' ? 'OK' : 'Erro', `${data.database.latencyMs} ms`],
     ['Disco', `${data.storage.diskUsagePercent}%`, `${formatBytes(data.storage.diskFreeBytes)} livres de ${formatBytes(data.storage.diskTotalBytes)}`],

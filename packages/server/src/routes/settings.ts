@@ -9,6 +9,8 @@ import { STANDARD_RESOLUTIONS, STANDARD_FRAMERATES, BITRATE_MATRIX_KBPS } from '
 function rowToLimits(row: typeof schema.instanceSettings.$inferSelect): InstanceStreamingLimits {
   return {
     maxBitrateKbps: row.maxBitrateKbps,
+    maxVoiceParticipantsPerRoom: row.maxVoiceParticipantsPerRoom,
+    maxConcurrentVoiceParticipants: row.maxConcurrentVoiceParticipants,
     minBitrateKbps: row.minBitrateKbps,
     bitrateStepKbps: row.bitrateStepKbps,
     allowedResolutions: row.allowedResolutions.split(',')
@@ -73,6 +75,20 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: 'bitrateStepKbps must be between 50 and 5000', statusCode: 400 });
       }
       updateData.bitrateStepKbps = body.bitrateStepKbps;
+    }
+
+    if (body.maxVoiceParticipantsPerRoom !== undefined) {
+      if (!Number.isInteger(body.maxVoiceParticipantsPerRoom) || body.maxVoiceParticipantsPerRoom < 2 || body.maxVoiceParticipantsPerRoom > 100) {
+        return reply.code(400).send({ error: 'maxVoiceParticipantsPerRoom must be an integer between 2 and 100', statusCode: 400 });
+      }
+      updateData.maxVoiceParticipantsPerRoom = body.maxVoiceParticipantsPerRoom;
+    }
+
+    if (body.maxConcurrentVoiceParticipants !== undefined) {
+      if (!Number.isInteger(body.maxConcurrentVoiceParticipants) || body.maxConcurrentVoiceParticipants < 2 || body.maxConcurrentVoiceParticipants > 500) {
+        return reply.code(400).send({ error: 'maxConcurrentVoiceParticipants must be an integer between 2 and 500', statusCode: 400 });
+      }
+      updateData.maxConcurrentVoiceParticipants = body.maxConcurrentVoiceParticipants;
     }
 
     if (body.allowedResolutions !== undefined) {
@@ -159,6 +175,14 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
     const effectiveMax = (updateData.maxBitrateKbps as number | undefined) ?? currentRow.maxBitrateKbps;
     if (effectiveMin >= effectiveMax) {
       return reply.code(400).send({ error: 'minBitrateKbps must be less than maxBitrateKbps', statusCode: 400 });
+    }
+
+    const effectiveRoomCapacity = (updateData.maxVoiceParticipantsPerRoom as number | undefined)
+      ?? currentRow.maxVoiceParticipantsPerRoom;
+    const effectiveInstanceCapacity = (updateData.maxConcurrentVoiceParticipants as number | undefined)
+      ?? currentRow.maxConcurrentVoiceParticipants;
+    if (effectiveRoomCapacity > effectiveInstanceCapacity) {
+      return reply.code(400).send({ error: 'Room participant limit cannot exceed the instance-wide voice limit', statusCode: 400 });
     }
 
     db.update(schema.instanceSettings).set(updateData).where(eq(schema.instanceSettings.id, 1)).run();
@@ -250,7 +274,6 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       }
       updateData.maxUploadSizeBytes = mb * 1024 * 1024;
     }
-
     const quotaFields = [
       ['maxUserStorageMb', 'maxUserStorageBytes'],
       ['maxDailyUploadMb', 'maxDailyUploadBytes'],

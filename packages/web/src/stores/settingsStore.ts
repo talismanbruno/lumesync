@@ -16,7 +16,9 @@ interface SettingsState {
 }
 
 const DEFAULT_LIMITS: InstanceStreamingLimits = {
-  maxBitrateKbps: 20000,
+  maxBitrateKbps: 6000,
+  maxVoiceParticipantsPerRoom: 15,
+  maxConcurrentVoiceParticipants: 20,
   minBitrateKbps: 500,
   bitrateStepKbps: 500,
   allowedResolutions: [540, 720, 1080],

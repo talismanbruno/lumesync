@@ -651,6 +651,8 @@ function handleEvent(origin: string, event: ServerEvent): void {
           getActiveRoom()?.disconnect();
           if (event.reason === 'displaced') {
             useUIStore.getState().addToast('Voice disconnected — joined from another session', 'info');
+          } else if (event.reason === 'capacity') {
+            useUIStore.getState().addToast('Esta call está cheia no momento', 'warning');
           }
         }
       }

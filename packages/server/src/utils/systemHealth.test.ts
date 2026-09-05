@@ -39,6 +39,19 @@ describe('buildSystemHealthAlerts', () => {
       .not.toEqual(expect.arrayContaining([expect.objectContaining({ code: 'voice_recovery' })]));
   });
 
+  it('warns before simultaneous call capacity is exhausted', () => {
+    expect(buildSystemHealthAlerts({
+      ...healthyInput,
+      voiceParticipants: 16,
+      maxConcurrentVoiceParticipants: 20,
+    })).not.toEqual(expect.arrayContaining([expect.objectContaining({ code: 'voice_capacity' })]));
+    expect(buildSystemHealthAlerts({
+      ...healthyInput,
+      voiceParticipants: 17,
+      maxConcurrentVoiceParticipants: 20,
+    })).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'voice_capacity' })]));
+  });
+
   it('reports storage measurement and cleanup backlogs without hiding other metrics', () => {
     const alerts = buildSystemHealthAlerts({
       ...healthyInput,
