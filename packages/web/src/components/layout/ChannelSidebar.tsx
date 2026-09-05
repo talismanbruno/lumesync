@@ -962,9 +962,9 @@ function UserAreaPanel({
   return (
     <div className="relative" ref={panelRef}>
       {openPanel === 'presence' && (
-        <div className="absolute bottom-full left-2 right-2 mb-2 z-[160] overflow-hidden rounded-[18px] border border-cyan-400/20 bg-[#080b0d]/95 shadow-[0_22px_70px_rgba(0,0,0,0.65),0_0_32px_rgba(0,209,255,0.08)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="absolute bottom-full left-2 right-2 mb-2 z-[160] overflow-hidden rounded-[18px] border border-accent-primary/20 bg-surface-elevated/95 shadow-[0_22px_70px_rgba(2,4,14,0.68),0_0_32px_rgba(123,230,255,0.08)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="relative px-3.5 pt-3.5 pb-3 border-b border-white/[0.06]">
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-accent-primary/70 to-accent-lavender/30" />
             <div className="flex items-center gap-3">
               <Avatar src={user.avatar} name={user.displayName ?? user.username} size={42} status={user.status as UserStatus} />
               <div className="min-w-0 flex-1">
@@ -976,7 +976,7 @@ function UserAreaPanel({
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
-              <span className="rounded-full border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-300">Minha órbita</span>
+              <span className="rounded-full border border-accent-primary/15 bg-accent-primary/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-accent-primary">Minha órbita</span>
             </div>
           </div>
 
@@ -989,8 +989,8 @@ function UserAreaPanel({
                 ['dnd', 'Não perturbe', 'Silenciar alertas', 'bg-status-dnd'],
                 ['offline', 'Invisível', 'Aparecer offline', 'bg-status-offline'],
               ] as const).map(([status, label, detail, color]) => (
-                <button key={status} type="button" disabled={isSavingPresence} onClick={() => setPresence(status)} className={`group flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${user.status === status ? 'border-cyan-400/35 bg-cyan-400/[0.09]' : 'border-white/[0.05] bg-white/[0.025] hover:border-white/10 hover:bg-white/[0.055]'}`}>
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color} ${user.status === status ? 'ring-4 ring-cyan-300/10' : ''}`} />
+                <button key={status} type="button" disabled={isSavingPresence} onClick={() => setPresence(status)} className={`group flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${user.status === status ? 'border-accent-primary/35 bg-accent-primary/[0.09]' : 'border-white/[0.05] bg-white/[0.025] hover:border-white/10 hover:bg-white/[0.055]'}`}>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color} ${user.status === status ? 'ring-4 ring-accent-primary/10' : ''}`} />
                   <span className="min-w-0">
                     <span className="block truncate text-[11px] font-semibold text-txt-primary">{label}</span>
                     <span className="block truncate text-[9px] text-txt-tertiary">{detail}</span>
@@ -1000,14 +1000,14 @@ function UserAreaPanel({
             </div>
 
             <form className="mt-2.5 flex gap-1.5" onSubmit={(e) => { e.preventDefault(); saveCustomStatus(); }}>
-              <input value={customStatus} maxLength={80} onChange={(e) => setCustomStatus(e.target.value)} placeholder="Escreva um status..." className="min-w-0 flex-1 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2 text-[11px] text-txt-primary outline-none transition-colors placeholder:text-txt-tertiary focus:border-cyan-400/35" />
-              <button disabled={isSavingPresence} className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.12] px-3 text-[10px] font-bold text-cyan-200 hover:bg-cyan-400/[0.2] disabled:opacity-50">Salvar</button>
+              <input value={customStatus} maxLength={80} onChange={(e) => setCustomStatus(e.target.value)} placeholder="Escreva um status..." className="min-w-0 flex-1 rounded-xl border border-white/[0.06] bg-surface-base/55 px-3 py-2 text-[11px] text-txt-primary outline-none transition-colors placeholder:text-txt-tertiary focus:border-accent-primary/35" />
+              <button disabled={isSavingPresence} className="rounded-xl border border-accent-primary/20 bg-accent-primary/[0.12] px-3 text-[10px] font-bold text-accent-primary hover:bg-accent-primary/[0.2] disabled:opacity-50">Salvar</button>
             </form>
           </div>
 
           <div className="flex gap-1.5 border-t border-white/[0.06] p-2.5">
             <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('account'); }} className="flex-1 rounded-xl px-3 py-2 text-left text-[11px] font-semibold text-txt-secondary hover:bg-white/[0.05] hover:text-white">Editar perfil</button>
-            {user.isAdmin && <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('instance'); }} className="flex-1 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-left text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/[0.1]">Ferramentas Lume</button>}
+            {user.isAdmin && <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('instance'); }} className="flex-1 rounded-xl border border-accent-primary/15 bg-accent-primary/[0.05] px-3 py-2 text-left text-[11px] font-semibold text-accent-primary hover:bg-accent-primary/[0.1]">Ferramentas Lume</button>}
           </div>
         </div>
       )}
@@ -1199,7 +1199,7 @@ function UserAreaPanel({
       {/* User area bar */}
       <div className="h-[52px] px-2 flex items-center select-none">
         {/* Avatar + name */}
-        <button type="button" onClick={() => setOpenPanel(openPanel === 'presence' ? null : 'presence')} className={`p-1 hover:bg-interactive-hover rounded-[7px] flex items-center gap-2 flex-1 min-w-0 cursor-pointer transition-colors group text-left ${openPanel === 'presence' ? 'bg-cyan-400/[0.07]' : ''}`}>
+        <button type="button" onClick={() => setOpenPanel(openPanel === 'presence' ? null : 'presence')} className={`p-1 hover:bg-interactive-hover rounded-[7px] flex items-center gap-2 flex-1 min-w-0 cursor-pointer transition-colors group text-left ${openPanel === 'presence' ? 'bg-accent-primary/[0.07]' : ''}`}>
           <Avatar src={user.avatar} name={user.displayName ?? user.username} size={34} status={user.status as any} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 min-w-0">

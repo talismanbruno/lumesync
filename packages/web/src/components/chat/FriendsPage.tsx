@@ -890,7 +890,7 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
     <button
       onClick={onClick}
       className={`lume-friends-tab px-3 py-2 text-[13px] font-semibold transition-all ${
-        active ? 'is-active text-cyan-100' : 'text-txt-tertiary hover:text-txt-secondary'
+        active ? 'is-active text-accent-primary' : 'text-txt-tertiary hover:text-txt-secondary'
       }`}
     >
       {children}

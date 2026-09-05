@@ -407,7 +407,7 @@ export function RegisterPage() {
     // `min-h-full`) makes this element exactly viewport-height; the inner flex wrapper
     // uses `min-h-full` so short content still centers vertically.
     <div className="h-full overflow-y-auto bg-surface-base relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(0,209,255,0.10)_0%,transparent_42%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_8%,rgba(123,230,255,0.12)_0%,transparent_42%),radial-gradient(circle_at_85%_92%,rgba(138,112,255,0.11)_0%,transparent_38%)] pointer-events-none" />
       <div className="min-h-full flex items-center justify-center px-4 py-6 md:py-10 relative z-10">
         <div className="w-full max-w-[480px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-6 md:p-8 shadow-elevation-high overflow-hidden backdrop-blur-xl">
         <img src="/icons/logo-wordmark.png" alt="Lume" className="h-9 w-auto mx-auto mb-5 object-contain" />

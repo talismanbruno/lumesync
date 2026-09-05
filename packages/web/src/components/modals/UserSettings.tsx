@@ -134,7 +134,7 @@ export function UserSettingsModal() {
 
           {/* Nav list */}
           <div className="lume-settings-orbit-map p-2 flex-1 flex flex-col">
-            <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
+            <div className="text-[9px] font-bold text-accent-primary/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
             <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
             <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
             <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
@@ -148,7 +148,7 @@ export function UserSettingsModal() {
             {isAdmin && (
               <>
                 <div className="border-t border-white/[0.04] my-2 mx-2" />
-                <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
+                <div className="text-[10px] font-semibold text-accent-primary/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
                 <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
                 {tab === 'instance' && <SidebarSubLinks />}
               </>
@@ -191,7 +191,7 @@ export function UserSettingsModal() {
             </div>
 
             <div className="lume-settings-orbit-map p-2 space-y-0.5">
-              <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
+              <div className="text-[9px] font-bold text-accent-primary/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
               <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
               <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
               <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
@@ -205,7 +205,7 @@ export function UserSettingsModal() {
               {isAdmin && (
                 <>
                   <div className="border-t border-white/[0.04] my-2 mx-2" />
-                  <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
+                  <div className="text-[10px] font-semibold text-accent-primary/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
                   <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
                 </>
               )}

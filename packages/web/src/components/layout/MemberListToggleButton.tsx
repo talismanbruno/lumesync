@@ -9,7 +9,7 @@ export function MemberListToggleButton() {
     <button
       onClick={toggleMemberList}
       className={`lume-header-orbit w-9 h-8 flex items-center justify-center transition-all rounded-xl ${
-        memberListOpen ? 'is-active text-cyan-200' : 'text-txt-tertiary hover:text-cyan-200'
+        memberListOpen ? 'is-active text-accent-primary' : 'text-txt-tertiary hover:text-accent-primary'
       }`}
       title="Mostrar pessoas na órbita"
     >

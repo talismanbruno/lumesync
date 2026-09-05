@@ -343,7 +343,7 @@ export function AppLayout() {
     return (
       <div className="h-full flex items-center justify-center bg-surface-base" role="status" aria-label="Sincronizando o Lume">
         <div className="flex flex-col items-center gap-5">
-          <div className="relative w-20 h-20 rounded-[26px] bg-[#071216] border border-accent-primary/20 shadow-[0_0_48px_rgba(0,209,255,0.12)] flex items-center justify-center">
+          <div className="relative w-20 h-20 rounded-[26px] bg-surface-elevated border border-accent-primary/20 shadow-[0_0_48px_rgba(123,230,255,0.12),18px_18px_48px_rgba(138,112,255,0.08)] flex items-center justify-center">
             <img src="/icons/logo.png" alt="" className="w-14 h-14 object-contain animate-pulse" />
           </div>
           <p className="text-xs font-semibold tracking-[0.28em] uppercase text-accent-primary">Sincronizando o Lume</p>

@@ -45,7 +45,7 @@ export function BadgeTooltip({ name, label = name, className = '', children }: {
   return (
     <span ref={anchor} role="img" aria-label={label} aria-describedby={open ? id : undefined}
       tabIndex={0}
-      className={`inline-flex shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090e10] ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-chat ${className}`}
       onMouseEnter={show} onMouseLeave={hide}
       onFocus={() => { focused.current = true; clearTimer(); setOpen(true); }}
       onBlur={() => { focused.current = false; hide(); }}
@@ -54,13 +54,13 @@ export function BadgeTooltip({ name, label = name, className = '', children }: {
       {open && createPortal(
         <span ref={floating} id={id} role="tooltip"
           style={{ ...style, zIndex: 10000, maxWidth: 'calc(100vw - 16px)' }}
-          className="flex w-max items-center gap-2 rounded-lg border border-cyan-200/15 bg-[#10191d] px-3 py-2 text-[12px] font-semibold leading-4 text-[#e9f5f6] shadow-[0_6px_22px_rgba(0,0,0,0.5)]"
+          className="flex w-max items-center gap-2 rounded-lg border border-accent-primary/15 bg-surface-elevated px-3 py-2 text-[12px] font-semibold leading-4 text-txt-primary shadow-[0_10px_30px_rgba(2,4,14,0.58)]"
           onMouseEnter={() => { clearTimer(); setOpen(true); }} onMouseLeave={hide}
         >
-          <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-cyan-300/80" />
+          <span aria-hidden="true" className="h-1 w-1 shrink-0 rounded-full bg-accent-primary/80" />
           <span className="min-w-0 break-words">{name}</span>
           <span aria-hidden="true"
-            className={`absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-[#10191d] ${actualPlacement === 'top' ? '-bottom-1 border-b border-r border-cyan-200/15' : '-top-1 border-l border-t border-cyan-200/15'}`} />
+            className={`absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-surface-elevated ${actualPlacement === 'top' ? '-bottom-1 border-b border-r border-accent-primary/15' : '-top-1 border-l border-t border-accent-primary/15'}`} />
         </span>, container,
       )}
     </span>

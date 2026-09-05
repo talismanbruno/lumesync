@@ -31,7 +31,7 @@ function ActivityFriendRow({
 
   const rowClass = isRichActivity
     ? `lume-orbit-person flex items-center gap-2.5 px-2.5 py-2.5 rounded-[14px] mb-1.5 cursor-pointer transition-all glass-pill border-l-2 ${accentClass}`
-    : 'lume-orbit-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-cyan-400/[0.045] cursor-pointer group transition-all';
+    : 'lume-orbit-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-accent-primary/[0.045] cursor-pointer group transition-all';
 
   return (
     <div
@@ -152,7 +152,7 @@ export function ActivityPanel() {
     <div className="lume-orbit-roster w-60 bg-surface-channel flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
       <div className="p-3 relative">
         <div className="px-2 mb-4">
-          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-300/65">Presença Lume</div>
+          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent-primary/65">Presença Lume</div>
           <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">Na sua órbita</h3>
         </div>
 

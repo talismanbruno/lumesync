@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Backspace icon generator
+ * Lume icon generator
  *
  * Reads from assets/brand/{app-icon.svg, app-icon-x{1,2,3}.png, mark.svg,
  * mark-mono-dark.svg} and writes the entire desktop + web icon set:
@@ -56,7 +56,7 @@ const WEB_ICONS     = join(ROOT, 'packages/web/public/icons');
 // Hex extracted from app-icon.svg's cls-1 fill (the badge background).
 // Used as the maskable PWA background so regular and maskable variants
 // read as the same brand on Android home screens.
-const MASKABLE_BG = '#1d1d1b';
+const MASKABLE_BG = '#090c1b';
 
 // SVG render density. High enough to produce a clean intermediate for
 // the largest target (1024) from the smallest viewBox source (~100px).
@@ -77,7 +77,9 @@ const SVG_DENSITY = 1200;
 // vector render is the correct trade against the halo. Kept as a gate (not
 // hard-removed) so the SVG path can be re-enabled if a corrected flat mark
 // — one whose sheen doesn't reach the perimeter — is ever supplied.
-const RASTER_THRESHOLD = 0;
+// The current identity is vector-first: all generated targets must use the
+// live Órbita Prismática artwork, never pixels retained from an older icon.
+const RASTER_THRESHOLD = Number.POSITIVE_INFINITY;
 
 // Rounded-square corner radius as a fraction of the side length. 0.22
 // matches the existing app-icon.svg geometry (rx=32.42 on a 147.46 viewBox
@@ -251,7 +253,7 @@ async function main() {
   for (const [, path] of Object.entries(SRC)) {
     if (!existsSync(path)) {
       throw new Error(
-        `Missing source SVG: ${relative(ROOT, path)} — copy from Artworks-Backspace/SVG/`,
+        `Missing brand source: ${relative(ROOT, path)} — restore it from the Lume brand backup.`,
       );
     }
   }
