@@ -120,8 +120,9 @@ export async function authenticate(
     (request as FastifyRequest & { userId: string; username: string }).homeInstance = identity.homeInstance;
 
     // Keep a single, current moderation signal instead of retaining IP history.
-    // Fastify trustProxy is enabled at the app boundary, so request.ip resolves
-    // the original client supplied by the trusted Caddy proxy.
+    // Fastify trusts only loopback/private infrastructure proxies at the app
+    // boundary, so request.ip resolves the client supplied by Caddy without
+    // accepting a forged X-Forwarded-For from a direct public connection.
     const clientIp = request.ip.replace(/^::ffff:/, '').slice(0, 64);
     const seenAt = Date.now();
     getDb().update(schema.users).set({ lastIp: clientIp, lastSeenAt: seenAt }).where(and(

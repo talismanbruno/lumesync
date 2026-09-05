@@ -31,6 +31,7 @@ import { startBackupWorker, stopBackupWorker } from './utils/backupWorker.js';
 import './utils/federationRollback.js'; // Side-effect: registers rollback callbacks for outbox terminal failures.
 import { registerCallRelayHooks } from './ws/events.js';
 import { resetStalePresenceOnBoot } from './utils/presenceBoot.js';
+import { isTrustedProxyAddress } from './utils/trustedProxy.js';
 
 import { registerWebSocket } from './ws/handler.js';
 import path from 'path';
@@ -38,7 +39,10 @@ import fs from 'fs';
 
 async function main(): Promise<void> {
   const app = Fastify({
-    trustProxy: true,
+    // Caddy reaches Fastify over loopback/the private Docker bridge. Only those
+    // hops may influence request.ip; direct public clients cannot forge XFF to
+    // evade IP rate limits or alter the moderation IP shown to administrators.
+    trustProxy: (address) => isTrustedProxyAddress(address),
     logger: {
       level: 'info',
     },
