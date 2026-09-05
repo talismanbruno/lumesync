@@ -1,105 +1,29 @@
-# Contributing to Backspace
+# Contribuindo com o Lume
 
-Thanks for considering a contribution! Backspace is free and open source software
-(GNU AGPL-3.0, with a commercial dual-license option), and contributions of all
-sizes are welcome: bug reports, fixes, features, documentation, and design.
+Obrigado por querer ajudar a melhorar o Lume.
 
-## Before you start
+## Durante o beta
 
-- **Read the architecture docs.** The `docs/systems/` directory documents every
-  subsystem (database, API, WebSocket protocol, federation, permissions, voice,
-  design system, and more). Read the relevant spec before changing a subsystem,
-  and update it in the same pull request if your change is structural.
-- **Open an issue first for anything non-trivial.** It saves you from building
-  something that conflicts with planned direction. Small fixes can go straight
-  to a pull request.
-- **One logical change per pull request.** Keep diffs focused and reviewable.
+O projeto está passando por uma consolidação técnica e visual. Por isso, neste
+momento não estamos incorporando código enviado por pessoas externas. Pull
+requests não solicitados podem ser encerrados sem análise.
 
-## Contributor License Agreement (required)
+Ainda existem formas valiosas de ajudar:
 
-Before your first contribution can be merged, you must sign the project's
-[Contributor License Agreement](CLA.md).
+- relatar um bug com passos claros para reproduzi-lo;
+- informar o sistema operacional e a versão do aplicativo;
+- dizer se o problema ocorreu em mensagem, servidor, chamada ou transmissão;
+- anexar imagem, vídeo ou diagnóstico quando isso não expuser dados pessoais;
+- sugerir melhorias explicando o problema que elas resolveriam.
 
-Backspace is a single-owner project. Under the CLA **you keep the copyright to
-your contribution** and grant the maintainer (Jannis Braun) an exclusive,
-sublicensable license to it, which is what lets the project be offered under both
-the AGPL and a commercial license. In return, you receive a perpetual license to
-reuse the specific code you authored in your own other projects (see CLA §5). You
-also confirm that you have the right to contribute the code in the first place.
+## Relatos de segurança
 
-Signing is automatic and takes one comment:
+Uma possível vulnerabilidade não deve ser publicada em uma issue aberta. Siga o
+canal privado descrito em [`SECURITY.md`](SECURITY.md).
 
-1. Open your pull request.
-2. The CLA bot will comment with a link to the agreement and ask you to sign.
-3. Reply on the pull request with exactly:
+## Futuras contribuições de código
 
-   > I have read the CLA Document and I hereby sign the CLA
-
-4. The bot records your signature against your GitHub username. You only sign
-   once, and it covers all of your future contributions.
-
-## Development setup
-
-Requirements: **Node.js 20 (LTS)** and **pnpm 10**. Run `nvm use` (reads
-`.nvmrc`); Corepack activates the pinned pnpm from the `packageManager` field
-automatically, so don't install pnpm globally.
-
-```bash
-pnpm install          # install all workspace dependencies
-cp .env.example .env  # then set JWT_SECRET (openssl rand -hex 32)
-pnpm dev              # API server on :3005, Vite dev server on :5173
-```
-
-You can run the two halves separately with `pnpm dev:server` and `pnpm dev:web`.
-
-Working on the **desktop** app additionally needs a C++ toolchain (`make`, `g++`,
-`python3`) to build the native `uiohook-napi` module. On Debian/Ubuntu:
-`sudo apt install build-essential python3`. Without it `pnpm install` just warns
-and skips that one rebuild; the server and web client are unaffected.
-
-Voice and video are optional and require a LiveKit server; see the README for
-configuration. Text, federation, uploads, and everything else run fully without
-it.
-
-## Coding standards
-
-- **TypeScript strict mode**, no `any`. The codebase compiles cleanly under
-  strict settings, so keep it that way.
-- **Match the surrounding code.** Follow existing patterns, naming, and module
-  boundaries rather than introducing new ones.
-- **Federation-aware.** Never assume a single global user ID. Resolve the
-  correct federated identity for the relevant instance when comparing IDs,
-  checking permissions, or talking to remote servers. See
-  `docs/systems/federation.md` and `docs/systems/client-federation.md`.
-- **Design system.** UI work follows the "Aether Drift" design system documented
-  in `docs/systems/design-system.md`.
-- **No new dependencies without justification.** Prefer the existing stack. New
-  dependencies must be **permissive** (MIT/ISC/Apache-2.0/BSD), or weak-copyleft
-  (LGPL/MPL) only when dynamically linked at arm's length. Never add **strong
-  copyleft** (GPL/AGPL) or non-permissive licenses (SSPL, BUSL/BSL,
-  non-commercial): strong copyleft cannot ship in the commercial edition, and the
-  others are incompatible with `AGPL-3.0-only`.
-- **Complete implementations only.** No placeholder code, no `TODO` stubs, no
-  partial components. Handle the error and edge cases.
-
-## Before you open a pull request
-
-- `pnpm build` succeeds (shared types, server, and web all build).
-- The dev server and web client both start without errors (`pnpm dev`).
-- Tests pass (`pnpm test` where applicable to the package you touched).
-- You updated the relevant `docs/systems/` spec if your change altered schema,
-  API routes, WebSocket events, the federation protocol, permissions, or the
-  design system.
-
-## Reporting bugs and requesting features
-
-Use GitHub Issues. For bugs, include reproduction steps, expected vs. actual
-behavior, and your environment (deployment method, browser/desktop, and whether
-federation or voice is involved). For security issues, please do **not** open a
-public issue. See [`SECURITY.md`](SECURITY.md).
-
-## License
-
-By contributing, you agree that your contributions are licensed under the
-[GNU AGPL-3.0](LICENSE) and are subject to the [CLA](CLA.md), an exclusive-license
-grant that also enables the project's commercial dual-license.
+Quando o processo for reaberto, este documento será atualizado com regras
+próprias do Lume, ambiente de desenvolvimento, padrão de revisão e termos de
+contribuição. Nenhum acordo de outro projeto deve ser considerado uma regra do
+Lume.
