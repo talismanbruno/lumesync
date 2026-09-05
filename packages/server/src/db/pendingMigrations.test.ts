@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hasPendingMigrations } from './pendingMigrations.js';
@@ -8,6 +10,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, '../../drizzle');
 
 describe('hasPendingMigrations', () => {
+  it('executes the complete migration journal with the production migrator', () => {
+    const sqlite = new Database(':memory:');
+    expect(() => migrate(drizzle(sqlite), { migrationsFolder })).not.toThrow();
+    const columns = sqlite.pragma('table_info(instance_settings)') as Array<{ name: string }>;
+    expect(columns.map((column) => column.name)).toEqual(expect.arrayContaining([
+      'max_voice_participants_per_room',
+      'max_concurrent_voice_participants',
+    ]));
+  });
+
   it('returns true when __drizzle_migrations is missing', () => {
     const db = new Database(':memory:');
     expect(hasPendingMigrations(db, migrationsFolder)).toBe(true);
