@@ -21,6 +21,7 @@ let testDb: TestDb;
 
 const lookupCalls: Array<{ peerOrigin: string; homeUserId: string }> = [];
 const lookupResponses = new Map<string, unknown>();
+const { verifyAttachProofMock } = vi.hoisted(() => ({ verifyAttachProofMock: vi.fn() }));
 
 vi.mock('../db/index.js', () => ({
   getDb: () => testDb,
@@ -35,6 +36,10 @@ vi.mock('./federationLookup.js', () => ({
     if (!r) return { ok: false, reason: 'not_found' };
     return r;
   }),
+}));
+
+vi.mock('./federationAttach.js', () => ({
+  verifyAttachProofWithPeer: verifyAttachProofMock,
 }));
 
 function applyMigrations(db: Database.Database): void {
@@ -55,6 +60,8 @@ beforeEach(() => {
   applyMigrations(sqlite);
   lookupCalls.length = 0;
   lookupResponses.clear();
+  verifyAttachProofMock.mockReset();
+  verifyAttachProofMock.mockResolvedValue({ valid: true, homeUserId: 'new-home-uid', username: 'alice' });
   // Active peer
   testDb.insert(schema.federationPeers).values({
     id: 'peer-orbit',
@@ -217,6 +224,13 @@ describe('detached account: registration 409 + suffixed stub creation (detach sp
   it('federated registration of a same-name user on the reset domain returns 409, detached row untouched', async () => {
     seedDetachedAccount();
     seedFederatedRegistrationOpen();
+    testDb.insert(schema.federationPeers).values({
+      id: 'peer-reset-domain',
+      origin: 'https://peer.example',
+      hmacSecret: 'b'.repeat(64),
+      status: 'active',
+      createdAt: Date.now(),
+    }).run();
     const app = await buildAuthApp();
     try {
       // Fresh homeUserId + the reset domain replaying 'alice' as the handle. Tier-2
@@ -230,6 +244,7 @@ describe('detached account: registration 409 + suffixed stub creation (detach sp
           password: 'password123',
           homeInstance: 'peer.example',
           homeUserId: 'new-home-uid',
+          federationProof: 'f'.repeat(64),
         },
       });
       expect(res.statusCode).toBe(409);

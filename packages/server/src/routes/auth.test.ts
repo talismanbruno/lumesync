@@ -9,6 +9,14 @@ import { fileURLToPath } from 'node:url';
 import * as schema from '../db/schema.js';
 import { setWorkerId } from '../utils/snowflake.js';
 
+const { verifyAttachProofMock } = vi.hoisted(() => ({
+  verifyAttachProofMock: vi.fn(),
+}));
+
+vi.mock('../utils/federationAttach.js', () => ({
+  verifyAttachProofWithPeer: verifyAttachProofMock,
+}));
+
 setWorkerId(2);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +55,16 @@ async function buildApp(): Promise<FastifyInstance> {
 
 const ADMIN_ID = 'admin-1';
 
+function seedActivePeer(domain = 'otherhost'): void {
+  testDb.insert(schema.federationPeers).values({
+    id: `peer-${domain}`,
+    origin: `https://${domain}`,
+    hmacSecret: 'a'.repeat(64),
+    status: 'active',
+    createdAt: Date.now(),
+  }).run();
+}
+
 beforeEach(async () => {
   sqlite = new Database(':memory:');
   sqlite.pragma('foreign_keys = ON');
@@ -62,6 +80,9 @@ beforeEach(async () => {
     isAdmin: 1,
     createdAt: Date.now(),
   }).run();
+
+  verifyAttachProofMock.mockReset();
+  verifyAttachProofMock.mockResolvedValue({ valid: true, homeUserId: 'remote-id', username: 'alice' });
 
   app = await buildApp();
 });
@@ -406,6 +427,7 @@ describe('POST /api/auth/register — federation gate split', () => {
       expiresAt: null,
       revokedAt: null,
     }).run();
+    seedActivePeer();
 
     const res = await app.inject({
       method: 'POST',
@@ -415,6 +437,7 @@ describe('POST /api/auth/register — federation gate split', () => {
         password: 'password123',
         homeInstance: 'otherhost',
         homeUserId: 'remote-id',
+        federationProof: 'f'.repeat(64),
         inviteToken: token,
       },
     });
@@ -427,6 +450,92 @@ describe('POST /api/auth/register — federation gate split', () => {
     const redemptions = testDb.select().from(schema.inviteRedemptions)
       .where(eq(schema.inviteRedemptions.inviteId, 'inv-fed-ignore')).all();
     expect(redemptions).toHaveLength(0);
+  });
+
+  it('rejects a federated identity without a home proof', async () => {
+    seedActivePeer();
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        username: 'alice@otherhost',
+        password: 'password123',
+        homeInstance: 'otherhost',
+        homeUserId: 'remote-id',
+      },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toContain('identity proof');
+    expect(verifyAttachProofMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a proof whose vouched identity does not match the request', async () => {
+    seedActivePeer();
+    verifyAttachProofMock.mockResolvedValue({ valid: true, homeUserId: 'someone-else', username: 'alice' });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        username: 'alice@otherhost',
+        password: 'password123',
+        homeInstance: 'otherhost',
+        homeUserId: 'remote-id',
+        federationProof: 'f'.repeat(64),
+      },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.username, 'alice@otherhost')).get()).toBeUndefined();
+  });
+
+  it('rejects a proof whose vouched username does not match the request', async () => {
+    seedActivePeer();
+    verifyAttachProofMock.mockResolvedValue({ valid: true, homeUserId: 'remote-id', username: 'mallory' });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        username: 'alice@otherhost',
+        password: 'password123',
+        homeInstance: 'otherhost',
+        homeUserId: 'remote-id',
+        federationProof: 'f'.repeat(64),
+      },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.username, 'alice@otherhost')).get()).toBeUndefined();
+  });
+
+  it('rejects creation when the claimed home is not an active peer', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        username: 'alice@otherhost',
+        password: 'password123',
+        homeInstance: 'otherhost',
+        homeUserId: 'remote-id',
+        federationProof: 'f'.repeat(64),
+      },
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error).toContain('active federation peer');
+    expect(verifyAttachProofMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a username namespace that differs from homeInstance', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        username: 'alice@lookalike.test',
+        password: 'password123',
+        homeInstance: 'otherhost',
+        homeUserId: 'remote-id',
+        federationProof: 'f'.repeat(64),
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toContain('must match');
   });
 
   it('closed registration: token last-slot race → 403 (in-txn re-derive)', async () => {
@@ -535,10 +644,18 @@ describe('POST /api/auth/register — first-user-admin promotion', () => {
   });
 
   it('federated user (homeInstance set) is never promoted to admin even if first in DB', async () => {
+    seedActivePeer('remote.example');
+    verifyAttachProofMock.mockResolvedValue({ valid: true, homeUserId: 'remote-user-id', username: 'feduser' });
     const res = await app.inject({
       method: 'POST',
       url: '/api/auth/register',
-      payload: { username: 'feduser@remote.example', password: 'password123', homeInstance: 'remote.example' },
+      payload: {
+        username: 'feduser@remote.example',
+        password: 'password123',
+        homeInstance: 'remote.example',
+        homeUserId: 'remote-user-id',
+        federationProof: 'f'.repeat(64),
+      },
     });
     // Federated registration is open (federatedRegistrationOpen: 1)
     expect(res.statusCode).toBe(201);

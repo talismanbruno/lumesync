@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import Database from 'better-sqlite3';
 import type { SpawnedInstance } from './twoInstanceHarness.js';
 
 export interface TestUser {
@@ -48,10 +49,10 @@ export async function registerLocal(instance: SpawnedInstance, baseName = 't'): 
 }
 
 /**
- * Create a federated account: register `home` first (native), then create the
- * `username@homeDomain` mirror on `remote` via POST /api/auth/register with
- * homeInstance + homeUserId — the production federated-account-creation path
- * documented in client-federation.md §1. Returns BOTH user records.
+ * Create a federated-account fixture: register `home` first (native), then seed
+ * the equivalent `username@homeDomain` mirror state on `remote`. The production
+ * proof-backed registration route has its own focused suites; this helper is
+ * for identity-deletion integration tests whose fake domains are not routable.
  *
  * Also seeds the home's user_federation_registry via PUT
  * /api/users/@me/federation-registry so the home's federation-identity
@@ -71,34 +72,7 @@ export async function createFederatedUser(
   baseName = 't',
 ): Promise<{ homeUser: TestUser; remoteUser: TestUser }> {
   const homeUser = await registerLocal(home, baseName);
-  const federatedUsername = `${homeUser.username}@${home.domain}`;
-
-  const res = await fetch(`${remote.origin}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: federatedUsername,
-      password: homeUser.password,
-      displayName: homeUser.username,
-      homeInstance: home.domain,
-      homeUserId: homeUser.id,
-    }),
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`createFederatedUser remote register failed: ${res.status} ${txt}`);
-  }
-  const data = await res.json() as { user: { id: string }; token: string };
-
-  const remoteUser: TestUser = {
-    id: data.user.id,
-    username: federatedUsername,
-    password: homeUser.password,
-    token: data.token,
-    origin: remote.origin,
-    homeUserId: homeUser.id,
-    homeInstance: home.domain,
-  };
+  const remoteUser = await registerFederatedMirror(home, remote, homeUser);
 
   // Seed the home user's federation registry. Body shape matches the route's
   // declared Body<{ registry, updatedAt }> — see users.ts L591-L594.
@@ -115,7 +89,7 @@ export async function createFederatedUser(
         {
           origin: remote.origin,
           label: remote.domain,
-          username: federatedUsername,
+          username: remoteUser.username,
           remoteUserId: remoteUser.id,
           status: 'connected',
           addedAt: registryUpdatedAt,
@@ -130,4 +104,44 @@ export async function createFederatedUser(
   }
 
   return { homeUser, remoteUser };
+}
+
+/**
+ * Seed a federated mirror for the identity-deletion integration harness.
+ *
+ * The harness deliberately separates its identity domains (`*.test.local`)
+ * from localhost transport URLs. A real attach-proof callback therefore cannot
+ * route through those fake DNS names. Registration-proof behavior is covered by
+ * the auth/attach unit suites; this helper creates the same persisted mirror
+ * state so the deletion suite can stay focused on its own S2S behavior.
+ */
+export async function registerFederatedMirror(
+  home: SpawnedInstance,
+  remote: SpawnedInstance,
+  homeUser: TestUser,
+  displayName = homeUser.username,
+): Promise<TestUser> {
+  const federatedUsername = `${homeUser.username}@${home.domain}`;
+  const localSeed = await registerLocal(remote, 'federated_mirror');
+  const sqlite = new Database(remote.dbPath);
+  try {
+    sqlite.prepare(`
+      UPDATE users
+      SET username = ?, display_name = ?, home_instance = ?, home_user_id = ?,
+          is_admin = 0, is_pioneer = 0
+      WHERE id = ?
+    `).run(federatedUsername, displayName, home.domain, homeUser.id, localSeed.id);
+  } finally {
+    sqlite.close();
+  }
+
+  return {
+    id: localSeed.id,
+    username: federatedUsername,
+    password: localSeed.password,
+    token: localSeed.token,
+    origin: remote.origin,
+    homeUserId: homeUser.id,
+    homeInstance: home.domain,
+  };
 }

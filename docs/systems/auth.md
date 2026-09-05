@@ -103,7 +103,8 @@ There is **no token blocklist**. The only revocation mechanism is the `passwordC
 | `displayName` | Optional. Trimmed or null. |
 | `avatarColor` | Optional. Must be in `AVATAR_COLORS` array, else random. |
 | `homeInstance` | Optional (federation only). Max 253 chars, alphanumeric + `.` `-` `_`. |
-| `homeUserId` | Optional (federation only). Stored if `homeInstance` is present. |
+| `homeUserId` | Required for federation. Must match the identity vouched for by the home instance. |
+| `federationProof` | Required for federation. 64-character, one-time proof minted by the authenticated home account for this target peer. |
 
 ### Username Validation (Two Paths)
 
@@ -133,11 +134,14 @@ DB value overrides env when explicitly set by admin. When closed, a valid `invit
 
 - Gated solely by `instanceSettings.federatedRegistrationOpen` (NOT NULL DEFAULT 1).
 - `inviteToken` is **ignored entirely** on this path -- tokens never unlock federated creation, even when supplied.
+- The username domain must equal the canonical `homeInstance` domain.
+- The home must already be an active HMAC-authenticated peer.
+- Creation requires a 60-second, single-use `federationProof`; the remote redeems it with the home and requires the vouched `homeUserId` and username to match the request. A browser cannot self-assert another user's federated identity.
 - Closed → 403 `"Federated registration is closed on this instance"`.
 
 **Invariants** (spec §1.3):
 
-- **Login-unaffected invariant.** Neither toggle gates `POST /api/auth/login` for any user. Existing federated accounts always log in regardless of `federatedRegistrationOpen`; existing local accounts always log in regardless of `registrationOpen`. Both gates affect **creation only**. This is why the Connections add-instance form keeps its submit button enabled even when the target instance has `federatedRegistrationOpen = false` (see `client-federation.md`): the request runs through `instanceStore`'s register-then-login fall-through, and the login leg succeeds for users who already have a federated account on that instance.
+- **Login-unaffected invariant.** Neither toggle gates `POST /api/auth/login` for any user. Existing federated accounts always log in regardless of `federatedRegistrationOpen`; existing local accounts always log in regardless of `registrationOpen`. Both gates affect **creation only**. The Connections flow therefore tries login first and only performs the proof-backed creation path when no existing remote account accepts the credentials.
 - The federated stub upgrade flow (below) is gated by `federatedRegistrationOpen`, never by an invite token. Tokens only unlock the local anonymous-signup path.
 
 **Toggle matrix** (spec §5.6):

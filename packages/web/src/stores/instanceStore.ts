@@ -325,6 +325,24 @@ export const useInstanceStore = create<InstanceState>((set, get) => ({
       const targetHost = new URL(origin).host;
       const targetIsHome = targetHost === trueHomeHost;
 
+      // The native home session is the authority that can mint a short-lived
+      // identity proof for first registration on a remote instance.
+      let identityHomeApi: BackspaceApiClient | null = null;
+      if (!currentUser.homeInstance) {
+        identityHomeApi = api;
+      } else {
+        const normalizedHome = trueHomeHost.replace(/^https?:\/\//, '').split('/')[0]!.toLowerCase();
+        identityHomeApi = get().instances.find((instance) => {
+          try {
+            return instance.status === 'connected'
+              && new URL(instance.origin).host.toLowerCase() === normalizedHome
+              && !instance.user.homeInstance;
+          } catch {
+            return false;
+          }
+        })?.api ?? null;
+      }
+
       const tempClient = createApiClient(origin, () => null);
 
       let response: AuthResponse | null = null;
@@ -346,41 +364,51 @@ export const useInstanceStore = create<InstanceState>((set, get) => ({
         // Target is a remote/third-party instance — register as user@homeHost
         finalUsername = `${bareUsername}@${trueHomeHost}`;
 
-        // 2a: Attempt registration with namespaced username
+        // 2a: Existing remote accounts can log in without minting a new proof.
         try {
-          response = await tempClient.auth.register({
-            username: finalUsername,
-            password,
-            displayName: displayName || currentUser.displayName || undefined,
-            homeInstance: trueHomeHost,
-            homeUserId: trueHomeUserId,
-          });
-        } catch (err) {
-          const message = (err as Error).message;
-          if (message.includes('already taken') || message.includes('409') ||
-              message.includes('Registration is currently closed') || message.includes('403')) {
-            // Already registered or registration closed — fall through to login
-          } else {
-            throw err;
+          response = await tempClient.auth.login({ username: finalUsername, password });
+        } catch {
+          // Backward compatibility for mirrors created before usernames were
+          // namespaced. This is login-only; new accounts always use @home.
+          try {
+            response = await tempClient.auth.login({ username: bareUsername, password });
+            finalUsername = bareUsername;
+          } catch {
+            // No account (or stale password): the verified creation path below
+            // will distinguish a missing account from a conflicting one.
           }
         }
 
-        // 2b: If registration didn't work, try login
+        // 2b: First-time remote registration requires active server peering and
+        // a one-time proof minted by the authenticated native home session.
         if (!response) {
+          if (!identityHomeApi) {
+            throw new Error('Connect to your home instance before adding a new remote instance');
+          }
+          const peerResult = await identityHomeApi.federation.ensurePeered({ remoteOrigin: origin });
+          if (peerResult.peeringStatus !== 'active') {
+            throw new Error(peerResult.error || 'Federation approval is required before this account can be linked');
+          }
+          const { token: federationProof } = await identityHomeApi.auth.attachProof(new URL(origin).hostname);
           try {
-            response = await tempClient.auth.login({
+            response = await tempClient.auth.register({
               username: finalUsername,
               password,
+              displayName: displayName || currentUser.displayName || undefined,
+              homeInstance: trueHomeHost,
+              homeUserId: trueHomeUserId,
+              federationProof,
             });
-          } catch {
-            // Namespaced login failed — try legacy plain username as fallback
+          } catch (registerError) {
+            // A concurrent device may have created it after our first login.
             try {
-              response = await tempClient.auth.login({
-                username: bareUsername,
-                password,
-              });
+              response = await tempClient.auth.login({ username: finalUsername, password });
             } catch {
-              throw new DifferentPasswordError(bareUsername);
+              const message = (registerError as Error).message;
+              if (message.includes('already taken') || message.includes('409')) {
+                throw new DifferentPasswordError(bareUsername);
+              }
+              throw registerError;
             }
           }
         }
@@ -431,9 +459,10 @@ export const useInstanceStore = create<InstanceState>((set, get) => ({
       // Automatic re-attach for detached accounts (re-attach spec §3.4).
       maybeAutoReattach(instance).catch(() => {});
 
-      // Ensure server-to-server peering for DM relay (non-fatal)
+      // Ensure server-to-server peering for DM relay (non-fatal). New accounts
+      // already passed this gate; existing remote accounts may predate proofs.
       try {
-        const peerResult = await api.federation.ensurePeered({ remoteOrigin: origin });
+        const peerResult = await (identityHomeApi ?? api).federation.ensurePeered({ remoteOrigin: origin });
         if (peerResult.peeringStatus === 'rejected') {
           const { addToast } = useUIStore.getState();
           addToast(

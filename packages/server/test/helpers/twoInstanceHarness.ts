@@ -51,7 +51,10 @@ async function allocateEphemeralPort(): Promise<number> {
   });
 }
 
-async function waitForReady(origin: string, proc: ChildProcess, logPath: string, timeoutMs = 20_000): Promise<void> {
+// Cold starts on constrained CI hosts can spend tens of seconds loading the
+// TypeScript server graph. This is only the boot deadline; healthy runs still
+// return as soon as /api/instance/info responds.
+async function waitForReady(origin: string, proc: ChildProcess, logPath: string, timeoutMs = 60_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let exited = false;
   let exitInfo: { code: number | null; signal: NodeJS.Signals | null } | null = null;

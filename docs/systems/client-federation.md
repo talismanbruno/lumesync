@@ -76,13 +76,18 @@ When a user adds a remote instance via the Connections settings:
 
 1. **Verify home password** — client confirms the user's password against the home instance
 2. **Compute federated username** — `{bareUsername}@{homeHost}` (e.g., `erin@nova.ddns.net`)
-3. **Try registration** on remote instance with:
+3. **Try login first** — namespaced username first, then the legacy bare username for old mirrors
+4. **For first-time creation, establish peering** — the authenticated native home session calls `/api/federation/peer/ensure`; creation waits for an active peer
+5. **Mint a one-time identity proof** — the home session calls `/api/auth/attach-proof`, bound to the target domain and valid for 60 seconds
+6. **Register** on the remote instance with:
    - Username: `erin@nova.ddns.net`
    - Password: same as home instance password
    - `homeInstance`: `nova.ddns.net` (bare domain)
    - `homeUserId`: user's Snowflake ID on home instance
-4. **If registration fails** (account already exists) — fall back to login
-5. **On success** — store JWT token, create API client, open WebSocket, sync profile
+   - `federationProof`: the single-use proof minted in step 5
+7. **On success** — store JWT token, create API client, open WebSocket, sync profile
+
+The remote verifies the proof over its signed HMAC peer channel and rejects mismatched usernames, home IDs, domains, expired proofs, reused proofs, and unpeered homes. If another device wins the account-creation race, the client retries login once.
 
 The same password is used across all instances. Password changes on the home instance are synced to remote instances automatically.
 
@@ -363,9 +368,9 @@ The hostname-probe step calls `GET /api/instance/info` on the target. The respon
 
 > "This instance has disabled new federated registrations. Existing accounts can still sign in."
 
-**The submit button stays enabled.** This is the [login-unaffected invariant](auth.md#3-registration-flow) made operational on the client. The flow runs through `instanceStore`'s register-then-login fall-through:
-- A user **without** an existing federated account on the target — register attempts 403 with `Federated registration is closed on this instance`; login attempts then fail with the existing "no account" error; the user sees the post-error toast.
-- A user **with** an existing federated account on the target — register 403s, then login succeeds against their existing credentials. Working path preserved for legitimate re-login.
+**The submit button stays enabled.** This is the [login-unaffected invariant](auth.md#3-registration-flow) made operational on the client. `instanceStore` tries namespaced and legacy login before entering the proof-backed creation path:
+- A user **without** an existing federated account on the target — both logins fail, then creation returns 403 while the gate is closed; the user sees the post-error toast.
+- A user **with** an existing federated account on the target — login succeeds immediately against their existing credentials. Working path preserved for legitimate re-login.
 
 Disabling submit would extend the gate into login territory and soft-lock users with existing accounts on a closed instance — exactly the failure mode the invariant prevents. The 403 server-side stays as the security boundary; the banner is a UX hint.
 

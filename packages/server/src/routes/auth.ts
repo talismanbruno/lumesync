@@ -11,6 +11,7 @@ import { sanitizeUser } from '../utils/sanitize.js';
 import { findFederatedUser, extractDomain } from './federation.js';
 import { fetchPeerEpoch } from '../utils/federationEpoch.js';
 import { getInviteByToken, inviteStatus, redeemInvite, InviteUnavailableError } from '../utils/inviteService.js';
+import { verifyAttachProofWithPeer } from '../utils/federationAttach.js';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterRequest }>('/api/auth/register', {
@@ -22,7 +23,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
   }, async (request, reply) => {
-    const { username, password, displayName, avatarColor: requestedAvatarColor, homeInstance, homeUserId } = request.body;
+    const { username, password, displayName, avatarColor: requestedAvatarColor, homeInstance, homeUserId, federationProof } = request.body;
 
     if (!username || typeof username !== 'string') {
       return reply.code(400).send({ error: 'Username is required', statusCode: 400 });
@@ -36,6 +37,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     // Replicated registrations (homeInstance provided) may use username@domain format
     // for collision fallback. Local registrations use strict alphanumeric+underscore.
+    let canonicalHomeDomain: string | null = null;
     if (homeInstance) {
       // Validate homeInstance is a reasonable domain string
       if (typeof homeInstance !== 'string' || homeInstance.length > 253 || !/^[a-zA-Z0-9._-]+$/.test(homeInstance)) {
@@ -57,10 +59,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         if (trimmedUsername.length > 100) {
           return reply.code(400).send({ error: 'Username must be 100 characters or less', statusCode: 400 });
         }
+        canonicalHomeDomain = extractDomain(homeInstance).toLowerCase();
+        if (!canonicalHomeDomain || domainPart.toLowerCase() !== canonicalHomeDomain) {
+          return reply.code(400).send({ error: 'Username domain must match homeInstance', statusCode: 400 });
+        }
       } else {
         // Replicated users MUST use username@domain format — plain usernames
         // are reserved exclusively for native users of this instance
         return reply.code(400).send({ error: 'Replicated users must use username@domain format', statusCode: 400 });
+      }
+      if (typeof homeUserId !== 'string' || homeUserId.length < 1 || homeUserId.length > 128) {
+        return reply.code(400).send({ error: 'homeUserId is required for federated registration', statusCode: 400 });
       }
     } else {
       // Local registration — strict validation
@@ -105,6 +114,27 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       // Federated path: token IGNORED entirely. Gate is federatedRegistrationOpen.
       if (!federatedRegistrationOpen) {
         return reply.code(403).send({ error: 'Federated registration is closed on this instance', statusCode: 403 });
+      }
+      if (typeof federationProof !== 'string' || !/^[0-9a-f]{64}$/i.test(federationProof)) {
+        return reply.code(403).send({ error: 'A valid home identity proof is required', statusCode: 403 });
+      }
+
+      // A federated account must be vouched for by its authenticated home
+      // instance. The one-time proof is verified over the existing HMAC peer
+      // channel, so a browser cannot claim somebody else's homeUserId/domain.
+      const peer = db.select().from(schema.federationPeers).all().find((candidate) =>
+        candidate.status === 'active'
+        && extractDomain(candidate.origin).toLowerCase() === canonicalHomeDomain,
+      );
+      if (!peer) {
+        return reply.code(409).send({ error: 'The home instance is not an active federation peer', statusCode: 409 });
+      }
+      const proof = await verifyAttachProofWithPeer(peer, federationProof);
+      const expectedBase = trimmedUsername.slice(0, trimmedUsername.indexOf('@'));
+      if (!proof.valid
+        || proof.homeUserId !== homeUserId
+        || proof.username.trim().toLowerCase() !== expectedBase) {
+        return reply.code(403).send({ error: 'Home identity proof could not be verified', statusCode: 403 });
       }
       // Fall through to existing federated stub upgrade / new federated user logic below.
     } else {
@@ -244,7 +274,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       registrationLocale: locale,
       registrationTimezone: timeZone,
       registrationCountryCode: countryCode,
-      homeInstance: homeInstance || null,
+      homeInstance: canonicalHomeDomain,
       homeUserId: (homeInstance && homeUserId && typeof homeUserId === 'string') ? homeUserId : null,
       avatarColor,
       createdAt: now,

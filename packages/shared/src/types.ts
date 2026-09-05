@@ -522,6 +522,8 @@ export interface RegisterRequest {
   avatarColor?: string;
   homeInstance?: string;
   homeUserId?: string;
+  /** One-time proof minted by the authenticated home instance for this target. */
+  federationProof?: string;
   inviteToken?: string;
   /** Coarse, user-agent supplied signup context. Never contains an IP. */
   locale?: string;
