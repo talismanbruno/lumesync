@@ -1,7 +1,15 @@
-# Reuse the deployed runtime only when package dependencies have not changed.
-# Pass its immutable local image ID/digest as BASE_IMAGE; keep the old image for rollback.
+# Reuse the deployed runtime while still refreshing the production dependency
+# graph from the release lockfile. Pass an immutable local image as BASE_IMAGE
+# and keep that image for rollback.
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/shared/package.json packages/shared/
+COPY packages/server/package.json packages/server/
+COPY packages/web/package.json packages/web/
+COPY patches/ patches/
+RUN pnpm install --prod --frozen-lockfile
 COPY packages/server/src/ /app/packages/server/src/
 COPY packages/server/drizzle/ /app/packages/server/drizzle/
 COPY packages/shared/src/ /app/packages/shared/src/
