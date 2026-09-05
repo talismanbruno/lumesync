@@ -3,6 +3,7 @@ import { getDb } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { buildFederationHeaders, getOurOrigin } from './federationAuth.js';
 import type { FederationUserLookupProfile, FederationUserLookupResponse } from '@backspace/shared';
+import { safeFetch } from './ssrf.js';
 
 const LOOKUP_TIMEOUT_MS = 10_000;
 
@@ -38,7 +39,7 @@ export async function lookupRemoteUser(peerOrigin: string, username: string): Pr
 
   let response: Response;
   try {
-    response = await fetch(`${peerOrigin}/api/federation/users/lookup`, {
+    response = await safeFetch(`${peerOrigin}/api/federation/users/lookup`, {
       method: 'POST',
       headers,
       body,
@@ -112,7 +113,7 @@ export async function lookupRemoteUserByHomeId(peerOrigin: string, homeUserId: s
 
   let response: Response;
   try {
-    response = await fetch(`${peerOrigin}/api/federation/users/by-home-id`, {
+    response = await safeFetch(`${peerOrigin}/api/federation/users/by-home-id`, {
       method: 'POST',
       headers,
       body,

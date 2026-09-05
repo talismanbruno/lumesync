@@ -7,6 +7,7 @@ import { validateOrigin } from '../routes/federation.js';
 import { onPeerActivated, onPeerDeactivated } from './federationPeerActivation.js';
 import { getInstanceId } from './federationEpoch.js';
 import type { EnsurePeeredCallerIntent } from '@backspace/shared';
+import { safeFetch } from './ssrf.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,7 @@ async function performHandshake(
   }
 
   try {
-    const response = await fetch(`${origin}/api/federation/peer/accept`, {
+    const response = await safeFetch(`${origin}/api/federation/peer/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

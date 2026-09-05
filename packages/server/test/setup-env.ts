@@ -5,3 +5,4 @@
 // still take precedence — `??=` only fills holes.
 
 process.env.JWT_SECRET ??= 'test-only-jwt-secret-not-for-production-use!!';
+process.env.ALLOW_PRIVATE_OUTBOUND_FOR_TESTS ??= '1';

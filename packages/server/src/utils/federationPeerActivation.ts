@@ -6,6 +6,7 @@ import { buildFederationHeaders, getOurOrigin } from './federationAuth.js';
 import { generateSnowflake } from './snowflake.js';
 import { healResetIncarnation } from './federationReset.js';
 import type { FederationRelayEvent } from '@backspace/shared';
+import { safeFetch } from './ssrf.js';
 
 export type PeerActivationReason =
   | 'initiate_accepted'
@@ -169,7 +170,7 @@ export async function syncPeerMutationLog(
       if (contextType) bodyObj.contextType = contextType;
       const body = JSON.stringify(bodyObj);
       const headers = buildFederationHeaders(body, signingSecret, ourOrigin);
-      const resp = await fetch(`${activePeer.origin}/api/federation/sync`, {
+      const resp = await safeFetch(`${activePeer.origin}/api/federation/sync`, {
         method: 'POST', headers, body,
         signal: AbortSignal.timeout(30_000),
       });

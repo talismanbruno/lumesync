@@ -11,6 +11,7 @@ import { randomBytes } from 'node:crypto';
 import type { ApprovalRequestSubscriberSummary, PeeringTriggerReason } from '@backspace/shared';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { resolveLocalOrigin, sanitizePeer } from '../origin.js';
+import { safeFetch } from '../../../utils/ssrf.js';
 
 /**
  * Queue an inbound peer/accept request for local-admin approval.
@@ -137,7 +138,7 @@ export async function handleInboundApprove(
       .where(eq(schema.instanceSettings.id, 1))
       .get()?.name ?? undefined;
 
-    const response = await fetch(`${approvalReq.origin}/api/federation/peer/accept`, {
+    const response = await safeFetch(`${approvalReq.origin}/api/federation/peer/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -297,7 +298,7 @@ export async function handleOutboundApprove(
 
   let response: Response;
   try {
-    response = await fetch(`${approvalReq.origin}/api/federation/peer/accept`, {
+    response = await safeFetch(`${approvalReq.origin}/api/federation/peer/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -471,7 +472,7 @@ export async function handleInboundDeny(
 
   let notificationSent = false;
   try {
-    const response = await fetch(`${approvalReq.origin}/api/federation/peer/denied`, {
+    const response = await safeFetch(`${approvalReq.origin}/api/federation/peer/denied`, {
       method: 'POST',
       headers,
       body: denialBody,

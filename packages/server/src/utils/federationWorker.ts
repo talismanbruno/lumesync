@@ -251,7 +251,7 @@ export async function processOutboxTick(): Promise<void> {
     outboxAbortController = new AbortController();
 
     try {
-      const response = await fetch(`${peerOrigin}/api/federation/relay`, {
+      const response = await safeFetch(`${peerOrigin}/api/federation/relay`, {
         method: 'POST',
         headers,
         body: bodyString,
@@ -1169,7 +1169,7 @@ async function processHealthCheckTick(): Promise<void> {
       const rotateBody = JSON.stringify({ newSecret });
       const headers = buildFederationHeaders(rotateBody, peer.hmacSecret, ourOrigin);
 
-      const response = await fetch(`${peer.origin}/api/federation/peer/rotate`, {
+      const response = await safeFetch(`${peer.origin}/api/federation/peer/rotate`, {
         method: 'POST',
         headers,
         body: rotateBody,

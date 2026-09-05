@@ -12,6 +12,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { FederationRelayEvent, FederationRelayProfileSnapshot } from '@backspace/shared';
 import { extractDomain } from './identity.js';
+import { safeFetch } from '../../utils/ssrf.js';
 
 /**
  * Hydrate a replicated user stub with profile data from a relay event.
@@ -104,7 +105,7 @@ export async function downloadProfileAsset(
   const finalPath = path.join(config.uploadDir, finalFilename);
 
   try {
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       signal: AbortSignal.timeout(10_000),
     });
 

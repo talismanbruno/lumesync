@@ -107,6 +107,7 @@ export async function spawnInstance(opts: {
   const env: Record<string, string> = {
     ...process.env,
     NODE_ENV: 'test',
+    ALLOW_PRIVATE_OUTBOUND_FOR_TESTS: '1',
     ENABLE_TEST_ROUTES: '1',
     DISABLE_FEDERATION_WORKERS: '1',
     PORT: String(opts.port),

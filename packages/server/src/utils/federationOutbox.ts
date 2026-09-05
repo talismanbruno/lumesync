@@ -7,6 +7,7 @@ import type { FederationRelayEvent, FederationRelayParticipant, FederationRelayA
 import { getOurOrigin, buildFederationHeaders, generateHmacSecret } from './federationAuth.js';
 import { extractDomain } from '../routes/federation.js';
 import { racePeering, ensurePeered } from './federationPeering.js';
+import { safeFetch } from './ssrf.js';
 
 // ─── Settings Cache ──────────────────────────────────────────────────────────
 
@@ -672,7 +673,7 @@ export async function sendCallRelay(
   const headers = buildFederationHeaders(bodyStr, signingSecret, ourOrigin);
 
   try {
-    const res = await fetch(`${targetPeerOrigin}/api/federation/relay`, {
+    const res = await safeFetch(`${targetPeerOrigin}/api/federation/relay`, {
       method: 'POST',
       headers,
       body: bodyStr,

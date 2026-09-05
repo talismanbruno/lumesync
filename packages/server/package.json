@@ -33,7 +33,8 @@
     "jsonwebtoken": "^9.0.2",
     "livekit-server-sdk": "^2.6.1",
     "sharp": "^0.33.0",
-    "tsx": "^4.16.0"
+    "tsx": "^4.16.0",
+    "undici": "7.22.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

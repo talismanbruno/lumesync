@@ -15,6 +15,7 @@ import { config } from '../config.js';
 import { buildFederationHeaders, getOurOrigin } from '../utils/federationAuth.js';
 import { extractDomain } from './federation.js';
 import path from 'path';
+import { safeFetch } from '../utils/ssrf.js';
 
 /** Validates that a URL is a safe asset URL (relative upload path, bare filename, or http/https) */
 export function isValidAssetUrl(url: string | null | undefined): boolean {
@@ -733,7 +734,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           const timeout = setTimeout(() => controller.abort(), 15_000);
 
           try {
-            const response = await fetch(`${origin}/api/federation/identity`, {
+            const response = await safeFetch(`${origin}/api/federation/identity`, {
               method: 'DELETE',
               headers,
               body,

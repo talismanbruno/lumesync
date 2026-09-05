@@ -1,4 +1,5 @@
 import { buildFederationHeaders, verifySignature, getOurOrigin } from './federationAuth.js';
+import { safeFetch } from './ssrf.js';
 
 export interface PeerForAttach {
   origin: string;
@@ -21,7 +22,7 @@ export async function verifyAttachProofWithPeer(
 
   let res: Response;
   try {
-    res = await fetch(`${peer.origin}/api/federation/verify-attach-proof`, {
+    res = await safeFetch(`${peer.origin}/api/federation/verify-attach-proof`, {
       method: 'POST',
       headers,
       body,
@@ -75,7 +76,7 @@ export async function fetchHomeProfileByHomeId(
 
   let res: Response;
   try {
-    res = await fetch(`${peer.origin}/api/federation/users/by-home-id`, {
+    res = await safeFetch(`${peer.origin}/api/federation/users/by-home-id`, {
       method: 'POST',
       headers,
       body,

@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import { queueApprovalRequest } from './approvals.js';
 import { resolveLocalOrigin, sanitizePeer, validateOrigin } from '../origin.js';
 import { isAcceptRateLimited, isEnsureRateLimited } from '../rateLimits.js';
+import { safeFetch } from '../../../utils/ssrf.js';
 
 export function registerPeerHandshakeRoutes(app: FastifyInstance): void {
   // ─── POST /api/federation/peer/initiate ────────────────────────────────────
@@ -107,7 +108,7 @@ export function registerPeerHandshakeRoutes(app: FastifyInstance): void {
 
       // Initiate the server-to-server handshake
       try {
-        const response = await fetch(`${remoteOrigin}/api/federation/peer/accept`, {
+        const response = await safeFetch(`${remoteOrigin}/api/federation/peer/accept`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

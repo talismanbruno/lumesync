@@ -1,6 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { getDb, schema } from '../db/index.js';
 import { buildFederationHeaders, verifySignature, getOurOrigin } from './federationAuth.js';
+import { safeFetch } from './ssrf.js';
 
 let cached: string | null = null;
 
@@ -50,7 +51,7 @@ export async function fetchPeerEpoch(peer: PeerForEpoch): Promise<string | null>
 
   let res: Response;
   try {
-    res = await fetch(`${peer.origin}/api/federation/epoch`, {
+    res = await safeFetch(`${peer.origin}/api/federation/epoch`, {
       method: 'POST',
       headers,
       body,

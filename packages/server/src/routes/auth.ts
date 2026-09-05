@@ -12,6 +12,7 @@ import { findFederatedUser, extractDomain } from './federation.js';
 import { fetchPeerEpoch } from '../utils/federationEpoch.js';
 import { getInviteByToken, inviteStatus, redeemInvite, InviteUnavailableError } from '../utils/inviteService.js';
 import { verifyAttachProofWithPeer } from '../utils/federationAttach.js';
+import { safeFetch } from '../utils/ssrf.js';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterRequest }>('/api/auth/register', {
@@ -463,7 +464,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 10_000);
 
-          const homeResponse = await fetch(`https://${user.homeInstance}/api/auth/login`, {
+          const homeResponse = await safeFetch(`https://${user.homeInstance}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: homeUsername, password }),

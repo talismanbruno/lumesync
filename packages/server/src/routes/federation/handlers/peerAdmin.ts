@@ -9,6 +9,7 @@ import { connectionManager } from '../../../ws/handler.js';
 import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { resolveLocalOrigin, sanitizePeer } from '../origin.js';
+import { safeFetch } from '../../../utils/ssrf.js';
 
 export function registerPeerAdminRoutes(app: FastifyInstance): void {
   // ─── GET /api/federation/peers ─────────────────────────────────────────────
@@ -378,7 +379,7 @@ export function registerPeerAdminRoutes(app: FastifyInstance): void {
         const rotateBody = JSON.stringify({ newSecret });
         const headers = buildFederationHeaders(rotateBody, peer.hmacSecret, localOrigin);
 
-        const response = await fetch(`${peer.origin}/api/federation/peer/rotate`, {
+        const response = await safeFetch(`${peer.origin}/api/federation/peer/rotate`, {
           method: 'POST',
           headers,
           body: rotateBody,
