@@ -6,5 +6,9 @@ COPY packages/server/src/ /app/packages/server/src/
 COPY packages/server/drizzle/ /app/packages/server/drizzle/
 COPY packages/shared/src/ /app/packages/shared/src/
 COPY packages/web/dist/ /app/packages/web/dist/
-ARG BACKSPACE_COMMIT
-ENV BACKSPACE_COMMIT=${BACKSPACE_COMMIT}
+# The base image already defines BACKSPACE_COMMIT. Older Docker builders let
+# that inherited ENV shadow an ARG with the same name during expansion, which
+# silently stamps the overlay with the base release. Use a distinct ARG name so
+# the running instance always advertises the code that was actually deployed.
+ARG LUME_RELEASE_COMMIT
+ENV BACKSPACE_COMMIT=${LUME_RELEASE_COMMIT}
