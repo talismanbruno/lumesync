@@ -373,8 +373,8 @@ export function DmSearchBar() {
           <>
             {query.trim().length >= 2 && (
               <div className="px-3 pt-1.5 pb-1 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-                  Conversas
-                </div>
+                Conversas
+              </div>
             )}
             {dmItems.map((item, i) => {
               const globalIndex = i;

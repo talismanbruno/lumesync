@@ -130,7 +130,7 @@ export function VoiceControls() {
           <button
             onClick={handleDisconnect}
             className="lume-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
-            title="Disconnect"
+            title="Desconectar"
           >
             <OrbitalIcon name="hangup" size={19} />
           </button>
