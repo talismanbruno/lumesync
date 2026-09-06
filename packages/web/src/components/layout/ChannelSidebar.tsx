@@ -540,14 +540,15 @@ export function ChannelSidebar() {
 
   return (
     <>
-    <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
+    <div className="lume-context-panel lume-space-sidebar w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
       {/* Space header */}
-      <div className="h-14 flex items-stretch border-b border-border-hard z-10 group/header">
+      <div className="lume-space-head min-h-[82px] flex items-stretch border-b border-border-hard z-10 group/header">
         <button
           onClick={() => openModal('spaceSettings')}
-          className="flex-1 h-full px-4 flex items-center justify-between hover:bg-interactive-hover transition-colors min-w-0"
+          className="lume-space-head-main flex-1 h-full px-4 flex items-center justify-between hover:bg-interactive-hover transition-colors min-w-0"
         >
           <div className="min-w-0">
+            <span className="lume-side-brand-kicker block mb-1">ESPAÇO ATIVO</span>
             <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate leading-tight block">{space.name}</span>
             {instanceLabel && (
               <span className="text-[10px] text-txt-tertiary font-medium truncate block leading-tight">
@@ -573,7 +574,7 @@ export function ChannelSidebar() {
       </div>
 
       {/* Channels — dynamic category layout */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pt-3 px-2 no-scrollbar" style={{ paddingBottom: floatingPanelHeight + 24 }} onDrop={containerHandlers.onDrop} onDragOver={containerHandlers.onDragOver} onContextMenu={handleSidebarContextMenu}>
+      <div ref={scrollContainerRef} className="lume-channel-scroll flex-1 overflow-y-auto pt-3 px-2 no-scrollbar" style={{ paddingBottom: floatingPanelHeight + 24 }} onDrop={containerHandlers.onDrop} onDragOver={containerHandlers.onDragOver} onContextMenu={handleSidebarContextMenu}>
         {showChannelSkeleton ? (
           <div className="px-2 pt-3" role="status" aria-label="Loading channels">
             {/* Category group 1 */}
@@ -649,7 +650,7 @@ export function ChannelSidebar() {
 
           const categoryHeader = (
                 <div
-                  className={`flex items-center justify-between px-1 mb-1 group cursor-pointer ${
+                  className={`lume-channel-category flex items-center justify-between px-1 mb-1 group cursor-pointer ${
                     activeDrag?.type === 'category' && activeDrag.dragId === category.id ? 'opacity-50' : ''
                   } ${dropTarget?.targetId === category.id && dropTarget.targetType === 'category' ? 'ring-1 ring-accent-mint/40 rounded' : ''}`}
                   {...categoryHandlers(category.id)}
@@ -1363,7 +1364,7 @@ function ChannelItem({
       {dropIndicator === 'before' && <div className="absolute -top-[1px] left-2 right-2 h-[2px] bg-accent-mint rounded-full z-10" />}
       <button
         onClick={onChannelClick}
-        className={`relative w-full flex items-center gap-1.5 px-[10px] h-8 rounded-[6px] group transition-colors ${
+        className={`lume-channel-node relative w-full flex items-center gap-1.5 px-[10px] h-8 rounded-[6px] group transition-colors ${
           isActive
             ? 'bg-surface-elevated text-txt-primary'
             : isUnread
@@ -1380,9 +1381,7 @@ function ChannelItem({
         {isUnread && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-accent-rose" />
         )}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0 text-[#6e6e7a]">
-          <path d="M5.88657 21C5.57547 21 5.3399 20.7189 5.39427 20.4126L6.00001 17H2.59511C2.28449 17 2.04905 16.7198 2.10259 16.4138L2.27759 15.4138C2.31946 15.1746 2.52722 15 2.77011 15H6.35001L7.41001 9H4.00511C3.69449 9 3.45905 8.71977 3.51259 8.41381L3.68759 7.41381C3.72946 7.17456 3.93722 7 4.18011 7H7.76001L8.39677 3.41262C8.43914 3.17391 8.64664 3 8.88907 3H9.87344C10.1845 3 10.4201 3.28107 10.3657 3.58738L9.76001 7H15.76L16.3968 3.41262C16.4391 3.17391 16.6466 3 16.8891 3H17.8734C18.1845 3 18.4201 3.28107 18.3657 3.58738L17.76 7H21.1649C21.4755 7 21.711 7.28023 21.6574 7.58619L21.4824 8.58619C21.4406 8.82544 21.2328 9 20.9899 9H17.41L16.35 15H19.7549C20.0655 15 20.301 15.2802 20.2474 15.5862L20.0724 16.5862C20.0306 16.8254 19.8228 17 19.5799 17H16L15.3632 20.5874C15.3209 20.8261 15.1134 21 14.8709 21H13.8866C13.5755 21 13.3399 20.7189 13.3943 20.4126L14 17H8.00001L7.36325 20.5874C7.32088 20.8261 7.11337 21 6.87094 21H5.88657ZM9.41001 9L8.35001 15H14.35L15.41 9H9.41001Z" />
-        </svg>
+        <span className="lume-channel-node-icon" aria-hidden="true"><i /></span>
         <span className={`truncate text-[15px] leading-5 tracking-[0.01em] flex-1 text-left ${isUnread ? 'font-semibold' : 'font-medium'}`}>{channel.name}</span>
         {canManage && (
           <svg
