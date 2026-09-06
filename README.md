@@ -40,7 +40,7 @@ O produto está sendo desenvolvido com três prioridades:
 
 ## Estado atual
 
-O Lume está na versão **1.0.0 beta 13**. A instância oficial é monitorada, possui
+O Lume está na versão **1.0.0 beta 14**. A instância oficial é monitorada, possui
 limites preventivos de armazenamento e chamadas, cópias de segurança automáticas
 e validações de código antes de cada publicação.
 

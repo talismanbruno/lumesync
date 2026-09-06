@@ -273,8 +273,8 @@
     <div class="container">
       <div class="card">
         <div class="header">
-          <h1>Welcome to Backspace</h1>
-          <p>Connect to your instance</p>
+          <h1>Boas-vindas ao Lume</h1>
+          <p>Conecte-se à sua instância</p>
         </div>
 
         <form id="picker-form">
@@ -283,7 +283,7 @@
             <input
               id="url-input"
               type="text"
-              placeholder="backspace.example.com"
+              placeholder="lume.exemplo.com"
               autocomplete="off"
               spellcheck="false"
               autofocus
@@ -362,8 +362,8 @@
         cancelBtn.style.display = 'block';
         // Update header copy to reflect the "switch" intent rather than the
         // first-run "welcome" framing.
-        document.querySelector('.header h1').textContent = 'Switch instance';
-        document.querySelector('.header p').textContent = 'Connect to a different Backspace instance, or cancel to stay.';
+        document.querySelector('.header h1').textContent = 'Trocar de instância';
+        document.querySelector('.header p').textContent = 'Conecte-se a outra instância do Lume ou cancele para continuar aqui.';
       }
     }
     init();
@@ -402,7 +402,7 @@
         const data = await res.json();
 
         if (!data.name) {
-          throw new Error('Not a Backspace instance');
+          throw new Error('Esta não é uma instância compatível com o Lume');
         }
 
         // Show instance info

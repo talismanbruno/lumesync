@@ -35,7 +35,7 @@ interface VersionedDictionary {
 
 const VALID_TYPES = new Set(['playing', 'listening', 'watching', 'streaming']);
 const POLL_INTERVAL_MS = 15_000;
-const REMOTE_URL = 'https://raw.githubusercontent.com/TheZwiss/backspace/main/packages/desktop/resources/games.json';
+const REMOTE_URL = 'https://raw.githubusercontent.com/talismanbruno/lumesync/main/packages/desktop/resources/games.json';
 
 // ─── Module state ───────────────────────────────────────────────────────────
 
@@ -251,7 +251,7 @@ function fetchRemote(url: string, etag: string | null): Promise<{
 } | null> {
   return new Promise((resolve) => {
     const headers: Record<string, string> = {
-      'User-Agent': 'Backspace-Desktop/1.0',
+      'User-Agent': 'Lume-Desktop/1.0',
     };
     if (etag) {
       headers['If-None-Match'] = etag;
