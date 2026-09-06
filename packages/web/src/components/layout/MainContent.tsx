@@ -204,9 +204,9 @@ export function MainContent() {
       return (
         <div
           ref={voiceContainerRef}
-          className={`lume-voice-stage flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
+          className={`flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
         >
-          <div className={`lume-voice-header h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
+          <div className={`h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
             <div className="flex items-center gap-[10px]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
                 <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
@@ -242,7 +242,7 @@ export function MainContent() {
     }
 
     return (
-      <div className="lume-conversation-stage flex-1 flex flex-col bg-surface-chat min-w-0 relative">
+      <div className="flex-1 flex flex-col bg-surface-chat min-w-0 relative">
         {isCallingThisDm && (
           <div className="bg-status-online/10 border-b border-status-online/20 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -259,7 +259,7 @@ export function MainContent() {
             </button>
           </div>
         )}
-        <div className="lume-conversation-header h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
+        <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
           <div className="flex items-center gap-[10px] min-w-0">
             {isGroupDm ? (
               <div
@@ -274,7 +274,6 @@ export function MainContent() {
                 <path d="M12.5 2A6.5 6.5 0 0 0 6 8.5c0 1.82.75 3.47 1.95 4.65A10.02 10.02 0 0 0 2 22h2c0-4.42 3.58-8 8-8 .35 0 .69.03 1.03.07A6.49 6.49 0 0 0 19 8.5 6.5 6.5 0 0 0 12.5 2Zm0 11A4.5 4.5 0 1 1 17 8.5a4.5 4.5 0 0 1-4.5 4.5Z" />
               </svg>
             )}
-            <span className="lume-channel-kicker hidden xl:inline">SINAL DIRETO</span>
             {isGroupDm ? (
               <span
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'overview' })}
@@ -378,27 +377,16 @@ export function MainContent() {
 
   if (!currentChannelId || !channel) {
     return (
-      <div className="lume-conversation-stage flex-1 flex flex-col bg-surface-chat relative">
-        <div className="lume-conversation-header h-14 px-5 flex items-center justify-between border-b border-border-hard">
-          <div className="lume-channel-identity">
-            <span className="lume-channel-symbol"><i /></span>
-            <div>
-              <span className="lume-channel-kicker">ESPAÇO EM ESPERA</span>
-              <strong>Escolha um canal</strong>
-            </div>
-          </div>
+      <div className="flex-1 flex flex-col bg-surface-chat relative">
+        <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard">
+          <span className="text-txt-tertiary">Select a channel</span>
           <div className="flex items-center gap-1 flex-shrink-0">
             <TransferIndicator />
             <MemberListToggleButton />
           </div>
         </div>
-        <div className="lume-channel-empty flex-1 flex items-center justify-center text-txt-tertiary">
-          <div className="lume-channel-empty-orbit" aria-hidden="true"><span /><span /><i /></div>
-          <div>
-            <span className="lume-empty-kicker">PRONTO PARA CONECTAR</span>
-            <h2>Escolha onde pousar</h2>
-            <p>Abra um canal de texto ou de voz para entrar na conversa.</p>
-          </div>
+        <div className="flex-1 flex items-center justify-center text-txt-tertiary">
+          <p>Select a text or voice channel to get started</p>
         </div>
       </div>
     );
@@ -409,8 +397,8 @@ export function MainContent() {
 
     if (!isInThisChannel) {
       return (
-        <div className="lume-voice-stage flex-1 flex flex-col bg-surface-base">
-          <div className="lume-voice-header h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base">
+        <div className="flex-1 flex flex-col bg-surface-base">
+          <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base">
             <div className="flex items-center gap-[10px]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
                 <path d="M11 5L6 9H2V15H6L11 19V5ZM15.54 8.46C16.48 9.4 17 10.67 17 12S16.48 14.6 15.54 15.54L14.12 14.12C14.69 13.55 15 12.79 15 12S14.69 10.45 14.12 9.88L15.54 8.46Z" />
@@ -422,22 +410,17 @@ export function MainContent() {
               <MemberListToggleButton />
             </div>
           </div>
-          <div className="lume-voice-lobby flex-1 flex flex-col items-center justify-center gap-8 relative">
-            <div className="lume-voice-lobby-orbit" aria-hidden="true">
-              <span className="ring ring-a" /><span className="ring ring-b" /><span className="ring ring-c" />
-              <span className="wave wave-a" /><span className="wave wave-b" />
-              <div className="lume-voice-lobby-core"><OrbitalIcon name="audio" size={38} /></div>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-8 relative">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,108,246,0.12)_0%,transparent_70%)] animate-gradient-pulse pointer-events-none" />
             <div className="text-center relative z-10">
-              <span className="lume-empty-kicker">CANAL DE VOZ</span>
               <h2 className="text-[28px] font-bold text-white mb-3">{channel.name}</h2>
-              <p className="text-txt-tertiary text-[15px]">O canal está livre. Entre e abra o sinal.</p>
+              <p className="text-txt-tertiary text-[15px]">No one is currently in this voice channel.</p>
             </div>
             <button
               onClick={() => joinVoiceChannel(currentChannelId, useVoiceStore.getState().connectFn ?? undefined)}
-              className="lume-voice-join relative z-10 px-8 py-3 bg-accent-primary hover:bg-accent-primary-hover text-white font-semibold rounded-full transition-all text-[15px] shadow-[0_4px_20px_rgba(124,108,246,0.3)]"
+              className="relative z-10 px-8 py-3 bg-accent-primary hover:bg-accent-primary-hover text-white font-semibold rounded-full transition-all text-[15px] shadow-[0_4px_20px_rgba(124,108,246,0.3)]"
             >
-              Entrar no canal <span aria-hidden="true">↗</span>
+              Join Voice
             </button>
           </div>
         </div>
@@ -447,23 +430,23 @@ export function MainContent() {
     return (
       <div 
         ref={voiceContainerRef}
-        className={`lume-voice-stage flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
+        className={`flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
       >
-        <div className={`lume-voice-header h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
+        <div className={`h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
           <div className="flex items-center gap-[10px]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
               <path d="M11 5L6 9H2V15H6L11 19V5ZM15.54 8.46C16.48 9.4 17 10.67 17 12S16.48 14.6 15.54 15.54L14.12 14.12C14.69 13.55 15 12.79 15 12S14.69 10.45 14.12 9.88L15.54 8.46Z" />
             </svg>
             <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary">{channel.name}</span>
             {connectionError ? (
-              <span className="text-xs text-txt-danger font-medium ml-2">Falha na conexão</span>
+              <span className="text-xs text-txt-danger font-medium ml-2">Connection Failed</span>
             ) : isLiveKitConnected ? (
               <>
-                  <span className="text-xs text-status-online font-medium ml-2">Conectado</span>
-                  <span className="text-xs text-txt-tertiary ml-1">{participants.length} no canal</span>
+                <span className="text-xs text-status-online font-medium ml-2">Connected</span>
+                <span className="text-xs text-txt-tertiary ml-1">{participants.length} connected</span>
               </>
             ) : (
-                <span className="text-xs text-status-idle font-medium ml-2">Conectando...</span>
+              <span className="text-xs text-status-idle font-medium ml-2">Connecting...</span>
             )}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -485,22 +468,17 @@ export function MainContent() {
   }
 
   return (
-    <div className="lume-conversation-stage flex-1 flex flex-col bg-surface-chat min-w-0 relative">
-      <div className="lume-conversation-header h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
-        <div className="lume-channel-identity min-w-0">
-          <span className="lume-channel-symbol"><i /></span>
-          <div className="min-w-0">
-            <span className="lume-channel-kicker">CANAL DO ESPAÇO</span>
-            <div className="flex items-center min-w-0">
-              <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate leading-tight">{channel.name}</span>
-              {channel.topic && (
-                <>
-                  <div className="w-[1px] h-4 bg-border-soft mx-2" />
-                  <span className="text-[12px] text-txt-tertiary truncate leading-tight">{channel.topic}</span>
-                </>
-              )}
-            </div>
-          </div>
+    <div className="flex-1 flex flex-col bg-surface-chat min-w-0 relative">
+      <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
+        <div className="flex items-center gap-[10px] min-w-0">
+          <span className="text-[20px] font-medium text-txt-tertiary flex-shrink-0 leading-none">#</span>
+          <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate leading-tight">{channel.name}</span>
+          {channel.topic && (
+            <>
+              <div className="w-[1px] h-5 bg-border-soft mx-2" />
+              <span className="text-[13px] text-txt-tertiary truncate leading-tight">{channel.topic}</span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover" title="Notification Settings">

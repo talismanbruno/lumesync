@@ -29,14 +29,6 @@ import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 const statusLabel: Record<string, string> = { online: 'Disponível', idle: 'Ausente', dnd: 'Não perturbe', offline: 'Offline' };
 
-const tabMeta: Record<Tab, { eyebrow: string; title: string; description: string }> = {
-  online: { eyebrow: 'AGORA', title: 'Disponíveis', description: 'Quem está por perto neste momento.' },
-  all: { eyebrow: 'SEU CÍRCULO', title: 'Todas as pessoas', description: 'Todo mundo que faz parte da sua órbita.' },
-  pending: { eyebrow: 'CONVITES', title: 'Pedidos', description: 'Novas conexões esperando por você.' },
-  add: { eyebrow: 'EXPANDIR', title: 'Encontrar pessoas', description: 'Busque alguém e amplie sua constelação.' },
-  activity: { eyebrow: 'PULSO', title: 'Em movimento', description: 'O que as pessoas estão fazendo agora.' },
-};
-
 function ActivityFriendItem({
   friend,
   isOffline,
@@ -184,18 +176,14 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
     switch (activeTab) {
       case 'online':
         return (
-          <div className="lume-friends-feed flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
               Disponíveis — {onlineFriends.length}
             </h2>
             {onlineFriends.length === 0 ? (
-              <FriendsEmptyState
-                tone="cyan"
-                title="A órbita está silenciosa"
-                description="Quando alguém ficar disponível, a presença aparece aqui em tempo real."
-                action="Encontrar pessoas"
-                onAction={() => setActiveTab('add')}
-              />
+              <div className="flex flex-col items-center justify-center h-full opacity-80">
+                <p className="text-txt-tertiary text-sm">Ninguém está disponível agora.</p>
+              </div>
             ) : (
               <>
                 {onlineFriends.map(friend => (
@@ -207,18 +195,14 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         );
       case 'all':
         return (
-          <div className="lume-friends-feed flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
               Todas as pessoas — {friends.length}
             </h2>
             {friends.length === 0 ? (
-              <FriendsEmptyState
-                tone="violet"
-                title="Comece sua constelação"
-                description="Encontre seus amigos e mantenha cada conversa ao alcance de um clique."
-                action="Adicionar primeira pessoa"
-                onAction={() => setActiveTab('add')}
-              />
+              <div className="flex flex-col items-center justify-center h-full opacity-80">
+                <p className="text-txt-tertiary text-sm">Sua lista ainda está vazia — adicione alguém!</p>
+              </div>
             ) : (
               <>
                 {friends.map(friend => (
@@ -230,16 +214,14 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         );
       case 'pending':
         return (
-          <div className="lume-friends-feed flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
               Pedidos — {pendingIncoming.length + pendingOutgoing.length}
             </h2>
             {[...pendingIncoming, ...pendingOutgoing].length === 0 ? (
-              <FriendsEmptyState
-                tone="rose"
-                title="Tudo resolvido por aqui"
-                description="Você não tem pedidos esperando. Novos convites vão aparecer neste painel."
-              />
+              <div className="flex flex-col items-center justify-center h-full opacity-80">
+                <p className="text-txt-tertiary text-sm">Nenhum pedido pendente.</p>
+              </div>
             ) : (
               <>
                 {pendingIncoming.map(req => (
@@ -308,13 +290,13 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         };
 
         return (
-          <div className="lume-friends-feed flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             {activeFriends.length === 0 && idleFriends.length === 0 && offlineActivityFriends.length === 0 ? (
-              <FriendsEmptyState
-                tone="violet"
-                title="Nenhum sinal no radar"
-                description="Jogos, músicas e outras atividades dos seus amigos vão ganhar vida aqui."
-              />
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-sm text-txt-tertiary max-w-[240px]">
+                  Tudo quieto por enquanto... Quando alguém iniciar uma atividade, ela aparece aqui.
+                </div>
+              </div>
             ) : (
               <>
                 {activeFriends.length > 0 && (
@@ -350,7 +332,6 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
   };
 
   const popMobileScreen = useUIStore((s) => s.popMobileScreen);
-  const currentMeta = tabMeta[activeTab];
 
   return (
     <div className="lume-friends-hub flex-1 flex flex-col bg-surface-chat h-full">
@@ -365,20 +346,36 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
           <span className="font-semibold text-sm text-txt-primary">Pessoas</span>
         </div>
       ) : (
-        <header className="lume-friends-command flex items-center flex-shrink-0 z-10">
-          <div className="lume-friends-title flex items-center gap-3 min-w-0">
-            <span className="lume-friends-mark"><OrbitalIcon name="friends" size={23} /></span>
-            <div className="min-w-0">
-              <span className="block text-[9px] font-bold tracking-[0.22em] text-accent-primary/70">CÍRCULO LUME</span>
-              <h1 className="text-[20px] font-bold tracking-[-0.035em] text-txt-primary leading-tight">Conexões</h1>
-            </div>
+        <div className="lume-friends-command h-16 px-5 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
+          <div className="flex items-center gap-2 mr-4">
+            <span className="lume-friends-mark"><OrbitalIcon name="friends" size={21} /></span>
+            <span className="font-bold text-txt-primary">Pessoas</span>
           </div>
-          <div className="lume-friends-stats ml-auto flex items-center gap-2">
-            <span><i className="is-live" />{onlineFriends.length} agora</span>
-            <span>{friends.length} no círculo</span>
+          <div className="w-[1px] h-6 bg-surface-elevated mx-2" />
+          <div className="flex items-center gap-4 ml-2">
+            <TabButton active={activeTab === 'online'} onClick={() => setActiveTab('online')}>Disponíveis</TabButton>
+            <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>Todos</TabButton>
+            <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
+              Pedidos
+              {(pendingIncoming.length > 0) && (
+                <span className="ml-2 px-1.5 py-0.5 bg-accent-rose text-white text-[10px] rounded-full leading-none">
+                  {pendingIncoming.length}
+                </span>
+              )}
+            </TabButton>
+            <button
+              onClick={() => setActiveTab('add')}
+              className={`px-2 py-0.5 rounded text-[14px] font-medium transition-all ${
+                activeTab === 'add' ? 'text-status-online bg-transparent' : 'bg-status-online text-[#13131a] hover:bg-status-online/90'
+              }`}
+            >
+              Adicionar
+            </button>
+          </div>
+          <div className="ml-auto flex items-center gap-1">
             <MemberListToggleButton />
           </div>
-        </header>
+        </div>
       )}
 
       {/* Mobile tab bar */}
@@ -405,39 +402,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         </div>
       )}
 
-      {mobile ? renderTabContent() : (
-        <div className="lume-friends-workspace min-h-0 flex-1">
-          <aside className="lume-friends-nav" aria-label="Navegação de pessoas">
-            <div className="lume-friends-nav-label">NAVEGAR</div>
-            <TabButton active={activeTab === 'online'} onClick={() => setActiveTab('online')} icon="pulse">Disponíveis</TabButton>
-            <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon="people">Todas</TabButton>
-            <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} icon="inbox">
-              Pedidos
-              {pendingIncoming.length > 0 && <b>{pendingIncoming.length}</b>}
-            </TabButton>
-            <TabButton active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} icon="spark">Atividade</TabButton>
-            <button
-              onClick={() => setActiveTab('add')}
-              className={`lume-friends-add ${activeTab === 'add' ? 'is-active' : ''}`}
-            >
-              <span>+</span>
-              <span><strong>Adicionar</strong><small>Nova conexão</small></span>
-            </button>
-            <div className="lume-friends-nav-note">
-              <span className="lume-live-dot" />
-              <p><strong>Presença ao vivo</strong>O Lume atualiza seu círculo sem precisar recarregar.</p>
-            </div>
-          </aside>
-          <section className="lume-friends-canvas min-w-0 min-h-0">
-            <div className="lume-friends-canvas-head">
-              <span>{currentMeta.eyebrow}</span>
-              <h2>{currentMeta.title}</h2>
-              <p>{currentMeta.description}</p>
-            </div>
-            {renderTabContent()}
-          </section>
-        </div>
-      )}
+      {renderTabContent()}
 
       <ConfirmDialog
         isOpen={pendingUnfriend !== null}
@@ -920,55 +885,15 @@ function UserDiscoverCard({
 
 // ─── Shared Components ──────────────────────────────────────────────────────
 
-function FriendsEmptyState({
-  title,
-  description,
-  action,
-  onAction,
-  tone = 'cyan',
-}: {
-  title: string;
-  description: string;
-  action?: string;
-  onAction?: () => void;
-  tone?: 'cyan' | 'violet' | 'rose';
-}) {
-  return (
-    <div className={`lume-empty-state tone-${tone}`}>
-      <div className="lume-empty-orbit" aria-hidden="true">
-        <span className="ring ring-a" />
-        <span className="ring ring-b" />
-        <span className="ring ring-c" />
-        <span className="planet planet-a" />
-        <span className="planet planet-b" />
-        <span className="planet planet-c" />
-        <span className="lume-empty-core">
-          <img src="/icons/logo.png" alt="" />
-        </span>
-      </div>
-      <div className="lume-empty-copy">
-        <span className="lume-empty-kicker">ESPAÇO ABERTO</span>
-        <h3>{title}</h3>
-        <p>{description}</p>
-        {action && onAction && (
-          <button onClick={onAction}>{action}<span aria-hidden="true">↗</span></button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TabButton({ children, active, onClick, icon }: { children: React.ReactNode, active: boolean, onClick: () => void, icon?: 'pulse' | 'people' | 'inbox' | 'spark' }) {
+function TabButton({ children, active, onClick }: { children: React.ReactNode, active: boolean, onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`lume-friends-tab text-[13px] font-semibold transition-all ${
-        active ? 'is-active text-accent-primary' : 'text-txt-tertiary hover:text-txt-secondary'
+      className={`lume-friends-tab px-3 py-2 text-[13px] font-semibold transition-all ${
+        active ? 'is-active text-cyan-100' : 'text-txt-tertiary hover:text-txt-secondary'
       }`}
     >
-      {icon && <span className={`lume-nav-glyph glyph-${icon}`} aria-hidden="true" />}
-      <span className="lume-friends-tab-label">{children}</span>
-      <span className="lume-friends-tab-arrow" aria-hidden="true">›</span>
+      {children}
     </button>
   );
 }

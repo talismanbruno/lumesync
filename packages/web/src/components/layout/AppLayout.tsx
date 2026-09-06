@@ -343,7 +343,7 @@ export function AppLayout() {
     return (
       <div className="h-full flex items-center justify-center bg-surface-base" role="status" aria-label="Sincronizando o Lume">
         <div className="flex flex-col items-center gap-5">
-          <div className="relative w-20 h-20 rounded-[26px] bg-surface-elevated border border-accent-primary/20 shadow-[0_0_48px_rgba(123,230,255,0.12),18px_18px_48px_rgba(138,112,255,0.08)] flex items-center justify-center">
+          <div className="relative w-20 h-20 rounded-[26px] bg-[#071216] border border-accent-primary/20 shadow-[0_0_48px_rgba(0,209,255,0.12)] flex items-center justify-center">
             <img src="/icons/logo.png" alt="" className="w-14 h-14 object-contain animate-pulse" />
           </div>
           <p className="text-xs font-semibold tracking-[0.28em] uppercase text-accent-primary">Sincronizando o Lume</p>
@@ -394,11 +394,9 @@ export function AppLayout() {
 
   // ── Desktop layout ──
   return (
-    <div data-visual="orbita-2" className="lume-shell h-full flex flex-col md:grid md:grid-cols-[286px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
-      <div className="lume-ambient lume-ambient-a" aria-hidden="true" />
-      <div className="lume-ambient lume-ambient-b" aria-hidden="true" />
+    <div className="lume-shell h-full flex flex-col md:grid md:grid-cols-[312px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
       {/* Space sidebar - always visible on desktop */}
-      <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[286px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
+      <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[312px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
         <SpaceSidebar />
         <ChannelSidebar />
       </div>

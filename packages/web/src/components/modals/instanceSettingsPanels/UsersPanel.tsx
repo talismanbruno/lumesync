@@ -207,14 +207,14 @@ export function UsersPanel() {
       <div className="text-xs text-txt-tertiary">
         Gerencie as contas e os selos dos usuários do Lume.
       </div>
-      <div className="flex items-center gap-3 rounded-xl border border-accent-primary/15 bg-accent-primary/[0.04] p-3">
+      <div className="flex items-center gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] p-3">
         <BetaContributorBadge size={32} />
         <div className="min-w-0 text-xs text-txt-secondary">
-          <p className="font-semibold text-accent-primary">Colaborador Beta</p>
+          <p className="font-semibold text-cyan-200">Colaborador Beta</p>
           <p>Reconheça quem ajudou a melhorar o Lume com testes, ideias e relatos de bugs. O selo não concede permissões de admin.</p>
         </div>
       </div>
-      {badgeNotice && <p role="status" className="text-xs text-accent-primary">{badgeNotice}</p>}
+      {badgeNotice && <p role="status" className="text-xs text-cyan-200">{badgeNotice}</p>}
 
       {/* Search */}
       <div className="flex items-center gap-3">
@@ -409,7 +409,7 @@ export function UsersPanel() {
                           onClick={() => handleToggleBetaContributor(user)}
                           disabled={badgePendingId !== null}
                           aria-label={`${user.isBetaContributor ? 'Remover' : 'Conceder'} selo Colaborador Beta ${user.isBetaContributor ? 'de' : 'a'} @${user.username}`}
-                          className="flex items-center gap-1.5 rounded-lg border border-accent-primary/20 px-2 py-1.5 text-[11px] text-accent-primary hover:bg-accent-primary/10 disabled:opacity-40"
+                          className="flex items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2 py-1.5 text-[11px] text-cyan-200 hover:bg-cyan-300/10 disabled:opacity-40"
                         >
                           <BetaContributorBadge size={16} />
                           {badgePendingId === user.id ? 'Salvando…' : user.isBetaContributor ? 'Remover selo' : 'Conceder selo'}

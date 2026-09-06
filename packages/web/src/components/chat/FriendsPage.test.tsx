@@ -194,7 +194,7 @@ describe('FriendsPage', () => {
       await user.click(addFriendTab);
 
       expect(screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/)).toBeInTheDocument();
-      expect(screen.getAllByText('Encontrar pessoas')).toHaveLength(2);
+      expect(screen.getByText('Encontrar pessoas')).toBeInTheDocument();
     });
 
     it('shows Direct Add row and sends request for user@domain input', async () => {
@@ -326,7 +326,7 @@ describe('FriendsPage', () => {
       renderFriendsPage();
 
       // Switch to "All" tab to see the friend
-      await user.click(screen.getByText('Todas'));
+      await user.click(screen.getByText('Todos'));
 
       // Find the Message button by title
       const dmButton = screen.getByTitle('Mensagem');
@@ -497,7 +497,7 @@ describe('FriendsPage', () => {
       useSocialStore.setState({ friends: [], requests: [] });
       renderFriendsPage();
 
-      expect(screen.getByText('A órbita está silenciosa')).toBeInTheDocument();
+      expect(screen.getByText('Ninguém está disponível agora.')).toBeInTheDocument();
       expect(screen.queryByText(/Wumpus/)).not.toBeInTheDocument();
     });
 
@@ -506,9 +506,9 @@ describe('FriendsPage', () => {
       useSocialStore.setState({ friends: [], requests: [] });
       renderFriendsPage();
 
-      await user.click(screen.getByText('Todas'));
+      await user.click(screen.getByText('Todos'));
 
-      expect(screen.getByText('Comece sua constelação')).toBeInTheDocument();
+      expect(screen.getByText('Sua lista ainda está vazia — adicione alguém!')).toBeInTheDocument();
       expect(screen.queryByText(/Wumpus/)).not.toBeInTheDocument();
     });
 
@@ -519,7 +519,7 @@ describe('FriendsPage', () => {
 
       await user.click(screen.getByText('Pedidos'));
 
-      expect(screen.getByText('Tudo resolvido por aqui')).toBeInTheDocument();
+      expect(screen.getByText('Nenhum pedido pendente.')).toBeInTheDocument();
       expect(screen.queryByText(/Wumpus/)).not.toBeInTheDocument();
     });
   });

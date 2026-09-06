@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── LUME · ÓRBITA PRISMÁTICA ──
+        // ── AETHER DRIFT TOKENS ──
         // RGB-channel variables enable Tailwind opacity modifiers (e.g. bg-accent-rose/10)
         surface: {
           base:     'rgb(var(--bg-base) / <alpha-value>)',
@@ -64,10 +64,10 @@ export default {
         notification: 'rgb(var(--notification) / <alpha-value>)',
       },
       boxShadow: {
-        'header': '0 1px 0 rgba(123, 230, 255, 0.07), 0 12px 30px rgba(2, 4, 14, 0.12)',
-        'elevation-low': '0 2px 8px rgba(2, 4, 14, 0.22)',
-        'elevation-high': '0 16px 44px rgba(2, 4, 14, 0.44)',
-        'glass': '0 8px 24px rgba(2,4,14,0.34), 0 0 30px rgba(138,112,255,0.035), inset 0 1px 0 var(--glass-highlight)',
+        'header': '0 1px 0 rgba(4, 4, 5, 0.2), 0 1.5px 0 rgba(6, 6, 7, 0.05), 0 2px 0 rgba(4, 4, 5, 0.05)',
+        'elevation-low': '0 1px 0 rgba(4, 4, 5, 0.2), 0 1.5px 0 rgba(6, 6, 7, 0.05), 0 2px 0 rgba(4, 4, 5, 0.05)',
+        'elevation-high': '0 8px 16px rgba(0, 0, 0, 0.24)',
+        'glass': '0 2px 8px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.15), inset 0 1px 0 var(--glass-highlight)',
         'input': 'inset 0 1px 2px rgba(0, 0, 0, 0.25)',
       },
       fontFamily: {

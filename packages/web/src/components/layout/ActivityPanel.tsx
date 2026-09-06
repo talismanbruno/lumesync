@@ -31,7 +31,7 @@ function ActivityFriendRow({
 
   const rowClass = isRichActivity
     ? `lume-orbit-person flex items-center gap-2.5 px-2.5 py-2.5 rounded-[14px] mb-1.5 cursor-pointer transition-all glass-pill border-l-2 ${accentClass}`
-    : 'lume-orbit-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-accent-primary/[0.045] cursor-pointer group transition-all';
+    : 'lume-orbit-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-cyan-400/[0.045] cursor-pointer group transition-all';
 
   return (
     <div
@@ -149,27 +149,18 @@ export function ActivityPanel() {
   };
 
   return (
-    <aside className="lume-orbit-roster w-[276px] flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block">
-      <div className="lume-pulse-panel relative">
-        <div className="lume-pulse-head">
-          <div>
-            <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent-primary/65">SINAL SOCIAL</div>
-            <h3 className="text-[19px] font-bold text-txt-primary mt-0.5">Pulso</h3>
-          </div>
-          <span className="lume-pulse-radar" aria-hidden="true"><i /></span>
-        </div>
-
-        <div className="lume-pulse-summary">
-          <span><strong>{onlineFriends.length + activeFriends.length}</strong> online</span>
-          <span><strong>{activeFriends.length}</strong> em atividade</span>
+    <div className="lume-orbit-roster w-60 bg-surface-channel flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
+      <div className="p-3 relative">
+        <div className="px-2 mb-4">
+          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-300/65">Presença Lume</div>
+          <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">Na sua órbita</h3>
         </div>
 
         {activeFriends.length === 0 && onlineFriends.length === 0 && offlineFriends.length === 0 ? (
-          <div className="lume-pulse-empty">
-            <div className="lume-pulse-map" aria-hidden="true"><span /><span /><span /></div>
-            <div className="text-[15px] font-bold text-txt-primary mb-1.5">Nenhum sinal agora</div>
-            <div className="text-[11.5px] leading-relaxed text-txt-tertiary max-w-[190px] mx-auto">
-              A presença dos seus amigos aparece aqui enquanto o Lume está aberto.
+          <div className="text-center py-8">
+            <div className="text-[15px] font-bold text-txt-primary mb-1">Órbita tranquila</div>
+            <div className="text-[12px] text-txt-tertiary max-w-[190px] mx-auto">
+              Atividades e conversas dos seus amigos aparecerão aqui.
             </div>
           </div>
         ) : (
@@ -198,6 +189,6 @@ export function ActivityPanel() {
           </>
         )}
       </div>
-    </aside>
+    </div>
   );
 }
