@@ -11,13 +11,12 @@ export function MemberListToggleButton() {
       className={`lume-header-orbit w-9 h-8 flex items-center justify-center transition-all rounded-xl ${
         memberListOpen ? 'is-active text-accent-primary' : 'text-txt-tertiary hover:text-accent-primary'
       }`}
-      title="Mostrar pessoas na órbita"
+      title={memberListOpen ? 'Ocultar pessoas' : 'Mostrar pessoas'}
+      aria-pressed={memberListOpen}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M4.2 13.5a8 8 0 0 1 0-3M19.8 10.5a8 8 0 0 1 0 3M7.1 6.4a8 8 0 0 1 2.6-1.5M14.3 4.9a8 8 0 0 1 2.6 1.5M7.1 17.6a8 8 0 0 0 2.6 1.5M14.3 19.1a8 8 0 0 0 2.6-1.5" />
-        <circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none" />
-        <circle cx="20" cy="12" r="1.4" fill="currentColor" stroke="none" />
+        <rect x="3" y="4" width="18" height="16" rx="3" />
+        <path d="M15 4v16M18 8h.01M18 12h.01M18 16h.01" />
       </svg>
     </button>
   );

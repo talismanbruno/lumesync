@@ -93,7 +93,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
           className="absolute inset-0 bg-black/50"
           onClick={onClose}
         />
-        <div className="relative w-[90vw] max-w-6xl h-[85vh] flex flex-col glass-modal rounded-xl animate-slide-up overflow-hidden">
+        <div className="lume-settings-dialog relative w-[90vw] max-w-6xl h-[85vh] flex flex-col glass-modal rounded-xl animate-slide-up overflow-hidden">
           {/* Floating close button */}
           <button
             onClick={onClose}
@@ -117,7 +117,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
         className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
-      <div className={`relative ${maxWidth} w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-lg animate-slide-up`}>
+      <div className={`lume-dialog relative ${maxWidth} w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-lg animate-slide-up`}>
         {title && (
           <div className="flex items-center justify-between px-4 pt-4 flex-shrink-0">
             <h2 className="text-xl font-bold text-txt-primary">{title}</h2>
