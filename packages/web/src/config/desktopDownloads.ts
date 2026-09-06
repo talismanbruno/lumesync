@@ -1,8 +1,9 @@
+export const LUME_DESKTOP_VERSION = '1.0.0-beta.15';
 export const LUME_DESKTOP_RELEASE_URL =
-  'https://github.com/talismanbruno/lumesync/releases/tag/lume-desktop-v1.0.0-beta.14';
+  `https://github.com/talismanbruno/lumesync/releases/tag/lume-desktop-v${LUME_DESKTOP_VERSION}`;
 
 const WINDOWS_INSTALLER_URL =
-  'https://github.com/talismanbruno/lumesync/releases/download/lume-desktop-v1.0.0-beta.14/Lume-1.0.0-beta.14-x64.exe';
+  `https://github.com/talismanbruno/lumesync/releases/download/lume-desktop-v${LUME_DESKTOP_VERSION}/Lume-${LUME_DESKTOP_VERSION}-x64.exe`;
 
 export interface DesktopDownload {
   url: string;
@@ -25,7 +26,7 @@ export function getDesktopDownload(): DesktopDownload {
       url: WINDOWS_INSTALLER_URL,
       label: 'Baixar Lume para Windows',
       detail: 'Desktop Beta · 93 MB',
-      filename: 'Lume-1.0.0-beta.14-x64.exe',
+      filename: `Lume-${LUME_DESKTOP_VERSION}-x64.exe`,
     };
   }
 
