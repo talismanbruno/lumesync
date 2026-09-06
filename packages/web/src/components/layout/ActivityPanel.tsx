@@ -30,8 +30,8 @@ function ActivityFriendRow({
   const friendDisplayName = canonical.displayName ?? baseName;
 
   const rowClass = isRichActivity
-    ? `lume-orbit-person flex items-center gap-2.5 px-2.5 py-2.5 rounded-[14px] mb-1.5 cursor-pointer transition-all glass-pill border-l-2 ${accentClass}`
-    : 'lume-orbit-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-cyan-400/[0.045] cursor-pointer group transition-all';
+    ? `lume-roster-person flex items-center gap-2.5 px-2.5 py-2.5 rounded-[14px] mb-1.5 cursor-pointer transition-all glass-pill border-l-2 ${accentClass}`
+    : 'lume-roster-person flex items-center gap-2.5 px-2.5 py-2 rounded-[14px] hover:bg-interactive-hover cursor-pointer group transition-all';
 
   return (
     <div
@@ -149,16 +149,16 @@ export function ActivityPanel() {
   };
 
   return (
-    <div className="lume-orbit-roster w-60 bg-surface-channel flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
+    <div className="lume-roster w-60 bg-surface-channel flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
       <div className="p-3 relative">
         <div className="px-2 mb-4">
-          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-300/65">Presença Lume</div>
-          <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">Na sua órbita</h3>
+          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-txt-tertiary">Presença</div>
+          <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">Amigos</h3>
         </div>
 
         {activeFriends.length === 0 && onlineFriends.length === 0 && offlineFriends.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-[15px] font-bold text-txt-primary mb-1">Órbita tranquila</div>
+            <div className="text-[15px] font-bold text-txt-primary mb-1">Nada por aqui ainda</div>
             <div className="text-[12px] text-txt-tertiary max-w-[190px] mx-auto">
               Atividades e conversas dos seus amigos aparecerão aqui.
             </div>
@@ -173,7 +173,7 @@ export function ActivityPanel() {
             {onlineFriends.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-                  ONLINE — {onlineFriends.length}
+                  Disponíveis — {onlineFriends.length}
                 </h3>
                 {onlineFriends.map(f => renderFriend(f))}
               </div>
@@ -181,7 +181,7 @@ export function ActivityPanel() {
             {offlineFriends.length > 0 && (
               <div>
                 <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-                  OFFLINE — {offlineFriends.length}
+                  Offline — {offlineFriends.length}
                 </h3>
                 {offlineFriends.map(f => renderFriend(f, true))}
               </div>

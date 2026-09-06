@@ -8,10 +8,10 @@ export function MemberListToggleButton() {
   return (
     <button
       onClick={toggleMemberList}
-      className={`lume-header-orbit w-9 h-8 flex items-center justify-center transition-all rounded-xl ${
+      className={`lume-header-toggle w-9 h-8 flex items-center justify-center transition-all rounded-xl ${
         memberListOpen ? 'is-active text-cyan-200' : 'text-txt-tertiary hover:text-cyan-200'
       }`}
-      title="Mostrar pessoas na órbita"
+      title="Mostrar pessoas"
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
         <circle cx="12" cy="12" r="3" />

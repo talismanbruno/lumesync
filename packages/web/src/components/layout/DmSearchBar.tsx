@@ -364,7 +364,7 @@ export function DmSearchBar() {
 
         {allItems.length === 0 && !isSearching && query.trim().length === 0 && dmItems.length === 0 && (
           <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">
-            Search for a user to start chatting
+            Busque por uma pessoa para começar a conversar
           </div>
         )}
 
@@ -373,8 +373,8 @@ export function DmSearchBar() {
           <>
             {query.trim().length >= 2 && (
               <div className="px-3 pt-1.5 pb-1 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-                Conversations
-              </div>
+                  Conversas
+                </div>
             )}
             {dmItems.map((item, i) => {
               const globalIndex = i;
@@ -396,10 +396,10 @@ export function DmSearchBar() {
         {(filteredUserResults.length > 0 || (isSearching && query.trim().length >= 2)) && (
           <>
             <div className="px-3 pt-1.5 pb-1 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-              Users
+              Usuários
             </div>
             {isSearching && filteredUserResults.length === 0 && (
-              <div className="px-3 py-2 text-center text-txt-tertiary text-[13px]">Searching...</div>
+              <div className="px-3 py-2 text-center text-txt-tertiary text-[13px]">Buscando...</div>
             )}
             {filteredUserResults.map((item, i) => {
               const globalIndex = dmItems.length + i;
@@ -419,7 +419,7 @@ export function DmSearchBar() {
 
         {/* No results */}
         {!isSearching && query.trim().length >= 2 && allItems.length === 0 && (
-          <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">No results found</div>
+          <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">Nenhum resultado encontrado</div>
         )}
       </div>
     </div>,
@@ -439,7 +439,7 @@ export function DmSearchBar() {
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
-            placeholder="Search..."
+            placeholder="Buscar..."
             className="input-embedded flex-1 min-w-0 text-[13px] font-medium py-[5px]"
           />
         </div>
@@ -448,7 +448,7 @@ export function DmSearchBar() {
           onClick={open}
           className="w-full min-h-8 bg-surface-input text-txt-tertiary text-[13px] font-medium py-[5px] px-2 rounded-[4px] text-left border border-white/[0.06] shadow-input hover:border-white/[0.1] transition-colors"
         >
-          Find or start a conversation
+          Buscar ou iniciar conversa
         </button>
       )}
       {dropdown}

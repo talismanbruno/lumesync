@@ -25,7 +25,6 @@ import { parseFederatedUsername, isFederationGlobeApplicable } from '../../utils
 import { useCanonicalUserView } from '../../utils/userViewLookup';
 import { Username } from '../ui/Username';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 const statusLabel: Record<string, string> = { online: 'Disponível', idle: 'Ausente', dnd: 'Não perturbe', offline: 'Offline' };
 
@@ -348,7 +347,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
       ) : (
         <div className="lume-friends-command h-16 px-5 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
           <div className="flex items-center gap-2 mr-4">
-            <span className="lume-friends-mark"><OrbitalIcon name="friends" size={21} /></span>
+            <span className="lume-friends-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></span>
             <span className="font-bold text-txt-primary">Pessoas</span>
           </div>
           <div className="w-[1px] h-6 bg-surface-elevated mx-2" />
@@ -611,7 +610,7 @@ function AddFriendTab({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z" />
             </svg>
-            <span className="text-xs font-semibold tracking-wider text-txt-tertiary">Discover People</span>
+            <span className="text-xs font-semibold tracking-wider text-txt-tertiary">Descobrir pessoas</span>
           </div>
         )}
 
@@ -620,10 +619,12 @@ function AddFriendTab({
             <LoadingSpinner />
           </div>
         ) : displayUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 opacity-60">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary mb-2">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
+          <div className="flex flex-col items-center justify-center h-32">
+            <span className="w-9 h-9 rounded-full border border-white/[0.07] bg-white/[0.02] flex items-center justify-center text-txt-tertiary/70 mb-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+                <path d="M12 3v6M12 15v6M3 12h6M15 12h6" />
+              </svg>
+            </span>
             <p className="text-txt-tertiary text-sm">{emptyLabel}</p>
           </div>
         ) : (
@@ -816,13 +817,13 @@ function UserDiscoverCard({
         {(user.mutualFriendCount > 0 || user.mutualSpaceCount > 0) && (
           <div className="flex items-center gap-2.5 text-[11px] text-txt-tertiary mt-2 mb-2.5">
             {user.mutualFriendCount > 0 && (
-              <span>{user.mutualFriendCount} mutual {user.mutualFriendCount === 1 ? 'friend' : 'friends'}</span>
+              <span>{user.mutualFriendCount} {user.mutualFriendCount === 1 ? 'amigo' : 'amigos'} em comum</span>
             )}
             {user.mutualFriendCount > 0 && user.mutualSpaceCount > 0 && (
               <span className="text-txt-tertiary/40">·</span>
             )}
             {user.mutualSpaceCount > 0 && (
-              <span>{user.mutualSpaceCount} mutual {user.mutualSpaceCount === 1 ? 'space' : 'spaces'}</span>
+              <span>{user.mutualSpaceCount} {user.mutualSpaceCount === 1 ? 'espaço' : 'espaços'} em comum</span>
             )}
           </div>
         )}
@@ -840,7 +841,7 @@ function UserDiscoverCard({
             disabled={actionLoading}
             className="w-full py-1.5 bg-accent-primary hover:bg-accent-primary-hover text-white text-[13px] font-medium rounded transition-colors disabled:opacity-50"
           >
-            {actionLoading ? 'Sending...' : 'Send Friend Request'}
+            {actionLoading ? 'Enviando...' : 'Enviar pedido de amizade'}
           </button>
         )}
         {user.relationship === 'outbound_pending' && (

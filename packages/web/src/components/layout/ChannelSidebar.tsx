@@ -414,7 +414,7 @@ export function ChannelSidebar() {
   // Floating bottom panel — shared between DM view and server view
   const floatingPanel = user ? (
     <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="fixed bottom-0 left-0 right-0 z-[105] p-2 md:right-auto md:w-[296px] md:bottom-[10px] md:left-[10px] md:p-0">
-      <div className="lume-connection-orb glass-bubble rounded-[20px]">
+      <div className="lume-connection-panel glass-bubble rounded-[20px]">
         {/* Voice controls (expands when connected) */}
         {(currentVoiceChannelId || activeDmCall) && <VoiceControls />}
         {/* Separator between voice and user area */}
@@ -456,15 +456,15 @@ export function ChannelSidebar() {
               <path d="M3 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-1c0-2.76-5.37-4-8-4s-8 1.24-8 4v1Z" />
               <path d="M3.5 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" opacity=".5" />
             </svg>
-            <span className="font-medium text-[16px]">Friends</span>
+            <span className="font-medium text-[16px]">Pessoas</span>
           </div>
 
           <div className="mt-[18px] px-2 mb-1 flex items-center justify-between group">
-            <span className="text-[12px] font-bold text-txt-tertiary tracking-wider">Direct Messages</span>
+            <span className="text-[12px] font-bold text-txt-tertiary tracking-wider">Mensagens Diretas</span>
             <button
               onClick={() => openModal('newDm')}
               className="text-txt-tertiary hover:text-txt-primary transition-colors"
-              title="New Direct Message"
+              title="Nova mensagem direta"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
@@ -494,7 +494,7 @@ export function ChannelSidebar() {
             ))}
             {dmChannels.length === 0 && (
               <div className="flex flex-col items-center py-6 opacity-80">
-                <p className="text-[13px] text-txt-tertiary">No conversations yet.</p>
+                <p className="text-[13px] text-txt-tertiary">Nenhuma conversa ainda.</p>
               </div>
             )}
           </div>
@@ -976,7 +976,7 @@ function UserAreaPanel({
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
-              <span className="rounded-full border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-300">Minha órbita</span>
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-txt-secondary">Status</span>
             </div>
           </div>
 

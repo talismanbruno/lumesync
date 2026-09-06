@@ -587,37 +587,22 @@
 .titlebar-no-drag { -webkit-app-region: no-drag; }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * LUME ORBITAL WORKSPACE
- * A structural identity layer: the app is a collection of floating orbital
- * surfaces instead of a single stack of flat communication columns.
+ * LUME CLASSIC WORKSPACE
+ * A structural identity layer: the app is a sober collection of classic
+ * surfaces — a server rail, context panel, content stage and activity panel.
+ * Cyan is reserved for brand, focus and selection; functional states stay
+ * green (online/success), red (error/danger) and yellow (warning).
  * ────────────────────────────────────────────────────────────────────────── */
 .lume-shell {
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 14% 10%, rgba(0, 209, 255, 0.09), transparent 24rem),
-    radial-gradient(circle at 88% 86%, rgba(25, 111, 136, 0.07), transparent 30rem),
-    #030405;
-}
-
-.lume-shell::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.28;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(circle at 50% 45%, black, transparent 78%);
+  background: #030405;
 }
 
 .lume-navigation-shell,
 .lume-content-stage,
 .lume-context-panel,
-.lume-orbit-rail {
+.lume-rail {
   transition:
     border-color var(--lume-normal) var(--lume-ease),
     box-shadow var(--lume-slow) var(--lume-ease),
@@ -625,9 +610,7 @@
 }
 
 .lume-content-stage {
-  background:
-    radial-gradient(circle at 48% -20%, rgba(0, 209, 255, 0.055), transparent 38rem),
-    rgb(var(--bg-chat));
+  background: rgb(var(--bg-chat));
 }
 
 .lume-content-stage > div {
@@ -644,8 +627,7 @@
 }
 
 .lume-context-panel {
-  background:
-    linear-gradient(180deg, rgba(13, 16, 19, 0.97), rgba(7, 9, 11, 0.96));
+  background: rgb(var(--bg-channel));
 }
 
 .lume-context-panel [class*="rounded-[6px]"] {
@@ -658,12 +640,11 @@
   box-shadow: inset 2px 0 0 rgba(0, 209, 255, 0.9);
 }
 
-.lume-orbit-rail {
-  background:
-    linear-gradient(180deg, rgba(7, 10, 12, 0.92), rgba(3, 4, 5, 0.96));
+.lume-rail {
+  background: rgb(5, 6, 7);
 }
 
-.lume-orbit-rail button {
+.lume-rail button {
   transition:
     transform var(--lume-normal) var(--lume-ease),
     border-radius var(--lume-normal) var(--lume-ease),
@@ -671,9 +652,9 @@
     box-shadow var(--lume-normal) var(--lume-ease);
 }
 
-.lume-orbit-rail button:hover {
+.lume-rail button:hover {
   transform: translateY(-2px) scale(1.035);
-  box-shadow: 0 8px 22px rgba(0, 209, 255, 0.1);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 
 .lume-message-row {
@@ -745,9 +726,7 @@
 }
 
 .lume-friends-hub {
-  background:
-    radial-gradient(circle at 16% 0%, rgba(0, 209, 255, 0.065), transparent 27rem),
-    transparent;
+  background: transparent;
 }
 
 .lume-friend-row {
@@ -762,10 +741,10 @@
 }
 
 .lume-friend-row:hover {
-  transform: translateX(3px);
-  border-color: rgba(0, 209, 255, 0.18);
-  background: linear-gradient(90deg, rgba(0, 209, 255, 0.075), rgba(255, 255, 255, 0.018));
-  box-shadow: -3px 0 0 rgba(0, 209, 255, 0.65);
+  transform: translateX(2px);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  box-shadow: none;
 }
 
 .lume-member-panel {
@@ -789,7 +768,7 @@
 
 .lume-rail-node {
   position: relative;
-  border-radius: 15px 15px 24px 15px !important;
+  border-radius: 14px !important;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background-color: rgba(255, 255, 255, 0.035);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
@@ -801,24 +780,23 @@
 }
 
 .lume-rail-node:hover {
-  border-radius: 21px 15px 15px 15px !important;
+  border-radius: 16px !important;
   border-color: rgba(0, 209, 255, 0.24);
 }
 
 .lume-rail-node-active {
-  border-radius: 14px 14px 25px 14px !important;
-  border-color: rgba(0, 209, 255, 0.48);
+  border-radius: 14px !important;
+  border-color: rgba(0, 209, 255, 0.45);
   box-shadow:
-    0 0 0 3px rgba(0, 209, 255, 0.055),
-    0 9px 28px rgba(0, 209, 255, 0.12) !important;
+    0 0 0 2px rgba(0, 209, 255, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.45) !important;
 }
 
-.lume-connection-orb {
+.lume-connection-panel {
   /* Presence and audio popovers are anchored inside this floating control. */
   overflow: visible;
-  border-color: rgba(0, 209, 255, 0.17);
+  border-color: rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(circle at 10% 0%, rgba(0, 209, 255, 0.12), transparent 9rem),
     linear-gradient(155deg, rgba(13, 18, 21, 0.98), rgba(7, 9, 11, 0.98));
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.42),
@@ -844,18 +822,18 @@
   transform: translateY(-1px);
 }
 
-.lume-orbit-disconnect {
+.lume-disconnect {
   color: rgb(var(--txt-danger));
   background: rgba(255, 79, 102, 0.075);
   border: 1px solid rgba(255, 79, 102, 0.14);
 }
 
-.lume-orbit-disconnect:hover {
+.lume-disconnect:hover {
   background: rgba(255, 79, 102, 0.22);
   border-color: rgba(255, 79, 102, 0.34);
 }
 
-/* ── Lume Orbital Controls ─────────────────────────────────────────────── */
+/* ── Lume Controls ──────────────────────────────────────────────────────── */
 .lume-user-control-deck {
   gap: 2px;
   padding: 3px;
@@ -879,20 +857,19 @@
   box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.1);
 }
 
-.lume-header-orbit {
+.lume-header-toggle {
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.025);
 }
 
-.lume-header-orbit:hover,
-.lume-header-orbit.is-active {
-  border-color: rgba(0, 209, 255, 0.2);
-  background: radial-gradient(circle, rgba(0, 209, 255, 0.12), rgba(0, 209, 255, 0.025));
-  box-shadow: 0 0 18px rgba(0, 209, 255, 0.08);
+.lume-header-toggle:hover,
+.lume-header-toggle.is-active {
+  border-color: rgba(0, 209, 255, 0.22);
+  background: rgba(0, 209, 255, 0.07);
 }
 
 .lume-rail-action {
-  border-radius: 15px 15px 25px 15px !important;
+  border-radius: 14px !important;
   border: 1px solid rgba(0, 209, 255, 0.13);
   background: rgba(0, 209, 255, 0.035) !important;
 }
@@ -900,31 +877,16 @@
 .lume-rail-action:hover {
   border-color: rgba(0, 209, 255, 0.38);
   background: rgba(0, 209, 255, 0.1) !important;
-  transform: rotate(-2deg) translateY(-1px);
+  transform: translateY(-1px);
 }
 
-.lume-orbit-roster {
+.lume-roster {
   position: relative;
-  background:
-    radial-gradient(circle at 100% 12%, rgba(0, 209, 255, 0.055), transparent 10rem),
-    rgb(var(--bg-channel));
+  background: rgb(var(--bg-channel));
 }
 
-.lume-orbit-roster::before {
-  content: '';
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  top: -92px;
-  right: -95px;
-  border: 1px solid rgba(0, 209, 255, 0.07);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.lume-orbit-person:hover {
-  transform: translateX(-2px);
-  box-shadow: inset 2px 0 rgba(0, 209, 255, 0.22);
+.lume-roster-person:hover {
+  background: var(--interactive-hover);
 }
 
 .lume-voice-actions {
@@ -1019,7 +981,7 @@
 }
 
 .lume-friends-command {
-  background: linear-gradient(90deg, rgba(0, 209, 255, 0.025), transparent 35%), rgb(var(--bg-chat));
+  background: rgb(var(--bg-chat));
 }
 
 .lume-friends-mark {
@@ -1029,23 +991,23 @@
   align-items: center;
   justify-content: center;
   color: rgb(120, 232, 255);
-  border: 1px solid rgba(0, 209, 255, 0.17);
-  border-radius: 12px 5px 12px 5px;
-  background: rgba(0, 209, 255, 0.055);
+  border: 1px solid rgba(0, 209, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(0, 209, 255, 0.06);
 }
 
 .lume-friends-tab {
   position: relative;
-  border-radius: 12px 5px 12px 5px;
+  border-radius: 8px;
 }
 
 .lume-friends-tab:hover {
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .lume-friends-tab.is-active {
-  background: rgba(0, 209, 255, 0.075);
-  box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.14);
+  background: rgba(0, 209, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.18);
 }
 
 .lume-friends-tab.is-active::after {
@@ -1057,7 +1019,6 @@
   height: 2px;
   border-radius: 2px;
   background: rgb(0, 209, 255);
-  box-shadow: 0 0 8px rgba(0, 209, 255, 0.6);
 }
 
 .lume-settings-shell {
@@ -1134,7 +1095,7 @@
   border-radius: 50%;
   border: 1px solid rgba(0, 209, 255, 0.15);
   box-shadow: 0 0 80px rgba(0, 209, 255, 0.06), inset 0 0 80px rgba(0, 209, 255, 0.035);
-  animation: lume-orbit-drift 9s ease-in-out infinite alternate;
+  animation: lume-drift 9s ease-in-out infinite alternate;
 }
 
 .lume-auth-kicker {
@@ -1194,7 +1155,7 @@
 .lume-auth-orbit-a { width: 620px; height: 620px; left: -310px; top: -210px; }
 .lume-auth-orbit-b { width: 440px; height: 440px; right: -190px; bottom: -210px; }
 
-@keyframes lume-orbit-drift {
+@keyframes lume-drift {
   from { transform: translate3d(0, -8px, 0) rotate(-4deg); }
   to { transform: translate3d(-18px, 12px, 0) rotate(4deg); }
 }
@@ -1214,12 +1175,12 @@
     box-shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
   }
 
-  .lume-orbit-rail {
+  .lume-rail {
     top: 10px !important;
     left: 10px !important;
     bottom: 10px !important;
     border-radius: 22px 0 0 22px;
-    border-right: 1px solid rgba(0, 209, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .lume-context-panel {
@@ -1249,7 +1210,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lume-orbit-rail button:hover,
+  .lume-rail button:hover,
   .lume-composer:focus-within,
   .lume-auth-intro::after { transform: none; animation: none; }
 }

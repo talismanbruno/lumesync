@@ -129,7 +129,7 @@ export function VoiceControls() {
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <button
             onClick={handleDisconnect}
-            className="lume-orbit-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
+            className="lume-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
             title="Disconnect"
           >
             <OrbitalIcon name="hangup" size={19} />
