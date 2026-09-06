@@ -225,7 +225,7 @@ export function MobileShell() {
   const shellHeight = keyboardOpen && vvHeight !== null ? `${vvHeight}px` : '100dvh';
 
   return (
-    <div className="flex flex-col" style={{ height: shellHeight }}>
+    <div className="lume-mobile-shell flex flex-col" style={{ height: shellHeight }}>
       <MobileScreenStack
         rootScreen={rootScreens[mobileScreen]}
         screenMap={screenMap}

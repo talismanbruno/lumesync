@@ -895,7 +895,7 @@ function WelcomeHeader({ channelId }: { channelId: string }) {
 
     return (
       <div className="lume-welcome-card lume-welcome-direct mx-4 mt-5 px-5 pt-6 pb-5">
-        <span className="lume-empty-kicker">SINAL DIRETO</span>
+        <span className="lume-empty-kicker">CONVERSA</span>
         <div className="lume-welcome-avatar mb-3 mt-3">
           <Avatar src={otherUser?.avatar} name={displayName} size={80} user={otherUser ?? undefined} />
         </div>
@@ -924,12 +924,12 @@ function WelcomeHeader({ channelId }: { channelId: string }) {
 
   return (
     <div className="lume-welcome-card lume-welcome-channel mx-4 mt-5 px-5 pt-6 pb-5">
-      <span className="lume-empty-kicker">PRIMEIRO SINAL</span>
+      <span className="lume-empty-kicker">O COMEÇO DA CONVERSA</span>
       <div className="lume-welcome-channel-mark mt-3 mb-4" aria-hidden="true">
         <span /><i />
       </div>
       <h3 className="text-[32px] leading-10 font-bold text-txt-primary">O canal começa aqui.</h3>
-      <p className="text-txt-secondary text-[16px] mt-2">A primeira mensagem acende esta órbita.</p>
+      <p className="text-txt-secondary text-[16px] mt-2">Compartilhe uma ideia. Faça uma pergunta. Comece por um oi.</p>
     </div>
   );
 }

@@ -1,0 +1,313 @@
+/* Lume Studio — shared design system. Layout is intentionally independent of the old rail. */
+:root {
+  color-scheme: dark;
+  --bg-base: 19 21 20;
+  --bg-channel: 25 28 26;
+  --bg-chat: 30 33 30;
+  --bg-members: 26 29 26;
+  --bg-elevated: 40 44 39;
+  --bg-input: 22 25 22;
+  --bg-overlay: rgba(10, 13, 10, .82);
+  --border-hard: 56 61 53;
+  --border-soft: 47 52 45;
+  --accent-primary: 218 244 104;
+  --accent-primary-hover: 233 255 145;
+  --accent-primary-active: 194 219 76;
+  --accent-mint: 177 218 163;
+  --accent-peach: 231 185 137;
+  --accent-lavender: 190 182 226;
+  --accent-sky: 164 201 225;
+  --accent-amber: 238 197 107;
+  --accent-rose: 235 147 146;
+  --accent-coral: 235 147 146;
+  --text-primary: 244 243 232;
+  --text-secondary: 202 207 190;
+  --text-tertiary: 155 164 145;
+  --text-message: 227 231 215;
+  --text-category: 155 164 145;
+  --text-link: 218 244 104;
+  --text-positive: 177 218 163;
+  --text-warning: 238 197 107;
+  --text-danger: 235 147 146;
+  --interactive-hover: rgba(230, 238, 211, .055);
+  --interactive-active: rgba(218, 244, 104, .13);
+  --interactive-selected: rgba(218, 244, 104, .12);
+  --interactive-muted: 78 85 72;
+  --status-online: 177 218 163;
+  --status-idle: 238 197 107;
+  --status-dnd: 235 147 146;
+  --status-offline: 109 117 99;
+  --glass-bg: #282c27;
+  --glass-modal-bg: #20241f;
+  --glass-border: #484f41;
+  --glass-highlight: transparent;
+  --notification: 223 155 112;
+  --lume-ease: cubic-bezier(.2,.7,.2,1);
+}
+body { letter-spacing: -.012em; }
+button, input, textarea, select { font: inherit; }
+button { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid #daf468 !important; outline-offset: 3px;
+}
+::selection { background: #daf468; color: #171d0b; }
+button.bg-accent-primary, a.bg-accent-primary, [type="submit"].bg-accent-primary {
+  color: #202611; font-weight: 700;
+}
+.glass, .glass-panel, .glass-modal, .glass-bubble, .glass-pill, .glass-strip {
+  backdrop-filter: none; -webkit-backdrop-filter: none; background-image: none;
+  box-shadow: none; border-color: #42493a;
+}
+.glass-modal, .glass { box-shadow: 0 24px 80px #0006; }
+.glass::before, .glass-modal::before, .glass-bubble::before, .glass-pill::before { display: none; }
+.input-standard, .input-search {
+  background: #171b16; border: 1px solid #414936; border-radius: 8px; color: #f4f3e8;
+  box-shadow: none; min-height: 40px;
+}
+.input-standard:focus, .input-search:focus { border-color: #daf468; box-shadow: none; }
+input:-webkit-autofill { -webkit-box-shadow: 0 0 0 50px #20241f inset; -webkit-text-fill-color: #f4f3e8; }
+
+/* Application frame: one horizontal space switcher, one contextual sidebar. */
+.lume-shell {
+  display: grid; height: 100%; width: 100%; overflow: hidden;
+  grid-template: 72px minmax(0,1fr) / 248px minmax(0,1fr); background: #131514;
+}
+.lume-topbar {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 22px;
+  padding: 0 24px; border-bottom: 1px solid #363c31; min-width: 0; z-index: 110;
+}
+.lume-wordmark { display:flex; gap:10px; align-items:center; flex:none; color:#f4f3e8; padding:0; }
+.lume-wordmark > img { width:34px; height:34px; object-fit:contain; }
+.lume-wordmark > span { font-size:30px; font-weight:800; letter-spacing:-1.8px; }
+.lume-wordmark-dot { color:#daf468; }
+.lume-topbar-spaces { flex:1; min-width:0; overflow:visible; }
+.lume-space-tabs {
+  display:flex; align-items:center; gap:8px; min-width:0; overflow-x:auto; scrollbar-width:thin;
+  scrollbar-color:#434b35 transparent; padding:9px 2px;
+}
+.lume-space-tabs > .lume-space-tab-item { flex:none; width:auto; margin:0; }
+.lume-space-tabs > div.w-8 { width:1px; height:22px; margin:0 3px; background:#363c31; }
+.lume-rail-node {
+  display:flex; width:auto; height:40px; gap:9px; padding:6px 13px 6px 8px; max-width:210px;
+  border-radius:7px; border:1px solid transparent; color:#b3bca8; background:transparent !important;
+  transition: background .15s, border-color .15s; overflow:hidden;
+}
+.lume-rail-node > img { width:26px; height:26px; border-radius:5px; object-fit:cover; }
+.lume-rail-node > svg { width:17px; height:17px; flex:none; }
+.lume-rail-node > span:first-child:not(.lume-space-tab-label) { width:26px; text-align:center; }
+.lume-space-tab-label { font-size:12px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lume-rail-node:hover { background:#252b20 !important; border-color:#434b35; }
+.lume-rail-node-active { color:#daf468; background:#282f1b !important; border-color:#505d2d; }
+.lume-space-tab-item > .absolute { display:none; }
+.lume-space-tab-item > .absolute.bg-accent-mint { display:block; top:7px; bottom:7px; left:auto; right:-5px; width:2px; height:auto; }
+.lume-folder-tab { display:flex; align-items:center; gap:8px; padding-right:12px; font-size:12px; white-space:nowrap; }
+.lume-folder-tab > span { max-width:130px; overflow:hidden; text-overflow:ellipsis; }
+.lume-folder-tab[aria-expanded="true"] { color:#daf468; }
+.lume-topbar-compose { flex:none; font-size:12px; font-weight:650; color:#daf468; display:flex; gap:6px; align-items:center; }
+.lume-topbar-compose > span { font-size:23px; font-weight:400; }
+.lume-navigation-shell { grid-column:1; grid-row:2; display:flex; min-height:0; min-width:0; position:relative; border-right:1px solid #363c31; }
+.lume-context-panel { width:100%; background:#191c19; padding:0; border:0; }
+.lume-dm-sidebar-head { padding:26px 18px 18px; border-bottom:0; }
+.lume-side-brand { margin-bottom:20px; }
+.lume-side-brand-kicker { font-size:9px; font-weight:700; letter-spacing:.16em; color:#a4ad98; }
+.lume-side-brand strong { display:block; margin-top:7px; font-size:19px; font-weight:650; letter-spacing:-.5px; }
+.lume-people-nav { border-radius:7px; min-height:56px; padding:12px; }
+.lume-people-nav > svg { width:20px; color:#daf468; }
+.lume-people-nav small, .lume-people-nav .text-txt-tertiary { font-size:11px; }
+.lume-content-stage { grid-column:2; grid-row:2; display:flex; min-height:0; min-width:0; background:#1e211e; overflow:hidden; }
+.lume-account-bar { position:absolute; bottom:0; left:0; width:248px; padding:12px; z-index:105; background:#191c19; }
+.lume-connection-orb { background:#242a21; border:1px solid #424a37; border-radius:9px; }
+.lume-user-control-deck { gap:0; border:0; background:none; }
+.lume-user-control-deck > button { width:27px; height:32px; border-radius:5px; }
+.lume-user-control-deck > button:nth-child(2), .lume-user-control-deck > button:nth-child(4) { width:12px; }
+.lume-user-control-deck > button:hover { background:#39422d; }
+.lume-space-head { min-height:96px; border-bottom:1px solid #363c31; }
+.lume-space-head-main { padding:20px 18px; }
+.lume-channel-scroll { padding:18px 12px; }
+.lume-channel-category { margin-top:20px; padding:0 8px 8px; letter-spacing:.09em; }
+.lume-channel-node { height:40px; margin-bottom:3px; border-radius:6px; padding:0 12px; gap:10px; }
+.lume-channel-node-icon { width:18px; height:18px; border:1px solid currentColor; border-radius:4px; display:grid; place-items:center; opacity:.65; flex:none; }
+.lume-channel-node-icon i { width:8px; height:1px; background:currentColor; box-shadow:0 4px currentColor; transform:translateY(-2px); }
+.lume-voice-node-icon { display:block; width:18px; height:18px; border:2px solid currentColor; border-bottom:0; border-radius:9px 9px 0 0; opacity:.7; position:relative; flex:none; }
+.lume-voice-node-icon::before, .lume-voice-node-icon::after { content:""; position:absolute; bottom:0; width:4px; height:8px; border-radius:2px; background:currentColor; }
+.lume-voice-node-icon::before { left:-2px; } .lume-voice-node-icon::after { right:-2px; }
+
+/* People: a typographic welcome, horizontal filters and a compact conversation motif. */
+.lume-friends-hub { min-width:0; background:#1e211e; }
+.lume-friends-command { padding:34px 36px 28px; display:flex; gap:20px; align-items:flex-start; }
+.lume-friends-title h1 { font-size:clamp(26px,2.65vw,42px); line-height:1.15; letter-spacing:-1.4px; font-weight:650; margin-top:12px; }
+.lume-friends-title > div > span { color:#c0c9b0; letter-spacing:.12em; font-size:10px; }
+.lume-friends-stats { padding-top:5px; gap:12px; flex-shrink:0; }
+.lume-friends-stats > span { font-size:11px; color:#a4ae97; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.lume-friends-stats i, .lume-live-dot { width:6px; height:6px; display:inline-block; border-radius:50%; background:#b1daa3; flex:none; }
+.lume-friends-workspace { display:flex; flex-direction:column; margin:0 36px 24px; }
+.lume-friends-nav { display:flex; align-items:center; gap:4px; border-bottom:1px solid #414a36; padding:0 0 12px; flex-shrink:0; flex-wrap:wrap; }
+.lume-friends-nav button { display:flex; align-items:center; gap:7px; font-size:12px; padding:9px 12px; border-radius:6px; color:#b0bba2; }
+.lume-friends-nav button.is-active { background:#daf468; color:#202611; font-weight:700; }
+.lume-friends-nav button:hover { background:#39432b; color:#eef4e4; }
+.lume-friends-nav button.is-active:hover { background:#e9ff91; color:#202611; }
+.lume-friends-nav button b { font-size:10px; border:1px solid currentColor; border-radius:3px; padding:0 4px; }
+.lume-friends-nav button svg { width:15px; height:15px; }
+.lume-friends-add { margin-left:auto; border:1px solid #596839; }
+.lume-friends-add > span:first-child { font-size:17px; }
+.lume-friends-add small { display:none; }
+.lume-friends-canvas { display:flex; flex:1; flex-direction:column; }
+.lume-friends-canvas-head { padding:25px 0 16px; }
+.lume-friends-canvas-head > span { display:none; }
+.lume-friends-canvas-head h2 { font-size:16px; font-weight:650; }
+.lume-friends-canvas-head p { font-size:12px; color:#a4ae97; margin-top:5px; }
+.lume-friends-feed { padding:0; }
+.lume-friend-row { background:#252b22; border:1px solid #394330; padding:16px; border-radius:8px; margin:0 0 8px; }
+.lume-friend-row:hover { border-color:#718344; background:#2a3224; }
+.lume-empty-state { display:grid; grid-template-columns: minmax(190px,.9fr) minmax(220px,1.1fr); gap:28px; align-items:center; padding:24px 32px; margin:auto 0; min-height:320px; background:#272d24; border:1px solid #404a35; border-radius:10px; }
+.lume-empty-copy { max-width:360px; }
+.lume-empty-kicker { font-size:9px; letter-spacing:.16em; color:#b4c19f; font-weight:700; }
+.lume-empty-copy h3 { font-size:clamp(24px,2.6vw,34px); font-weight:600; line-height:1.13; letter-spacing:-1px; margin:13px 0; }
+.lume-empty-copy p { font-size:13px; line-height:1.75; color:#b9c3ab; }
+.lume-empty-action { display:inline-flex; gap:18px; align-items:center; margin-top:22px; background:#daf468; color:#202611; padding:12px 18px; border-radius:6px; font-size:12px; font-weight:700; }
+.lume-empty-action:hover { background:#e9ff91; }
+.lume-signal-art { height:270px; width:100%; max-width:310px; position:relative; margin:auto; isolation:isolate; }
+.lume-signal-grid { position:absolute; inset:18px 0 30px; background-image:radial-gradient(#6b7950 1px,transparent 1px); background-size:14px 14px; opacity:.45; }
+.lume-signal-card { position:absolute; width:158px; height:134px; border-radius:10px 10px 10px 2px; }
+.lume-signal-card-back { top:30px; right:22px; transform:rotate(9deg); background:#b9aa87; display:flex; flex-direction:column; gap:10px; padding:30px 24px; }
+.lume-signal-card-back i { height:5px; border-radius:3px; background:#695f4a; width:80%; }
+.lume-signal-card-back i:last-child { width:45%; }
+.lume-signal-card-front { top:95px; left:16px; transform:rotate(-7deg); background:#daf468; color:#263011; box-shadow:8px 10px 0 #13190f; display:grid; place-items:center; }
+.lume-signal-type { font-size:72px; font-weight:750; letter-spacing:-5px; line-height:1; }
+.lume-signal-type > span { color:#7e9139; }
+.lume-signal-caption { position:absolute; bottom:0; right:8px; font-size:8px; letter-spacing:.17em; color:#b6c5a2; }
+.lume-signal-wave { display:flex; gap:7px; align-items:center; }
+.lume-signal-wave i { width:7px; height:24px; background:#34431b; border-radius:4px; }
+.lume-signal-wave i:nth-child(2), .lume-signal-wave i:nth-child(4) { height:43px; }
+.lume-signal-wave i:nth-child(3) { height:66px; }
+
+/* The optional people panel is a quiet utility panel, not a second navigation rail. */
+.lume-orbit-roster, .lume-member-panel { width:220px; background:#191d18; border-left:1px solid #363f2d; padding:24px 12px; }
+.lume-pulse-panel { padding:0; }
+.lume-pulse-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:25px; }
+.lume-pulse-head h3 { font-size:16px; margin-top:5px; }
+.lume-pulse-head .text-accent-primary\/65 { color:#a4ae97; }
+.lume-pulse-summary { display:flex; border-top:1px solid #3a4331; border-bottom:1px solid #3a4331; padding:16px 0; gap:24px; }
+.lume-pulse-summary span { font-size:10px; color:#a4ae97; }
+.lume-pulse-summary strong { display:block; font-size:27px; color:#e0e8d4; font-weight:500; }
+.lume-pulse-empty { margin:30px 0; text-align:left; border-left:2px solid #68784a; padding-left:14px; }
+.lume-pulse-empty > div { margin-left:0; }
+.lume-member-panel h3 { color:#b7c3a6; margin-top:10px; }
+
+/* Conversations and voice rooms use the same frame, with a clear content boundary. */
+.lume-conversation-stage, .lume-voice-stage { background:#1e211e; min-width:0; }
+.lume-conversation-header, .lume-voice-header { min-height:78px; border-bottom:1px solid #3c4434; box-shadow:none; padding:16px 28px; background:#1e211e; gap:14px; }
+.lume-channel-symbol { display:grid; place-items:center; width:35px; height:35px; border:1px solid #7c8b57; border-radius:6px; color:#daf468; flex:none; }
+.lume-channel-symbol i { width:14px; height:9px; border:1px solid currentColor; border-radius:2px; }
+.lume-channel-identity { display:flex; align-items:center; gap:12px; }
+.lume-channel-kicker { display:block; font-size:9px; font-weight:650; letter-spacing:.13em; color:#b3c19d; margin-bottom:4px; }
+.lume-register-shell { background:#191e16; }
+.lume-register-card { background:#242c1e; border-color:#53613e; border-top:4px solid #daf468; }
+.lume-register-card button[type="submit"] { color:#263011; font-weight:700; }
+.lume-message-scroll { padding:12px 22px; }
+.lume-message-stream { max-width:1000px; margin:0 auto; padding:0; }
+.lume-message-stream > [id^="msg-"] { border-radius:6px; }
+.lume-date-divider { opacity:.8; margin:20px 0; }
+.lume-date-divider span { color:#acb89b; letter-spacing:.08em; font-size:9px; }
+.lume-welcome-card { display:block; border:1px solid #4c583b; border-left:4px solid #daf468; padding:24px; margin:18px 0 32px; background:#282f22; border-radius:6px; }
+.lume-welcome-card h3 { font-size:24px; letter-spacing:-.7px; color:#f4f3e8; }
+.lume-welcome-card p { color:#b5c0a5; font-size:13px; margin-top:7px; }
+.lume-welcome-card span { font-size:9px; letter-spacing:.1em; color:#c5d2b1; }
+.lume-welcome-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:8px; background:#daf468; color:#25300f; flex:none; }
+.lume-welcome-mark svg { width:23px; height:23px; }
+.lume-voice-lobby, .lume-channel-empty { display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:32px; text-align:center; overflow:auto; }
+.lume-voice-lobby h2, .lume-channel-empty h2 { font-size:34px; letter-spacing:-1px; }
+.lume-voice-lobby p, .lume-channel-empty p { font-size:14px; color:#b5c0a5; max-width:380px; line-height:1.7; }
+.lume-voice-lobby button { margin-top:22px; border-radius:6px; background:#daf468; color:#25300f; padding:14px 30px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:20px; }
+.lume-voice-kicker, .lume-channel-empty > span { font-size:10px; letter-spacing:.13em; color:#bfcdab; }
+.lume-voice-lobby .lume-signal-art { flex:none; margin:0; }
+.lume-call-person { border:1px solid #505b41; border-radius:9px; }
+.lume-call-person > .bg-surface-channel { background:radial-gradient(ellipse at 50% 65%,#353e2a,#20271c); }
+.lume-call-toolbar { max-width:calc(100% - 24px); }
+.lume-call-toolbar > .glass-bubble { border:1px solid #64714e; border-radius:10px; background:#262f20; padding:10px; gap:8px; box-shadow:0 12px 32px #0006; }
+.lume-call-toolbar button { border-radius:6px; flex-shrink:0; }
+.lume-voice-actions button { border:1px solid #46543a; border-radius:6px; }
+.lume-voice-status { border-top:1px solid #46543a; }
+.lume-orbit-disconnect:hover { background:#51332e; color:#ffd0c4; }
+.lume-channel-empty-orbit { width:70px; height:64px; background:#daf468; color:#263011; border-radius:9px; display:grid; place-items:center; transform:rotate(-6deg); margin-bottom:20px; }
+
+/* Dialogs, settings, profiles, search and composition. */
+.lume-dialog { border-radius:12px; border:1px solid #566343; }
+.lume-dialog > div:first-of-type { padding:24px 24px 0; }
+.lume-dialog > div:last-child { padding:24px; }
+.lume-settings-dialog { border-radius:12px; border:1px solid #566343; }
+.lume-settings-dialog h1, .lume-settings-dialog h2 { letter-spacing:-.6px; }
+.lume-settings-dialog input, .lume-settings-dialog select, .lume-settings-dialog textarea { border-radius:7px; }
+.lume-settings-dialog button { border-radius:6px; }
+.lume-settings-dialog .bg-surface-base { background:#181d16; }
+.lume-settings-dialog .bg-surface-channel { background:#1c2219; }
+[role="menu"] { border-radius:9px; background:#272e22; border:1px solid #54613f; }
+.lume-composer { margin:12px 24px 20px; background:#171c14; border:1px solid #53613e; border-radius:9px; box-shadow:none; }
+.lume-composer:focus-within { border-color:#a5bb66; }
+.lume-profile { border:1px solid #596944; border-radius:12px; box-shadow:0 30px 80px #0007; background:#232b1e; }
+
+/* Authentication is a warm poster next to a focused form. */
+.lume-auth-shell { background:#131713; }
+.lume-auth-orbit { display:none; }
+.lume-auth-layout { max-width:1100px; border:1px solid #49533b; border-radius:12px; overflow:hidden; }
+.lume-auth-intro { background:#daf468; color:#263011; position:relative; padding:48px; }
+.lume-auth-intro h2 { color:#263011; font-size:58px; font-weight:650; line-height:1.02; letter-spacing:-2.5px; }
+.lume-auth-intro h2 span { color:#5d6b2d; }
+.lume-auth-intro p, .lume-auth-intro .text-txt-tertiary, .lume-auth-kicker { color:#4b582b; }
+.lume-auth-intro .lume-live-dot { background:#53672b; }
+.lume-auth-intro > img { filter:none; }
+.lume-auth-kicker { font-size:10px; font-weight:700; letter-spacing:.14em; }
+.lume-auth-card { background:#20271c; border:0; border-radius:0; box-shadow:none; padding:48px 36px; display:flex; flex-direction:column; justify-content:center; backdrop-filter:none; }
+.lume-auth-card > div:first-child { text-align:left; }
+.lume-auth-card h1 { font-size:28px; letter-spacing:-1px; }
+.lume-auth-card input { min-height:48px; }
+.lume-auth-card button[type="submit"] { color:#263011; border-radius:7px; min-height:46px; }
+
+/* Compact desktop and mobile retain touch targets and avoid clipped content. */
+@media(min-width:768px) and (max-width:1199px) {
+  .lume-shell { grid-template-columns:218px minmax(0,1fr); }
+  .lume-account-bar { width:218px; padding:8px; }
+  .lume-friends-command { padding:24px; flex-wrap:wrap; gap:12px; }
+  .lume-friends-stats { margin-left:0; }
+  .lume-friends-workspace { margin:0 24px 20px; }
+  .lume-empty-state { grid-template-columns:1fr; text-align:center; gap:10px; padding:24px; }
+  .lume-empty-copy { margin:auto; }
+  .lume-signal-art { height:235px; max-width:260px; }
+  .lume-signal-card { width:140px; height:110px; }
+  .lume-orbit-roster, .lume-member-panel { width:185px; padding:20px 8px; }
+  .lume-topbar { padding:0 16px; gap:16px; }
+  .lume-topbar-compose { font-size:0; gap:0; }
+  .lume-topbar-compose > span { font-size:25px; }
+}
+@media(max-width:767px) {
+  .lume-call-toolbar > .glass-bubble { gap:3px; padding:6px; flex-wrap:wrap; justify-content:center; }
+  .lume-mobile-shell { background:#191e16; }
+  .lume-mobile-shell h1 { font-size:28px; letter-spacing:-1px; }
+  .lume-mobile-shell nav { background:#20291a; border-top:1px solid #586b39; }
+  .lume-mobile-dock { padding-inline:12px; gap:6px; }
+  .lume-mobile-dock button { flex-direction:row; gap:7px; border-radius:7px; min-height:40px; padding:8px 4px; }
+  .lume-mobile-dock button[aria-current="page"] { background:#daf468; color:#263011; }
+  .lume-mobile-dock button svg { width:19px; height:19px; }
+  .lume-mobile-dock button > span { font-size:10px; font-weight:650; }
+  .lume-mobile-header { min-height:62px; padding-inline:16px; background:#191e16; }
+  .lume-mobile-shell .lume-mobile-header h1 { font-size:19px; letter-spacing:-.5px; }
+  .lume-friends-hub { min-height:0; }
+  .lume-empty-state { display:flex; flex-direction:column; padding:24px 16px; gap:12px; text-align:center; margin:16px; min-height:0; }
+  .lume-signal-art { height:220px; max-width:250px; }
+  .lume-signal-card { width:130px; height:105px; }
+  .lume-empty-copy h3 { font-size:27px; }
+  .lume-friend-row { margin:4px 8px; padding:12px; }
+  .lume-message-scroll { padding:8px 0; }
+  .lume-welcome-card { margin:12px; padding:18px; }
+  .lume-welcome-card h3 { font-size:22px; }
+  .lume-composer { margin:8px; }
+  .lume-voice-lobby { padding:20px; }
+  .lume-account-bar { position:fixed; bottom:0; width:100%; }
+  .lume-auth-layout { max-width:440px; }
+  .lume-auth-card { padding:32px 24px; }
+  .lume-dialog { margin:12px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}

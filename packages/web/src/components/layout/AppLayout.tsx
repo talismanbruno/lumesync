@@ -394,12 +394,17 @@ export function AppLayout() {
 
   // ── Desktop layout ──
   return (
-    <div data-visual="orbita-2" className="lume-shell h-full flex flex-col md:grid md:grid-cols-[286px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
-      <div className="lume-ambient lume-ambient-a" aria-hidden="true" />
-      <div className="lume-ambient lume-ambient-b" aria-hidden="true" />
-      {/* Space sidebar - always visible on desktop */}
-      <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[286px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
-        <SpaceSidebar />
+    <div data-visual="studio" className="lume-shell">
+      <header className="lume-topbar">
+        <button className="lume-wordmark" onClick={() => navigate('/channels/@me')} aria-label="Lume — início">
+          <img src="/icons/logo.png" alt="" /><span>lume<span className="lume-wordmark-dot">.</span></span>
+        </button>
+        <div className="lume-topbar-spaces"><SpaceSidebar /></div>
+        <button className="lume-topbar-compose" onClick={() => useUIStore.getState().openModal('newDm')}>
+          <span aria-hidden="true">＋</span> Nova conversa
+        </button>
+      </header>
+      <div className={`lume-navigation-shell ${sidebarOpen ? 'is-open' : ''}`}>
         <ChannelSidebar />
       </div>
 

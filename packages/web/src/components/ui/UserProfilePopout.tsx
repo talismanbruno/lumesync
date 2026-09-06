@@ -95,7 +95,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
 
   return (
     <div
-      className="fixed z-[200] w-[340px] rounded-[12px] overflow-hidden animate-fade-in select-none glass-modal"
+      className="lume-profile fixed z-[200] w-[340px] rounded-[12px] overflow-hidden animate-fade-in select-none glass-modal"
       style={position
         ? { top, left }
         : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
