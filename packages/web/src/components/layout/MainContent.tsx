@@ -23,7 +23,6 @@ import { DmDeletedNotice } from '../chat/DmDeletedNotice';
 import { useCanonicalUserView } from '../../utils/userViewLookup';
 import type { User } from '@backspace/shared';
 import { Tooltip } from '../ui/Tooltip';
-import { SignalArtwork } from '../ui/SignalArtwork';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { joinVoiceChannel } from '../../utils/voice';
 import { SearchPopover } from '../chat/SearchPopover';
@@ -275,7 +274,7 @@ export function MainContent() {
                 <path d="M12.5 2A6.5 6.5 0 0 0 6 8.5c0 1.82.75 3.47 1.95 4.65A10.02 10.02 0 0 0 2 22h2c0-4.42 3.58-8 8-8 .35 0 .69.03 1.03.07A6.49 6.49 0 0 0 19 8.5 6.5 6.5 0 0 0 12.5 2Zm0 11A4.5 4.5 0 1 1 17 8.5a4.5 4.5 0 0 1-4.5 4.5Z" />
               </svg>
             )}
-            <span className="lume-channel-kicker hidden xl:inline">CONVERSA</span>
+            <span className="lume-channel-kicker hidden xl:inline">SINAL DIRETO</span>
             {isGroupDm ? (
               <span
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'overview' })}
@@ -424,11 +423,15 @@ export function MainContent() {
             </div>
           </div>
           <div className="lume-voice-lobby flex-1 flex flex-col items-center justify-center gap-8 relative">
-            <SignalArtwork variant="voice" />
+            <div className="lume-voice-lobby-orbit" aria-hidden="true">
+              <span className="ring ring-a" /><span className="ring ring-b" /><span className="ring ring-c" />
+              <span className="wave wave-a" /><span className="wave wave-b" />
+              <div className="lume-voice-lobby-core"><OrbitalIcon name="audio" size={38} /></div>
+            </div>
             <div className="text-center relative z-10">
               <span className="lume-empty-kicker">CANAL DE VOZ</span>
               <h2 className="text-[28px] font-bold text-white mb-3">{channel.name}</h2>
-              <p className="text-txt-tertiary text-[15px]">Um lugar para conversar sem pressa. Entre quando quiser.</p>
+              <p className="text-txt-tertiary text-[15px]">O canal está livre. Entre e abra o sinal.</p>
             </div>
             <button
               onClick={() => joinVoiceChannel(currentChannelId, useVoiceStore.getState().connectFn ?? undefined)}

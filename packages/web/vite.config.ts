@@ -18,8 +18,8 @@ export default defineConfig({
         start_url: '/channels/@me',
         id: '/',
         lang: 'pt-BR',
-        theme_color: '#131514',
-        background_color: '#131514',
+        theme_color: '#050505',
+        background_color: '#050505',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },

@@ -413,7 +413,7 @@ export function ChannelSidebar() {
 
   // Floating bottom panel — shared between DM view and server view
   const floatingPanel = user ? (
-    <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="lume-account-bar">
+    <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="fixed bottom-0 left-0 right-0 z-[105] p-2 md:right-auto md:w-[270px] md:bottom-[14px] md:left-[8px] md:p-0">
       <div className="lume-connection-orb glass-bubble rounded-[20px]">
         {/* Voice controls (expands when connected) */}
         {(currentVoiceChannelId || activeDmCall) && <VoiceControls />}
@@ -438,11 +438,11 @@ export function ChannelSidebar() {
   if (!space) {
     return (
       <>
-      <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none  border-r border-border-hard">
+      <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
         <div className="lume-dm-sidebar-head px-3 pt-4 pb-3 border-b border-border-hard z-10">
           <div className="lume-side-brand mb-3">
-            <span className="lume-side-brand-kicker">PESSOAL</span>
-            <strong>Caixa de entrada</strong>
+            <span className="lume-side-brand-kicker">CENTRAL LUME</span>
+            <strong>Seu espaço</strong>
           </div>
           <DmSearchBar />
         </div>
@@ -471,7 +471,7 @@ export function ChannelSidebar() {
             <button
               onClick={() => openModal('newDm')}
               className="text-txt-tertiary hover:text-txt-primary transition-colors"
-              title="Nova conversa"
+              title="New Direct Message"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
@@ -540,7 +540,7 @@ export function ChannelSidebar() {
 
   return (
     <>
-    <div className="lume-context-panel lume-space-sidebar w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none  border-r border-border-hard">
+    <div className="lume-context-panel lume-space-sidebar w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
       {/* Space header */}
       <div className="lume-space-head min-h-[82px] flex items-stretch border-b border-border-hard z-10 group/header">
         <button
@@ -548,7 +548,7 @@ export function ChannelSidebar() {
           className="lume-space-head-main flex-1 h-full px-4 flex items-center justify-between hover:bg-interactive-hover transition-colors min-w-0"
         >
           <div className="min-w-0">
-            <span className="lume-side-brand-kicker block mb-1">COMUNIDADE</span>
+            <span className="lume-side-brand-kicker block mb-1">ESPAÇO ATIVO</span>
             <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate leading-tight block">{space.name}</span>
             {instanceLabel && (
               <span className="text-[10px] text-txt-tertiary font-medium truncate block leading-tight">
@@ -984,7 +984,7 @@ function UserAreaPanel({
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
-              <span className="rounded-full border border-accent-primary/15 bg-accent-primary/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-accent-primary">Meu perfil</span>
+              <span className="rounded-full border border-accent-primary/15 bg-accent-primary/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-accent-primary">Minha órbita</span>
             </div>
           </div>
 

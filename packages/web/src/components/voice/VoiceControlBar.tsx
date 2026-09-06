@@ -84,7 +84,7 @@ export function VoiceControlBar() {
         </button>
       </div>
     )}
-    <div className="lume-call-toolbar absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 opacity-0 translate-y-4 group-hover/voice:opacity-100 group-hover/voice:translate-y-0 transition-all duration-300 ease-out">
       <div className="flex items-center gap-1.5 rounded-full px-3 py-2 glass-bubble">
         {/* Mute */}
         <button

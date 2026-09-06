@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { startPendingMessageOrchestrator } from './stores/pendingMessageRehydrate';
 import './styles/globals.css';
-import './styles/studio.css';
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },

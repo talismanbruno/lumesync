@@ -110,7 +110,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
   };
 
   const buttonContent = (
-    <button onClick={onClick} aria-label={name} aria-current={active ? 'page' : undefined} className={`${getButtonClasses()} ${dimmed ? 'opacity-40 saturate-50' : ''}`} style={backgroundStyle} title={tooltipText ? undefined : name}>
+    <button onClick={onClick} className={`${getButtonClasses()} ${dimmed ? 'opacity-40 saturate-50' : ''}`} style={backgroundStyle} title={tooltipText ? undefined : name}>
       {type === 'dm' ? (
         <img src="/icons/logo.png" alt="Lume" className="w-[27px] h-[27px] object-contain" />
       ) : type === 'action' ? (
@@ -140,7 +140,6 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
       ) : (
         <span className="text-[15px] font-bold">{firstLetter}</span>
       )}
-      <span className="lume-space-tab-label">{type === 'dm' ? 'Conversas' : type === 'action' ? (actionType === 'add' ? 'Criar' : actionType === 'join' ? 'Entrar' : actionType === 'explore' ? 'Explorar' : 'Baixar') : name}</span>
     </button>
   );
 
@@ -163,7 +162,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
 
   return (
     <div
-      className={`lume-space-tab-item relative flex items-center justify-center ${isDragging ? 'opacity-50' : ''}`}
+      className={`relative flex items-center mb-1.5 w-full justify-center ${isDragging ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onContextMenu={onContextMenu}
@@ -191,7 +190,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
       )}
 
       {tooltipText ? (
-        <Tooltip content={tooltipText} position="bottom" delay={300}>
+        <Tooltip content={tooltipText} position="right" delay={300}>
           {innerContent}
         </Tooltip>
       ) : (
@@ -295,7 +294,7 @@ function FolderFlyout({
   const floatingRef = useRef<HTMLDivElement>(null);
 
   const { style } = useFloatingPosition(anchorRef, floatingRef, {
-    placement: 'bottom',
+    placement: 'right',
     offset: 12,
   });
 
@@ -543,16 +542,15 @@ function FolderSlot({
   };
 
   const iconContent = (
-    <button className="lume-folder-tab" onClick={onToggleFlyout} aria-expanded={isFlyoutOpen}>
+    <button onClick={onToggleFlyout}>
       <FolderIcon spaces={folderSpaces} color={folder.color} isActive={isActive || isFlyoutOpen} isHovered={isHovered} />
-      <span>{folder.name || 'Comunidades'}</span>
     </button>
   );
 
   return (
     <div
       ref={anchorRef}
-      className={`lume-space-tab-item relative flex items-center justify-center ${isDragging ? 'opacity-50' : ''}`}
+      className={`relative flex items-center mb-1.5 w-full justify-center ${isDragging ? 'opacity-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onContextMenu={onContextMenu}
@@ -583,7 +581,7 @@ function FolderSlot({
       {isFlyoutOpen ? (
         iconContent
       ) : (
-        <Tooltip content={folder.name || `Comunidades (${folderSpaces.length})`} position="bottom" delay={300}>
+        <Tooltip content={folder.name || `Folder (${folderSpaces.length})`} position="right" delay={300}>
           {iconContent}
         </Tooltip>
       )}
@@ -608,6 +606,7 @@ export function SpaceSidebar() {
   const setShowDms = useUIStore((s) => s.setShowDms);
   const openModal = useUIStore((s) => s.openModal);
   const addToast = useUIStore((s) => s.addToast);
+  const floatingPanelHeight = useUIStore((s) => s.floatingPanelHeight);
   const setCurrentChannel = useChatStore((s) => s.setCurrentChannel);
   const unreadChannels = useChatStore((s) => s.unreadChannels);
   const instances = useInstanceStore((s) => s.instances);
@@ -815,27 +814,27 @@ export function SpaceSidebar() {
     e.dataTransfer.dropEffect = 'move';
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const relX = e.clientX - rect.left;
-    const width = rect.width;
+    const relY = e.clientY - rect.top;
+    const height = rect.height;
 
     let position: 'before' | 'after' | 'merge';
     if (targetType === 'folder' || dragState.dragType === 'space') {
-      // Horizontal tabs: left 25% = before, middle 50% = merge, right 25% = after.
-      if (relX < width * 0.25) {
+      // Space items: top 25% = before, middle 50% = merge, bottom 25% = after
+      if (relY < height * 0.25) {
         position = 'before';
-      } else if (relX > width * 0.75) {
+      } else if (relY > height * 0.75) {
         position = 'after';
       } else {
         // Merge zone: only if dragging a space onto another space or folder
         if (dragState.dragType === 'space' && dragState.dragId !== targetId) {
           position = 'merge';
         } else {
-          position = relX < width * 0.5 ? 'before' : 'after';
+          position = relY < height * 0.5 ? 'before' : 'after';
         }
       }
     } else {
       // Folder dragging: only before/after, no merge
-      position = relX < width * 0.5 ? 'before' : 'after';
+      position = relY < height * 0.5 ? 'before' : 'after';
     }
 
     // Normalize 'before' to previous item's 'after' so the drop indicator
@@ -1098,10 +1097,10 @@ export function SpaceSidebar() {
   }, [openFolderId, resolvedLayout]);
 
   return (
-    <nav aria-label="Seus espaços" className="lume-space-tabs" onDragOver={(e) => { if (dragState) e.preventDefault(); }} onDrop={handleDrop}>
+    <nav data-pip-obstacle="left" className="lume-orbit-rail w-[68px] bg-surface-base flex flex-col items-center py-3 overflow-y-auto flex-shrink-0 no-scrollbar select-none md:fixed md:inset-y-0 md:left-0 md:z-[100] md:glass-strip" style={{ paddingBottom: floatingPanelHeight + 24, ...(isElectron() ? { top: '33px' } : {}) }} onDragOver={(e) => { if (dragState) e.preventDefault(); }} onDrop={handleDrop}>
       <SidebarItem
         id="@me"
-        name="Conversas"
+        name="Direct Messages"
         active={showDms}
         onClick={handleDmClick}
         type="dm"

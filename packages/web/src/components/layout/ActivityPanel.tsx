@@ -153,10 +153,10 @@ export function ActivityPanel() {
       <div className="lume-pulse-panel relative">
         <div className="lume-pulse-head">
           <div>
-            <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent-primary/65">AO SEU REDOR</div>
-            <h3 className="text-[19px] font-bold text-txt-primary mt-0.5">Acontecendo</h3>
+            <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-accent-primary/65">SINAL SOCIAL</div>
+            <h3 className="text-[19px] font-bold text-txt-primary mt-0.5">Pulso</h3>
           </div>
-          <span className="lume-live-dot" aria-hidden="true" />
+          <span className="lume-pulse-radar" aria-hidden="true"><i /></span>
         </div>
 
         <div className="lume-pulse-summary">
@@ -166,8 +166,8 @@ export function ActivityPanel() {
 
         {activeFriends.length === 0 && onlineFriends.length === 0 && offlineFriends.length === 0 ? (
           <div className="lume-pulse-empty">
-            
-            <div className="text-[15px] font-bold text-txt-primary mb-1.5">Um momento tranquilo</div>
+            <div className="lume-pulse-map" aria-hidden="true"><span /><span /><span /></div>
+            <div className="text-[15px] font-bold text-txt-primary mb-1.5">Nenhum sinal agora</div>
             <div className="text-[11.5px] leading-relaxed text-txt-tertiary max-w-[190px] mx-auto">
               A presença dos seus amigos aparece aqui enquanto o Lume está aberto.
             </div>

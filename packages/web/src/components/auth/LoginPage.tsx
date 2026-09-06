@@ -82,7 +82,7 @@ export function LoginPage() {
         <section className="lume-auth-intro hidden lg:flex flex-col justify-between p-12 min-h-[600px]">
           <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto self-start object-contain" />
           <div>
-            <span className="lume-auth-kicker">UM LUGAR PARA SUA GALERA</span>
+            <span className="lume-auth-kicker">COMUNICAÇÃO EM ÓRBITA</span>
             <h2 className="mt-5 text-[44px] leading-[1.04] font-bold tracking-[-0.045em] text-white">
               Sua galera,<br /><span className="text-accent-primary">no mesmo ritmo.</span>
             </h2>
@@ -92,7 +92,7 @@ export function LoginPage() {
           </div>
           <div className="flex items-center gap-3 text-xs text-txt-tertiary">
             <span className="lume-live-dot" />
-            <span>Conversas que aproximam.</span>
+            <span>Lume Orbital está online</span>
           </div>
         </section>
 
