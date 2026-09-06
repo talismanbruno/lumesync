@@ -50,10 +50,9 @@ if (publicOrigin !== undefined) {
 
 // AGPL-3.0 § 13 "network-use source offer": users interacting over the network
 // must be able to obtain the Corresponding Source of the *running* version.
-// Operators who modify Backspace and self-host MUST point this at their own
-// fork's source so the offer stays accurate. Defaults to the upstream repo for
-// unmodified deployments.
-const UPSTREAM_SOURCE_URL = 'https://github.com/TheZwiss/backspace';
+// Operators who modify Lume and self-host MUST point this at their own fork's
+// source so the offer stays accurate. Defaults to the official Lume repository.
+const UPSTREAM_SOURCE_URL = 'https://github.com/talismanbruno/lumesync';
 const sourceCodeUrl = envOptional('BACKSPACE_SOURCE_URL') ?? UPSTREAM_SOURCE_URL;
 if (!/^https?:\/\//i.test(sourceCodeUrl)) {
   throw new Error(

@@ -319,7 +319,7 @@ export const userSpaceLayout = sqliteTable('user_space_layout', {
 
 export const instanceSettings = sqliteTable('instance_settings', {
   id: integer('id').primaryKey().default(1),
-  instanceName: text('instance_name').default('Backspace'),
+  instanceName: text('instance_name').default('Lume'),
   workerId: integer('worker_id'),
   instanceId: text('instance_id'),
   discoveryEnabled: integer('discovery_enabled').notNull().default(1),

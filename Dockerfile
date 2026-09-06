@@ -1,5 +1,5 @@
 # ============================================================
-# Backspace — Multi-stage Docker build
+# Lume — Multi-stage Docker build
 # ============================================================
 
 # Stage 1: Install dependencies and build frontend

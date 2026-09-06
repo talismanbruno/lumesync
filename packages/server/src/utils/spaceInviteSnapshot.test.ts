@@ -175,7 +175,7 @@ describe('getLocalInviteSnapshot', () => {
     expect(getLocalInviteSnapshot('does-not-exist')).toBeNull();
   });
 
-  it('falls back to "Backspace" when no instance settings row exists', () => {
+  it('falls back to "Lume" when no instance settings row exists', () => {
     testDb.insert(schema.spaces).values({
       id: 'S2',
       name: 'NoSettings',
@@ -191,7 +191,7 @@ describe('getLocalInviteSnapshot', () => {
 
     const snap = getLocalInviteSnapshot('nosettings');
     expect(snap).not.toBeNull();
-    expect(snap?.instanceName).toBe('Backspace');
+    expect(snap?.instanceName).toBe('Lume');
     expect(snap?.memberCount).toBe(0);
   });
 });
