@@ -394,9 +394,11 @@ export function AppLayout() {
 
   // ── Desktop layout ──
   return (
-    <div className="lume-shell h-full flex flex-col md:grid md:grid-cols-[312px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
+    <div data-visual="orbita-2" className="lume-shell h-full flex flex-col md:grid md:grid-cols-[286px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
+      <div className="lume-ambient lume-ambient-a" aria-hidden="true" />
+      <div className="lume-ambient lume-ambient-b" aria-hidden="true" />
       {/* Space sidebar - always visible on desktop */}
-      <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[312px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
+      <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[286px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
         <SpaceSidebar />
         <ChannelSidebar />
       </div>

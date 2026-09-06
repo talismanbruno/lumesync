@@ -7,7 +7,7 @@
 **Um lugar para conversar, reunir comunidades e estar perto de quem importa.**
 
 [![CI](https://github.com/talismanbruno/lumesync/actions/workflows/ci.yml/badge.svg)](https://github.com/talismanbruno/lumesync/actions/workflows/ci.yml)
-[![Versão](https://img.shields.io/badge/versão-beta.12-8a70ff.svg)](https://github.com/talismanbruno/lumesync/releases)
+[![Versão](https://img.shields.io/badge/versão-beta.13-8a70ff.svg)](https://github.com/talismanbruno/lumesync/releases)
 [![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933.svg)](https://nodejs.org/)
 
 [Abrir o Lume](https://lumesocial.online) · [Baixar o aplicativo](https://github.com/talismanbruno/lumesync/releases) · [Relatar um problema](https://github.com/talismanbruno/lumesync/issues)

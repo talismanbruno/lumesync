@@ -413,7 +413,7 @@ export function ChannelSidebar() {
 
   // Floating bottom panel — shared between DM view and server view
   const floatingPanel = user ? (
-    <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="fixed bottom-0 left-0 right-0 z-[105] p-2 md:right-auto md:w-[296px] md:bottom-[10px] md:left-[10px] md:p-0">
+    <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="fixed bottom-0 left-0 right-0 z-[105] p-2 md:right-auto md:w-[270px] md:bottom-[14px] md:left-[8px] md:p-0">
       <div className="lume-connection-orb glass-bubble rounded-[20px]">
         {/* Voice controls (expands when connected) */}
         {(currentVoiceChannelId || activeDmCall) && <VoiceControls />}
@@ -438,14 +438,18 @@ export function ChannelSidebar() {
   if (!space) {
     return (
       <>
-      <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
-        <div className="h-14 px-[10px] flex items-center border-b border-border-hard z-10">
+      <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
+        <div className="lume-dm-sidebar-head px-3 pt-4 pb-3 border-b border-border-hard z-10">
+          <div className="lume-side-brand mb-3">
+            <span className="lume-side-brand-kicker">CENTRAL LUME</span>
+            <strong>Seu espaço</strong>
+          </div>
           <DmSearchBar />
         </div>
-        <div className="flex-1 overflow-y-auto pt-4 px-2 no-scrollbar" style={{ paddingBottom: floatingPanelHeight + 24 }}>
+        <div className="flex-1 overflow-y-auto pt-3 px-2.5 no-scrollbar" style={{ paddingBottom: floatingPanelHeight + 24 }}>
           <div
             onClick={handleHomeClick}
-            className={`flex items-center gap-3 px-2 h-[42px] rounded-[6px] cursor-pointer mb-[2px] transition-colors group ${
+            className={`lume-people-nav flex items-center gap-3 px-3 min-h-[58px] rounded-[14px] cursor-pointer mb-2 transition-colors group ${
               !currentChannelId && location.pathname !== '/explore'
                 ? 'bg-interactive-selected text-white'
                 : 'text-txt-tertiary hover:bg-interactive-hover hover:text-txt-secondary'
@@ -456,11 +460,14 @@ export function ChannelSidebar() {
               <path d="M3 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-1c0-2.76-5.37-4-8-4s-8 1.24-8 4v1Z" />
               <path d="M3.5 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" opacity=".5" />
             </svg>
-            <span className="font-medium text-[16px]">Friends</span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-[14px] leading-tight">Pessoas</span>
+              <span className="block text-[10px] text-txt-tertiary mt-1">Amigos, pedidos e presença</span>
+            </span>
           </div>
 
-          <div className="mt-[18px] px-2 mb-1 flex items-center justify-between group">
-            <span className="text-[12px] font-bold text-txt-tertiary tracking-wider">Direct Messages</span>
+          <div className="mt-5 px-2 mb-2 flex items-center justify-between group">
+            <span className="text-[10px] font-bold text-txt-tertiary tracking-[0.16em] uppercase">Conversas</span>
             <button
               onClick={() => openModal('newDm')}
               className="text-txt-tertiary hover:text-txt-primary transition-colors"
@@ -494,7 +501,7 @@ export function ChannelSidebar() {
             ))}
             {dmChannels.length === 0 && (
               <div className="flex flex-col items-center py-6 opacity-80">
-                <p className="text-[13px] text-txt-tertiary">No conversations yet.</p>
+                <p className="text-[12px] text-txt-tertiary text-center max-w-[150px]">Suas conversas vão aparecer aqui.</p>
               </div>
             )}
           </div>
@@ -533,7 +540,7 @@ export function ChannelSidebar() {
 
   return (
     <>
-    <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[72px] border-r border-border-hard">
+    <div className="lume-context-panel w-60 md:w-full bg-surface-channel flex flex-col flex-shrink-0 select-none md:pl-[68px] border-r border-border-hard">
       {/* Space header */}
       <div className="h-14 flex items-stretch border-b border-border-hard z-10 group/header">
         <button
