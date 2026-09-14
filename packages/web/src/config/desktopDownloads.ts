@@ -1,4 +1,4 @@
-export const LUME_DESKTOP_VERSION = '1.0.0-beta.15';
+export const LUME_DESKTOP_VERSION = '1.0.0-beta.16';
 export const LUME_DESKTOP_RELEASE_URL =
   `https://github.com/talismanbruno/lumesync/releases/tag/lume-desktop-v${LUME_DESKTOP_VERSION}`;
 
