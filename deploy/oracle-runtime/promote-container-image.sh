@@ -23,7 +23,7 @@ cd "$app_dir"
 test "$(pwd -P)" = "$app_dir"
 test -s .env
 test -s compose.yml
-test -s data/backspace.db
+test -d data
 docker inspect lume-core >/dev/null
 
 old_image_id="$(docker inspect --format '{{.Image}}' lume-core)"
@@ -40,7 +40,11 @@ cp .env "$env_backup"
 cp compose.yml "$compose_backup"
 docker image tag "$old_image_id" "$rollback_image"
 
-# VACUUM INTO produces a consistent snapshot while the live server is running.
+# The host data directory is intentionally not readable by the unprivileged
+# deploy user. Validate and snapshot the database from inside the running
+# container, where the application has the required access. VACUUM INTO
+# produces a consistent snapshot while the live server is running.
+docker exec lume-core sh -c 'test -d /app/data'
 docker exec -w /app/packages/server lume-core \
   node --import tsx/esm src/scripts/snapshot.ts
 
