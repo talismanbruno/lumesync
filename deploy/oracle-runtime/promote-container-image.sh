@@ -86,13 +86,16 @@ upsert_env BACKSPACE_SOURCE_URL "https://github.com/talismanbruno/lumesync/tree/
 # Rewrite only the image field inside the lume service. Building is disabled:
 # production must run the exact image already scanned and published by CI.
 awk -v image="$image" '
-  /^  lume:/ { in_lume = 1 }
+  /^  lume:[[:space:]]*$/ { in_lume = 1; print; next }
   in_lume && /^    image:/ && !done { print "    image: " image; done = 1; next }
   in_lume && /^  [A-Za-z0-9_-]+:/ { in_lume = 0 }
   { print }
   END { if (!done) exit 42 }
 ' compose.yml > "$next_compose"
 
+# Fail before touching the running service if the generated compose did not
+# actually receive the reviewed image.
+grep -F "    image: $image" "$next_compose" >/dev/null
 docker compose -f "$next_compose" config >/dev/null
 docker compose -f "$next_compose" up -d --no-deps --no-build lume
 
