@@ -6,6 +6,7 @@ import { wsSend } from '../hooks/useWebSocket';
 import { getChannelOrigin } from '../stores/spaceStore';
 import { broadcastVoiceStatus, broadcastDeafenViaLiveKit } from './voice';
 import { CAMERA_PRESET, startScreenShare, stopScreenShare } from './screenShare';
+import { isElectron } from '../platform/platform';
 
 /**
  * One-shot flag used to distinguish user-initiated camera-off from unexpected
@@ -102,9 +103,24 @@ export async function handleCameraAction(): Promise<void> {
  * Do NOT call toggleScreenShare() here — it would double-flip the state.
  */
 export async function handleScreenShareAction(): Promise<void> {
+  // Capture must begin directly from the click handler: getDisplayMedia needs
+  // transient user activation, so don't await a preflight request here.
+  if (screenShareActionPending) return;
   const room = getActiveRoom();
-  if (!room) return;
+  if (!room) {
+    useUIStore.getState().addToast('Entre em uma chamada antes de compartilhar a tela.', 'warning');
+    return;
+  }
   const isScreenSharing = useVoiceStore.getState().isScreenSharing;
+  if (!isScreenSharing && !isElectron() && !navigator.mediaDevices?.getDisplayMedia) {
+    useUIStore.getState().addToast(
+      'Este navegador não permite compartilhar a tela. Você ainda pode assistir ao compartilhamento de outras pessoas.',
+      'warning',
+      7000,
+    );
+    return;
+  }
+  screenShareActionPending = true;
   try {
     if (!isScreenSharing) {
       const started = await startScreenShare(room);
@@ -115,8 +131,13 @@ export async function handleScreenShareAction(): Promise<void> {
     }
   } catch (err) {
     console.error('[voiceActions] Failed to toggle screen share:', err);
+    useUIStore.getState().addToast('Não foi possível alterar o compartilhamento. Tente novamente.', 'warning');
+  } finally {
+    screenShareActionPending = false;
   }
 }
+
+let screenShareActionPending = false;
 
 /**
  * Disconnect from voice. Handles DM call teardown and fullscreen exit.

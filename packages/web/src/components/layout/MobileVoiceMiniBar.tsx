@@ -1,8 +1,9 @@
 import React from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useVoiceStore } from '../../stores/voiceStore';
-import { useSpaceStore, getChannelOrigin } from '../../stores/spaceStore';
+import { useSpaceStore, getChannelOrigin, getMyUserIdForOrigin } from '../../stores/spaceStore';
 import { wsSend } from '../../hooks/useWebSocket';
+import { handleMuteAction, handleDeafenAction } from '../../utils/voiceActions';
 
 export function MobileVoiceMiniBar() {
   const pushMobileScreen = useUIStore((s) => s.pushMobileScreen);
@@ -11,13 +12,18 @@ export function MobileVoiceMiniBar() {
   const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const isMuted = useVoiceStore((s) => s.isMuted);
   const isDeafened = useVoiceStore((s) => s.isDeafened);
-  const toggleMute = useVoiceStore((s) => s.toggleMic);
-  const toggleDeafen = useVoiceStore((s) => s.toggleDeafen);
+  const spaceMutedUserIds = useVoiceStore((s) => s.spaceMutedUserIds);
+  const spaceDeafenedUserIds = useVoiceStore((s) => s.spaceDeafenedUserIds);
   const voiceUsers = useVoiceStore((s) => s.voiceUsers);
   const leaveVoice = useVoiceStore((s) => s.leaveVoice);
 
   const channels = useSpaceStore((s) => s.channels);
   const dmChannels = useSpaceStore((s) => s.dmChannels);
+  const channelToSpaceMap = useSpaceStore((s) => s.channelToSpaceMap);
+  const spaceId = currentVoiceChannelId ? channelToSpaceMap.get(currentVoiceChannelId) : undefined;
+  const myOriginId = currentVoiceChannelId ? getMyUserIdForOrigin(getChannelOrigin(currentVoiceChannelId)) : undefined;
+  const isSpaceMuted = !!(myOriginId && spaceId && spaceMutedUserIds.has(`${spaceId}:${myOriginId}`));
+  const isSpaceDeafened = !!(myOriginId && spaceId && spaceDeafenedUserIds.has(`${spaceId}:${myOriginId}`));
 
   if (!currentVoiceChannelId) return null;
 
@@ -55,7 +61,7 @@ export function MobileVoiceMiniBar() {
         <div className="min-w-0">
           <p className="text-xs font-medium text-accent-mint truncate">{channelName}</p>
           {participantCount > 0 && (
-            <p className="text-[10px] text-txt-tertiary">{participantCount} connected</p>
+            <p className="text-[10px] text-txt-tertiary">{participantCount} na chamada</p>
           )}
         </div>
       </button>
@@ -63,7 +69,9 @@ export function MobileVoiceMiniBar() {
       {/* Quick controls */}
       <div className="flex items-center gap-1 shrink-0">
         <button
-          onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+          onClick={(e) => { e.stopPropagation(); handleMuteAction(isSpaceMuted, isSpaceDeafened); }}
+          disabled={isSpaceMuted || isSpaceDeafened}
+          aria-label={isMuted ? 'Ativar microfone' : 'Silenciar microfone'}
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
             isMuted ? 'bg-accent-rose/20 text-accent-rose' : 'text-txt-secondary hover:text-txt-primary hover:bg-interactive-hover'
           }`}
@@ -81,7 +89,9 @@ export function MobileVoiceMiniBar() {
         </button>
 
         <button
-          onClick={(e) => { e.stopPropagation(); toggleDeafen(); }}
+          onClick={(e) => { e.stopPropagation(); handleDeafenAction(isSpaceDeafened); }}
+          disabled={isSpaceDeafened}
+          aria-label={isDeafened ? 'Ativar áudio' : 'Desativar áudio'}
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
             isDeafened ? 'bg-accent-rose/20 text-accent-rose' : 'text-txt-secondary hover:text-txt-primary hover:bg-interactive-hover'
           }`}
@@ -107,6 +117,7 @@ export function MobileVoiceMiniBar() {
             if (disconnectFn) disconnectFn();
           }}
           className="w-8 h-8 rounded-full flex items-center justify-center bg-accent-rose/20 text-accent-rose hover:bg-accent-rose/30 transition-colors"
+          aria-label="Sair da chamada"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />

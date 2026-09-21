@@ -239,6 +239,8 @@ export async function applyOverdrive(
 // in the main process, which shows the custom picker automatically.
 // ---------------------------------------------------------------------------
 
+let screenShareGeneration = 0;
+
 export async function startScreenShare(room: Room): Promise<boolean> {
   console.log('[SS] startScreenShare called, room state:', room.state);
   const config = useVoiceStore.getState().screenShareConfig;
@@ -284,6 +286,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
     console.log('[SS] setScreenShareEnabled returned:', !!track);
     if (!track) {
       if (hwOverdrive) deactivateHwOverdrive();
+      useUIStore.getState().addToast('O compartilhamento não começou. Tente selecionar outra tela ou janela.', 'warning');
       return false;
     }
 
@@ -295,7 +298,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
     }
 
     useVoiceStore.setState({ isScreenSharing: true });
-    applyScreenShareOverdrive(room);
+    applyScreenShareOverdrive(room, ++screenShareGeneration);
 
     // Schedule hardware encoder detection
     if (hwOverdrive) {
@@ -309,13 +312,15 @@ export async function startScreenShare(room: Room): Promise<boolean> {
     // Loopback unsupported (Linux without pulse, macOS without Catap) makes
     // the whole getDisplayMedia call reject. No auto-retry: the picker
     // selection was consumed, retrying would re-prompt it.
-    if (config.shareAudio && err instanceof Error && err.name !== 'NotAllowedError') {
-      useUIStore.getState().addToast(
-        'Could not start stream with system audio. Disable "Share system audio" in the picker if your system does not support it.',
-        'warning',
-        8000,
-      );
-    }
+    const errorName = err instanceof Error ? err.name : '';
+    const message = errorName === 'NotAllowedError' || errorName === 'AbortError'
+      ? 'Compartilhamento cancelado ou permissão negada.'
+      : errorName === 'NotFoundError'
+        ? 'Nenhuma tela ou janela disponível para compartilhar.'
+        : config.shareAudio
+          ? 'Não foi possível compartilhar com áudio. Desative o áudio do sistema e tente novamente.'
+          : 'Não foi possível iniciar o compartilhamento de tela. Tente novamente.';
+    useUIStore.getState().addToast(message, 'warning', 7000);
     return false;
   }
 }
@@ -324,46 +329,56 @@ export async function startScreenShare(room: Room): Promise<boolean> {
 // Shared overdrive scheduling
 // ---------------------------------------------------------------------------
 
-function applyScreenShareOverdrive(room: Room): void {
+function applyScreenShareOverdrive(room: Room, generation: number): void {
   // Overdrive at 2s — after WebRTC finishes negotiation
   setTimeout(async () => {
-    if (!useVoiceStore.getState().isScreenSharing) return;
-    const freshOpts = buildScreenShareOptions(useVoiceStore.getState().screenShareConfig);
+    if (!useVoiceStore.getState().isScreenSharing || generation !== screenShareGeneration) return;
+    try {
+      const freshOpts = buildScreenShareOptions(useVoiceStore.getState().screenShareConfig);
 
-    const screenPub = room.localParticipant.getTrackPublications()
-      .find(p => p.source === Track.Source.ScreenShare);
-    if (screenPub?.track?.mediaStreamTrack) {
-      if (freshOpts.capture.width > 0 && freshOpts.capture.height > 0) {
-        // Standard mode: apply resolution + frameRate together
-        await screenPub.track.mediaStreamTrack.applyConstraints({
-          width: { ideal: freshOpts.capture.width },
-          height: { ideal: freshOpts.capture.height },
-          frameRate: { ideal: freshOpts.capture.frameRate, min: 15 },
-        });
-      } else {
-        // Native mode: apply frameRate only — never pass 0 to width/height
-        await screenPub.track.mediaStreamTrack.applyConstraints({
-          frameRate: { ideal: freshOpts.capture.frameRate, min: 15 },
-        });
+      const screenPub = room.localParticipant.getTrackPublications()
+        .find(p => p.source === Track.Source.ScreenShare);
+      if (screenPub?.track?.mediaStreamTrack) {
+        if (freshOpts.capture.width > 0 && freshOpts.capture.height > 0) {
+          // Standard mode: apply resolution + frameRate together
+          await screenPub.track.mediaStreamTrack.applyConstraints({
+            width: { ideal: freshOpts.capture.width },
+            height: { ideal: freshOpts.capture.height },
+            frameRate: { ideal: freshOpts.capture.frameRate, min: 15 },
+          });
+        } else {
+          // Native mode: apply frameRate only — never pass 0 to width/height
+          await screenPub.track.mediaStreamTrack.applyConstraints({
+            frameRate: { ideal: freshOpts.capture.frameRate, min: 15 },
+          });
+        }
+        screenPub.track.mediaStreamTrack.contentHint = freshOpts.contentHint;
+
+        // For native mode, compute correct bitrate from actual track dimensions
+        resolveNativeOverdrive(screenPub.track.mediaStreamTrack, useVoiceStore.getState().screenShareConfig, freshOpts);
       }
-      screenPub.track.mediaStreamTrack.contentHint = freshOpts.contentHint;
-
-      // For native mode, compute correct bitrate from actual track dimensions
-      resolveNativeOverdrive(screenPub.track.mediaStreamTrack, useVoiceStore.getState().screenShareConfig, freshOpts);
+      await applyOverdrive(room, Track.Source.ScreenShare, freshOpts.overdrive);
+    } catch (err) {
+      // A share can end while constraints are being applied (particularly on
+      // mobile). Quality tuning is optional; never leave a rejected timer.
+      console.warn('[ScreenShare] Skipped delayed quality tuning:', err);
     }
-    await applyOverdrive(room, Track.Source.ScreenShare, freshOpts.overdrive);
   }, 2000);
 
   // Second overdrive at 5s — safety net for slow BWE convergence
   setTimeout(async () => {
-    if (!useVoiceStore.getState().isScreenSharing) return;
-    const freshOpts = buildScreenShareOptions(useVoiceStore.getState().screenShareConfig);
-    const screenPub5 = room.localParticipant.getTrackPublications()
-      .find(p => p.source === Track.Source.ScreenShare);
-    if (screenPub5?.track?.mediaStreamTrack) {
-      resolveNativeOverdrive(screenPub5.track.mediaStreamTrack, useVoiceStore.getState().screenShareConfig, freshOpts);
+    if (!useVoiceStore.getState().isScreenSharing || generation !== screenShareGeneration) return;
+    try {
+      const freshOpts = buildScreenShareOptions(useVoiceStore.getState().screenShareConfig);
+      const screenPub5 = room.localParticipant.getTrackPublications()
+        .find(p => p.source === Track.Source.ScreenShare);
+      if (screenPub5?.track?.mediaStreamTrack) {
+        resolveNativeOverdrive(screenPub5.track.mediaStreamTrack, useVoiceStore.getState().screenShareConfig, freshOpts);
+      }
+      await applyOverdrive(room, Track.Source.ScreenShare, freshOpts.overdrive);
+    } catch (err) {
+      console.warn('[ScreenShare] Skipped delayed quality tuning:', err);
     }
-    await applyOverdrive(room, Track.Source.ScreenShare, freshOpts.overdrive);
   }, 5000);
 }
 
@@ -416,6 +431,7 @@ function scheduleEncoderDetection(room: Room): void {
 // ---------------------------------------------------------------------------
 
 export async function stopScreenShare(room: Room): Promise<void> {
+  screenShareGeneration++;
   try {
     await room.localParticipant.setScreenShareEnabled(false);
   } catch (err) {
@@ -441,6 +457,7 @@ export async function changeScreenShare(room: Room): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export function handleScreenShareUnpublished(): void {
+  screenShareGeneration++;
   deactivateHwOverdrive();
   useVoiceStore.setState({ isScreenSharing: false, hwOverdrive: false });
   broadcastVoiceStatus();

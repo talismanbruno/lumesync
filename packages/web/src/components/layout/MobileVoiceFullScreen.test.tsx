@@ -53,6 +53,8 @@ vi.mock('../../audio/AudioManager', () => ({
 
 vi.mock('../../utils/voiceActions', async () => ({
   handleCameraAction: vi.fn(),
+  handleMuteAction: vi.fn(),
+  handleDeafenAction: vi.fn(),
   handleScreenShareAction: vi.fn(),
 }));
 
@@ -81,6 +83,7 @@ function makeParticipant(overrides: Partial<any>): any {
     isDeafened: false,
     isCameraOn: false,
     isScreenSharing: false,
+    connectionQuality: 'unknown',
     isLocal: false,
     audioTrack: null,
     videoTrack: null,
@@ -140,8 +143,7 @@ describe('MobileVoiceFullScreen', () => {
     const { container } = renderScreen();
     // No <video> until participants exist.
     expect(container.querySelectorAll('video').length).toBe(0);
-    // Waiting copy or "0 connected".
-    expect(container.textContent).toMatch(/0 connected/);
+    expect(container.textContent).toMatch(/0 na chamada/);
   });
 
   it('renders a video element for the local user when their camera is on', () => {
@@ -191,7 +193,7 @@ describe('MobileVoiceFullScreen', () => {
     // Alice (no camera) → avatar tile with no <video>.
     // Bob (camera on) → <video> tile.
     expect(container.querySelectorAll('video').length).toBe(1);
-    expect(container.textContent).toMatch(/2 connected/);
+    expect(container.textContent).toMatch(/2 na chamada/);
   });
 
   it('renders an extra StreamTile when a participant publishes screen-share', () => {
@@ -286,10 +288,34 @@ describe('MobileVoiceFullScreen', () => {
 
     const { container } = renderScreen();
     const btn = container.querySelector(
-      'button[aria-label="Share screen"], button[aria-label="Stop sharing screen"]',
+      'button[aria-label="Compartilhar tela"], button[aria-label="Parar compartilhamento de tela"]',
     ) as HTMLButtonElement | null;
     expect(btn).toBeTruthy();
     btn?.click();
     expect(handleScreenShareAction).toHaveBeenCalled();
+  });
+
+  it('keeps all five call actions in a narrow-screen grid with visible labels', () => {
+    const { container, getByText } = renderScreen();
+    const controls = container.querySelector('.grid.grid-cols-5');
+    expect(controls).toBeTruthy();
+    for (const label of ['Microfone', 'Áudio', 'Câmera', 'Tela', 'Sair']) {
+      expect(getByText(label)).toBeTruthy();
+    }
+  });
+
+  it('uses the shared voice actions for mobile mic and audio controls', async () => {
+    const { handleMuteAction, handleDeafenAction } = await import('../../utils/voiceActions');
+    const { getByRole } = renderScreen();
+    getByRole('button', { name: 'Silenciar microfone' }).click();
+    getByRole('button', { name: 'Desativar áudio' }).click();
+    expect(handleMuteAction).toHaveBeenCalledWith(false, false);
+    expect(handleDeafenAction).toHaveBeenCalledWith(false);
+  });
+
+  it('shows a recovery message when the call connection is lost', () => {
+    useVoiceStore.setState({ connectionQuality: 'lost' });
+    const { getByRole } = renderScreen();
+    expect(getByRole('status').textContent).toMatch(/Tentando recuperar a chamada/);
   });
 });

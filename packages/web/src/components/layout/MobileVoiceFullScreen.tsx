@@ -5,9 +5,11 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useAuthStore } from '../../stores/authStore';
 import { wsSend } from '../../hooks/useWebSocket';
-import { getChannelOrigin } from '../../stores/spaceStore';
+import { getChannelOrigin, getMyUserIdForOrigin } from '../../stores/spaceStore';
 import {
   handleCameraAction,
+  handleMuteAction,
+  handleDeafenAction,
   handleScreenShareAction,
 } from '../../utils/voiceActions';
 import { VoiceGrid } from '../voice/VoiceGrid';
@@ -37,8 +39,8 @@ export function MobileVoiceFullScreen() {
   const isDeafened = useVoiceStore((s) => s.isDeafened);
   const isCameraOn = useVoiceStore((s) => s.isCameraOn);
   const isScreenSharing = useVoiceStore((s) => s.isScreenSharing);
-  const toggleMute = useVoiceStore((s) => s.toggleMic);
-  const toggleDeafen = useVoiceStore((s) => s.toggleDeafen);
+  const spaceMutedUserIds = useVoiceStore((s) => s.spaceMutedUserIds);
+  const spaceDeafenedUserIds = useVoiceStore((s) => s.spaceDeafenedUserIds);
   const leaveVoice = useVoiceStore((s) => s.leaveVoice);
   const participants = useVoiceStore((s) => s.participants);
   const focusedParticipantId = useVoiceStore((s) => s.focusedParticipantId);
@@ -50,10 +52,18 @@ export function MobileVoiceFullScreen() {
   const channelToSpaceMap = useSpaceStore((s) => s.channelToSpaceMap);
 
   const authUser = useAuthStore((s) => s.user);
+  const members = useSpaceStore((s) => s.members);
+  const spaceId = currentVoiceChannelId ? channelToSpaceMap.get(currentVoiceChannelId) : undefined;
+  const myOriginId = currentVoiceChannelId
+    ? getMyUserIdForOrigin(getChannelOrigin(currentVoiceChannelId))
+    : members.find((m) => m.userId === authUser?.id)?.userId ?? authUser?.id;
+  const isSpaceMuted = !!(myOriginId && spaceId && spaceMutedUserIds.has(`${spaceId}:${myOriginId}`));
+  const isSpaceDeafened = !!(myOriginId && spaceId && spaceDeafenedUserIds.has(`${spaceId}:${myOriginId}`));
 
   const cameraDeviceId = useVoiceStore((s) => s.cameraDeviceId);
   const setCameraDeviceId = useVoiceStore((s) => s.setCameraDeviceId);
   const micPermissionDenied = useVoiceStore((s) => s.micPermissionDenied);
+  const connectionQuality = useVoiceStore((s) => s.connectionQuality);
 
   // ── In-call camera switcher ───────────────────────────────────────────────
   // On mobile, users typically have a front+back camera and need to flip
@@ -78,9 +88,11 @@ export function MobileVoiceFullScreen() {
   // camera plugged in).
   useEffect(() => {
     let cancelled = false;
+    const mediaDevices = navigator.mediaDevices;
+    if (!mediaDevices?.enumerateDevices) return;
     const enumerate = async () => {
       try {
-        const all = await navigator.mediaDevices.enumerateDevices();
+        const all = await mediaDevices.enumerateDevices();
         if (cancelled) return;
         const seen = new Set<string>();
         const cams: MediaDeviceInfo[] = [];
@@ -97,10 +109,10 @@ export function MobileVoiceFullScreen() {
     };
     enumerate();
     const onChange = () => enumerate();
-    navigator.mediaDevices.addEventListener('devicechange', onChange);
+    mediaDevices.addEventListener?.('devicechange', onChange);
     return () => {
       cancelled = true;
-      navigator.mediaDevices.removeEventListener('devicechange', onChange);
+      mediaDevices.removeEventListener?.('devicechange', onChange);
     };
   }, []);
 
@@ -243,10 +255,11 @@ export function MobileVoiceFullScreen() {
     };
   }, []);
 
-  if (!currentVoiceChannelId) {
-    popMobileScreen();
-    return null;
-  }
+  useEffect(() => {
+    if (!currentVoiceChannelId) popMobileScreen();
+  }, [currentVoiceChannelId, popMobileScreen]);
+
+  if (!currentVoiceChannelId) return null;
 
   const isDmCall = currentVoiceChannelId.startsWith('dm-');
   let channelName = 'Voice Call';
@@ -298,7 +311,7 @@ export function MobileVoiceFullScreen() {
         <button
           onClick={popMobileScreen}
           className="w-8 h-8 flex items-center justify-center text-txt-secondary hover:text-txt-primary"
-          aria-label="Collapse call"
+          aria-label="Minimizar chamada"
         >
           <svg
             className="w-5 h-5"
@@ -323,13 +336,13 @@ export function MobileVoiceFullScreen() {
           )}
         </div>
         <span className="text-xs text-txt-tertiary">
-          {participants.length} connected
+          {participants.length} na chamada
         </span>
         {!isDmCall && (
           <button
             onClick={() => pushMobileScreen('members')}
             className="w-8 h-8 flex items-center justify-center text-txt-secondary hover:text-txt-primary"
-            aria-label="View members"
+            aria-label="Ver membros"
           >
             <svg
               className="w-5 h-5"
@@ -347,6 +360,14 @@ export function MobileVoiceFullScreen() {
           </button>
         )}
       </header>
+
+      {(connectionQuality === 'poor' || connectionQuality === 'lost') && (
+        <div role="status" className="mx-2 mt-2 rounded-lg border border-accent-amber/30 bg-accent-amber/10 px-3 py-2 text-xs text-accent-amber">
+          {connectionQuality === 'lost'
+            ? 'Conexão interrompida. Tentando recuperar a chamada…'
+            : 'Conexão instável. O áudio ou vídeo pode falhar por alguns instantes.'}
+        </div>
+      )}
 
       {/* Mic-permission denial banner. Surfaces only when the user joined
           voice without granting microphone access (most common on iOS PWA
@@ -400,18 +421,20 @@ export function MobileVoiceFullScreen() {
 
       {/* Control bar */}
       <div
-        className="glass-bubble mx-2 mb-2 rounded-2xl flex items-center justify-center gap-4 px-4 py-3 shrink-0"
+        className="glass-bubble mx-2 mb-2 rounded-2xl grid grid-cols-5 items-start gap-1 px-2 py-2 shrink-0"
         style={{ marginBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
         {/* Mute */}
+        <div className="flex min-w-0 flex-col items-center gap-1">
         <button
-          onClick={toggleMute}
+          onClick={() => handleMuteAction(isSpaceMuted, isSpaceDeafened)}
+          disabled={isSpaceMuted || isSpaceDeafened}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
             isMuted
               ? 'bg-accent-rose/20 text-accent-rose'
               : 'bg-surface-elevated text-txt-primary hover:bg-interactive-hover'
           }`}
-          aria-label={isMuted ? 'Unmute' : 'Mute'}
+          aria-label={isMuted ? 'Ativar microfone' : 'Silenciar microfone'}
         >
           <svg
             className="w-5 h-5"
@@ -434,16 +457,20 @@ export function MobileVoiceFullScreen() {
             )}
           </svg>
         </button>
+        <span className="text-[10px] text-txt-secondary">Microfone</span>
+        </div>
 
         {/* Deafen */}
+        <div className="flex min-w-0 flex-col items-center gap-1">
         <button
-          onClick={toggleDeafen}
+          onClick={() => handleDeafenAction(isSpaceDeafened)}
+          disabled={isSpaceDeafened}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
             isDeafened
               ? 'bg-accent-rose/20 text-accent-rose'
               : 'bg-surface-elevated text-txt-primary hover:bg-interactive-hover'
           }`}
-          aria-label={isDeafened ? 'Undeafen' : 'Deafen'}
+          aria-label={isDeafened ? 'Ativar áudio' : 'Desativar áudio'}
         >
           <svg
             className="w-5 h-5"
@@ -466,11 +493,14 @@ export function MobileVoiceFullScreen() {
             )}
           </svg>
         </button>
+        <span className="text-[10px] text-txt-secondary">Áudio</span>
+        </div>
 
         {/* Camera (with in-call switcher chevron when multiple cameras exist
             and the camera is currently on). The chevron sits in a small
             attached pill above the bottom-right corner of the camera button —
             visible only when relevant so single-camera devices are unaffected. */}
+        <div className="flex min-w-0 flex-col items-center gap-1">
         <div className="relative" ref={cameraPickerAnchorRef}>
           <button
             onClick={handleCameraAction}
@@ -479,7 +509,7 @@ export function MobileVoiceFullScreen() {
                 ? 'bg-accent-mint/20 text-accent-mint'
                 : 'bg-surface-elevated text-txt-primary hover:bg-interactive-hover'
             }`}
-            aria-label={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
+            aria-label={isCameraOn ? 'Desligar câmera' : 'Ligar câmera'}
           >
             <svg
               className="w-5 h-5"
@@ -501,7 +531,7 @@ export function MobileVoiceFullScreen() {
                 e.stopPropagation();
                 setCameraPickerOpen((v) => !v);
               }}
-              aria-label="Switch camera"
+              aria-label="Trocar câmera"
               aria-haspopup="menu"
               aria-expanded={cameraPickerOpen}
               className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-surface-elevated text-txt-primary flex items-center justify-center shadow-md border border-border-soft active:scale-95 transition-transform"
@@ -529,11 +559,14 @@ export function MobileVoiceFullScreen() {
             </button>
           )}
         </div>
+        <span className="text-[10px] text-txt-secondary">Câmera</span>
+        </div>
 
         {/* Screen share — uses canonical handleScreenShareAction so the
             getDisplayMedia call actually fires (and propagates errors via
             voiceActions). The previous voiceStore.toggleScreenShare flipped
             only the boolean and never started capture. */}
+        <div className="flex min-w-0 flex-col items-center gap-1">
         <button
           onClick={handleScreenShareAction}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
@@ -542,7 +575,7 @@ export function MobileVoiceFullScreen() {
               : 'bg-surface-elevated text-txt-primary hover:bg-interactive-hover'
           }`}
           aria-label={
-            isScreenSharing ? 'Stop sharing screen' : 'Share screen'
+            isScreenSharing ? 'Parar compartilhamento de tela' : 'Compartilhar tela'
           }
         >
           <svg
@@ -559,12 +592,15 @@ export function MobileVoiceFullScreen() {
             />
           </svg>
         </button>
+        <span className="text-[10px] text-txt-secondary">Tela</span>
+        </div>
 
         {/* Disconnect */}
+        <div className="flex min-w-0 flex-col items-center gap-1">
         <button
           onClick={handleDisconnect}
           className="w-12 h-12 rounded-full bg-accent-rose flex items-center justify-center text-white hover:bg-accent-rose/80 transition-colors"
-          aria-label="Disconnect from call"
+          aria-label="Sair da chamada"
         >
           <svg
             className="w-5 h-5"
@@ -580,6 +616,8 @@ export function MobileVoiceFullScreen() {
             />
           </svg>
         </button>
+        <span className="text-[10px] text-txt-secondary">Sair</span>
+        </div>
       </div>
 
       {/* Camera picker popup — portaled to document.body so the upward
