@@ -71,6 +71,7 @@ function seedTwoUsers(): void {
     passwordHash: 'x',
     homeUserId: 'user-A',
     homeInstance: 'https://local.example',
+    isAdmin: 1,
     createdAt: Date.now(),
   }).run();
 

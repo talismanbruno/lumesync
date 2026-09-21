@@ -72,6 +72,7 @@ function seedCaller(): void {
     passwordHash: 'x',
     homeUserId: 'user-A',
     homeInstance: null,
+    isAdmin: 1,
     createdAt: Date.now(),
   }).run();
 }

@@ -1067,6 +1067,39 @@ export async function dmRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
+    // Starting a brand-new direct conversation normally requires an existing
+    // friendship. Instance administrators may bypass this gate so they can
+    // contact any account for moderation or support. This is enforced here,
+    // rather than only hidden in the UI, so a regular user cannot bypass it by
+    // calling the endpoint directly.
+    const callerUser = db.select({ isAdmin: schema.users.isAdmin })
+      .from(schema.users)
+      .where(eq(schema.users.id, request.userId))
+      .get();
+
+    if (callerUser?.isAdmin !== 1) {
+      const friendship = db.select({ userId: schema.friends.userId })
+        .from(schema.friends)
+        .where(or(
+          and(
+            eq(schema.friends.userId, request.userId),
+            eq(schema.friends.friendId, targetUserId),
+          ),
+          and(
+            eq(schema.friends.userId, targetUserId),
+            eq(schema.friends.friendId, request.userId),
+          ),
+        ))
+        .get();
+
+      if (!friendship) {
+        return reply.code(403).send({
+          error: 'Você precisa adicionar esta pessoa como amiga antes de iniciar uma conversa.',
+          statusCode: 403,
+        });
+      }
+    }
+
     // Create new DM channel with both members atomically
     const dmChannelId = generateSnowflake();
     const now = Date.now();
