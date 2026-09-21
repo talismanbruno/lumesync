@@ -33,6 +33,27 @@ export default defineConfig({
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        // Cache only the app shell during install. Optional mobile screens,
+        // desktop panels and admin tools are fetched when opened instead of
+        // costing every phone user data on each release.
+        globPatterns: [
+          'index.html',
+          'assets/index-*.css',
+          'assets/index-*.js',
+          'assets/app-runtime-*.js',
+          'assets/voice-runtime-*.js',
+          'assets/rich-text-*.js',
+        ],
+        runtimeCaching: [{
+          urlPattern: ({ sameOrigin, url }) =>
+            sameOrigin && url.pathname.startsWith('/assets/') && /\.(js|wasm)$/.test(url.pathname),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'lume-on-demand-assets',
+            cacheableResponse: { statuses: [200] },
+            expiration: { maxEntries: 80, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          },
+        }],
       },
     }),
   ],

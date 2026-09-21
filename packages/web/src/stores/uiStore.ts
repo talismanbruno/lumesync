@@ -85,11 +85,13 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
-      sidebarOpen: true,
-      memberListOpen: true,
+      sidebarOpen: typeof window === 'undefined' || window.innerWidth >= 768,
+      memberListOpen: typeof window === 'undefined' || window.innerWidth >= 768,
       activeModal: null,
       modalData: {},
-      isMobile: false,
+      // Choose the correct shell on the first render. Waiting for a resize
+      // effect briefly mounts (and downloads) the desktop shell on phones.
+      isMobile: typeof window !== 'undefined' && window.innerWidth < 768,
       showDms: false,
       imagePreviewUrl: null,
       userProfilePopout: {
@@ -106,7 +108,13 @@ export const useUIStore = create<UIState>()(
 
       setIsMobile: (isMobile) => {
         const prev = get().isMobile;
-        if (prev === isMobile) return;
+        if (prev === isMobile) {
+          // Persisted desktop settings can rehydrate after initial creation.
+          if (isMobile && (get().sidebarOpen || get().memberListOpen)) {
+            set({ sidebarOpen: false, memberListOpen: false });
+          }
+          return;
+        }
         if (isMobile) {
           set({ isMobile, sidebarOpen: false, memberListOpen: false });
         } else {
@@ -160,7 +168,9 @@ export const useUIStore = create<UIState>()(
       floatingPanelHeight: 140,
       setFloatingPanelHeight: (height) => set({ floatingPanelHeight: height }),
 
-      mobileScreen: 'spaces',
+      mobileScreen: typeof window !== 'undefined' && /^\/channels\/@me(?:\/|$)/.test(window.location.pathname)
+        ? 'dms'
+        : 'spaces',
       mobileStack: [],
 
       setMobileTab: (tab) => set({ mobileScreen: tab, mobileStack: [] }),

@@ -7,31 +7,34 @@ import { MobileBottomNav } from './MobileBottomNav';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { useVisualViewportInset } from '../../hooks/useVisualViewportInset';
 
-import { MobileSpacesScreen } from './MobileSpacesScreen';
-import { MobileDmsScreen } from './MobileDmsScreen';
-import { MobileYouScreen } from './MobileYouScreen';
-import { MobileChatScreen } from './MobileChatScreen';
-import { MobileSettingsScreen } from './MobileSettingsScreen';
-import { MobileInstancePanel } from './MobileInstancePanel';
 import { MobileScreenHeader } from './MobileScreenHeader';
 import { TransferIndicator } from './TransferIndicator';
 import { MobileVoiceMiniBar } from './MobileVoiceMiniBar';
-import { MobileVoiceFullScreen } from './MobileVoiceFullScreen';
-import { MobileMembersScreen } from './MobileMembersScreen';
-import { MobileGroupDmInfo } from './MobileGroupDmInfo';
-import { FriendsPage } from '../chat/FriendsPage';
-import { ExplorePage } from '../chat/ExplorePage';
-import { UserProfileModal } from '../modals/UserProfileModal';
-import { GeneralPanel } from '../modals/instanceSettingsPanels/GeneralPanel';
-import { RegistrationPanel } from '../modals/instanceSettingsPanels/RegistrationPanel';
-import { FederationPanel } from '../modals/instanceSettingsPanels/FederationPanel';
-import { StreamingPanel } from '../modals/instanceSettingsPanels/StreamingPanel';
-import { StoragePanel } from '../modals/instanceSettingsPanels/StoragePanel';
-import { UsersPanel } from '../modals/instanceSettingsPanels/UsersPanel';
-import { InsightsPanel } from '../modals/instanceSettingsPanels/InsightsPanel';
-import { SpacesPanel } from '../modals/instanceSettingsPanels/SpacesPanel';
-import { AuditPanel } from '../modals/instanceSettingsPanels/AuditPanel';
-import { HealthPanel } from '../modals/instanceSettingsPanels/HealthPanel';
+
+// The stack renders only one screen at a time. Keep optional screens out of
+// the first mobile download, especially the large admin tools.
+const MobileSpacesScreen = React.lazy(() => import('./MobileSpacesScreen').then((m) => ({ default: m.MobileSpacesScreen })));
+const MobileDmsScreen = React.lazy(() => import('./MobileDmsScreen').then((m) => ({ default: m.MobileDmsScreen })));
+const MobileYouScreen = React.lazy(() => import('./MobileYouScreen').then((m) => ({ default: m.MobileYouScreen })));
+const MobileChatScreen = React.lazy(() => import('./MobileChatScreen').then((m) => ({ default: m.MobileChatScreen })));
+const MobileSettingsScreen = React.lazy(() => import('./MobileSettingsScreen').then((m) => ({ default: m.MobileSettingsScreen })));
+const MobileInstancePanel = React.lazy(() => import('./MobileInstancePanel').then((m) => ({ default: m.MobileInstancePanel })));
+const MobileVoiceFullScreen = React.lazy(() => import('./MobileVoiceFullScreen').then((m) => ({ default: m.MobileVoiceFullScreen })));
+const MobileMembersScreen = React.lazy(() => import('./MobileMembersScreen').then((m) => ({ default: m.MobileMembersScreen })));
+const MobileGroupDmInfo = React.lazy(() => import('./MobileGroupDmInfo').then((m) => ({ default: m.MobileGroupDmInfo })));
+const FriendsPage = React.lazy(() => import('../chat/FriendsPage').then((m) => ({ default: m.FriendsPage })));
+const ExplorePage = React.lazy(() => import('../chat/ExplorePage').then((m) => ({ default: m.ExplorePage })));
+const UserProfileModal = React.lazy(() => import('../modals/UserProfileModal').then((m) => ({ default: m.UserProfileModal })));
+const GeneralPanel = React.lazy(() => import('../modals/instanceSettingsPanels/GeneralPanel').then((m) => ({ default: m.GeneralPanel })));
+const RegistrationPanel = React.lazy(() => import('../modals/instanceSettingsPanels/RegistrationPanel').then((m) => ({ default: m.RegistrationPanel })));
+const FederationPanel = React.lazy(() => import('../modals/instanceSettingsPanels/FederationPanel').then((m) => ({ default: m.FederationPanel })));
+const StreamingPanel = React.lazy(() => import('../modals/instanceSettingsPanels/StreamingPanel').then((m) => ({ default: m.StreamingPanel })));
+const StoragePanel = React.lazy(() => import('../modals/instanceSettingsPanels/StoragePanel').then((m) => ({ default: m.StoragePanel })));
+const UsersPanel = React.lazy(() => import('../modals/instanceSettingsPanels/UsersPanel').then((m) => ({ default: m.UsersPanel })));
+const InsightsPanel = React.lazy(() => import('../modals/instanceSettingsPanels/InsightsPanel').then((m) => ({ default: m.InsightsPanel })));
+const SpacesPanel = React.lazy(() => import('../modals/instanceSettingsPanels/SpacesPanel').then((m) => ({ default: m.SpacesPanel })));
+const AuditPanel = React.lazy(() => import('../modals/instanceSettingsPanels/AuditPanel').then((m) => ({ default: m.AuditPanel })));
+const HealthPanel = React.lazy(() => import('../modals/instanceSettingsPanels/HealthPanel').then((m) => ({ default: m.HealthPanel })));
 
 /**
  * Wrapper for the Federation sub-panel that forwards FederationPanel's
@@ -139,6 +142,17 @@ export function MobileShell() {
   const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const location = useLocation();
 
+  // Deep links and refreshes should open the matching root tab. Keep the
+  // current stack intact: a direct DM link still needs its chat screen above
+  // the DMs root, and tapping "Você" does not change the URL.
+  useEffect(() => {
+    if (/^\/channels\/@me(?:\/|$)/.test(location.pathname)) {
+      useUIStore.setState({ mobileScreen: 'dms' });
+    } else if (/^\/channels\/[^/]+/.test(location.pathname)) {
+      useUIStore.setState({ mobileScreen: 'spaces' });
+    }
+  }, [location.pathname]);
+
   // Edge swipe back gesture
   useSwipeGesture({
     onSwipeRight: () => {
@@ -226,10 +240,12 @@ export function MobileShell() {
 
   return (
     <div className="flex flex-col" style={{ height: shellHeight }}>
-      <MobileScreenStack
-        rootScreen={rootScreens[mobileScreen]}
-        screenMap={screenMap}
-      />
+      <React.Suspense fallback={<div role="status" className="flex flex-1 items-center justify-center text-sm text-txt-secondary">Abrindo tela…</div>}>
+        <MobileScreenStack
+          rootScreen={rootScreens[mobileScreen]}
+          screenMap={screenMap}
+        />
+      </React.Suspense>
 
       {/* Voice mini-bar — shown when in a voice call */}
       {currentVoiceChannelId && <MobileVoiceMiniBar />}

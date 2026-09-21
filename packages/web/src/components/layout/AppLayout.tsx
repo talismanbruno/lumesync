@@ -1,17 +1,11 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { SpaceSidebar } from './SpaceSidebar';
-import { ChannelSidebar } from './ChannelSidebar';
-import { MainContent } from './MainContent';
-import { RightPanel } from './RightPanel';
-import { MobileShell } from './MobileShell';
 import { ImagePreview } from '../chat/ImagePreview';
 import { CreateSpaceModal } from '../modals/CreateSpace';
 import { JoinSpaceModal } from '../modals/JoinSpace';
 import { CreateChannelModal } from '../modals/CreateChannel';
 import { CreateCategoryModal } from '../modals/CreateCategory';
 import { InviteModal } from '../modals/InviteModal';
-import { UserSettingsModal } from '../modals/UserSettings';
 import { SpaceSettingsModal } from '../modals/SpaceSettings';
 import { ChannelSettingsModal } from '../modals/ChannelSettingsModal';
 import { CategorySettingsModal } from '../modals/CategorySettingsModal';
@@ -20,7 +14,6 @@ import { AddDmMemberModal } from '../modals/AddDmMemberModal';
 import { GroupDmSettings } from '../modals/GroupDmSettings';
 import { UserProfileModal } from '../modals/UserProfileModal';
 import { IncomingCallModal } from '../voice/IncomingCallModal';
-import { PictureInPicture } from '../voice/PictureInPicture';
 import { SoundController } from '../voice/SoundController';
 import { GlobalAudioRenderer } from '../voice/GlobalAudioRenderer';
 import { NotificationController } from '../NotificationController';
@@ -43,6 +36,16 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { AudioManager } from '../../audio/AudioManager';
 import { BugReportButton } from '../feedback/BugReportButton';
 import { BugReportModal } from '../modals/BugReportModal';
+
+// Load only the layout the device can actually display. The shared call and
+// message state stays in AppLayout; the other layout is fetched on demand.
+const SpaceSidebar = React.lazy(() => import('./SpaceSidebar').then((m) => ({ default: m.SpaceSidebar })));
+const ChannelSidebar = React.lazy(() => import('./ChannelSidebar').then((m) => ({ default: m.ChannelSidebar })));
+const MainContent = React.lazy(() => import('./MainContent').then((m) => ({ default: m.MainContent })));
+const RightPanel = React.lazy(() => import('./RightPanel').then((m) => ({ default: m.RightPanel })));
+const MobileShell = React.lazy(() => import('./MobileShell').then((m) => ({ default: m.MobileShell })));
+const UserSettingsModal = React.lazy(() => import('../modals/UserSettings').then((m) => ({ default: m.UserSettingsModal })));
+const PictureInPicture = React.lazy(() => import('../voice/PictureInPicture').then((m) => ({ default: m.PictureInPicture })));
 
 export function AppLayout() {
   const { spaceId, channelId } = useParams<{ spaceId?: string; channelId?: string }>();
@@ -110,6 +113,8 @@ export function AppLayout() {
   //   (4) Toast on a *new* audioinput appearance (debounced + dedupe by groupId).
   //       Removals do not toast — the user already knows they unplugged it.
   useEffect(() => {
+    const mediaDevices = navigator.mediaDevices;
+    if (!mediaDevices?.enumerateDevices) return;
     const prune = useVoiceStore.getState().pruneStaleDevices;
     let lastInputGroupIds = new Set<string>();
     const recentToastByGroup = new Map<string, number>(); // groupId -> timestamp ms
@@ -125,7 +130,7 @@ export function AppLayout() {
 
     const seedBaseline = async () => {
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
+        const devices = await mediaDevices.enumerateDevices();
         lastInputGroupIds = new Set(
           devices.filter(d => d.kind === 'audioinput' && d.groupId).map(d => d.groupId)
         );
@@ -134,7 +139,7 @@ export function AppLayout() {
 
     const handleNewDeviceToasts = async () => {
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
+        const devices = await mediaDevices.enumerateDevices();
         const currentInputGroupIds = new Set(
           devices.filter(d => d.kind === 'audioinput' && d.groupId).map(d => d.groupId)
         );
@@ -200,15 +205,17 @@ export function AppLayout() {
       .then(() => prune())
       .then(() => {
         if (cancelled) return;
-        navigator.mediaDevices.addEventListener('devicechange', handler);
-        listenerRegistered = true;
+        if (mediaDevices.addEventListener) {
+          mediaDevices.addEventListener('devicechange', handler);
+          listenerRegistered = true;
+        }
       });
     return () => {
       cancelled = true;
       if (pendingHandlerTimer) clearTimeout(pendingHandlerTimer);
       if (pendingDebounceTimer) clearTimeout(pendingDebounceTimer);
       if (listenerRegistered) {
-        navigator.mediaDevices.removeEventListener('devicechange', handler);
+        mediaDevices.removeEventListener?.('devicechange', handler);
       }
     };
   }, []);
@@ -356,7 +363,9 @@ export function AppLayout() {
   if (isMobile) {
     return (
       <>
-        <MobileShell />
+        <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">Abrindo o Lume…</div>}>
+          <MobileShell />
+        </React.Suspense>
         {/* Modals still render globally for both mobile and desktop */}
         <CreateSpaceModal />
         <JoinSpaceModal />
@@ -394,6 +403,7 @@ export function AppLayout() {
 
   // ── Desktop layout ──
   return (
+    <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">Abrindo o Lume…</div>}>
     <div className="lume-shell h-full flex flex-col md:grid md:grid-cols-[312px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
       {/* Space sidebar - always visible on desktop */}
       <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[312px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
@@ -450,5 +460,6 @@ export function AppLayout() {
       <ToastContainer />
       <ContextMenuRenderer />
     </div>
+    </React.Suspense>
   );
 }
