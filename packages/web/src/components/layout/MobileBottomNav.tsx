@@ -48,10 +48,10 @@ export function MobileBottomNav() {
       // sticky memory, returning to Spaces from a DM/Friends/Settings detour
       // would have nothing to anchor to and `MobileSpacesScreen`'s auto-select
       // would fall back to `spaces[0]`.
-      const { currentSpaceId, lastSelectedSpaceId } = useSpaceStore.getState();
-      const target = currentSpaceId ?? lastSelectedSpaceId;
-      if (target) navigate(`/channels/${target}`);
-      else navigate('/');
+      const { currentSpaceId, lastSelectedSpaceId, spaces } = useSpaceStore.getState();
+      const target = [currentSpaceId, lastSelectedSpaceId, spaces[0]?.id]
+        .find((id) => id && spaces.some((space) => space.id === id));
+      navigate(target ? `/channels/${target}` : '/channels');
     }
   };
 

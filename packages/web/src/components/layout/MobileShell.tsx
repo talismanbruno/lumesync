@@ -148,7 +148,7 @@ export function MobileShell() {
   useEffect(() => {
     if (/^\/channels\/@me(?:\/|$)/.test(location.pathname)) {
       useUIStore.setState({ mobileScreen: 'dms' });
-    } else if (/^\/channels\/[^/]+/.test(location.pathname)) {
+    } else if (location.pathname === '/channels' || /^\/channels\/[^/]+/.test(location.pathname)) {
       useUIStore.setState({ mobileScreen: 'spaces' });
     }
   }, [location.pathname]);

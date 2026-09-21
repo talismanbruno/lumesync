@@ -82,6 +82,14 @@ export function App() {
             }
           />
           <Route
+            path="/channels"
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/join/:inviteCode"
             element={<JoinPage />}
           />
