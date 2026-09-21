@@ -126,7 +126,7 @@ interface SpaceState {
   setRoles: (roles: Role[]) => void;
   setDmChannels: (channels: DmChannel[]) => void;
   addDmChannel: (channel: DmChannel, origin?: string) => void;
-  reloadDmsForOrigin: (origin: string) => Promise<void>;
+  reloadDmsForOrigin: (origin: string, shouldApply?: () => boolean) => Promise<void>;
   removeDmChannel: (id: string) => void;
   addDmMember: (dmChannelId: string, user: User) => void;
   removeDmMember: (dmChannelId: string, userId: string) => void;
@@ -292,9 +292,14 @@ export const useSpaceStore = create<SpaceState>((set, get) => ({
   // re-attach reconciles this connection's 1-on-1 federatedIds (merge/re-key)
   // so the split conversation collapses without a full WS reconnect. Origin ''
   // is the home instance. Non-fatal: the caller wraps it in try/catch.
-  reloadDmsForOrigin: async (origin: string) => {
+  reloadDmsForOrigin: async (origin: string, shouldApply = () => true) => {
     const client = getApiForOrigin(origin);
     const incomingDms = await client.dm.list();
+
+    // A session may end while this request is in flight. Never let a late
+    // response from the previous account repopulate the freshly-cleared store
+    // (or overwrite a newer account's conversations).
+    if (!shouldApply()) return;
 
     // Normalize remote-origin DM member asset URLs (home origin serves clean paths).
     if (origin !== '') {

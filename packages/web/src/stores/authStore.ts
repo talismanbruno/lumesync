@@ -38,6 +38,22 @@ function resetUserStores() {
   useActivityStore.getState().reset();
 }
 
+/**
+ * Restore the home conversation list independently of the WebSocket ready
+ * event. The socket remains the realtime source of truth, while this REST
+ * refresh makes login resilient to a slow or interrupted initial handshake.
+ */
+function restoreHomeConversations(sessionToken: string) {
+  const isCurrentSession = () => (
+    useAuthStore.getState().token === sessionToken
+    && localStorage.getItem('backspace_token') === sessionToken
+  );
+
+  useSpaceStore.getState().reloadDmsForOrigin('', isCurrentSession).catch(() => {
+    // Non-fatal: the WebSocket ready event can still populate the list.
+  });
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem('backspace_token'),
   user: null,
@@ -48,6 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     resetUserStores();
     localStorage.setItem('backspace_token', token);
     set({ token, user, isLoading: false });
+    restoreHomeConversations(token);
     useInstanceStore.getState().autoConnectAll().catch(() => {});
   },
 
@@ -87,6 +104,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const user = await api.users.me();
       set({ user, isLoading: false });
+      restoreHomeConversations(token);
       // Auto-connect to remote instances (fire-and-forget)
       useInstanceStore.getState().autoConnectAll().catch(() => {});
     } catch {
