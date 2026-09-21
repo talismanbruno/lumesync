@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import Database from 'better-sqlite3';
 import { bootTwoInstances, bootHomePlusRemotes, type TwoInstanceHarness, type MultiRemoteHarness, type SpawnedInstance } from './helpers/twoInstanceHarness.js';
 import { peerInstances } from './helpers/seedPeer.js';
 import type { TestUser } from './helpers/testUsers.js';
@@ -14,6 +15,19 @@ vi.setConfig({ testTimeout: 30_000 });
 
 let harness: TwoInstanceHarness;
 let sharedHmacSecret: string;
+
+function seedFriendship(instance: SpawnedInstance, userId: string, friendId: string): void {
+  const sqlite = new Database(instance.dbPath);
+  try {
+    sqlite.prepare(`
+      INSERT OR IGNORE INTO friends (user_id, friend_id, created_at)
+      VALUES (?, ?, ?)
+    `).run(userId, friendId, Date.now());
+  } finally {
+    sqlite.close();
+  }
+}
+
 
 /**
  * Setup for tests #3 / #5 / #16 / etc.: federated user has a remote space membership,
@@ -93,6 +107,11 @@ async function setupFullDeletionFixture(label: string): Promise<{
   } finally {
     reactWs.close();
   }
+
+  // The product now requires friendship before regular users can open a new DM.
+  // Seed that prerequisite directly in this test DB so this suite stays focused
+  // on federation identity deletion rather than friend-request mechanics.
+  seedFriendship(harness.remote, remoteUser.id, observerOnRemote.id);
 
   // 1-on-1 DM federated <-> observer
   const dmRes = await fetch(`${harness.remote.origin}/api/dm`, {
@@ -194,6 +213,9 @@ async function mirrorOnRemote(
   } finally {
     reactWs.close();
   }
+
+  // The product now requires friendship before regular users can open a new DM.
+  seedFriendship(remote, remoteUser.id, observerOnRemote.id);
 
   const dmRes = await fetch(`${remote.origin}/api/dm`, {
     method: 'POST',
