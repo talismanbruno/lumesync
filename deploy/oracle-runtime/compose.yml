@@ -11,6 +11,7 @@ services:
       HOST: 0.0.0.0
       DB_PATH: /app/data/backspace.db
       UPLOAD_DIR: /app/data/uploads
+      BACKUP_OFFSITE_CMD: node --import tsx/esm src/scripts/upload-backup-oracle.ts
     volumes:
       - ./data:/app/data
       - ./web-dist:/app/packages/web/dist:ro

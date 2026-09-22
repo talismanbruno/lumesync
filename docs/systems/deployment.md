@@ -213,7 +213,7 @@ Remediation applies only to pre-change instances; newly installed instances neve
 
 ## 3. Database Backups
 
-Backspace takes **DB-only** SQLite snapshots via `VACUUM INTO`, which produces a consistent, fully-checkpointed copy of the live database without locking it for the duration of a file copy. Snapshots live in `data/backups/` (configurable). Uploads and other files under `data/` are **not** included — see the same-disk limitation below.
+Lume takes SQLite snapshots via `VACUUM INTO`, which produces a consistent, fully-checkpointed copy of the live database without locking it for the duration of a file copy. Snapshots remain in `data/backups/` (configurable). In the Oracle production runtime, each snapshot also triggers an external backup set containing the database, the complete uploads directory, and a checksum manifest in Oracle Object Storage.
 
 ### Triggers
 
@@ -250,6 +250,8 @@ All vars are parsed in `packages/server/src/config.ts` under `config.backup`. De
 | `BACKUP_KEEP_PREMIGRATION` | `5` | Pre-migration snapshots retained. |
 | `BACKUP_KEEP_MANUAL` | `10` | Manual snapshots retained. |
 | `BACKUP_OFFSITE_CMD` | _(unset)_ | Off-box replication hook (see below). |
+| `BACKUP_OBJECT_STORAGE_PAR_URL` | _(unset)_ | Secret, write-only bucket PAR URL used by the Oracle uploader. Store only in production `.env`. |
+| `BACKUP_OBJECT_STORAGE_PREFIX` | `lume-production` | Object prefix used for immutable backup sets. |
 | `BACKUP_DISABLED` | `false` | Disable all automatic snapshots. |
 
 ### Retention / pruning
@@ -258,7 +260,7 @@ All vars are parsed in `packages/server/src/config.ts` under `config.backup`. De
 
 ### Off-box replication hook
 
-After writing a snapshot, `createSnapshot` invokes `BACKUP_OFFSITE_CMD` (if set). The command is run as `sh -c '<cmd> "$1"'` with the new snapshot's absolute path passed as `$1`, so your command is **appended** the snapshot path as a trailing argument (and may also reference `"$1"` explicitly for full control over the destination). This is **best-effort**: failures are logged, never fatal, and run asynchronously. Examples:
+After writing a snapshot, `createSnapshot` invokes `BACKUP_OFFSITE_CMD` (if set). The command is run as `sh -c '<cmd> "$1"'` with the new snapshot's absolute path passed as `$1`. The local snapshot remains valid if the external destination is unavailable, but failure is not silent: it is logged and persisted to `data/backups/.offsite-status.json`, which the Oracle production monitor treats as unhealthy.
 
 ```bash
 # Each resolves to:  <cmd> "<absolute snapshot path>"
@@ -271,7 +273,19 @@ BACKUP_OFFSITE_CMD='aws s3 cp -- "$1" s3://my-bucket/backspace/'
 BACKUP_OFFSITE_CMD='rsync -a -- "$1" backup-host:/srv/backspace-backups/'
 ```
 
-### Same-disk limitation (important)
+### Oracle Object Storage production backup
+
+`deploy/oracle-runtime/compose.yml` configures `upload-backup-oracle.ts` as the offsite hook. It creates the following immutable set and uploads the manifest last, so a set without a manifest is never considered complete:
+
+```text
+lume-production/backups/<backup-id>/database.db
+lume-production/backups/<backup-id>/uploads.tar.gz
+lume-production/backups/<backup-id>/manifest.json
+```
+
+The manifest records SHA-256 and byte length for both payloads. The PAR must have only `AnyObjectWrite` access to the dedicated private backup bucket and should expire on a planned rotation date. The URL is a credential: it belongs in the VM's mode-600 `.env`, never in Git. Bucket lifecycle policy owns external retention; the application intentionally has no delete permission.
+
+Local snapshots still protect against a bad migration and quick rollback. Oracle Object Storage protects against loss of the VM or its disk.
 
 Local snapshots live on the **same disk** as the live DB. They protect against:
 
@@ -280,11 +294,31 @@ Local snapshots live on the **same disk** as the live DB. They protect against:
 
 They do **not** protect against **hardware loss** (disk failure, the box being destroyed). The snapshot dies with the disk that held the original.
 
-> **To survive hardware loss you must replicate off the box.** Either set `BACKUP_OFFSITE_CMD` to push every snapshot to remote storage, **or** run a host-level backup of the `data/` directory (which also captures uploads, not just the DB). One of these is **required** for real durability; the built-in snapshots alone are not a disaster-recovery solution.
+`health-monitor.sh` requires a successful external status no older than `LUME_MAX_OFFSITE_BACKUP_AGE_HOURS` (30 by default). An upload error or stale/missing status fails the monitor and uses the existing webhook alert path when configured.
 
 ---
 
 ## 4. Restore
+
+### Restore or verify an Oracle backup set
+
+The VM uses instance-principal authentication for reads during disaster recovery; no API key is stored on disk. The instance dynamic group needs read access to the dedicated bucket. Verification is non-destructive and is the default:
+
+```bash
+sudo BACKUP_OBJECT_STORAGE_BUCKET=lume-production-backups \
+  /home/ubuntu/lume-core/restore-object-storage-backup.sh <backup-id>
+```
+
+This downloads the three objects to `data/restore-staging/`, verifies both SHA-256 checksums and lengths, runs SQLite `integrity_check`, and rejects absolute or traversal paths in the uploads archive. Only after verification can the same command be repeated with `--apply`. Apply requires typing the exact backup id, keeps pre-restore database/uploads copies, and automatically rolls back if the restored application fails its health check.
+
+```bash
+sudo BACKUP_OBJECT_STORAGE_BUCKET=lume-production-backups \
+  /home/ubuntu/lume-core/restore-object-storage-backup.sh <backup-id> --apply
+```
+
+The restore procedure should be exercised in verify-only mode after initial setup and after credential/policy rotation.
+
+### Restore a local snapshot
 
 Restores are driven by `./restore.sh` from the host. Because `data/` (including `backspace.db` and `data/backups/`) is **container-owned (uid 1000)** via the bind-mount, the host user cannot rewrite those files directly — so the actual swap runs inside a throwaway root `alpine` container that mounts `data/`.
 
