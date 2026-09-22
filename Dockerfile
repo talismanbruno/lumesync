@@ -69,7 +69,8 @@ RUN pnpm install --prod --frozen-lockfile --filter @backspace/server...
 # npm/corepack are build-time package managers and are not used by the running
 # service. Remove them (and their bundled dependency trees) from the final image
 # after pnpm has materialized the server dependencies.
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack && \
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /root/.cache/node/corepack && \
     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
       /usr/local/bin/pnpm /usr/local/bin/pnpx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
