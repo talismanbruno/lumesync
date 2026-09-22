@@ -91,6 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    void api.auth.logout().catch(() => {});
     localStorage.removeItem('backspace_token');
     resetUserStores();
     set({ token: null, user: null });

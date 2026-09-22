@@ -248,6 +248,9 @@ describe('POST /api/auth/register — federation gate split', () => {
       payload: { username: 'alice', password: 'password123' },
     });
     expect(res.statusCode).toBe(201);
+    expect(res.headers['set-cookie']).toContain('lume_media_token=');
+    expect(res.headers['set-cookie']).toContain('Path=/api/uploads');
+    expect(res.headers['set-cookie']).toContain('HttpOnly');
 
     // Try with bogus token — still succeeds, token ignored
     const res2 = await app.inject({
@@ -256,6 +259,13 @@ describe('POST /api/auth/register — federation gate split', () => {
       payload: { username: 'bob', password: 'password123', inviteToken: 'fakefakefakefakefakeXX' },
     });
     expect(res2.statusCode).toBe(201);
+  });
+
+  it('clears the upload media cookie on logout', async () => {
+    const res = await app.inject({ method: 'POST', url: '/api/auth/logout' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['set-cookie']).toContain('lume_media_token=;');
+    expect(res.headers['set-cookie']).toContain('Max-Age=0');
   });
 
   it('closed registration without token: 403 "An invite is required"', async () => {

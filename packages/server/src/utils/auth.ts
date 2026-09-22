@@ -6,6 +6,7 @@ import { getDb, schema } from '../db/index.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 const SALT_ROUNDS = 12;
+const MEDIA_AUTH_COOKIE = 'lume_media_token';
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
@@ -31,6 +32,47 @@ export function signJwt(payload: JwtPayload): string {
 export function verifyJwt(token: string): JwtPayload {
   const decoded = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as JwtPayload;
   return decoded;
+}
+
+/**
+ * Browser media elements cannot attach the Authorization header used by the
+ * JSON API. Keep the same JWT in an HttpOnly cookie scoped exclusively to the
+ * upload reader so <img>, <video>, and <audio> can load protected attachments
+ * without putting credentials in URLs.
+ */
+export function setMediaAuthCookie(reply: FastifyReply, token: string): void {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  reply.header(
+    'Set-Cookie',
+    `${MEDIA_AUTH_COOKIE}=${encodeURIComponent(token)}; Path=/api/uploads; HttpOnly; SameSite=Strict${secure}`,
+  );
+}
+
+export function clearMediaAuthCookie(reply: FastifyReply): void {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  reply.header(
+    'Set-Cookie',
+    `${MEDIA_AUTH_COOKIE}=; Path=/api/uploads; HttpOnly; SameSite=Strict; Max-Age=0${secure}`,
+  );
+}
+
+/** Resolve the normal Bearer token first, then the upload-only media cookie. */
+export function getRequestAuthToken(request: FastifyRequest): string | null {
+  const authHeader = request.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7);
+
+  const cookieHeader = request.headers.cookie;
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(';')) {
+    const [rawName, ...rawValue] = part.trim().split('=');
+    if (rawName !== MEDIA_AUTH_COOKIE) continue;
+    try {
+      return decodeURIComponent(rawValue.join('='));
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 /**

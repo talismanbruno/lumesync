@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, or, lt } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { getDb, schema } from '../db/index.js';
-import { hashPassword, verifyPassword, signJwt, authenticate } from '../utils/auth.js';
+import { hashPassword, verifyPassword, signJwt, authenticate, setMediaAuthCookie, clearMediaAuthCookie } from '../utils/auth.js';
 import { generateSnowflake } from '../utils/snowflake.js';
 import { config } from '../config.js';
 import type { RegisterRequest, LoginRequest, AuthResponse } from '@backspace/shared';
@@ -212,6 +212,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         console.log(`[auth] Upgraded federation stub ${existingStub.id} (${existingStub.username} → ${trimmedUsername}) to full account`);
 
         const token = signJwt({ userId: upgraded.id, username: upgraded.username });
+        setMediaAuthCookie(reply, token);
         const response: AuthResponse = {
           token,
           user: sanitizeUser(upgraded, true),
@@ -315,6 +316,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const token = signJwt({ userId: user.id, username: user.username });
+    setMediaAuthCookie(reply, token);
 
     const response: AuthResponse = {
       token,
@@ -538,6 +540,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // clean up. The user's reported status remains whatever it was; the WS
     // handshake will flip it to 'online' once a real socket attaches.
     const token = signJwt({ userId: user.id, username: user.username });
+    setMediaAuthCookie(reply, token);
 
     const response: AuthResponse = {
       token,
@@ -545,6 +548,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     };
 
     return reply.code(200).send(response);
+  });
+
+  // Clears the upload-only cookie. The application JWT remains client-managed.
+  app.post('/api/auth/logout', async (_request, reply) => {
+    clearMediaAuthCookie(reply);
+    return reply.code(200).send({ success: true });
   });
 
   // ─── POST /api/auth/attach-proof ──────────────────────────────────────────

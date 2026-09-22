@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, or, and, inArray } from 'drizzle-orm';
 import { getDb, schema } from '../db/index.js';
-import { authenticate, verifyPassword, hashPassword, signJwt } from '../utils/auth.js';
+import { authenticate, verifyPassword, hashPassword, signJwt, setMediaAuthCookie, clearMediaAuthCookie, getRequestAuthToken } from '../utils/auth.js';
 import { connectionManager } from '../ws/handler.js';
 import type { UpdateUserRequest, VerifyPasswordRequest, VerifyPasswordResponse, ChangePasswordRequest, ChangePasswordResponse, DeleteAccountRequest, ReplicatedInstance, SpaceLayoutItem, SpaceFolder, Activity, FederationIdentityDeleteRequest, FederationIdentityDeleteResponse, FederationIdentityDeleteResult, FederationProfileUpdatePayload } from '@backspace/shared';
 import { AVATAR_COLORS } from '@backspace/shared';
@@ -36,6 +36,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (!user || user.isDeleted) {
       return reply.code(401).send({ error: 'This account has been deleted', statusCode: 401 });
     }
+
+    // Restore the upload-only session cookie after a browser restart. The main
+    // application token is persistent; the narrower media cookie is not.
+    const token = getRequestAuthToken(request);
+    if (token) setMediaAuthCookie(reply, token);
 
     return reply.code(200).send(sanitizeUser(user, true));
   });
@@ -96,6 +101,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     // Issue fresh JWT
     const token = signJwt({ userId: user.id, username: user.username });
+    setMediaAuthCookie(reply, token);
     const response: ChangePasswordResponse = { token };
     return reply.code(200).send(response);
   });
@@ -184,6 +190,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // Force-close all WebSocket connections
     connectionManager.forceDisconnectUser(request.userId);
 
+    clearMediaAuthCookie(reply);
     return reply.code(200).send({ success: true });
   });
 
