@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
+  logout: vi.fn().mockResolvedValue({ success: true }),
   me: vi.fn(),
   reloadDmsForOrigin: vi.fn().mockResolvedValue(undefined),
   resetSpace: vi.fn(),
@@ -15,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => ({
   api: {
-    auth: { login: mocks.login, register: vi.fn() },
+    auth: { login: mocks.login, logout: mocks.logout, register: vi.fn() },
     users: { me: mocks.me },
   },
 }));
@@ -90,6 +91,7 @@ describe('auth session conversation hydration', () => {
     useAuthStore.getState().logout();
 
     expect(shouldApply()).toBe(false);
+    expect(mocks.logout).toHaveBeenCalledOnce();
   });
 
   it('restores conversations when an existing saved session boots', async () => {
