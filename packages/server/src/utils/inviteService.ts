@@ -172,9 +172,11 @@ function rowToSummary(
  * body can read the max from the same logical transaction as their surrounding
  * writes. Defaults to the outer `getDb()` for non-txn callers.
  */
+type InviteReadHandle = Pick<ReturnType<typeof getDb>, 'select'>;
+
 function resolveLastRedeemedAt(
   inviteId: string,
-  dbHandle: ReturnType<typeof getDb> = getDb(),
+  dbHandle: InviteReadHandle = getDb(),
 ): number | null {
   const result = dbHandle
     .select({ maxAt: sql<number | null>`MAX(${schema.inviteRedemptions.redeemedAt})` })
@@ -195,7 +197,7 @@ function resolveLastRedeemedAt(
  */
 function resolveCreatorUsername(
   creatorId: string,
-  dbHandle: ReturnType<typeof getDb> = getDb(),
+  dbHandle: InviteReadHandle = getDb(),
 ): string | null {
   const u = dbHandle.select({ username: schema.users.username, isDeleted: schema.users.isDeleted })
     .from(schema.users)
