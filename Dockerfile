@@ -61,8 +61,17 @@ COPY packages/web/package.json packages/web/
 # Copy patches (referenced by pnpm-lock.yaml)
 COPY patches/ patches/
 
-# Install production dependencies only (tsx is in server dependencies)
-RUN pnpm install --prod --frozen-lockfile
+# Install only the server's production dependency graph. The web application is
+# already compiled in the builder stage, so shipping its runtime dependencies
+# only increases the image size and attack surface.
+RUN pnpm install --prod --frozen-lockfile --filter @backspace/server...
+
+# npm/corepack are build-time package managers and are not used by the running
+# service. Remove them (and their bundled dependency trees) from the final image
+# after pnpm has materialized the server dependencies.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack && \
+    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /usr/local/bin/pnpm /usr/local/bin/pnpx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
 # Copy shared source (needed at runtime since server imports types directly)
 COPY packages/shared/ packages/shared/
