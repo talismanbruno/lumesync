@@ -4,6 +4,8 @@ set -eu
 APP_DIR="${LUME_APP_DIR:-/home/ubuntu/lume-core}"
 DOMAIN="${LUME_DOMAIN:-lumesocial.online}"
 MAX_BACKUP_AGE_HOURS="${LUME_MAX_BACKUP_AGE_HOURS:-30}"
+MAX_OFFSITE_BACKUP_AGE_HOURS="${LUME_MAX_OFFSITE_BACKUP_AGE_HOURS:-30}"
+OFFSITE_REQUIRED="${LUME_OFFSITE_BACKUP_REQUIRED:-true}"
 WEBHOOK_URL="${LUME_ALERT_WEBHOOK_URL:-}"
 
 failures=""
@@ -13,6 +15,21 @@ add_failure() {
 
 if ! curl -fsS --max-time 12 "https://${DOMAIN}/api/health" >/dev/null; then
   add_failure "HTTPS health check failed"
+fi
+
+offsite_status="$APP_DIR/data/backups/.offsite-status.json"
+if [ "$OFFSITE_REQUIRED" = "true" ]; then
+  if [ ! -f "$offsite_status" ]; then
+    add_failure "no external backup status found"
+  elif ! grep -q '"status":"success"' "$offsite_status"; then
+    add_failure "latest external backup failed"
+  else
+    offsite_epoch="$(stat -c %Y "$offsite_status" 2>/dev/null || printf '0')"
+    offsite_age_hours="$(( ($(date +%s) - offsite_epoch) / 3600 ))"
+    if [ "$offsite_age_hours" -gt "$MAX_OFFSITE_BACKUP_AGE_HOURS" ]; then
+      add_failure "latest external backup is ${offsite_age_hours}h old"
+    fi
+  fi
 fi
 
 for container in lume-core lume-edge lume-voice; do

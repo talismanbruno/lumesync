@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { config } from '../config.js';
+import { writeOffsiteStatus } from './offsiteBackup.js';
 
 export type SnapshotReason = 'pre-migration' | 'scheduled' | 'manual';
 
@@ -46,9 +47,17 @@ export function createSnapshot(db: Database.Database, reason: SnapshotReason): s
 function runOffsite(snapshotPath: string): void {
   const cmd = config.backup.offsiteCmd;
   if (!cmd) return;
-  // Best-effort: failures are logged, never fatal.
+  // A remote failure must not invalidate the already-created local snapshot, but it
+  // is persisted for the production monitor instead of disappearing into stdout.
   execFile('/bin/sh', ['-c', `${cmd} "$1"`, 'sh', snapshotPath], (err, _stdout, stderr) => {
-    if (err) console.error(`[backup] off-box hook failed: ${err.message} ${stderr ?? ''}`);
+    if (err) {
+      const message = `${err.message}${stderr ? `: ${stderr.trim()}` : ''}`;
+      writeOffsiteStatus(config.backup.dir, {
+        status: 'error', completedAt: new Date().toISOString(),
+        backupId: path.basename(snapshotPath, '.db'), error: message,
+      });
+      console.error(`[backup] off-box hook failed: ${message}`);
+    }
   });
 }
 

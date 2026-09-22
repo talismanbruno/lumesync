@@ -41,7 +41,7 @@ RUN corepack enable && corepack prepare pnpm@10.34.3 --activate
 # Runtime deps only: ffmpeg (media processing) + gosu (drop to non-root in the
 # entrypoint). No C toolchain — better-sqlite3 and sharp load prebuilt binaries.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg gosu && \
+    apt-get install -y --no-install-recommends ffmpeg gosu tar && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
