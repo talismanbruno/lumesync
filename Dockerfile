@@ -12,6 +12,7 @@ WORKDIR /app
 # Copy workspace config
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY tsconfig.base.json ./
+COPY scripts/check-node.mjs scripts/
 
 # Copy package.json files for all workspace packages
 COPY packages/shared/package.json packages/shared/
@@ -49,6 +50,7 @@ WORKDIR /app
 # Copy workspace config
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY tsconfig.base.json ./
+COPY scripts/check-node.mjs scripts/
 
 # Copy package.json files
 COPY packages/shared/package.json packages/shared/

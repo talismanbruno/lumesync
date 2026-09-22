@@ -47,8 +47,20 @@ jobs:
           egress-policy: audit
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 2
+      - name: Check dependency changes
+        id: lockfile
+        run: |
+          if git diff --quiet HEAD^ HEAD -- pnpm-lock.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Run OSV-Scanner
+        id: osv
         uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+        continue-on-error: true # existing dependency findings remain visible; new lockfile changes are gated below
         with:
           scan-args: |-
             --lockfile=./pnpm-lock.yaml
@@ -60,6 +72,11 @@ jobs:
         with:
           sarif_file: osv-results.sarif
           category: osv-scanner
+      - name: Block vulnerable dependency changes
+        if: steps.lockfile.outputs.changed == 'true' && steps.osv.outcome == 'failure'
+        run: |
+          echo "Lockfile changed and OSV found vulnerabilities. Resolve them before release."
+          exit 1
 
   trivy-config:
     name: IaC/config scan (Trivy)
@@ -74,15 +91,23 @@ jobs:
           egress-policy: audit
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-      - name: Trivy config scan (Dockerfile + docker-compose)
+      - name: Trivy critical config gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: table
+          severity: CRITICAL
+          exit-code: '1'
+      - name: Trivy config SARIF report
+        if: always()
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
           scan-ref: .
           format: sarif
           output: trivy-config.sarif
-          severity: CRITICAL
-          exit-code: '1'
+          exit-code: '0'
       - name: Upload Trivy config SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3.37.0

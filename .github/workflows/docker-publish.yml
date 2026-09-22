@@ -101,10 +101,20 @@ jobs:
           scan-type: image
           image-ref: lume:scan
           ignore-unfixed: true
-          format: sarif
-          output: trivy-image.sarif
+          format: table
           severity: HIGH,CRITICAL
           exit-code: '1'
+
+      - name: Trivy image SARIF report
+        if: always()
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: lume:scan
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-image.sarif
+          exit-code: '0'
 
       - name: Upload Trivy image SARIF
         if: always()

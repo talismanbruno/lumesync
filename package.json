@@ -11,6 +11,7 @@
     "url": "https://github.com/talismanbruno/lumesync.git"
   },
   "scripts": {
+    "preinstall": "node scripts/check-node.mjs",
     "dev:server": "pnpm --filter @backspace/server dev",
     "dev:web": "pnpm --filter @backspace/web dev",
     "dev": "pnpm --parallel --filter @backspace/server --filter @backspace/web dev",
