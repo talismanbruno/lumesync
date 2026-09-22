@@ -184,4 +184,22 @@ describe('GET /api/uploads/:filename private attachment authorization', () => {
     expect(response.body).toBe('avatar');
     expect(response.headers['cache-control']).toContain('public');
   });
+
+  it('serves valid ranges and rejects malformed or unsatisfiable ranges', async () => {
+    for (const [range, expected] of [
+      ['bytes=1-3', 'vat'],
+      ['bytes=4-', 'ar'],
+      ['bytes=-2', 'ar'],
+      ['bytes=4-99', 'ar'],
+    ]) {
+      const response = await app.inject({ method: 'GET', url: '/api/uploads/avatar.png', headers: { range } });
+      expect(response.statusCode).toBe(206);
+      expect(response.body).toBe(expected);
+    }
+    for (const range of ['bytes=abc-2', 'bytes=4-2', 'bytes=6-', 'bytes=-0', 'bytes=0-1,3-4']) {
+      const response = await app.inject({ method: 'GET', url: '/api/uploads/avatar.png', headers: { range } });
+      expect(response.statusCode).toBe(416);
+      expect(response.headers['content-range']).toBe('bytes */6');
+    }
+  });
 });

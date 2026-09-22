@@ -5,7 +5,7 @@ import { Avatar } from '../ui/Avatar';
 import { ImageCropModal } from '../ui/ImageCropModal';
 import { AVATAR_GRADIENT_MAP } from '../../utils/gradients';
 import { AVATAR_COLORS } from '@backspace/shared';
-import type { AvatarColor, CheckInviteResponse, InstanceInfoResponse } from '@backspace/shared';
+import type { AvatarColor, CheckInviteResponse, InstanceInfoResponse, User } from '@backspace/shared';
 import { api, RateLimitError } from '../../api/client';
 import { useTransferStore } from '../../stores/transferStore';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
@@ -60,6 +60,8 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [pendingSession, setPendingSession] = useState<{ token: string; user: User; codes: string[] } | null>(null);
+  const [codesSaved, setCodesSaved] = useState(false);
 
   const initSession = useAuthStore((s) => s.initSession);
   const navigate = useNavigate();
@@ -367,13 +369,12 @@ export function RegisterPage() {
         }
       }
 
-      // Step 3: Activate session — sets Zustand token, triggers AuthRedirect
-      initSession(response.token, finalUser);
-
-      if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
-        navigate(redirect);
+      // Show one-time codes before navigation; the server stores only their hashes.
+      if (response.recoveryCodes?.length) {
+        setPendingSession({ token: response.token, user: finalUser, codes: response.recoveryCodes });
       } else {
-        navigate('/channels/@me');
+        initSession(response.token, finalUser);
+        navigate(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
       }
     } catch (err) {
       if (err instanceof RateLimitError) {
@@ -391,6 +392,22 @@ export function RegisterPage() {
   const gradient = AVATAR_GRADIENT_MAP[avatarColor];
 
   const isDisabled = isRegistering || retryAfter > 0;
+
+  if (pendingSession) return (
+    <div className="min-h-full flex items-center justify-center bg-surface-base p-5">
+      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-surface-raised p-6 text-txt-primary">
+        <h1 className="text-xl font-bold">Guarde seus códigos de recuperação</h1>
+        <p className="mt-2 text-sm text-txt-secondary">Eles permitem trocar sua senha se você perdê-la. Cada código funciona uma vez. Eles não serão mostrados de novo.</p>
+        <pre className="mt-4 p-4 rounded-lg bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{pendingSession.codes.join('\n')}</pre>
+        <button type="button" className="mt-3 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(pendingSession.codes.join('\n'))}>Copiar códigos</button>
+        <label className="mt-5 flex items-center gap-2 text-sm"><input type="checkbox" checked={codesSaved} onChange={e => setCodesSaved(e.target.checked)} /> Guardei os códigos em lugar seguro</label>
+        <button type="button" disabled={!codesSaved} className="mt-4 w-full rounded-lg bg-accent-primary px-4 py-2 text-white disabled:opacity-50" onClick={() => {
+          initSession(pendingSession.token, pendingSession.user);
+          navigate(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
+        }}>Continuar para o Lume</button>
+      </div>
+    </div>
+  );
 
   // Continue button is blocked while username is invalid/taken OR when an invite is required
   // but not yet validated as valid

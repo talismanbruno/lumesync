@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, or, lt } from 'drizzle-orm';
-import { randomBytes } from 'node:crypto';
+import { and, eq, or, lt } from 'drizzle-orm';
+import { createHash, randomBytes } from 'node:crypto';
 import { getDb, schema } from '../db/index.js';
 import { hashPassword, verifyPassword, signJwt, authenticate, setMediaAuthCookie, clearMediaAuthCookie } from '../utils/auth.js';
 import { generateSnowflake } from '../utils/snowflake.js';
@@ -13,6 +13,18 @@ import { fetchPeerEpoch } from '../utils/federationEpoch.js';
 import { getInviteByToken, inviteStatus, redeemInvite, InviteUnavailableError } from '../utils/inviteService.js';
 import { verifyAttachProofWithPeer } from '../utils/federationAttach.js';
 import { safeFetch } from '../utils/ssrf.js';
+
+function codeHash(code: string): string {
+  return createHash('sha256').update(code).digest('hex');
+}
+
+function issueRecoveryCodes(userId: string): string[] {
+  const codes = Array.from({ length: 8 }, () => randomBytes(16).toString('hex'));
+  getDb().insert(schema.recoveryCodes).values(codes.map(code => ({
+    userId, codeHash: codeHash(code), createdAt: Date.now(),
+  }))).run();
+  return codes;
+}
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterRequest }>('/api/auth/register', {
@@ -287,6 +299,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     // never touch the invite_links table.
     const consumesInvite = !homeInstance && !registrationOpen && !!inviteToken;
 
+    let recoveryCodes: string[] | undefined;
     if (consumesInvite) {
       // Atomic redemption: the user INSERT, the usedCount bump, and the
       // invite_redemptions row all run inside one SQLite transaction. If any
@@ -296,6 +309,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       try {
         redeemInvite(inviteToken!, () => {
           db.insert(schema.users).values(userRow).run();
+          recoveryCodes = issueRecoveryCodes(userId);
           return { id: userId, username: trimmedUsername };
         });
       } catch (err) {
@@ -307,7 +321,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
     } else {
       // Standard local-open or federated-new-user path: plain user insert.
-      db.insert(schema.users).values(userRow).run();
+      db.transaction((tx) => {
+        tx.insert(schema.users).values(userRow).run();
+        if (!homeInstance) recoveryCodes = issueRecoveryCodes(userId);
+      });
     }
 
     const user = db.select().from(schema.users).where(eq(schema.users.id, userId)).get();
@@ -321,9 +338,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const response: AuthResponse = {
       token,
       user: sanitizeUser(user, true),
+      ...(recoveryCodes ? { recoveryCodes } : {}),
     };
 
-    return reply.code(201).send(response);
+    return reply.header('Cache-Control', 'no-store').code(201).send(response);
   });
 
   app.get<{ Querystring: { username?: string } }>('/api/auth/check-username', {
@@ -548,6 +566,60 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     };
 
     return reply.code(200).send(response);
+  });
+
+  // Existing local accounts can generate a fresh set while authenticated.
+  // Rotation invalidates all earlier codes; only hashes are retained.
+  app.post<{ Body: { password?: unknown } }>('/api/auth/recovery-codes', {
+    preHandler: authenticate,
+    config: { rateLimit: { max: 3, timeWindow: '15 minutes' } },
+  }, async (request, reply) => {
+    if (request.homeInstance) return reply.code(403).send({ error: 'Local accounts only', statusCode: 403 });
+    const user = getDb().select().from(schema.users).where(eq(schema.users.id, request.userId)).get();
+    if (!user || typeof request.body?.password !== 'string'
+      || !(await verifyPassword(request.body.password, user.passwordHash))) {
+      return reply.code(401).send({ error: 'Invalid password', statusCode: 401 });
+    }
+    const codes = getDb().transaction((tx) => {
+      tx.delete(schema.recoveryCodes).where(eq(schema.recoveryCodes.userId, request.userId)).run();
+      return issueRecoveryCodes(request.userId);
+    });
+    return reply.header('Cache-Control', 'no-store').send({ recoveryCodes: codes });
+  });
+
+  app.post<{ Body: { username?: unknown; recoveryCode?: unknown; newPassword?: unknown } }>('/api/auth/recover', {
+    config: { rateLimit: { max: 5, timeWindow: '15 minutes', keyGenerator: (request: any) => request.ip } },
+  }, async (request, reply) => {
+    const { username, recoveryCode, newPassword } = request.body ?? {};
+    if (typeof username !== 'string' || typeof recoveryCode !== 'string' || typeof newPassword !== 'string'
+      || newPassword.length < 8 || newPassword.length > 1024 || !/^[0-9a-f]{32}$/i.test(recoveryCode)) {
+      return reply.code(400).send({ error: 'Invalid recovery details', statusCode: 400 });
+    }
+    const db = getDb();
+    const user = db.select().from(schema.users).where(eq(schema.users.username, username.trim().toLowerCase())).get();
+    const digest = codeHash(recoveryCode.toLowerCase());
+    const found = user && !user.homeInstance && !user.isDeleted && !user.isSuspended
+      ? db.select().from(schema.recoveryCodes).where(and(
+        eq(schema.recoveryCodes.userId, user.id), eq(schema.recoveryCodes.codeHash, digest),
+      )).get()
+      : null;
+    if (!found || !user) return reply.code(401).send({ error: 'Invalid recovery details', statusCode: 401 });
+
+    const passwordHash = await hashPassword(newPassword);
+    const changed = db.transaction((tx) => {
+      const consumed = tx.delete(schema.recoveryCodes).where(and(
+        eq(schema.recoveryCodes.userId, user.id), eq(schema.recoveryCodes.codeHash, digest),
+      )).run();
+      if (consumed.changes !== 1) return false;
+      // JWT iat has whole-second precision; round up so tokens minted just
+      // before recovery in this same second are also revoked.
+      tx.update(schema.users).set({ passwordHash, passwordChangedAt: Math.ceil(Date.now() / 1000) * 1000 })
+        .where(eq(schema.users.id, user.id)).run();
+      return true;
+    });
+    if (!changed) return reply.code(401).send({ error: 'Invalid recovery details', statusCode: 401 });
+    clearMediaAuthCookie(reply);
+    return reply.header('Cache-Control', 'no-store').send({ success: true });
   });
 
   // Clears the upload-only cookie. The application JWT remains client-managed.

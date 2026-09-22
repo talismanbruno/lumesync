@@ -72,6 +72,9 @@ export function AccountPanel() {
   const [passwordResults, setPasswordResults] = useState<FederationOpResult[] | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [recoveryError, setRecoveryError] = useState('');
 
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -816,6 +819,26 @@ export function AccountPanel() {
           </button>
         </form>
       </div>
+
+      {!user.homeInstance && <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
+        <div className="text-sm font-semibold text-txt-primary">Códigos de recuperação</div>
+        <p className="text-xs text-txt-secondary">Use um código se esquecer sua senha. Gerar novos códigos invalida os anteriores.</p>
+        <input type="password" value={recoveryPassword} onChange={e => setRecoveryPassword(e.target.value)} placeholder="Senha atual" autoComplete="current-password" className="input-standard w-full" />
+        <button type="button" disabled={!recoveryPassword} className="px-4 py-2 bg-accent-primary text-white text-sm rounded-lg disabled:opacity-50" onClick={async () => {
+          setRecoveryError('');
+          try {
+            const result = await api.auth.recoveryCodes(recoveryPassword);
+            setRecoveryCodes(result.recoveryCodes);
+            setRecoveryPassword('');
+          } catch (error) { setRecoveryError(error instanceof Error ? error.message : 'Não foi possível gerar códigos'); }
+        }}>Gerar novos códigos</button>
+        {recoveryError && <p className="text-xs text-txt-danger">{recoveryError}</p>}
+        {recoveryCodes && <div>
+          <p className="text-xs text-txt-secondary">Guarde agora: estes códigos não serão exibidos novamente.</p>
+          <pre className="mt-2 p-3 rounded bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{recoveryCodes.join('\n')}</pre>
+          <button type="button" className="mt-2 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}>Copiar códigos</button>
+        </div>}
+      </div>}
 
       {/* ── Danger Zone ── */}
       <div>

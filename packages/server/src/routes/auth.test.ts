@@ -241,6 +241,39 @@ describe('POST /api/auth/register — federation gate split', () => {
     }).run();
   });
 
+  it('issues one-time recovery codes and permits password recovery without admin', async () => {
+    const registered = await app.inject({ method: 'POST', url: '/api/auth/register',
+      payload: { username: 'recoverme', password: 'oldpassword123' } });
+    expect(registered.statusCode).toBe(201);
+    const { recoveryCodes } = registered.json();
+    expect(recoveryCodes).toHaveLength(8);
+    expect(testDb.select().from(schema.recoveryCodes).all()).toHaveLength(8);
+    const recovered = await app.inject({ method: 'POST', url: '/api/auth/recover',
+      payload: { username: 'recoverme', recoveryCode: recoveryCodes[0], newPassword: 'newpassword123' } });
+    expect(recovered.statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/auth/login',
+      payload: { username: 'recoverme', password: 'oldpassword123' } })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/api/auth/login',
+      payload: { username: 'recoverme', password: 'newpassword123' } })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/auth/recover',
+      payload: { username: 'recoverme', recoveryCode: recoveryCodes[0], newPassword: 'thirdpassword123' } })).statusCode).toBe(401);
+  });
+
+  it('rotates recovery codes only after verifying the current password', async () => {
+    const registered = await app.inject({ method: 'POST', url: '/api/auth/register',
+      payload: { username: 'rotateme', password: 'password123' } });
+    const { token, recoveryCodes } = registered.json();
+    const headers = { authorization: `Bearer ${token}` };
+    expect((await app.inject({ method: 'POST', url: '/api/auth/recovery-codes', headers,
+      payload: { password: 'wrongpassword' } })).statusCode).toBe(401);
+    const rotated = await app.inject({ method: 'POST', url: '/api/auth/recovery-codes', headers,
+      payload: { password: 'password123' } });
+    expect(rotated.statusCode).toBe(200);
+    expect(rotated.json().recoveryCodes).toHaveLength(8);
+    expect((await app.inject({ method: 'POST', url: '/api/auth/recover',
+      payload: { username: 'rotateme', recoveryCode: recoveryCodes[0], newPassword: 'changedpassword' } })).statusCode).toBe(401);
+  });
+
   it('open registration: register without token succeeds; token field ignored if present', async () => {
     const res = await app.inject({
       method: 'POST',

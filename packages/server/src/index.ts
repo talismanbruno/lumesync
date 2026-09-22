@@ -34,6 +34,7 @@ import { resetStalePresenceOnBoot } from './utils/presenceBoot.js';
 import { isTrustedProxyAddress } from './utils/trustedProxy.js';
 
 import { registerWebSocket } from './ws/handler.js';
+import { MAX_WS_PAYLOAD_BYTES } from './ws/limits.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -110,7 +111,7 @@ async function main(): Promise<void> {
     }),
   });
 
-  await app.register(websocket);
+  await app.register(websocket, { options: { maxPayload: MAX_WS_PAYLOAD_BYTES } });
 
   // Serve built frontend in production
   const webDistPath = path.resolve(import.meta.dirname ?? '.', '../../web/dist');

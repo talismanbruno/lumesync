@@ -47,7 +47,10 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
     const conditions: ReturnType<typeof eq>[] = [eq(schema.messages.channelId, id)];
 
     if (q && q.trim()) {
-      conditions.push(like(schema.messages.content, `%${q.trim()}%`));
+      const pattern = `%${q.trim()}%`;
+      conditions.push(q.trim().length >= 3
+        ? sql`${schema.messages.id} IN (SELECT id FROM messages WHERE rowid IN (SELECT rowid FROM messages_fts WHERE content LIKE ${pattern}))`
+        : like(schema.messages.content, pattern));
     }
 
     if (from && from.trim()) {
@@ -75,8 +78,6 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    const whereClause = and(...conditions)!;
-
     // Handle has: filter with subqueries
     let hasFilter: ReturnType<typeof sql> | null = null;
     if (has === 'file' || has === 'image') {
@@ -86,6 +87,7 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
     } else if (has === 'link') {
       conditions.push(like(schema.messages.content, '%http%'));
     }
+    const whereClause = and(...conditions)!;
 
     // Count total
     let countQuery;
@@ -177,7 +179,10 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
     const conditions: ReturnType<typeof eq>[] = [eq(schema.dmMessages.dmChannelId, id)];
 
     if (q && q.trim()) {
-      conditions.push(like(schema.dmMessages.content, `%${q.trim()}%`));
+      const pattern = `%${q.trim()}%`;
+      conditions.push(q.trim().length >= 3
+        ? sql`${schema.dmMessages.id} IN (SELECT id FROM dm_messages WHERE rowid IN (SELECT rowid FROM dm_messages_fts WHERE content LIKE ${pattern}))`
+        : like(schema.dmMessages.content, pattern));
     }
 
     if (from && from.trim()) {
@@ -205,8 +210,6 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    const whereClause = and(...conditions)!;
-
     let hasFilter: ReturnType<typeof sql> | null = null;
     if (has === 'file' || has === 'image') {
       hasFilter = sql`EXISTS (SELECT 1 FROM attachments WHERE attachments.dm_message_id = dm_messages.id${
@@ -215,6 +218,7 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
     } else if (has === 'link') {
       conditions.push(like(schema.dmMessages.content, '%http%'));
     }
+    const whereClause = and(...conditions)!;
 
     let countQuery;
     if (hasFilter) {

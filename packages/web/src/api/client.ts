@@ -108,6 +108,8 @@ export class BackspaceApiClient {
   readonly auth: {
     register: (data: RegisterRequest) => Promise<AuthResponse>;
     login: (data: LoginRequest) => Promise<AuthResponse>;
+    recover: (data: { username: string; recoveryCode: string; newPassword: string }) => Promise<{ success: boolean }>;
+    recoveryCodes: (password: string) => Promise<{ recoveryCodes: string[] }>;
     logout: () => Promise<{ success: boolean }>;
     checkUsername: (username: string) => Promise<{ available: boolean; reason?: string }>;
     checkInvite: (token: string) => Promise<CheckInviteResponse>;
@@ -427,6 +429,8 @@ export class BackspaceApiClient {
         }, false),
       login: (data: LoginRequest) =>
         request<AuthResponse>('POST', '/auth/login', data, false),
+      recover: (data) => request<{ success: boolean }>('POST', '/auth/recover', data, false),
+      recoveryCodes: (password: string) => request<{ recoveryCodes: string[] }>('POST', '/auth/recovery-codes', { password }),
       logout: () => request<{ success: boolean }>('POST', '/auth/logout', undefined, false),
       checkUsername: (username: string) =>
         request<{ available: boolean; reason?: string }>('GET', `/auth/check-username?username=${encodeURIComponent(username)}`, undefined, false),

@@ -38,6 +38,12 @@ export const users = sqliteTable('users', {
   createdAt: integer('created_at').notNull(),
 });
 
+export const recoveryCodes = sqliteTable('recovery_codes', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  codeHash: text('code_hash').notNull(),
+  createdAt: integer('created_at').notNull(),
+}, (table) => ({ pk: primaryKey({ columns: [table.userId, table.codeHash] }) }));
+
 export const spaces = sqliteTable('spaces', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

@@ -95,9 +95,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trivy image scan (report-only)
+      - name: Trivy image scan (release gate)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        continue-on-error: true # report-only; enforcement flipped on in Plan E
         with:
           scan-type: image
           image-ref: lume:scan
@@ -105,6 +104,7 @@ jobs:
           format: sarif
           output: trivy-image.sarif
           severity: HIGH,CRITICAL
+          exit-code: '1'
 
       - name: Upload Trivy image SARIF
         if: always()

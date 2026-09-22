@@ -382,7 +382,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         username: schema.users.username,
         displayName: schema.users.displayName,
         avatar: schema.users.avatar,
-      }).from(schema.users).all().filter((user) => authorIds.has(user.id)).map((user) => [user.id, user]));
+      }).from(schema.users).where(inArray(schema.users.id, [...authorIds])).all().map((user) => [user.id, user]));
       const messageIds = rawMessages.map((message) => message.id);
       const attachmentRows = messageIds.length
         ? db.select({

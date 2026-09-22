@@ -1,5 +1,8 @@
 services:
   lume:
+    # Presence, voice reservations and SQLite are process-local. Do not scale
+    # this service horizontally until shared coordination is implemented.
+    scale: 1
     image: ghcr.io/talismanbruno/lumesync:1.0.0-lume.1
     container_name: lume-core
     restart: unless-stopped
@@ -14,7 +17,6 @@ services:
       BACKUP_OFFSITE_CMD: node --import tsx/esm src/scripts/upload-backup-oracle.ts
     volumes:
       - ./data:/app/data
-      - ./web-dist:/app/packages/web/dist:ro
     networks:
       - lume-internal
     healthcheck:

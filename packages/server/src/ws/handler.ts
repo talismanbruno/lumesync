@@ -23,6 +23,7 @@ import type {
 import { sanitizeUser } from '../utils/sanitize.js';
 import { collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { clearVoiceCapacityReservation } from '../utils/voiceCapacity.js';
+import { allowWsConnection, MAX_WS_PAYLOAD_BYTES, wsPayloadBytes } from './limits.js';
 
 // ─── Heartbeat State ──────────────────────────────────────────────────────────
 const wsIsAlive: WeakMap<WebSocket, boolean> = new WeakMap();
@@ -1523,23 +1524,29 @@ function buildReadyPayload(userId: string): {
     .where(eq(schema.spaceFolders.userId, userId))
     .orderBy(schema.spaceFolders.position)
     .all();
+  const folderMembers = folderRows.length > 0
+    ? batchInArray(folderRows.map(folder => folder.id), ids => db.select()
+      .from(schema.spaceFolderMembers)
+      .where(inArray(schema.spaceFolderMembers.folderId, ids))
+      .orderBy(schema.spaceFolderMembers.position)
+      .all())
+    : [];
+  const folderSpaceIds = new Map<string, string[]>();
+  for (const member of folderMembers) {
+    const ids = folderSpaceIds.get(member.folderId) ?? [];
+    ids.push(member.spaceId);
+    folderSpaceIds.set(member.folderId, ids);
+  }
 
   const folders: SpaceFolder[] = [];
   for (const folder of folderRows) {
-    const folderSpaceIds = db.select()
-      .from(schema.spaceFolderMembers)
-      .where(eq(schema.spaceFolderMembers.folderId, folder.id))
-      .orderBy(schema.spaceFolderMembers.position)
-      .all()
-      .map(m => m.spaceId);
-
     folders.push({
       id: folder.id,
       userId: folder.userId,
       name: folder.name,
       color: folder.color,
       position: folder.position ?? 0,
-      spaceIds: folderSpaceIds,
+      spaceIds: folderSpaceIds.get(folder.id) ?? [],
     });
   }
 
@@ -1702,7 +1709,16 @@ function buildReadyPayload(userId: string): {
 }
 
 export async function registerWebSocket(app: FastifyInstance): Promise<void> {
-  app.get('/ws', { websocket: true }, (socket, request) => {
+  app.get('/ws', {
+    websocket: true,
+    preHandler: (request, reply, done) => {
+      if (!allowWsConnection(request.ip)) {
+        reply.code(429).send({ error: 'Too many WebSocket connections', statusCode: 429 });
+        return;
+      }
+      done();
+    },
+  }, (socket, request) => {
     const ws = socket as unknown as WebSocket;
     let authenticated = false;
     let userId: string | undefined;
@@ -1718,6 +1734,17 @@ export async function registerWebSocket(app: FastifyInstance): Promise<void> {
     }, 10000);
 
     ws.on('message', (data: Buffer | string) => {
+      if (wsPayloadBytes(data) > MAX_WS_PAYLOAD_BYTES) {
+        ws.close(1009, 'Message too large');
+        return;
+      }
+      // A cheap check before JSON.parse prevents repeated expensive parses.
+      // The client's minimal heartbeat remains exempt from the user quota.
+      const isHeartbeat = data.toString() === '{"type":"ping"}';
+      if (authenticated && !isHeartbeat && !connectionManager.getUserRateLimiter(userId!).consume()) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Rate limited' }));
+        return;
+      }
       let parsed: Record<string, unknown>;
       try {
         const raw = typeof data === 'string' ? data : data.toString('utf-8');
@@ -1801,12 +1828,6 @@ export async function registerWebSocket(app: FastifyInstance): Promise<void> {
       // Fast-path heartbeat — never reaches business logic
       if (parsed.type === 'ping') {
         ws.send(JSON.stringify({ type: 'pong' }));
-        return;
-      }
-
-      // Rate limit all post-auth, non-ping messages (per-user, shared across tabs)
-      if (!connectionManager.getUserRateLimiter(userId!).consume()) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Rate limited' }));
         return;
       }
 

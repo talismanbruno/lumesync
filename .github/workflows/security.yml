@@ -1,8 +1,6 @@
 name: Security
 
-# Report-only in this plan: every scanner is non-blocking and uploads SARIF to
-# the Security tab. Enforcement (fail on fixable HIGH/CRITICAL, block on secrets)
-# is flipped on in Plan E after the remediation pass.
+# Secret and fixable dependency/configuration findings block new releases.
 
 on:
   pull_request:
@@ -33,7 +31,6 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole git history, not just the diff
       - name: Run gitleaks
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-        continue-on-error: true # report-only; enforcement flipped on in Plan E
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -52,7 +49,6 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Run OSV-Scanner
         uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
-        continue-on-error: true # report-only; enforcement flipped on in Plan E
         with:
           scan-args: |-
             --lockfile=./pnpm-lock.yaml
@@ -80,12 +76,13 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Trivy config scan (Dockerfile + docker-compose)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        continue-on-error: true # report-only; enforcement flipped on in Plan E
         with:
           scan-type: config
           scan-ref: .
           format: sarif
           output: trivy-config.sarif
+          severity: CRITICAL
+          exit-code: '1'
       - name: Upload Trivy config SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3.37.0

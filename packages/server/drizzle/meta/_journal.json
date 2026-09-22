@@ -127,6 +127,20 @@
       "when": 1788629243915,
       "tag": "0017_organic_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1790078400000,
+      "tag": "0018_message_search_fts",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1790078400001,
+      "tag": "0019_recovery_codes",
+      "breakpoints": true
     }
   ]
 }

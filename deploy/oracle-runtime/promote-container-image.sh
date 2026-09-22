@@ -2,7 +2,7 @@
 set -eu
 
 # Promote a reviewed, immutable Lume container on the Oracle host. The database,
-# uploads and independently promoted web-dist bind mount are never replaced.
+# uploads are never replaced. Web and server come from the same image.
 image="${1:?container image is required}"
 release_id="${2:?release id is required}"
 commit="${3:?full source commit is required}"
@@ -49,6 +49,11 @@ docker exec -w /app/packages/server lume-core \
   node --import tsx/esm src/scripts/snapshot.ts
 
 docker pull "$image"
+image_commit="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")"
+if [ "$image_commit" != "$commit" ]; then
+  echo "Image revision $image_commit does not match requested commit $commit" >&2
+  exit 1
+fi
 
 upsert_env() {
   key="$1"
@@ -86,6 +91,7 @@ upsert_env BACKSPACE_SOURCE_URL "https://github.com/talismanbruno/lumesync/tree/
 # Rewrite only the image field inside the lume service. Building is disabled:
 # production must run the exact image already scanned and published by CI.
 awk -v image="$image" '
+  /\.\/web-dist:\/app\/packages\/web\/dist/ { next }
   /^  lume:[[:space:]]*$/ { in_lume = 1; print; next }
   in_lume && /^    image:/ && !done { print "    image: " image; done = 1; next }
   in_lume && /^  [A-Za-z0-9_-]+:/ { in_lume = 0 }
@@ -118,6 +124,9 @@ fi
 docker exec lume-core node -e \
   "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 curl -fsS https://lumesocial.online/api/health >/dev/null
+curl -fsS https://lumesocial.online/ | grep -q '<html'
+running_commit="$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' lume-core)"
+[ "$running_commit" = "$commit" ]
 
 mv "$next_compose" compose.yml
 trap - EXIT INT TERM

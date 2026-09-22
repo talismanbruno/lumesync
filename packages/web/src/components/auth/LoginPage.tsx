@@ -9,6 +9,9 @@ import { DesktopDownloadLink } from './DesktopDownloadLink';
 export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [recoveryDone, setRecoveryDone] = useState(false);
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState(0);
   const login = useAuthStore((s) => s.login);
@@ -56,6 +59,14 @@ export function LoginPage() {
     }
 
     try {
+      if (recovering) {
+        await api.auth.recover({ username: username.trim(), recoveryCode: recoveryCode.trim(), newPassword: password });
+        setRecoveryDone(true);
+        setRecovering(false);
+        setPassword('');
+        setRecoveryCode('');
+        return;
+      }
       await login(username.trim(), password);
       if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
         navigate(redirect);
@@ -117,6 +128,8 @@ export function LoginPage() {
             </div>
           )}
 
+          {recoveryDone && <p className="mb-4 text-sm text-accent-primary">Senha alterada. Entre com a nova senha.</p>}
+
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
               Usuário <span className="text-txt-danger">*</span>
@@ -133,16 +146,21 @@ export function LoginPage() {
 
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Senha <span className="text-txt-danger">*</span>
+              {recovering ? 'Nova senha' : 'Senha'} <span className="text-txt-danger">*</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-standard w-full py-2.5"
-              autoComplete="current-password"
+              autoComplete={recovering ? 'new-password' : 'current-password'}
             />
           </div>
+
+          {recovering && <div className="mb-5">
+            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">Código de recuperação</label>
+            <input type="text" value={recoveryCode} onChange={e => setRecoveryCode(e.target.value)} className="input-standard w-full py-2.5" autoComplete="off" required />
+          </div>}
 
           <button
             type="submit"
@@ -153,7 +171,11 @@ export function LoginPage() {
               ? `Tente novamente em ${retryAfter}s`
               : isLoading
                 ? 'Entrando...'
-                : 'Entrar'}
+                : recovering ? 'Trocar senha' : 'Entrar'}
+          </button>
+
+          <button type="button" className="mt-3 text-sm text-accent-primary hover:underline" onClick={() => { setRecovering(!recovering); setError(''); setRecoveryDone(false); }}>
+            {recovering ? 'Voltar para entrar' : 'Esqueci minha senha'}
           </button>
 
           <p className="mt-3 text-sm text-txt-tertiary">
