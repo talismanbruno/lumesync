@@ -28,7 +28,7 @@ export function buildProfileSnapshot(user: typeof schema.users.$inferSelect): Fe
   // Only meaningful for native users (us). Replicated stubs carry stale status
   // their home owns — emitting it would flap remote UIs on relay receipt.
   const status = !user.homeInstance && user.status
-    ? (user.status as 'online' | 'idle' | 'dnd' | 'offline')
+    ? (user.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline')
     : null;
   return {
     username: user.username ?? null,

@@ -689,6 +689,7 @@ export function AccountPanel() {
               className="input-standard w-full appearance-none"
             >
               <option value="online">Online</option>
+              {user.isAdmin && <option value="working">Trabalhando no Lume</option>}
               <option value="idle">Idle</option>
               <option value="dnd">Do Not Disturb</option>
             </select>

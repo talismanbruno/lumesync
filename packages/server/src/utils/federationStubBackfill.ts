@@ -74,7 +74,7 @@ export async function backfillStubUsernamesForPeer(peerOrigin: string): Promise<
 
     // Fill displayName from result.profile if the stub has none, mirroring the
     // displayName ?? username fallback applied at hydrate / profile_update time.
-    const updates: { username: string; displayName?: string; status?: 'online' | 'idle' | 'dnd' | 'offline' } = { username: newUsername };
+    const updates: { username: string; displayName?: string; status?: 'online' | 'working' | 'idle' | 'dnd' | 'offline' } = { username: newUsername };
     if (!stub.displayName) {
       updates.displayName = result.profile.displayName ?? result.username;
     }

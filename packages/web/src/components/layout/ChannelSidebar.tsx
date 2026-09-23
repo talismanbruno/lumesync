@@ -985,10 +985,11 @@ function UserAreaPanel({
             <div className="grid grid-cols-2 gap-1.5">
               {([
                 ['online', 'Disponível', 'Aberto para conversar', 'bg-status-online'],
+                ...(user.isAdmin ? [['working', 'Trabalhando', 'Melhorando o Lume', 'bg-status-working shadow-[0_0_8px_rgba(56,189,248,0.7)]'] as const] : []),
                 ['idle', 'Ausente', 'Por perto', 'bg-status-idle'],
                 ['dnd', 'Não perturbe', 'Silenciar alertas', 'bg-status-dnd'],
                 ['offline', 'Invisível', 'Aparecer offline', 'bg-status-offline'],
-              ] as const).map(([status, label, detail, color]) => (
+              ] as ReadonlyArray<readonly [UserStatus, string, string, string]>).map(([status, label, detail, color]) => (
                 <button key={status} type="button" disabled={isSavingPresence} onClick={() => setPresence(status)} className={`group flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${user.status === status ? 'border-cyan-400/35 bg-cyan-400/[0.09]' : 'border-white/[0.05] bg-white/[0.025] hover:border-white/10 hover:bg-white/[0.055]'}`}>
                   <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color} ${user.status === status ? 'ring-4 ring-cyan-300/10' : ''}`} />
                   <span className="min-w-0">

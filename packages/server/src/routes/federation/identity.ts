@@ -198,7 +198,7 @@ export function resolveOrCreateReplicatedUser(
   homeUserId: string,
   homeInstance: string,
   db: ReturnType<typeof getDb>,
-  hints?: { username?: string | null; status?: 'online' | 'idle' | 'dnd' | 'offline' | null; deleted?: boolean | null },
+  hints?: { username?: string | null; status?: 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null; deleted?: boolean | null },
 ): typeof schema.users.$inferSelect | null {
   const existing = findFederatedUser(homeUserId, homeInstance, db, hints);
   if (existing) return backfillHomeUserId(existing, homeUserId, db);

@@ -287,7 +287,7 @@ export function UserProfileModal() {
             src={user.avatar}
             name={displayName}
             size={96}
-            status={user.status as 'online' | 'idle' | 'dnd' | 'offline' | null}
+            status={user.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null}
             userId={user.homeUserId ?? user.id}
             user={user}
             ring={{ width: 4, color: 'rgba(20,20,26,0.82)' }}
@@ -407,7 +407,7 @@ export function UserProfileModal() {
                           src={friend.avatar}
                           name={fname}
                           size={40}
-                          status={friend.status as 'online' | 'idle' | 'dnd' | 'offline' | null}
+                          status={friend.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null}
                           userId={friend.homeUserId ?? friend.id}
                           avatarColor={friend.avatarColor}
                         />

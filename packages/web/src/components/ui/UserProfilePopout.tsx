@@ -116,7 +116,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
           src={user.avatar}
           name={displayName}
           size={80}
-          status={user.status as 'online' | 'idle' | 'dnd' | 'offline' | null}
+          status={user.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null}
           userId={user.homeUserId ?? user.id}
           user={user}
           ring={{ width: 4, color: 'rgba(20,20,26,0.85)' }}

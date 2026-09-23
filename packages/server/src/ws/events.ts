@@ -494,12 +494,19 @@ function validateActivities(raw: unknown): Activity[] | null {
 function handlePresenceUpdate(event: Record<string, unknown>, userId: string): void {
   const status = event.status as string;
 
-  if (!status || !['online', 'idle', 'dnd'].includes(status)) {
-    connectionManager.sendToUser(userId, { type: 'error', message: 'Status must be "online", "idle", or "dnd"' });
+  if (!status || !['online', 'working', 'idle', 'dnd'].includes(status)) {
+    connectionManager.sendToUser(userId, { type: 'error', message: 'Invalid presence status' });
     return;
   }
 
   const db = getDb();
+  if (status === 'working') {
+    const user = db.select({ isAdmin: schema.users.isAdmin }).from(schema.users).where(eq(schema.users.id, userId)).get();
+    if (user?.isAdmin !== 1) {
+      connectionManager.sendToUser(userId, { type: 'error', message: 'Working status is reserved for instance administrators' });
+      return;
+    }
+  }
   db.update(schema.users).set({ status }).where(eq(schema.users.id, userId)).run();
 
   connectionManager.setUserStatus(userId, status);
@@ -520,7 +527,7 @@ function handlePresenceUpdate(event: Record<string, unknown>, userId: string): v
 
   // S2S: project to all active peers
   void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
-    try { queuePresenceRelay(userId, status as 'online' | 'idle' | 'dnd', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(manual) failed', e); }
+    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(manual) failed', e); }
   });
 }
 
@@ -547,7 +554,7 @@ function handleActivityUpdate(event: Record<string, unknown>, userId: string): v
 
   // S2S: project to all active peers (activities + current status).
   void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
-    try { queuePresenceRelay(userId, status as 'online' | 'idle' | 'dnd' | 'offline', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(activity) failed', e); }
+    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd' | 'offline', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(activity) failed', e); }
   });
 }
 

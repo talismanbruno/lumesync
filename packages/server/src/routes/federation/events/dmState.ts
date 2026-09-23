@@ -168,7 +168,7 @@ export function processPresenceUpdateEvent(
     return;
   }
 
-  if (!payload.status || !['online', 'idle', 'dnd', 'offline'].includes(payload.status)) {
+  if (!payload.status || !['online', 'working', 'idle', 'dnd', 'offline'].includes(payload.status)) {
     rejected.push({ messageId: event.messageId, reason: 'invalid_status' });
     return;
   }

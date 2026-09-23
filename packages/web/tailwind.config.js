@@ -52,6 +52,7 @@ export default {
         },
         status: {
           online:  'rgb(var(--status-online) / <alpha-value>)',
+          working: 'rgb(var(--status-working) / <alpha-value>)',
           idle:    'rgb(var(--status-idle) / <alpha-value>)',
           dnd:     'rgb(var(--status-dnd) / <alpha-value>)',
           offline: 'rgb(var(--status-offline) / <alpha-value>)',

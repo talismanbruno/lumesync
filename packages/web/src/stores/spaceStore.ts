@@ -791,7 +791,7 @@ export const useSpaceStore = create<SpaceState>((set, get) => ({
 
   updateMemberPresence: (userId: string, status: string) => {
     set((state) => {
-      const typedStatus = status as 'online' | 'idle' | 'dnd' | 'offline';
+      const typedStatus = status as 'online' | 'working' | 'idle' | 'dnd' | 'offline';
       // Mirror the status into the userViews cache so any component reading via
       // useCanonicalUserView (e.g. the FriendItem avatar dot) re-renders with
       // fresh status — not just spaceStore.members which only feeds space UIs.

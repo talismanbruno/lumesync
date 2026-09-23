@@ -55,6 +55,7 @@ function MobileFriendBubble({
         />
         <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-base ${
           friend.status === 'online' ? 'bg-status-online' :
+          friend.status === 'working' ? 'bg-status-working' :
           friend.status === 'idle' ? 'bg-status-idle' :
           'bg-status-dnd'
         }`} />
@@ -193,7 +194,7 @@ export function MobileDmsScreen() {
 
   // Online friends for the activity row
   const onlineFriends = useMemo(() =>
-    friends.filter(f => f.status === 'online' || f.status === 'idle' || f.status === 'dnd'),
+    friends.filter(f => f.status === 'online' || f.status === 'working' || f.status === 'idle' || f.status === 'dnd'),
     [friends]
   );
 

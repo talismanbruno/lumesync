@@ -33,6 +33,8 @@ vi.mock('../ws/handler.js', () => ({
     sendToUser: vi.fn(),
     sendToSpace: vi.fn(),
     sendToDmMembers: vi.fn(),
+    setUserStatus: vi.fn(),
+    getUserActivities: vi.fn(() => []),
     setUserShowActivity: vi.fn(),
     clearUserActivities: vi.fn(),
     getUserStatus: vi.fn(() => 'online'),
@@ -149,6 +151,35 @@ describe('PATCH /api/users/@me — durable-field write-protection', () => {
     expect(res.statusCode).toBe(403);
     const row = testDb.select().from(schema.users).where(eq(schema.users.id, FEDERATED_ID)).get();
     expect(row?.displayName).toBe('Bob'); // unchanged
+  });
+});
+
+describe('PATCH /api/users/@me — administrator working presence', () => {
+  it('rejects the working status for non-admin users', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/users/@me',
+      headers: { Authorization: `Bearer ${detachedToken()}` },
+      payload: { status: 'working' },
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()?.status).toBe('offline');
+  });
+
+  it('allows an administrator to use the working status', async () => {
+    testDb.update(schema.users).set({ isAdmin: 1 }).where(eq(schema.users.id, DETACHED_ID)).run();
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/users/@me',
+      headers: { Authorization: `Bearer ${detachedToken()}` },
+      payload: { status: 'working' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().status).toBe('working');
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()?.status).toBe('working');
   });
 });
 

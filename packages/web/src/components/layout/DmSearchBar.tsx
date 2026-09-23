@@ -59,7 +59,7 @@ function DmSearchUserRow({ user, isSelected, selectedRef, onClick }: {
         src={canonical.avatar}
         name={displayName}
         size={24}
-        status={canonical.status as 'online' | 'idle' | 'dnd' | 'offline' | undefined}
+        status={canonical.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | undefined}
         userId={canonical.homeUserId ?? canonical.id}
       />
       <div className="flex-1 min-w-0 flex items-center gap-1.5">
@@ -115,7 +115,7 @@ function DmSearchDmRow({ item, isSelected, selectedRef, onClick }: {
           src={partner?.avatar}
           name={partner?.displayName ?? parseFederatedUsername(partner?.username ?? '').baseName}
           size={24}
-          status={partner?.status as 'online' | 'idle' | 'dnd' | 'offline' | undefined}
+          status={partner?.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | undefined}
           userId={partner?.homeUserId ?? partner?.id}
           user={partner ?? undefined}
         />

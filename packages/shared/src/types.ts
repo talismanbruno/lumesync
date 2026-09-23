@@ -55,7 +55,7 @@ export interface FederationRegistryEntry {
   errorMessage: string | null;
 }
 
-export type UserStatus = 'online' | 'idle' | 'dnd' | 'offline';
+export type UserStatus = 'online' | 'working' | 'idle' | 'dnd' | 'offline';
 
 export interface UserWithPassword extends User {
   passwordHash: string;
@@ -405,7 +405,7 @@ export type ClientEvent =
   | { type: 'message_edit'; messageId: string; content: string }
   | { type: 'message_delete'; messageId: string }
   | { type: 'typing_start'; channelId: string }
-  | { type: 'presence_update'; status: 'online' | 'idle' | 'dnd' }
+  | { type: 'presence_update'; status: 'online' | 'working' | 'idle' | 'dnd' }
   | { type: 'voice_join'; channelId: string }
   | { type: 'voice_leave' }
   | { type: 'dm_message_create'; dmChannelId: string; content?: string; attachments?: string[]; replyToId?: string }
@@ -1210,7 +1210,7 @@ export interface FederationRelayProfileSnapshot {
   // ephemeral and fires only on transitions, so without this field an
   // already-online remote stays stuck at 'offline' on the receiver until they
   // next change status.
-  status?: 'online' | 'idle' | 'dnd' | 'offline' | null;
+  status?: UserStatus | null;
   /**
    * The user is tombstoned on the instance that built this snapshot.
    * Receivers must not create a new stub for this identity; internal
@@ -1246,7 +1246,7 @@ export interface FederationProfileUpdatePayload {
 export interface FederationPresenceUpdatePayload {
   homeUserId: string;
   homeInstance: string;
-  status: 'online' | 'idle' | 'dnd' | 'offline';
+  status: UserStatus;
   activities?: Activity[];
   ts: number; // emitter clock; receiver may use for last-write-wins
 }
@@ -1358,7 +1358,7 @@ export interface FederationUserLookupProfile {
   bio: string | null;
   // Carried so the requester can seed the stub's status at creation time.
   // Optional for backwards compat with peers that pre-date the field.
-  status?: 'online' | 'idle' | 'dnd' | 'offline' | null;
+  status?: UserStatus | null;
 }
 
 export type FederationUserLookupResponse =

@@ -6,7 +6,7 @@ import { isFederationRelayEnabled, queueOutboxEvent } from './federationOutbox.j
 import { collectProfileBroadcastTargetIds } from './userDeletion.js';
 import { extractDomain } from '../routes/federation.js';
 
-export type PresenceStatus = 'online' | 'idle' | 'dnd' | 'offline';
+export type PresenceStatus = 'online' | 'working' | 'idle' | 'dnd' | 'offline';
 
 /**
  * Queue a presence_update event for the given native user. Broadcast to all
@@ -171,7 +171,7 @@ export function snapshotPresenceForPeer(peerOrigin: string): void {
       presenceUpdate: {
         homeUserId: u.id,
         homeInstance: getOurOrigin(),
-        status: u.status as 'online' | 'idle' | 'dnd',
+        status: u.status as 'online' | 'working' | 'idle' | 'dnd',
         ts,
       },
     };

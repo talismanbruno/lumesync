@@ -317,8 +317,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     if (status !== undefined) {
-      if (!['online', 'idle', 'dnd', 'offline'].includes(status)) {
+      if (!['online', 'working', 'idle', 'dnd', 'offline'].includes(status)) {
         return reply.code(400).send({ error: 'Invalid status', statusCode: 400 });
+      }
+      if (status === 'working' && preUpdateUser.isAdmin !== 1) {
+        return reply.code(403).send({ error: 'Working status is reserved for instance administrators', statusCode: 403 });
       }
       updateData.status = status;
     }
@@ -467,7 +470,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           try {
             queuePresenceRelay(
               request.userId,
-              (connectionManager.getUserStatus(request.userId) ?? 'online') as 'online' | 'idle' | 'dnd' | 'offline',
+              (connectionManager.getUserStatus(request.userId) ?? 'online') as 'online' | 'working' | 'idle' | 'dnd' | 'offline',
               [],
             );
           } catch (e) { console.warn('[users] queuePresenceRelay(showActivity-clear) failed', e); }
@@ -512,6 +515,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     // Broadcast presence update if status changed
     if (status !== undefined) {
+      connectionManager.setUserStatus(sanitized.id, status);
       const statusPayload = {
         type: 'presence_update' as const,
         userId: sanitized.id,
@@ -520,6 +524,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const statusTargets = collectProfileBroadcastTargetIds(sanitized.id);
       for (const uid of statusTargets) connectionManager.sendToUser(uid, statusPayload);
       connectionManager.sendToUser(sanitized.id, statusPayload);
+
+      void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
+        try {
+          queuePresenceRelay(
+            sanitized.id,
+            status as 'online' | 'working' | 'idle' | 'dnd' | 'offline',
+            connectionManager.getUserActivities(sanitized.id),
+          );
+        } catch (e) { console.warn('[users] queuePresenceRelay(status) failed', e); }
+      });
     }
 
     // Broadcast user_updated for profile field changes

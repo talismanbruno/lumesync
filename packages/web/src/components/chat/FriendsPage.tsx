@@ -26,7 +26,7 @@ import { useCanonicalUserView } from '../../utils/userViewLookup';
 import { Username } from '../ui/Username';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
-const statusLabel: Record<string, string> = { online: 'Disponível', idle: 'Ausente', dnd: 'Não perturbe', offline: 'Offline' };
+const statusLabel: Record<string, string> = { online: 'Disponível', working: 'Trabalhando no Lume', idle: 'Ausente', dnd: 'Não perturbe', offline: 'Offline' };
 
 function ActivityFriendItem({
   friend,

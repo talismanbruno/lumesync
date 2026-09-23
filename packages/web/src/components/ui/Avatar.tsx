@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { User } from '@backspace/shared';
+import type { User, UserStatus } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient } from '../../utils/gradients';
 import { resolveAvatarSource } from '../../utils/safeUrls';
@@ -8,7 +8,7 @@ interface AvatarProps {
   src?: string | null;
   name: string;
   size?: number;
-  status?: 'online' | 'idle' | 'dnd' | 'offline' | null;
+  status?: UserStatus | null;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   user?: User;
@@ -58,6 +58,7 @@ function useFrozenAvatar(src: string | null, freeze: boolean): string | null {
 
 const statusColors: Record<string, string> = {
   online: 'bg-status-online',
+  working: 'bg-status-working shadow-[0_0_8px_rgba(56,189,248,0.75)]',
   idle: 'bg-status-idle',
   dnd: 'bg-status-dnd',
   offline: 'bg-status-offline',

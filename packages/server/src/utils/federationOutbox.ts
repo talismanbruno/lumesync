@@ -394,7 +394,7 @@ export function getDmParticipants(dmChannelId: string): FederationRelayParticipa
         avatarColor: m.avatarColor ?? null,
         // Only carry presence for native participants — replicated stubs hold
         // stale status owned by their home; emitting it would flap remote UIs.
-        status: !m.homeInstance ? (m.status as 'online' | 'idle' | 'dnd' | 'offline' | null) : null,
+        status: !m.homeInstance ? (m.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,
       },
     };
   });
@@ -950,7 +950,7 @@ export function queueGroupMetadataRelay(
       avatarColor: actorRow.avatarColor ?? null,
       // Only carry presence for native participants — replicated stubs hold
       // stale status owned by their home; emitting it would flap remote UIs.
-      status: !actorRow.homeInstance ? (actorRow.status as 'online' | 'idle' | 'dnd' | 'offline' | null) : null,
+      status: !actorRow.homeInstance ? (actorRow.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,
     },
   };
 

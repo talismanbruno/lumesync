@@ -66,6 +66,7 @@
 
     /* ── Status ── */
     --status-online: 134 239 172;
+    --status-working: 56 189 248;
     --status-idle: 252 211 77;
     --status-dnd: 252 165 165;
     --status-offline: 58 58 68;
