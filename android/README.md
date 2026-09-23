@@ -2,7 +2,7 @@
 
 Cliente nativo do Lume para Android, desenvolvido e validado por módulos.
 
-O sistema visual móvel segue a landing oficial do Lume: fundo `#05080B`, ciano elétrico, superfícies escuras com borda fina, cantos amplos e hierarquia tipográfica limpa.
+O sistema visual móvel segue o aplicativo web autenticado do Lume: navegação raiz por Servidores, Conversas e Você, telas empilhadas para canais e chats, superfícies quase pretas e seleção em ciano.
 
 - login na conta existente;
 - sessão persistente sem armazenar a senha;

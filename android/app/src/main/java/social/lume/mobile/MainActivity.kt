@@ -139,36 +139,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showHome() {
-        val current = session ?: return showLogin()
+        session ?: return showLogin()
         activeView = ActiveView.HOME
         activeSpace = null
         activeChannel = null
         activeDm = null
         requestNotificationPermission()
-        val content = column().apply {
-            addView(brandHeader("Lume", "conectado como ${current.displayName}"))
-            addView(title("O que vamos fazer?"))
-            addView(label("Tudo que importa, sem ruído."))
-            addView(tileRow(
-                homeTile("✦", "Conversas", "Mensagens diretas") { loadDirectMessages() },
-                homeTile("◎", "Amigos", "Pessoas e presença") { loadFriends() },
-            ))
-            addView(tileRow(
-                homeTile("▦", "Servidores", "Comunidades e canais") { loadSpaces() },
-                homeTile("◉", "Ao vivo", "Entrar em uma chamada") { loadChannels() },
-            ))
-            addView(action("Pedidos de amizade") { loadFriendRequests() })
-            addView(action("Sair da conta") {
-                leaveCall(false)
-                realtimeEnabled = false
-                realtime?.close()
-                realtime = null
-                sessionStore.clear()
-                session = null
-                showLogin()
-            })
-        }
-        setContentView(wrap(content))
+        loadDirectMessages()
     }
 
     private fun connectRealtime(token: String) {
@@ -283,7 +260,7 @@ class MainActivity : AppCompatActivity() {
             showBusy("Buscando suas conversas…")
             runCatching { api.directMessages(current.token, current.userId) }
                 .onSuccess { showDirectMessages(it) }
-                .onFailure { showHome(); toast(it.message ?: "Erro ao carregar conversas.") }
+                .onFailure { showDirectMessages(emptyList()); toast(it.message ?: "Erro ao carregar conversas.") }
         }
     }
 
@@ -291,17 +268,16 @@ class MainActivity : AppCompatActivity() {
         activeView = ActiveView.DMS
         activeDm = null
         val content = column().apply {
-            addView(label("MENSAGENS DIRETAS"))
-            addView(title("Conversas"))
+            addView(screenHeader("Conversas", "Amigos") { loadFriends() })
+            addView(section("MENSAGENS DIRETAS"))
             if (conversations.isEmpty()) addView(label("Nenhuma conversa ainda. Abra uma pela lista de amigos."))
             conversations.forEach { dm ->
                 val preview = dm.preview?.replace('\n', ' ')?.take(60)
-                addView(action(if (preview == null) dm.name else "${dm.name}  ·  $preview") { loadDmMessages(dm) })
+                addView(listRow("●", dm.name, preview ?: "Toque para conversar") { loadDmMessages(dm) })
             }
-            addView(action("Iniciar conversa com amigo") { loadFriends() })
-            addView(action("Voltar") { showHome() })
+            addView(primaryAction("＋  Nova conversa") { loadFriends() })
         }
-        setContentView(wrap(content))
+        setContentView(appFrame(content, RootTab.DMS))
     }
 
     private fun loadFriends() {
@@ -318,12 +294,11 @@ class MainActivity : AppCompatActivity() {
         val current = session ?: return showLogin()
         activeView = ActiveView.FRIENDS
         val content = column().apply {
-            addView(label("PESSOAS"))
-            addView(title("Amigos"))
+            addView(backHeader("Amigos") { loadDirectMessages() })
             addView(label("Toque em uma pessoa para abrir a conversa."))
             if (friends.isEmpty()) addView(label("Sua lista de amigos está vazia."))
             friends.forEach { friend ->
-                addView(action("${presenceDot(friend.status)}  ${friend.name}  ·  ${presenceLabel(friend.status)}") {
+                addView(listRow(presenceDot(friend.status), friend.name, presenceLabel(friend.status)) {
                     lifecycleScope.launch {
                         showBusy("Abrindo conversa…")
                         runCatching { api.openDirectMessage(current.token, friend.id, current.userId) }
@@ -332,7 +307,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 })
             }
-            addView(action("Voltar") { showHome() })
+            addView(action("Pedidos de amizade") { loadFriendRequests() })
         }
         setContentView(wrap(content))
     }
@@ -417,8 +392,7 @@ class MainActivity : AppCompatActivity() {
         var replyToId: String? = null
         var replyLabel: TextView? = null
         val content = column().apply {
-            addView(label("MENSAGEM DIRETA"))
-            addView(title(dm.name))
+            addView(backHeader(dm.name, "Mensagem direta") { loadDirectMessages() })
             if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
             messages.forEach { message ->
                 val time = DateFormat.format("dd/MM · HH:mm", message.createdAt).toString()
@@ -456,7 +430,6 @@ class MainActivity : AppCompatActivity() {
                 filePicker.launch(arrayOf("image/*", "video/*", "audio/*", "application/pdf", "text/plain"))
             })
             addView(action("Atualizar conversa") { loadDmMessages(dm) })
-            addView(action("Voltar às conversas") { loadDirectMessages() })
         }
         setContentView(wrap(content))
     }
@@ -474,13 +447,12 @@ class MainActivity : AppCompatActivity() {
     private fun showSpaces(spaces: List<LumeSpace>) {
         activeView = ActiveView.SPACES
         val content = column().apply {
-            addView(label("SEUS SERVIDORES"))
-            addView(title("Escolha um espaço"))
+            addView(screenHeader("Servidores", "Ao vivo") { loadChannels() })
+            addView(section("SEUS ESPAÇOS"))
             if (spaces.isEmpty()) addView(label("Você ainda não participa de nenhum servidor."))
-            spaces.forEach { space -> addView(action(space.name) { loadSpaceChannels(space) }) }
-            addView(action("Voltar") { showHome() })
+            spaces.forEach { space -> addView(listRow(space.name.take(1).uppercase(), space.name, "Abrir canais") { loadSpaceChannels(space) }) }
         }
-        setContentView(wrap(content))
+        setContentView(appFrame(content, RootTab.SPACES))
     }
 
     private fun loadSpaceChannels(space: LumeSpace) {
@@ -497,21 +469,19 @@ class MainActivity : AppCompatActivity() {
         activeView = ActiveView.SPACE
         activeSpace = space
         val content = column().apply {
-            addView(label("SERVIDOR"))
-            addView(title(space.name))
+            addView(backHeader(space.name) { loadSpaces() })
             val textChannels = channels.filter { it.type == "text" }
             val voiceChannels = channels.filter { it.type == "voice" }
             addView(section("CANAIS DE TEXTO"))
             if (textChannels.isEmpty()) addView(label("Nenhum canal de texto disponível."))
-            textChannels.forEach { channel -> addView(action("#  ${channel.name}") { loadMessages(space, channel) }) }
+            textChannels.forEach { channel -> addView(listRow("#", channel.name, "Canal de texto") { loadMessages(space, channel) }) }
             addView(section("CANAIS DE VOZ"))
             if (voiceChannels.isEmpty()) addView(label("Nenhum canal de voz disponível."))
             voiceChannels.forEach { channel ->
-                addView(action("◉  ${channel.name}") {
+                addView(listRow("◉", channel.name, "Canal de voz") {
                     requestJoin(VoiceChannel(channel.id, channel.name, space.name))
                 })
             }
-            addView(action("Voltar aos servidores") { loadSpaces() })
         }
         setContentView(wrap(content))
     }
@@ -534,8 +504,7 @@ class MainActivity : AppCompatActivity() {
         var replyToId: String? = null
         var replyLabel: TextView? = null
         val content = column().apply {
-            addView(label(space.name.uppercase()))
-            addView(title("# ${channel.name}"))
+            addView(backHeader("# ${channel.name}", space.name) { loadSpaceChannels(space) })
             channel.topic?.let { addView(label(it)) }
             if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
             messages.forEach { message ->
@@ -577,7 +546,6 @@ class MainActivity : AppCompatActivity() {
                 filePicker.launch(arrayOf("image/*", "video/*", "audio/*", "application/pdf", "text/plain"))
             })
             addView(action("Atualizar conversa") { loadMessages(space, channel) })
-            addView(action("Voltar aos canais") { loadSpaceChannels(space) })
         }
         setContentView(wrap(content))
     }
@@ -596,14 +564,12 @@ class MainActivity : AppCompatActivity() {
         val current = session ?: return showLogin()
         activeView = ActiveView.VOICE_LIST
         val content = column().apply {
-            addView(title("Olá, ${current.displayName}"))
-            addView(label("Escolha um canal de voz"))
+            addView(backHeader("Canais de voz", current.displayName) { loadSpaces() })
             if (channels.isEmpty()) addView(label("Nenhum canal de voz disponível."))
             channels.forEach { channel ->
-                addView(action("${channel.spaceName}  ·  ${channel.name}") { requestJoin(channel) })
+                addView(listRow("◉", channel.name, channel.spaceName) { requestJoin(channel) })
             }
             addView(action("Atualizar") { loadChannels() })
-            addView(action("Voltar") { showHome() })
         }
         setContentView(wrap(content))
     }
@@ -639,27 +605,36 @@ class MainActivity : AppCompatActivity() {
         activeView = ActiveView.CALL
         val content = column().apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(label(channel.spaceName.uppercase()))
-            addView(title(channel.name))
+            addView(backHeader(channel.name, channel.spaceName) { leaveCall(); loadChannels() })
+            addView(section("NA CHAMADA"))
+            addView(participantCard(session?.displayName ?: "Você", true))
             addView(label("Conectado. O áudio das outras pessoas toca automaticamente."))
 
-            val mic = action("Silenciar microfone") {
+            val controls = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+            }
+            val mic = callControl("◉", "Microfone") {
                 microphoneMuted = !microphoneMuted
                 lifecycleScope.launch { room?.localParticipant?.setMicrophoneEnabled(!microphoneMuted) }
                 presence?.status(microphoneMuted, screenSharing)
-                (it as Button).text = if (microphoneMuted) "Ativar microfone" else "Silenciar microfone"
+                (it as Button).text = if (microphoneMuted) "○\nAtivar" else "◉\nMicrofone"
             }
-            addView(mic)
+            controls.addView(mic, weightedParams(64))
 
-            addView(primaryAction("Compartilhar minha tela") {
+            controls.addView(callControl("▣", "Tela") {
                 if (screenSharing) lifecycleScope.launch { stopScreenShare() }
                 else {
                     val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
                     screenCaptureLauncher.launch(manager.createScreenCaptureIntent())
                 }
-            })
+            }, weightedParams(64))
+            controls.addView(callControl("×", "Sair", danger = true) {
+                leaveCall()
+                loadChannels()
+            }, weightedParams(64))
+            addView(controls, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(72)).apply { bottomMargin = dp(8) })
             addView(label("O Android sempre pedirá sua confirmação antes de transmitir a tela."))
-            addView(action("Sair da chamada") { leaveCall(); loadChannels() })
         }
         setContentView(wrap(content))
     }
@@ -721,41 +696,207 @@ class MainActivity : AppCompatActivity() {
 
     private fun wrap(content: LinearLayout) = ScrollView(this).apply {
         isFillViewport = true
-        background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.rgb(5, 9, 11), Color.rgb(7, 17, 20), Color.rgb(5, 9, 11)),
-        )
+        setBackgroundColor(APP_BG)
         addView(content, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
     private fun column() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(18), dp(30), dp(18), dp(36))
+        setPadding(dp(14), dp(8), dp(14), dp(20))
     }
 
     private fun title(text: String) = TextView(this).apply {
         this.text = text
-        textSize = 28f
-        setTextColor(Color.rgb(243, 250, 252))
+        textSize = 22f
+        setTextColor(TEXT_PRIMARY)
         setTypeface(typeface, Typeface.BOLD)
-        letterSpacing = -0.02f
-        setPadding(0, dp(10), 0, dp(8))
+        setPadding(0, dp(8), 0, dp(6))
     }
 
     private fun label(text: String) = TextView(this).apply {
         this.text = text
         textSize = 14f
-        setTextColor(Color.rgb(148, 171, 178))
+        setTextColor(TEXT_SECONDARY)
         setPadding(0, dp(8), 0, dp(16))
     }
 
     private fun section(text: String) = TextView(this).apply {
         this.text = text
         textSize = 11f
-        setTextColor(Color.rgb(82, 217, 255))
+        setTextColor(ACCENT)
         setTypeface(typeface, Typeface.BOLD)
         letterSpacing = 0.12f
-        setPadding(0, dp(22), 0, dp(10))
+        setPadding(dp(2), dp(18), 0, dp(8))
+    }
+
+    private fun appFrame(content: LinearLayout, selected: RootTab): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(APP_BG)
+        addView(wrap(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        addView(bottomDock(selected), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(62)))
+    }
+
+    private fun bottomDock(selected: RootTab) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER
+        setPadding(dp(6), dp(5), dp(6), dp(5))
+        background = roundedBackground(Color.rgb(8, 11, 13), BORDER, 18)
+        addView(dockItem("▦", "Servidores", selected == RootTab.SPACES) { loadSpaces() }, weightedParams(52))
+        addView(dockItem("●", "Conversas", selected == RootTab.DMS) { loadDirectMessages() }, weightedParams(52))
+        addView(dockItem("◎", "Você", selected == RootTab.YOU) { showYou() }, weightedParams(52))
+    }
+
+    private fun dockItem(icon: String, text: String, active: Boolean, click: () -> Unit) = MaterialButton(this).apply {
+        this.text = "$icon\n$text"
+        isAllCaps = false
+        textSize = 11f
+        gravity = Gravity.CENTER
+        minHeight = 0
+        minimumHeight = 0
+        cornerRadius = dp(14)
+        backgroundTintList = ColorStateList.valueOf(if (active) Color.rgb(13, 39, 46) else Color.TRANSPARENT)
+        setTextColor(if (active) ACCENT else TEXT_SECONDARY)
+        insetTop = 0
+        insetBottom = 0
+        setOnClickListener { click() }
+    }
+
+    private fun screenHeader(title: String, actionLabel: String, actionClick: () -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(2), dp(8), dp(2), dp(10))
+        addView(TextView(context).apply {
+            text = title
+            textSize = 20f
+            setTextColor(TEXT_PRIMARY)
+            setTypeface(typeface, Typeface.BOLD)
+        }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { gravity = Gravity.CENTER_VERTICAL })
+        addView(compactButton(actionLabel, actionClick), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40)))
+    }
+
+    private fun backHeader(title: String, subtitle: String? = null, click: () -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(0, dp(6), 0, dp(12))
+        addView(compactButton("‹", click), LinearLayout.LayoutParams(dp(42), dp(42)).apply { marginEnd = dp(8) })
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(TextView(context).apply {
+                text = title
+                textSize = 18f
+                setTextColor(TEXT_PRIMARY)
+                setTypeface(typeface, Typeface.BOLD)
+            })
+            if (!subtitle.isNullOrBlank()) addView(TextView(context).apply {
+                text = subtitle
+                textSize = 11f
+                setTextColor(TEXT_TERTIARY)
+            })
+        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+    }
+
+    private fun listRow(icon: String, heading: String, subtitle: String, click: () -> Unit) = MaterialCardView(this).apply {
+        radius = dp(14).toFloat()
+        cardElevation = 0f
+        setCardBackgroundColor(Color.rgb(9, 10, 12))
+        strokeColor = BORDER
+        strokeWidth = dp(1)
+        isClickable = true
+        isFocusable = true
+        setOnClickListener { click() }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(68)).apply { bottomMargin = dp(8) }
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(13), dp(8), dp(12), dp(8))
+            addView(TextView(context).apply {
+                text = icon
+                textSize = 19f
+                gravity = Gravity.CENTER
+                setTextColor(ACCENT)
+                background = roundedBackground(Color.rgb(13, 28, 33), Color.rgb(23, 56, 65), 13)
+            }, LinearLayout.LayoutParams(dp(42), dp(42)).apply { marginEnd = dp(12) })
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(TextView(context).apply {
+                    text = heading
+                    textSize = 15f
+                    setTextColor(TEXT_PRIMARY)
+                    setTypeface(typeface, Typeface.BOLD)
+                    maxLines = 1
+                })
+                addView(TextView(context).apply {
+                    text = subtitle
+                    textSize = 12f
+                    setTextColor(TEXT_TERTIARY)
+                    maxLines = 1
+                })
+            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(TextView(context).apply {
+                text = "›"
+                textSize = 22f
+                setTextColor(TEXT_TERTIARY)
+            })
+        })
+    }
+
+    private fun participantCard(name: String, self: Boolean) = MaterialCardView(this).apply {
+        radius = dp(18).toFloat()
+        cardElevation = 0f
+        setCardBackgroundColor(Color.rgb(9, 10, 12))
+        strokeColor = if (self) ACCENT else BORDER
+        strokeWidth = dp(if (self) 2 else 1)
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(16), dp(24), dp(16), dp(18))
+            addView(ImageView(context).apply { setImageResource(R.drawable.ic_lume) }, LinearLayout.LayoutParams(dp(66), dp(66)))
+            addView(TextView(context).apply {
+                text = if (self) "$name  (você)" else name
+                textSize = 15f
+                setTextColor(TEXT_PRIMARY)
+                setTypeface(typeface, Typeface.BOLD)
+                setPadding(0, dp(12), 0, 0)
+            })
+        })
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(16) }
+    }
+
+    private fun callControl(icon: String, label: String, danger: Boolean = false, click: (android.view.View) -> Unit) = MaterialButton(this).apply {
+        text = "$icon\n$label"
+        isAllCaps = false
+        textSize = 11f
+        gravity = Gravity.CENTER
+        minHeight = 0
+        minimumHeight = 0
+        cornerRadius = dp(18)
+        backgroundTintList = ColorStateList.valueOf(if (danger) Color.rgb(73, 24, 32) else Color.rgb(14, 16, 18))
+        strokeColor = ColorStateList.valueOf(if (danger) Color.rgb(252, 165, 165) else BORDER)
+        strokeWidth = dp(1)
+        setTextColor(if (danger) Color.rgb(252, 165, 165) else TEXT_PRIMARY)
+        insetTop = 0
+        insetBottom = 0
+        setOnClickListener(click)
+    }
+
+    private fun showYou() {
+        val current = session ?: return showLogin()
+        val content = column().apply {
+            addView(screenHeader("Você", "Pedidos") { loadFriendRequests() })
+            addView(participantCard(current.displayName, true))
+            addView(listRow("◎", "Amigos", "Pessoas e presença") { loadFriends() })
+            addView(listRow("◉", "Canais de voz", "Chamadas disponíveis") { loadChannels() })
+            addView(action("Sair da conta") {
+                leaveCall(false)
+                realtimeEnabled = false
+                realtime?.close()
+                realtime = null
+                sessionStore.clear()
+                session = null
+                showLogin()
+            })
+        }
+        setContentView(appFrame(content, RootTab.YOU))
     }
 
     private fun brandHeader(name: String, subtitle: String) = LinearLayout(this).apply {
@@ -843,10 +984,10 @@ class MainActivity : AppCompatActivity() {
         onAttachment: (LumeAttachment) -> Unit,
     ) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(16), dp(12), dp(16), dp(12))
-        background = roundedBackground(Color.rgb(11, 20, 23), Color.rgb(24, 45, 51), 18)
+        setPadding(dp(8), dp(10), dp(8), dp(10))
+        background = roundedBackground(Color.TRANSPARENT, Color.TRANSPARENT, 0)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            bottomMargin = dp(10)
+            bottomMargin = dp(2)
         }
         addView(TextView(context).apply {
             text = "${message.author}  ·  $time${if (message.edited) "  · editada" else ""}"
@@ -913,6 +1054,11 @@ class MainActivity : AppCompatActivity() {
     private fun weightedParams() = LinearLayout.LayoutParams(0, dp(42), 1f).apply {
         marginEnd = dp(4)
         topMargin = dp(6)
+    }
+
+    private fun weightedParams(height: Int) = LinearLayout.LayoutParams(0, dp(height), 1f).apply {
+        marginStart = dp(2)
+        marginEnd = dp(2)
     }
 
     private fun editMessage(message: LumeMessage, dm: Boolean, reload: () -> Unit) {
@@ -1039,16 +1185,16 @@ class MainActivity : AppCompatActivity() {
         isAllCaps = false
         textSize = 15f
         setTypeface(typeface, Typeface.BOLD)
-        cornerRadius = dp(15)
-        backgroundTintList = ColorStateList.valueOf(Color.rgb(10, 19, 22))
-        strokeColor = ColorStateList.valueOf(Color.rgb(31, 48, 57))
+        cornerRadius = dp(12)
+        backgroundTintList = ColorStateList.valueOf(Color.rgb(9, 10, 12))
+        strokeColor = ColorStateList.valueOf(BORDER)
         strokeWidth = dp(1)
         setTextColor(Color.rgb(233, 241, 245))
         gravity = Gravity.CENTER_VERTICAL or Gravity.START
         insetTop = 0
         insetBottom = 0
         setOnClickListener(click)
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)).apply { bottomMargin = dp(10) }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply { bottomMargin = dp(8) }
     }
 
     private fun primaryAction(text: String, click: (android.view.View) -> Unit) = MaterialButton(this).apply {
@@ -1056,14 +1202,14 @@ class MainActivity : AppCompatActivity() {
         isAllCaps = false
         textSize = 15f
         setTypeface(typeface, Typeface.BOLD)
-        cornerRadius = dp(15)
-        backgroundTintList = ColorStateList.valueOf(Color.rgb(19, 205, 234))
-        setTextColor(Color.rgb(3, 16, 20))
+        cornerRadius = dp(12)
+        backgroundTintList = ColorStateList.valueOf(ACCENT)
+        setTextColor(Color.rgb(3, 12, 14))
         gravity = Gravity.CENTER
         insetTop = 0
         insetBottom = 0
         setOnClickListener(click)
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)).apply { bottomMargin = dp(10) }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply { bottomMargin = dp(8) }
     }
 
     private fun roundedBackground(fill: Int, stroke: Int, radius: Int) = GradientDrawable().apply {
@@ -1093,9 +1239,16 @@ class MainActivity : AppCompatActivity() {
     )
 
     private enum class ActiveView { HOME, DMS, DM, FRIENDS, REQUESTS, SPACES, SPACE, CHANNEL, VOICE_LIST, CALL }
+    private enum class RootTab { SPACES, DMS, YOU }
 
     private companion object {
         const val MESSAGE_CHANNEL = "lume_messages"
         const val MAX_MOBILE_UPLOAD_BYTES = 25 * 1024 * 1024
+        val APP_BG: Int = Color.rgb(5, 5, 5)
+        val ACCENT: Int = Color.rgb(0, 209, 255)
+        val BORDER: Int = Color.rgb(31, 39, 43)
+        val TEXT_PRIMARY: Int = Color.rgb(239, 239, 239)
+        val TEXT_SECONDARY: Int = Color.rgb(160, 160, 170)
+        val TEXT_TERTIARY: Int = Color.rgb(92, 92, 104)
     }
 }
