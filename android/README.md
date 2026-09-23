@@ -11,6 +11,8 @@ Cliente nativo do Lume para Android, desenvolvido e validado por módulos.
 - mensagens e presença atualizadas em tempo real enquanto o aplicativo está ativo;
 - notificações Android de novas mensagens;
 - envio, aceite e recusa de pedidos de amizade;
+- respostas, reações, edição e exclusão de mensagens;
+- envio e abertura autenticada de imagens, vídeos, áudios, PDFs e textos (até 25 MB no cliente móvel);
 - lista dos canais de voz acessíveis;
 - áudio bidirecional pelo LiveKit;
 - compartilhamento nativo de tela pelo MediaProjection;

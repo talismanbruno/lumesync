@@ -10,9 +10,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.text.InputType
 import android.text.format.DateFormat
 import android.view.Gravity
@@ -25,8 +27,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import io.livekit.android.LiveKit
 import io.livekit.android.audio.ScreenAudioCapturer
@@ -38,6 +42,7 @@ import io.livekit.android.room.track.screencapture.ScreenCaptureParams
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import org.json.JSONObject
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private val api = LumeApi()
@@ -49,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private var activeSpace: LumeSpace? = null
     private var activeChannel: LumeChannel? = null
     private var activeDm: LumeDm? = null
+    private var pendingUpload: UploadTarget? = null
     private var room: Room? = null
     private var presence: PresenceSocket? = null
     private var pendingChannel: VoiceChannel? = null
@@ -63,6 +69,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) uploadSelectedFile(uri) else pendingUpload = null
+    }
 
     private val screenCaptureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode != Activity.RESULT_OK || result.data == null) {
@@ -181,6 +191,8 @@ class MainActivity : AppCompatActivity() {
                     showMessageNotification("Nova mensagem direta", message)
                 }
             }
+            "message_updated", "message_deleted", "dm_message_updated", "dm_message_deleted",
+            "reaction_added", "reaction_removed" -> reloadActiveConversation()
             "presence_update" -> if (activeView == ActiveView.FRIENDS) loadFriends()
             "friend_request_received" -> {
                 notify("Novo pedido de amizade", "Abra o Lume para responder.")
@@ -190,6 +202,18 @@ class MainActivity : AppCompatActivity() {
                 if (activeView == ActiveView.REQUESTS) loadFriendRequests()
                 if (activeView == ActiveView.FRIENDS) loadFriends()
             }
+        }
+    }
+
+    private fun reloadActiveConversation() {
+        when (activeView) {
+            ActiveView.CHANNEL -> {
+                val space = activeSpace ?: return
+                val channel = activeChannel ?: return
+                loadMessages(space, channel)
+            }
+            ActiveView.DM -> activeDm?.let { loadDmMessages(it) }
+            else -> Unit
         }
     }
 
@@ -370,15 +394,27 @@ class MainActivity : AppCompatActivity() {
         val current = session ?: return showLogin()
         activeView = ActiveView.DM
         activeDm = dm
+        var replyToId: String? = null
+        var replyLabel: TextView? = null
         val content = column().apply {
             addView(label("MENSAGEM DIRETA"))
             addView(title(dm.name))
             if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
             messages.forEach { message ->
                 val time = DateFormat.format("dd/MM · HH:mm", message.createdAt).toString()
-                addView(messageCard(message.author, time, message.content, message.edited))
+                addView(messageCard(
+                    message = message,
+                    time = time,
+                    currentUserId = current.userId,
+                    onReply = { replyToId = message.id; replyLabel?.text = "Respondendo a ${message.author}" },
+                    onReact = { emoji, remove -> realtime?.reaction(message.id, emoji, remove) },
+                    onEdit = { editMessage(message, true) { loadDmMessages(dm) } },
+                    onDelete = { confirmDelete(message, true) { loadDmMessages(dm) } },
+                    onAttachment = { openAttachment(it) },
+                ))
             }
 
+            replyLabel = label("").also { addView(it) }
             val composer = input("Mensagem para ${dm.name}").apply {
                 isSingleLine = false
                 maxLines = 5
@@ -390,10 +426,14 @@ class MainActivity : AppCompatActivity() {
                 if (text.isBlank()) return@action toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
                 lifecycleScope.launch {
-                    runCatching { api.sendDmMessage(current.token, dm.id, text) }
+                    runCatching { api.sendDmMessage(current.token, dm.id, text, replyToId = replyToId) }
                         .onSuccess { loadDmMessages(dm) }
                         .onFailure { error -> sendButton.isEnabled = true; toast(error.message ?: "Não foi possível enviar.") }
                 }
+            })
+            addView(action("Anexar arquivo") {
+                pendingUpload = UploadTarget(dm = dm, replyToId = replyToId)
+                filePicker.launch(arrayOf("image/*", "video/*", "audio/*", "application/pdf", "text/plain"))
             })
             addView(action("Atualizar conversa") { loadDmMessages(dm) })
             addView(action("Voltar às conversas") { loadDirectMessages() })
@@ -471,6 +511,8 @@ class MainActivity : AppCompatActivity() {
         activeView = ActiveView.CHANNEL
         activeSpace = space
         activeChannel = channel
+        var replyToId: String? = null
+        var replyLabel: TextView? = null
         val content = column().apply {
             addView(label(space.name.uppercase()))
             addView(title("# ${channel.name}"))
@@ -478,9 +520,19 @@ class MainActivity : AppCompatActivity() {
             if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
             messages.forEach { message ->
                 val time = DateFormat.format("dd/MM · HH:mm", message.createdAt).toString()
-                addView(messageCard(message.author, time, message.content, message.edited))
+                addView(messageCard(
+                    message = message,
+                    time = time,
+                    currentUserId = current.userId,
+                    onReply = { replyToId = message.id; replyLabel?.text = "Respondendo a ${message.author}" },
+                    onReact = { emoji, remove -> realtime?.reaction(message.id, emoji, remove) },
+                    onEdit = { editMessage(message, false) { loadMessages(space, channel) } },
+                    onDelete = { confirmDelete(message, false) { loadMessages(space, channel) } },
+                    onAttachment = { openAttachment(it) },
+                ))
             }
 
+            replyLabel = label("").also { addView(it) }
             val composer = input("Mensagem em #${channel.name}").apply {
                 isSingleLine = false
                 maxLines = 5
@@ -492,13 +544,17 @@ class MainActivity : AppCompatActivity() {
                 if (text.isBlank()) return@action toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
                 lifecycleScope.launch {
-                    runCatching { api.sendMessage(current.token, channel.id, text) }
+                    runCatching { api.sendMessage(current.token, channel.id, text, replyToId = replyToId) }
                         .onSuccess { loadMessages(space, channel) }
                         .onFailure { error ->
                             sendButton.isEnabled = true
                             toast(error.message ?: "Não foi possível enviar.")
                         }
                 }
+            })
+            addView(action("Anexar arquivo") {
+                pendingUpload = UploadTarget(space = space, channel = channel, replyToId = replyToId)
+                filePicker.launch(arrayOf("image/*", "video/*", "audio/*", "application/pdf", "text/plain"))
             })
             addView(action("Atualizar conversa") { loadMessages(space, channel) })
             addView(action("Voltar aos canais") { loadSpaceChannels(space) })
@@ -676,7 +732,16 @@ class MainActivity : AppCompatActivity() {
         setPadding(0, dp(22), 0, dp(10))
     }
 
-    private fun messageCard(author: String, time: String, content: String, edited: Boolean) = LinearLayout(this).apply {
+    private fun messageCard(
+        message: LumeMessage,
+        time: String,
+        currentUserId: String,
+        onReply: () -> Unit,
+        onReact: (String, Boolean) -> Unit,
+        onEdit: () -> Unit,
+        onDelete: () -> Unit,
+        onAttachment: (LumeAttachment) -> Unit,
+    ) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(12), dp(16), dp(12))
         setBackgroundColor(Color.rgb(13, 23, 26))
@@ -684,17 +749,155 @@ class MainActivity : AppCompatActivity() {
             bottomMargin = dp(10)
         }
         addView(TextView(context).apply {
-            text = "$author  ·  $time${if (edited) "  · editada" else ""}"
+            text = "${message.author}  ·  $time${if (message.edited) "  · editada" else ""}"
             textSize = 13f
             setTextColor(Color.rgb(82, 217, 255))
             setTypeface(typeface, Typeface.BOLD)
         })
-        addView(TextView(context).apply {
-            text = content.ifBlank { "Mensagem sem texto" }
-            textSize = 16f
-            setTextColor(Color.rgb(243, 250, 252))
-            setPadding(0, dp(6), 0, 0)
-        })
+        if (message.replyAuthor != null) {
+            addView(TextView(context).apply {
+                text = "↳ ${message.replyAuthor}: ${message.replyContent.orEmpty().take(90)}"
+                textSize = 13f
+                setTextColor(Color.rgb(157, 181, 189))
+                setPadding(0, dp(6), 0, 0)
+            })
+        }
+        if (message.content.isNotBlank()) {
+            addView(TextView(context).apply {
+                text = message.content
+                textSize = 16f
+                setTextColor(Color.rgb(243, 250, 252))
+                setPadding(0, dp(6), 0, 0)
+            })
+        }
+        message.attachments.forEach { attachment ->
+            addView(compactButton("📎 ${attachment.originalName}") { onAttachment(attachment) })
+        }
+
+        val counts = message.reactions.groupingBy { it.emoji }.eachCount()
+        val reactions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            listOf("👍", "❤️", "😂").forEach { emoji ->
+                val mine = message.reactions.any { it.emoji == emoji && it.userId == currentUserId }
+                addView(compactButton("$emoji ${counts[emoji] ?: 0}") { onReact(emoji, mine) }, weightedParams())
+            }
+        }
+        addView(reactions)
+
+        val actions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(compactButton("Responder") { onReply() }, weightedParams())
+            if (message.userId == currentUserId) {
+                addView(compactButton("Editar") { onEdit() }, weightedParams())
+                addView(compactButton("Excluir") { onDelete() }, weightedParams())
+            }
+        }
+        addView(actions)
+    }
+
+    private fun compactButton(text: String, click: () -> Unit) = Button(this).apply {
+        this.text = text
+        isAllCaps = false
+        textSize = 12f
+        minHeight = 0
+        minimumHeight = 0
+        setPadding(dp(6), dp(4), dp(6), dp(4))
+        setOnClickListener { click() }
+    }
+
+    private fun weightedParams() = LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+        marginEnd = dp(4)
+        topMargin = dp(6)
+    }
+
+    private fun editMessage(message: LumeMessage, dm: Boolean, reload: () -> Unit) {
+        val current = session ?: return
+        val editor = input("Editar mensagem").apply {
+            setText(message.content)
+            setSelection(text.length)
+            isSingleLine = false
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Editar mensagem")
+            .setView(editor)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Salvar") { _, _ ->
+                val content = editor.text.toString().trim()
+                if (content.isBlank()) return@setPositiveButton toast("A mensagem não pode ficar vazia.")
+                lifecycleScope.launch {
+                    runCatching { api.editMessage(current.token, message.id, content, dm) }
+                        .onSuccess { reload() }
+                        .onFailure { toast(it.message ?: "Não foi possível editar.") }
+                }
+            }
+            .show()
+    }
+
+    private fun confirmDelete(message: LumeMessage, dm: Boolean, reload: () -> Unit) {
+        val current = session ?: return
+        AlertDialog.Builder(this)
+            .setTitle("Excluir mensagem?")
+            .setMessage("Essa ação não pode ser desfeita.")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Excluir") { _, _ ->
+                lifecycleScope.launch {
+                    runCatching { api.deleteMessage(current.token, message.id, dm) }
+                        .onSuccess { reload() }
+                        .onFailure { toast(it.message ?: "Não foi possível excluir.") }
+                }
+            }
+            .show()
+    }
+
+    private fun uploadSelectedFile(uri: Uri) {
+        val target = pendingUpload ?: return
+        pendingUpload = null
+        val current = session ?: return showLogin()
+        val name = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        } ?: "arquivo"
+        lifecycleScope.launch {
+            showBusy("Enviando $name…")
+            runCatching {
+                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: error("Não foi possível abrir o arquivo")
+                require(bytes.size <= MAX_MOBILE_UPLOAD_BYTES) { "No celular, envie arquivos de até 25 MB." }
+                val attachment = api.upload(current.token, name, bytes)
+                if (target.dm != null) {
+                    api.sendDmMessage(current.token, target.dm.id, "", listOf(attachment.id), target.replyToId)
+                } else {
+                    val channel = target.channel ?: error("Canal indisponível")
+                    api.sendMessage(current.token, channel.id, "", listOf(attachment.id), target.replyToId)
+                }
+            }.onSuccess {
+                if (target.dm != null) loadDmMessages(target.dm)
+                else loadMessages(target.space!!, target.channel!!)
+            }.onFailure {
+                if (target.dm != null) loadDmMessages(target.dm)
+                else loadMessages(target.space!!, target.channel!!)
+                toast(it.message ?: "Não foi possível enviar o arquivo.")
+            }
+        }
+    }
+
+    private fun openAttachment(attachment: LumeAttachment) {
+        val current = session ?: return
+        lifecycleScope.launch {
+            toast("Baixando ${attachment.originalName}…")
+            runCatching {
+                val bytes = api.download(current.token, attachment.filename)
+                val sharedDir = File(cacheDir, "shared").apply { mkdirs() }
+                val safeName = attachment.originalName.replace(Regex("[^A-Za-z0-9._ -]"), "_")
+                val file = File(sharedDir, safeName).apply { writeBytes(bytes) }
+                FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
+            }.onSuccess { uri ->
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, attachment.mimetype)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runCatching { startActivity(intent) }.onFailure { toast("Nenhum aplicativo consegue abrir este arquivo.") }
+            }.onFailure { toast(it.message ?: "Não foi possível abrir o arquivo.") }
+        }
     }
 
     private fun presenceDot(status: String) = when (status) {
@@ -744,9 +947,17 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    private data class UploadTarget(
+        val space: LumeSpace? = null,
+        val channel: LumeChannel? = null,
+        val dm: LumeDm? = null,
+        val replyToId: String? = null,
+    )
+
     private enum class ActiveView { HOME, DMS, DM, FRIENDS, REQUESTS, SPACES, SPACE, CHANNEL, VOICE_LIST, CALL }
 
     private companion object {
         const val MESSAGE_CHANNEL = "lume_messages"
+        const val MAX_MOBILE_UPLOAD_BYTES = 25 * 1024 * 1024
     }
 }
