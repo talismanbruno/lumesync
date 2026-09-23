@@ -1,0 +1,119 @@
+package social.lume.mobile
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+
+data class LumeSession(val token: String, val displayName: String)
+data class VoiceChannel(val id: String, val name: String, val spaceName: String)
+data class VoiceCredentials(val token: String, val url: String)
+
+class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
+    private val jsonType = "application/json; charset=utf-8".toMediaType()
+    private val http = OkHttpClient.Builder().retryOnConnectionFailure(true).build()
+
+    suspend fun login(username: String, password: String): LumeSession = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("username", username).put("password", password)
+        val json = execute("POST", "auth/login", null, body)
+        val user = json.getJSONObject("user")
+        LumeSession(
+            token = json.getString("token"),
+            displayName = user.optString("displayName").ifBlank { user.getString("username") },
+        )
+    }
+
+    suspend fun voiceChannels(token: String): List<VoiceChannel> = withContext(Dispatchers.IO) {
+        val spaces = executeArray("GET", "spaces", token)
+        buildList {
+            for (i in 0 until spaces.length()) {
+                val space = spaces.getJSONObject(i)
+                val channels = executeArray("GET", "spaces/${space.getString("id")}/channels", token)
+                for (j in 0 until channels.length()) {
+                    val channel = channels.getJSONObject(j)
+                    if (channel.optString("type") == "voice") {
+                        add(VoiceChannel(channel.getString("id"), channel.getString("name"), space.getString("name")))
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun voiceCredentials(token: String, channelId: String): VoiceCredentials = withContext(Dispatchers.IO) {
+        val json = execute("POST", "livekit/token", token, JSONObject().put("channelId", channelId))
+        VoiceCredentials(json.getString("token"), json.getString("url"))
+    }
+
+    fun openPresenceSocket(token: String, channelId: String): PresenceSocket {
+        val presence = PresenceSocket(token, channelId)
+        val request = Request.Builder().url(EndpointConfig.websocket(baseUrl)).build()
+        presence.socket = http.newWebSocket(request, presence)
+        return presence
+    }
+
+    private fun execute(method: String, path: String, token: String?, body: JSONObject? = null): JSONObject {
+        val response = request(method, path, token, body).execute()
+        response.use {
+            val text = it.body?.string().orEmpty()
+            if (!it.isSuccessful) throw IOException(errorMessage(text, it.code))
+            return if (text.isBlank()) JSONObject() else JSONObject(text)
+        }
+    }
+
+    private fun executeArray(method: String, path: String, token: String?): JSONArray {
+        val response = request(method, path, token, null).execute()
+        response.use {
+            val text = it.body?.string().orEmpty()
+            if (!it.isSuccessful) throw IOException(errorMessage(text, it.code))
+            return JSONArray(text)
+        }
+    }
+
+    private fun request(method: String, path: String, token: String?, body: JSONObject?): okhttp3.Call {
+        val builder = Request.Builder().url(EndpointConfig.api(baseUrl, path)).header("Accept", "application/json")
+        if (token != null) builder.header("Authorization", "Bearer $token")
+        val requestBody = body?.toString()?.toRequestBody(jsonType)
+        builder.method(method, if (method == "GET") null else requestBody ?: "{}".toRequestBody(jsonType))
+        return http.newCall(builder.build())
+    }
+
+    private fun errorMessage(text: String, code: Int): String = runCatching {
+        JSONObject(text).optString("error").ifBlank { "Erro $code no servidor" }
+    }.getOrDefault("Erro $code no servidor")
+}
+
+class PresenceSocket(private val token: String, private val channelId: String) : WebSocketListener() {
+    lateinit var socket: WebSocket
+
+    override fun onOpen(webSocket: WebSocket, response: Response) {
+        webSocket.send(JSONObject().put("type", "auth").put("token", token).toString())
+        webSocket.send(JSONObject().put("type", "voice_join").put("channelId", channelId).toString())
+    }
+
+    fun status(muted: Boolean, sharing: Boolean) {
+        if (!::socket.isInitialized) return
+        socket.send(
+            JSONObject()
+                .put("type", "voice_status")
+                .put("isMuted", muted)
+                .put("isDeafened", false)
+                .put("isCameraOn", false)
+                .put("isScreenSharing", sharing)
+                .toString(),
+        )
+    }
+
+    fun leave() {
+        if (!::socket.isInitialized) return
+        socket.send(JSONObject().put("type", "voice_leave").toString())
+        socket.close(1000, "Saindo da chamada")
+    }
+}

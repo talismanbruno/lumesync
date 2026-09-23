@@ -1,0 +1,50 @@
+name: Lume Android APK
+
+on:
+  push:
+    tags:
+      - 'android-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - name: Set up Java 17
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Test and build APK
+        run: gradle testDebugUnitTest assembleDebug --stacktrace
+      - name: Name APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/lume-mobile-${GITHUB_REF_NAME:-manual}.apk"
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lume-mobile-apk
+          path: android/app/build/outputs/apk/debug/lume-mobile-*.apk
+          if-no-files-found: error
+      - name: Publish tagged APK
+        if: startsWith(github.ref, 'refs/tags/android-v')
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          android/app/build/outputs/apk/debug/lume-mobile-*.apk
+          --title "Lume Mobile ${GITHUB_REF_NAME#android-v}"
+          --notes "Beta Android focada em chamadas e compartilhamento nativo de tela. Instalação direta para testes."
+          --prerelease

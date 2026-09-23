@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.Lume" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/lume_bg</item>
+        <item name="android:navigationBarColor">@color/lume_bg</item>
+        <item name="android:colorAccent">@color/lume_cyan</item>
+        <item name="colorPrimary">@color/lume_cyan</item>
+        <item name="colorOnPrimary">@color/lume_bg</item>
+        <item name="android:windowBackground">@color/lume_bg</item>
+    </style>
+</resources>

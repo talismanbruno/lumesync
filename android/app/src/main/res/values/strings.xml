@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Lume Mobile Beta</string>
+    <string name="call_channel_name">Chamada do Lume</string>
+    <string name="call_notification">Chamada do Lume em andamento</string>
+</resources>
