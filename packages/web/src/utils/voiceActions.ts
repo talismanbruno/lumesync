@@ -7,6 +7,7 @@ import { getChannelOrigin } from '../stores/spaceStore';
 import { broadcastVoiceStatus, broadcastDeafenViaLiveKit } from './voice';
 import { CAMERA_PRESET, startScreenShare, stopScreenShare } from './screenShare';
 import { isElectron } from '../platform/platform';
+import { hasAndroidNativeHost, startAndroidScreenShare, stopAndroidScreenShare } from '../platform/androidBridge';
 
 /**
  * One-shot flag used to distinguish user-initiated camera-off from unexpected
@@ -112,7 +113,8 @@ export async function handleScreenShareAction(): Promise<void> {
     return;
   }
   const isScreenSharing = useVoiceStore.getState().isScreenSharing;
-  if (!isScreenSharing && !isElectron() && !navigator.mediaDevices?.getDisplayMedia) {
+  const usesNativeAndroidCapture = hasAndroidNativeHost();
+  if (!isScreenSharing && !usesNativeAndroidCapture && !isElectron() && !navigator.mediaDevices?.getDisplayMedia) {
     useUIStore.getState().addToast(
       'Este navegador não permite compartilhar a tela. Você ainda pode assistir ao compartilhamento de outras pessoas.',
       'warning',
@@ -122,7 +124,10 @@ export async function handleScreenShareAction(): Promise<void> {
   }
   screenShareActionPending = true;
   try {
-    if (!isScreenSharing) {
+    if (usesNativeAndroidCapture) {
+      if (isScreenSharing) await stopAndroidScreenShare();
+      else await startAndroidScreenShare();
+    } else if (!isScreenSharing) {
       const started = await startScreenShare(room);
       if (started) broadcastVoiceStatus();
     } else {
@@ -145,6 +150,10 @@ let screenShareActionPending = false;
 export function handleDisconnectAction(): void {
   const voice = useVoiceStore.getState();
   const { activeDmCall, currentVoiceChannelId, disconnectFn } = voice;
+
+  if (voice.isScreenSharing && hasAndroidNativeHost()) {
+    void stopAndroidScreenShare().catch((err) => console.error('[voiceActions] Failed to stop native screen share:', err));
+  }
 
   if (activeDmCall) {
     const origin = voice.callOrigin || getChannelOrigin(activeDmCall.dmChannelId);

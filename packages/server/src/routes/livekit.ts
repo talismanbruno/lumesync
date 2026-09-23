@@ -16,14 +16,14 @@ import {
 } from '../utils/voiceCapacity.js';
 
 export async function livekitRoutes(app: FastifyInstance): Promise<void> {
-  app.post<{ Body: LiveKitTokenRequest & { dmChannelId?: string } }>('/api/livekit/token', {
+  app.post<{ Body: LiveKitTokenRequest }>('/api/livekit/token', {
     preHandler: authenticate,
   }, async (request, reply) => {
     if (!config.livekit.apiKey || !config.livekit.apiSecret) {
       return reply.code(503).send({ error: 'Voice/video is not configured on this server', statusCode: 503 });
     }
 
-    const { channelId, dmChannelId } = request.body as { channelId?: string; dmChannelId?: string };
+    const { channelId, dmChannelId, nativeScreenShare = false } = request.body;
 
     // Determine room name based on channel type
     let roomName: string;
@@ -68,29 +68,39 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(400).send({ error: 'channelId or dmChannelId is required', statusCode: 400 });
     }
 
-    const currentRoomId = connectionManager.getUserRoom(request.userId)?.roomId ?? null;
-    const reservations = getVoiceReservationCounts(request.userId, capacityRoomId);
-    const rejection = evaluateVoiceCapacity({
-      ...readVoiceCapacityLimits(),
-      targetRoomId: capacityRoomId,
-      currentRoomId,
-      roomParticipants: connectionManager.getRoomParticipants(capacityRoomId).size,
-      totalParticipants: connectionManager.getOperationalStats().voiceParticipants,
-      reservedForRoom: reservations.room,
-      reservedTotal: reservations.total,
-    });
-    if (rejection) {
-      const error = rejection === 'room_full'
-        ? 'This call has reached its participant limit'
-        : 'Voice capacity is temporarily full on this instance';
-      return reply.code(429).send({ error, statusCode: 429, reason: rejection });
+    if (nativeScreenShare && !canStream) {
+      return reply.code(403).send({ error: 'Missing STREAM permission', statusCode: 403 });
     }
-    reserveVoiceCapacity(request.userId, capacityRoomId, {
-      addsToRoom: currentRoomId !== capacityRoomId,
-      addsToInstance: currentRoomId === null,
-    });
 
-    const identity = `${request.userId}:${request.username}`;
+    // A native Android screen publisher accompanies an already-connected web
+    // participant. It must not reserve a second human seat in the room.
+    if (!nativeScreenShare) {
+      const currentRoomId = connectionManager.getUserRoom(request.userId)?.roomId ?? null;
+      const reservations = getVoiceReservationCounts(request.userId, capacityRoomId);
+      const rejection = evaluateVoiceCapacity({
+        ...readVoiceCapacityLimits(),
+        targetRoomId: capacityRoomId,
+        currentRoomId,
+        roomParticipants: connectionManager.getRoomParticipants(capacityRoomId).size,
+        totalParticipants: connectionManager.getOperationalStats().voiceParticipants,
+        reservedForRoom: reservations.room,
+        reservedTotal: reservations.total,
+      });
+      if (rejection) {
+        const error = rejection === 'room_full'
+          ? 'This call has reached its participant limit'
+          : 'Voice capacity is temporarily full on this instance';
+        return reply.code(429).send({ error, statusCode: 429, reason: rejection });
+      }
+      reserveVoiceCapacity(request.userId, capacityRoomId, {
+        addsToRoom: currentRoomId !== capacityRoomId,
+        addsToInstance: currentRoomId === null,
+      });
+    }
+
+    const identity = nativeScreenShare
+      ? `${request.userId}:${request.username}:lume-android-screen`
+      : `${request.userId}:${request.username}`;
 
     const token = new AccessToken(config.livekit.apiKey, config.livekit.apiSecret, {
       identity,
@@ -99,7 +109,7 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
 
     // Build canPublishSources based on permissions
     const canPublishSources: TrackSource[] = [];
-    if (canSpeak) {
+    if (canSpeak && !nativeScreenShare) {
       canPublishSources.push(TrackSource.MICROPHONE);
       canPublishSources.push(TrackSource.CAMERA);
     }
@@ -110,17 +120,17 @@ export async function livekitRoutes(app: FastifyInstance): Promise<void> {
     token.addGrant({
       room: roomName,
       roomJoin: true,
-      canPublish: canSpeak || canStream,
+      canPublish: nativeScreenShare ? canStream : canSpeak || canStream,
       canPublishSources,
-      canSubscribe: true,
-      canPublishData: true,
+      canSubscribe: !nativeScreenShare,
+      canPublishData: !nativeScreenShare,
     });
 
     let jwt: string;
     try {
       jwt = await token.toJwt();
     } catch (error) {
-      clearVoiceCapacityReservation(request.userId);
+      if (!nativeScreenShare) clearVoiceCapacityReservation(request.userId);
       throw error;
     }
 

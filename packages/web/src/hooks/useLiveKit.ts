@@ -36,6 +36,7 @@ import { parseStreamWatch } from '../utils/streamWatchProtocol';
 import { getMediaStreamTrack } from '../utils/livekitInternals';
 import { deactivate as deactivateHwOverdrive } from '../utils/hwOverdrive';
 import { api } from '../api/client';
+import { ANDROID_SCREEN_IDENTITY_SUFFIX, mergeAndroidScreenShareCompanions } from './androidScreenParticipant';
 
 let _activeRoom: Room | null = null;
 let _publishedScreenShareCodec: 'vp9' | 'h264' | null = null;
@@ -60,6 +61,8 @@ export interface ParticipantInfo {
   screenAudioTrack: MediaStreamTrack | null;
   lkVideoTrack: Track | null;   // LiveKit Track for attach/detach (adaptive stream)
   lkScreenTrack: Track | null;  // LiveKit Track for attach/detach (adaptive stream)
+  /** LiveKit identity that owns the screen publication (Android uses a companion publisher). */
+  screenOwnerIdentity?: string;
   cachedUser: User | null;   // Hydrated User from member lookup, carried forward across space switches
 }
 
@@ -331,11 +334,12 @@ export function useLiveKit() {
         screenAudioTrack,
         lkVideoTrack,
         lkScreenTrack,
+        screenOwnerIdentity: p.identity,
       });
     };
     processParticipant(r.localParticipant, true);
     r.remoteParticipants.forEach((p) => processParticipant(p, false));
-    useVoiceStore.getState().setParticipants(allParticipants);
+    useVoiceStore.getState().setParticipants(mergeAndroidScreenShareCompanions(allParticipants));
     SpeakingDetector.getInstance().syncTracks(useVoiceStore.getState().participants);
   }, []);
 
@@ -753,11 +757,18 @@ export function useLiveKit() {
       newRoom.on(RoomEvent.TrackUnmuted, guardedUpdate);
       newRoom.on(RoomEvent.ParticipantMetadataChanged, guardedUpdate);
       newRoom.on(RoomEvent.TrackPublished, (publication: RemoteTrackPublication, participant: RemoteParticipant) => {
+        const isOwnAndroidScreen = participant.identity.endsWith(ANDROID_SCREEN_IDENTITY_SUFFIX)
+          && parseIdentity(participant.identity).userId === parseIdentity(newRoom.localParticipant.identity).userId;
         if (
           publication.source !== Track.Source.ScreenShare &&
           publication.source !== Track.Source.ScreenShareAudio
         ) {
           publication.setSubscribed(true);
+        } else if (isOwnAndroidScreen) {
+          // The WebView user should see their native MediaProjection preview
+          // without having to press "Watch" on their own stream.
+          publication.setSubscribed(true);
+          useVoiceStore.getState().watchStream(parseIdentity(participant.identity).userId);
         }
         guardedUpdate();
       });

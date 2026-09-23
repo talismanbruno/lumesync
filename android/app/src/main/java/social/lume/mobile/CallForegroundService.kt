@@ -25,9 +25,10 @@ class CallForegroundService : Service() {
             .setOngoing(true)
             .build()
 
-        var types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-        if (intent?.action == ACTION_SCREEN_SHARE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+        val types = if (intent?.action == ACTION_SCREEN_SHARE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+        } else {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
         }
         ServiceCompat.startForeground(this, 4107, notification, types)
         return START_NOT_STICKY

@@ -36,6 +36,8 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { AudioManager } from '../../audio/AudioManager';
 import { BugReportButton } from '../feedback/BugReportButton';
 import { BugReportModal } from '../modals/BugReportModal';
+import { setAndroidCallActive, subscribeAndroidScreenShareState } from '../../platform/androidBridge';
+import { broadcastVoiceStatus } from '../../utils/voice';
 
 // Load only the layout the device can actually display. The shared call and
 // message state stays in AppLayout; the other layout is fetched on demand.
@@ -50,6 +52,19 @@ const PictureInPicture = React.lazy(() => import('../voice/PictureInPicture').th
 export function AppLayout() {
   const { spaceId, channelId } = useParams<{ spaceId?: string; channelId?: string }>();
   const navigate = useNavigate();
+  const nativeCallActive = useVoiceStore((s) => s.isLiveKitConnected);
+
+  useEffect(() => subscribeAndroidScreenShareState((message) => {
+    if (message) useUIStore.getState().addToast(message, 'warning');
+    broadcastVoiceStatus();
+  }), []);
+
+  // Keep WebRTC alive when the Android host is backgrounded. The visual and
+  // call state remain entirely in React; Android only owns the foreground service.
+  useEffect(() => {
+    setAndroidCallActive(nativeCallActive);
+    return () => setAndroidCallActive(false);
+  }, [nativeCallActive]);
   
   // Global interaction handler to resume AudioContext
   useEffect(() => {

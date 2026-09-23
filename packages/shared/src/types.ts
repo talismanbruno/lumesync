@@ -608,7 +608,10 @@ export interface JoinSpaceRequest {
 }
 
 export interface LiveKitTokenRequest {
-  channelId: string;
+  channelId?: string;
+  dmChannelId?: string;
+  /** Issues a second, screen-only identity for the trusted Android WebView host. */
+  nativeScreenShare?: boolean;
 }
 
 export interface LiveKitTokenResponse {

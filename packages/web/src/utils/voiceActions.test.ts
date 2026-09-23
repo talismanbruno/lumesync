@@ -7,6 +7,9 @@ const fixtures = vi.hoisted(() => ({
   stop: vi.fn(),
   toast: vi.fn(),
   broadcast: vi.fn(),
+  native: false,
+  nativeStart: vi.fn(),
+  nativeStop: vi.fn(),
 }));
 
 vi.mock('../hooks/useLiveKit', () => ({ getActiveRoom: () => fixtures.room }));
@@ -27,6 +30,11 @@ vi.mock('./screenShare', () => ({
   stopScreenShare: fixtures.stop,
 }));
 vi.mock('../platform/platform', () => ({ isElectron: () => false }));
+vi.mock('../platform/androidBridge', () => ({
+  hasAndroidNativeHost: () => fixtures.native,
+  startAndroidScreenShare: fixtures.nativeStart,
+  stopAndroidScreenShare: fixtures.nativeStop,
+}));
 
 import { handleScreenShareAction } from './voiceActions';
 
@@ -36,6 +44,9 @@ beforeEach(() => {
   fixtures.stop.mockReset();
   fixtures.toast.mockReset();
   fixtures.broadcast.mockReset();
+  fixtures.native = false;
+  fixtures.nativeStart.mockReset();
+  fixtures.nativeStop.mockReset();
   Object.defineProperty(navigator, 'mediaDevices', {
     configurable: true,
     value: { getDisplayMedia: vi.fn() },
@@ -63,5 +74,14 @@ describe('handleScreenShareAction', () => {
     finish(true);
     await first;
     expect(fixtures.broadcast).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses Android MediaProjection bridge when hosted by the APK', async () => {
+    fixtures.native = true;
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
+    await handleScreenShareAction();
+    expect(fixtures.nativeStart).toHaveBeenCalledTimes(1);
+    expect(fixtures.start).not.toHaveBeenCalled();
+    expect(fixtures.toast).not.toHaveBeenCalled();
   });
 });

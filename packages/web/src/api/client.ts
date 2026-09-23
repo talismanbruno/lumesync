@@ -251,8 +251,8 @@ export class BackspaceApiClient {
   };
 
   readonly livekit: {
-    token: (channelId: string) => Promise<LiveKitTokenResponse>;
-    dmToken: (dmChannelId: string) => Promise<LiveKitTokenResponse>;
+    token: (channelId: string, options?: { nativeScreenShare?: boolean }) => Promise<LiveKitTokenResponse>;
+    dmToken: (dmChannelId: string, options?: { nativeScreenShare?: boolean }) => Promise<LiveKitTokenResponse>;
   };
 
   readonly settings: {
@@ -651,10 +651,10 @@ export class BackspaceApiClient {
     };
 
     this.livekit = {
-      token: (channelId: string) =>
-        request<LiveKitTokenResponse>('POST', '/livekit/token', { channelId }),
-      dmToken: (dmChannelId: string) =>
-        request<LiveKitTokenResponse>('POST', '/livekit/token', { dmChannelId }),
+      token: (channelId: string, options = {}) =>
+        request<LiveKitTokenResponse>('POST', '/livekit/token', { channelId, ...options }),
+      dmToken: (dmChannelId: string, options = {}) =>
+        request<LiveKitTokenResponse>('POST', '/livekit/token', { dmChannelId, ...options }),
     };
 
     this.settings = {

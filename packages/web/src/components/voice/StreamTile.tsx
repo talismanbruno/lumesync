@@ -283,7 +283,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
       } else {
         // Remote stream: watch/unwatch, mute, volume, attenuation
         const currentIsWatching = useVoiceStore.getState().watchingStreams.has(userId);
-        const identity = participant.identity;
+        const identity = participant.screenOwnerIdentity ?? participant.identity;
 
         if (currentIsWatching) {
           items.push({
@@ -348,14 +348,14 @@ export function StreamTile({ tile, large }: StreamTileProps) {
 
       openContextMenu({ x: e.clientX, y: e.clientY }, items);
     },
-    [isLocal, userId, participant.identity, openContextMenu],
+    [isLocal, userId, participant.identity, participant.screenOwnerIdentity, openContextMenu],
   );
 
   const handleWatch = useCallback(() => {
     useVoiceStore.getState().watchStream(userId);
-    setStreamSubscription(getActiveRoom(), participant.identity, true);
+    setStreamSubscription(getActiveRoom(), participant.screenOwnerIdentity ?? participant.identity, true);
     handleViewerWatchToggle(userId, true);
-  }, [userId, participant.identity]);
+  }, [userId, participant.identity, participant.screenOwnerIdentity]);
 
   const hasVideo = liveScreenTrack !== null;
 
