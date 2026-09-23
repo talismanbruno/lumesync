@@ -8,8 +8,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.media.projection.MediaProjectionManager
 import android.os.Build
@@ -21,6 +23,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -32,6 +36,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import io.livekit.android.LiveKit
 import io.livekit.android.audio.ScreenAudioCapturer
 import io.livekit.android.room.Room
@@ -101,23 +107,33 @@ class MainActivity : AppCompatActivity() {
     private fun showLogin() {
         val content = column().apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(title("Lume"))
-            addView(label("Mobile Beta · chamadas e compartilhamento nativo"))
-            val username = input("Usuário")
-            val password = input("Senha").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
-            addView(username)
-            addView(password)
-            addView(action("Entrar") {
-                val user = username.text.toString().trim()
-                val pass = password.text.toString()
-                if (user.isBlank() || pass.isBlank()) return@action toast("Digite usuário e senha.")
-                lifecycleScope.launch {
-                    showBusy("Entrando…")
-                    runCatching { api.login(user, pass) }
-                        .onSuccess { session = it; sessionStore.save(it.token); connectRealtime(it.token); showHome() }
-                        .onFailure { showLogin(); toast(it.message ?: "Não foi possível entrar.") }
-                }
+            addView(ImageView(context).apply {
+                setImageResource(R.drawable.ic_lume)
+                layoutParams = LinearLayout.LayoutParams(dp(88), dp(88)).apply { bottomMargin = dp(18) }
             })
+            addView(title("Bem-vindo ao Lume").apply { gravity = Gravity.CENTER })
+            addView(label("Seu espaço para conversar, jogar e estar junto.").apply { gravity = Gravity.CENTER })
+            val loginForm = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(18), dp(18), dp(18), dp(8))
+                val username = input("Usuário")
+                val password = input("Senha").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
+                addView(username)
+                addView(password)
+                addView(primaryAction("Entrar no Lume") {
+                    val user = username.text.toString().trim()
+                    val pass = password.text.toString()
+                    if (user.isBlank() || pass.isBlank()) return@primaryAction toast("Digite usuário e senha.")
+                    lifecycleScope.launch {
+                        showBusy("Entrando…")
+                        runCatching { api.login(user, pass) }
+                            .onSuccess { session = it; sessionStore.save(it.token); connectRealtime(it.token); showHome() }
+                            .onFailure { showLogin(); toast(it.message ?: "Não foi possível entrar.") }
+                    }
+                })
+            }
+            addView(surface(loginForm))
+            addView(label("Lume para Android · Beta privada").apply { gravity = Gravity.CENTER })
         }
         setContentView(wrap(content))
     }
@@ -130,14 +146,18 @@ class MainActivity : AppCompatActivity() {
         activeDm = null
         requestNotificationPermission()
         val content = column().apply {
-            addView(label("LUME MOBILE"))
-            addView(title("Olá, ${current.displayName}"))
-            addView(label("Seus espaços, mensagens e chamadas em um só lugar."))
-            addView(action("Mensagens diretas") { loadDirectMessages() })
-            addView(action("Amigos") { loadFriends() })
+            addView(brandHeader("Lume", "conectado como ${current.displayName}"))
+            addView(title("O que vamos fazer?"))
+            addView(label("Tudo que importa, sem ruído."))
+            addView(tileRow(
+                homeTile("✦", "Conversas", "Mensagens diretas") { loadDirectMessages() },
+                homeTile("◎", "Amigos", "Pessoas e presença") { loadFriends() },
+            ))
+            addView(tileRow(
+                homeTile("▦", "Servidores", "Comunidades e canais") { loadSpaces() },
+                homeTile("◉", "Ao vivo", "Entrar em uma chamada") { loadChannels() },
+            ))
             addView(action("Pedidos de amizade") { loadFriendRequests() })
-            addView(action("Servidores e conversas") { loadSpaces() })
-            addView(action("Canais de voz") { loadChannels() })
             addView(action("Sair da conta") {
                 leaveCall(false)
                 realtimeEnabled = false
@@ -340,7 +360,7 @@ class MainActivity : AppCompatActivity() {
             if (incoming.isEmpty()) addView(label("Nenhum pedido recebido."))
             incoming.forEach { request ->
                 addView(label(request.name))
-                addView(action("Aceitar ${request.name}") { answerButton ->
+                addView(primaryAction("Aceitar ${request.name}") { answerButton ->
                     answerButton.isEnabled = false
                     lifecycleScope.launch {
                         runCatching { api.answerFriendRequest(current.token, request.id, true) }
@@ -365,7 +385,7 @@ class MainActivity : AppCompatActivity() {
             addView(section("ADICIONAR PESSOA"))
             val username = input("usuário ou usuário@servidor")
             addView(username)
-            addView(action("Enviar pedido") { sendButton ->
+            addView(primaryAction("Enviar pedido") { sendButton ->
                 val target = username.text.toString().trim()
                 if (target.isBlank()) return@action toast("Digite o usuário.")
                 sendButton.isEnabled = false
@@ -421,7 +441,7 @@ class MainActivity : AppCompatActivity() {
                 inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             }
             addView(composer)
-            addView(action("Enviar mensagem") { sendButton ->
+            addView(primaryAction("Enviar mensagem") { sendButton ->
                 val text = composer.text.toString().trim()
                 if (text.isBlank()) return@action toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
@@ -539,7 +559,7 @@ class MainActivity : AppCompatActivity() {
                 inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             }
             addView(composer)
-            addView(action("Enviar mensagem") { sendButton ->
+            addView(primaryAction("Enviar mensagem") { sendButton ->
                 val text = composer.text.toString().trim()
                 if (text.isBlank()) return@action toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
@@ -631,7 +651,7 @@ class MainActivity : AppCompatActivity() {
             }
             addView(mic)
 
-            addView(action("Compartilhar minha tela") {
+            addView(primaryAction("Compartilhar minha tela") {
                 if (screenSharing) lifecycleScope.launch { stopScreenShare() }
                 else {
                     val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -700,36 +720,116 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun wrap(content: LinearLayout) = ScrollView(this).apply {
-        setBackgroundColor(Color.rgb(7, 11, 13))
+        isFillViewport = true
+        background = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(Color.rgb(5, 9, 11), Color.rgb(7, 17, 20), Color.rgb(5, 9, 11)),
+        )
         addView(content, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
     private fun column() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(24), dp(48), dp(24), dp(32))
+        setPadding(dp(18), dp(30), dp(18), dp(36))
     }
 
     private fun title(text: String) = TextView(this).apply {
         this.text = text
-        textSize = 30f
+        textSize = 28f
         setTextColor(Color.rgb(243, 250, 252))
         setTypeface(typeface, Typeface.BOLD)
-        setPadding(0, dp(12), 0, dp(12))
+        letterSpacing = -0.02f
+        setPadding(0, dp(10), 0, dp(8))
     }
 
     private fun label(text: String) = TextView(this).apply {
         this.text = text
-        textSize = 15f
-        setTextColor(Color.rgb(157, 181, 189))
+        textSize = 14f
+        setTextColor(Color.rgb(148, 171, 178))
         setPadding(0, dp(8), 0, dp(16))
     }
 
     private fun section(text: String) = TextView(this).apply {
         this.text = text
-        textSize = 12f
+        textSize = 11f
         setTextColor(Color.rgb(82, 217, 255))
         setTypeface(typeface, Typeface.BOLD)
+        letterSpacing = 0.12f
         setPadding(0, dp(22), 0, dp(10))
+    }
+
+    private fun brandHeader(name: String, subtitle: String) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(0, 0, 0, dp(22))
+        addView(ImageView(context).apply {
+            setImageResource(R.drawable.ic_lume)
+        }, LinearLayout.LayoutParams(dp(52), dp(52)).apply { marginEnd = dp(12) })
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(TextView(context).apply {
+                text = name
+                textSize = 20f
+                setTextColor(Color.WHITE)
+                setTypeface(typeface, Typeface.BOLD)
+            })
+            addView(TextView(context).apply {
+                text = subtitle
+                textSize = 12f
+                setTextColor(Color.rgb(82, 217, 255))
+            })
+        })
+    }
+
+    private fun surface(content: LinearLayout) = MaterialCardView(this).apply {
+        radius = dp(22).toFloat()
+        cardElevation = 0f
+        setCardBackgroundColor(Color.rgb(11, 20, 23))
+        strokeColor = Color.rgb(28, 55, 62)
+        strokeWidth = dp(1)
+        addView(content)
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = dp(18)
+            bottomMargin = dp(18)
+        }
+    }
+
+    private fun tileRow(left: MaterialCardView, right: MaterialCardView) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        addView(left, LinearLayout.LayoutParams(0, dp(146), 1f).apply { marginEnd = dp(6); bottomMargin = dp(12) })
+        addView(right, LinearLayout.LayoutParams(0, dp(146), 1f).apply { marginStart = dp(6); bottomMargin = dp(12) })
+    }
+
+    private fun homeTile(icon: String, heading: String, subtitle: String, click: () -> Unit) = MaterialCardView(this).apply {
+        radius = dp(20).toFloat()
+        cardElevation = 0f
+        setCardBackgroundColor(Color.rgb(12, 22, 25))
+        strokeColor = Color.rgb(25, 48, 54)
+        strokeWidth = dp(1)
+        isClickable = true
+        isFocusable = true
+        setOnClickListener { click() }
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(15), dp(12), dp(12))
+            addView(TextView(context).apply {
+                text = icon
+                textSize = 25f
+                setTextColor(Color.rgb(82, 217, 255))
+            })
+            addView(TextView(context).apply {
+                text = heading
+                textSize = 17f
+                setTextColor(Color.WHITE)
+                setTypeface(typeface, Typeface.BOLD)
+                setPadding(0, dp(10), 0, dp(3))
+            })
+            addView(TextView(context).apply {
+                text = subtitle
+                textSize = 12f
+                setTextColor(Color.rgb(135, 158, 165))
+            })
+        })
     }
 
     private fun messageCard(
@@ -744,7 +844,7 @@ class MainActivity : AppCompatActivity() {
     ) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(12), dp(16), dp(12))
-        setBackgroundColor(Color.rgb(13, 23, 26))
+        background = roundedBackground(Color.rgb(11, 20, 23), Color.rgb(24, 45, 51), 18)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(10)
         }
@@ -795,12 +895,17 @@ class MainActivity : AppCompatActivity() {
         addView(actions)
     }
 
-    private fun compactButton(text: String, click: () -> Unit) = Button(this).apply {
+    private fun compactButton(text: String, click: () -> Unit) = MaterialButton(this).apply {
         this.text = text
         isAllCaps = false
         textSize = 12f
         minHeight = 0
         minimumHeight = 0
+        cornerRadius = dp(12)
+        backgroundTintList = ColorStateList.valueOf(Color.rgb(13, 26, 30))
+        strokeColor = ColorStateList.valueOf(Color.rgb(29, 54, 61))
+        strokeWidth = dp(1)
+        setTextColor(Color.rgb(222, 235, 239))
         setPadding(dp(6), dp(4), dp(6), dp(4))
         setOnClickListener { click() }
     }
@@ -918,21 +1023,54 @@ class MainActivity : AppCompatActivity() {
 
     private fun input(hint: String) = EditText(this).apply {
         this.hint = hint
-        setHintTextColor(Color.rgb(105, 128, 135))
-        setTextColor(Color.WHITE)
+        setHintTextColor(Color.rgb(102, 124, 132))
+        setTextColor(Color.rgb(245, 248, 250))
+        textSize = 15f
         setSingleLine(true)
         setPadding(dp(16), dp(14), dp(16), dp(14))
+        background = roundedBackground(Color.rgb(8, 15, 18), Color.rgb(31, 51, 59), 14)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(12)
         }
     }
 
-    private fun action(text: String, click: (android.view.View) -> Unit) = Button(this).apply {
+    private fun action(text: String, click: (android.view.View) -> Unit) = MaterialButton(this).apply {
         this.text = text
         isAllCaps = false
-        textSize = 16f
+        textSize = 15f
+        setTypeface(typeface, Typeface.BOLD)
+        cornerRadius = dp(15)
+        backgroundTintList = ColorStateList.valueOf(Color.rgb(10, 19, 22))
+        strokeColor = ColorStateList.valueOf(Color.rgb(31, 48, 57))
+        strokeWidth = dp(1)
+        setTextColor(Color.rgb(233, 241, 245))
+        gravity = Gravity.CENTER_VERTICAL or Gravity.START
+        insetTop = 0
+        insetBottom = 0
         setOnClickListener(click)
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(58)).apply { bottomMargin = dp(12) }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)).apply { bottomMargin = dp(10) }
+    }
+
+    private fun primaryAction(text: String, click: (android.view.View) -> Unit) = MaterialButton(this).apply {
+        this.text = text
+        isAllCaps = false
+        textSize = 15f
+        setTypeface(typeface, Typeface.BOLD)
+        cornerRadius = dp(15)
+        backgroundTintList = ColorStateList.valueOf(Color.rgb(19, 205, 234))
+        setTextColor(Color.rgb(3, 16, 20))
+        gravity = Gravity.CENTER
+        insetTop = 0
+        insetBottom = 0
+        setOnClickListener(click)
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)).apply { bottomMargin = dp(10) }
+    }
+
+    private fun roundedBackground(fill: Int, stroke: Int, radius: Int) = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(fill)
+        setStroke(dp(1), stroke)
+        cornerRadius = dp(radius).toFloat()
     }
 
     private fun hasPermission(permission: String) = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
