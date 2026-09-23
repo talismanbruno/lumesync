@@ -5,6 +5,11 @@
 # Stage 1: Install dependencies and build frontend
 FROM node:20-slim AS builder
 
+# Tie the frontend build cache to the exact reviewed source revision. Source
+# COPY checks should already invalidate naturally, but this makes a stale web
+# bundle impossible when a remote BuildKit cache is reused across releases.
+ARG BACKSPACE_COMMIT=""
+
 RUN corepack enable && corepack prepare pnpm@10.34.3 --activate
 
 WORKDIR /app
@@ -31,7 +36,7 @@ COPY packages/server/ packages/server/
 COPY packages/web/ packages/web/
 
 # Build the web frontend
-RUN pnpm --filter @backspace/web build
+RUN echo "Building Lume web at ${BACKSPACE_COMMIT}" && pnpm --filter @backspace/web build
 
 # ============================================================
 # Stage 2: Production runtime
