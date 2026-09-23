@@ -58,12 +58,12 @@ describe('screen audio volume', () => {
     render(<GlobalAudioRenderer />);
     expect(screenPlayback().muted).toBe(false);
   });
-  it('keeps echo protection while the local microphone is actually speaking', () => {
+  it('keeps screen audio playing while the local microphone is speaking', () => {
     useVoiceStore.setState({
       participants: [remote, { userId: 'me', identity: 'me:name', isLocal: true, isMuted: false } as ParticipantInfo],
       speakingParticipantIds: new Set(['me:name']),
     });
     render(<GlobalAudioRenderer />);
-    expect(screenPlayback().muted).toBe(true);
+    expect(screenPlayback().muted).toBe(false);
   });
 });
