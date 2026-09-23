@@ -1,8 +1,11 @@
 # Lume Mobile Beta (Android)
 
-Primeiro módulo nativo do Lume para Android. O escopo é intencionalmente pequeno:
+Cliente nativo do Lume para Android, desenvolvido e validado por módulos.
 
 - login na conta existente;
+- sessão persistente sem armazenar a senha;
+- lista de servidores e canais acessíveis;
+- leitura e envio de mensagens em canais de texto;
 - lista dos canais de voz acessíveis;
 - áudio bidirecional pelo LiveKit;
 - compartilhamento nativo de tela pelo MediaProjection;

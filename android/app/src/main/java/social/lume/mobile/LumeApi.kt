@@ -14,6 +14,15 @@ import org.json.JSONObject
 import java.io.IOException
 
 data class LumeSession(val token: String, val displayName: String)
+data class LumeSpace(val id: String, val name: String)
+data class LumeChannel(val id: String, val spaceId: String, val name: String, val type: String, val topic: String?)
+data class LumeMessage(
+    val id: String,
+    val author: String,
+    val content: String,
+    val createdAt: Long,
+    val edited: Boolean,
+)
 data class VoiceChannel(val id: String, val name: String, val spaceName: String)
 data class VoiceCredentials(val token: String, val url: String)
 
@@ -27,8 +36,48 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         val user = json.getJSONObject("user")
         LumeSession(
             token = json.getString("token"),
-            displayName = user.optString("displayName").ifBlank { user.getString("username") },
+            displayName = displayName(user),
         )
+    }
+
+    suspend fun restoreSession(token: String): LumeSession = withContext(Dispatchers.IO) {
+        val user = execute("GET", "users/@me", token)
+        LumeSession(
+            token = token,
+            displayName = displayName(user),
+        )
+    }
+
+    suspend fun spaces(token: String): List<LumeSpace> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "spaces", token)
+        List(rows.length()) { index ->
+            rows.getJSONObject(index).let { LumeSpace(it.getString("id"), it.getString("name")) }
+        }
+    }
+
+    suspend fun channels(token: String, spaceId: String): List<LumeChannel> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "spaces/$spaceId/channels", token)
+        List(rows.length()) { index ->
+            rows.getJSONObject(index).let {
+                LumeChannel(
+                    id = it.getString("id"),
+                    spaceId = it.getString("spaceId"),
+                    name = it.getString("name"),
+                    type = it.getString("type"),
+                    topic = it.optString("topic").takeIf { topic -> topic.isNotBlank() },
+                )
+            }
+        }
+    }
+
+    suspend fun messages(token: String, channelId: String): List<LumeMessage> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "channels/$channelId/messages?limit=50", token)
+        List(rows.length()) { index -> parseMessage(rows.getJSONObject(index)) }
+    }
+
+    suspend fun sendMessage(token: String, channelId: String, content: String): LumeMessage = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("content", content)
+        parseMessage(execute("POST", "channels/$channelId/messages", token, body))
     }
 
     suspend fun voiceChannels(token: String): List<VoiceChannel> = withContext(Dispatchers.IO) {
@@ -46,6 +95,25 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
             }
         }
     }
+
+    private fun parseMessage(json: JSONObject): LumeMessage {
+        val user = json.getJSONObject("user")
+        val author = displayName(user)
+        return LumeMessage(
+            id = json.getString("id"),
+            author = author,
+            content = json.optString("content"),
+            createdAt = json.optLong("createdAt"),
+            edited = !json.isNull("editedAt"),
+        )
+    }
+
+    private fun displayName(user: JSONObject): String =
+        if (!user.isNull("displayName") && user.optString("displayName").isNotBlank()) {
+            user.getString("displayName")
+        } else {
+            user.optString("username", "Usuário")
+        }
 
     suspend fun voiceCredentials(token: String, channelId: String): VoiceCredentials = withContext(Dispatchers.IO) {
         val json = execute("POST", "livekit/token", token, JSONObject().put("channelId", channelId))

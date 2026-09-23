@@ -11,6 +11,7 @@ import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
+import android.text.format.DateFormat
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private val api = LumeApi()
+    private lateinit var sessionStore: SessionStore
     private var session: LumeSession? = null
     private var room: Room? = null
     private var presence: PresenceSocket? = null
@@ -58,7 +60,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        showLogin()
+        sessionStore = SessionStore(this)
+        val savedToken = sessionStore.token()
+        if (savedToken == null) showLogin() else restoreSession(savedToken)
+    }
+
+    private fun restoreSession(token: String) {
+        lifecycleScope.launch {
+            showBusy("Abrindo o Lume…")
+            runCatching { api.restoreSession(token) }
+                .onSuccess { session = it; showHome() }
+                .onFailure { sessionStore.clear(); showLogin() }
+        }
     }
 
     private fun showLogin() {
@@ -77,10 +90,127 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     showBusy("Entrando…")
                     runCatching { api.login(user, pass) }
-                        .onSuccess { session = it; loadChannels() }
+                        .onSuccess { session = it; sessionStore.save(it.token); showHome() }
                         .onFailure { showLogin(); toast(it.message ?: "Não foi possível entrar.") }
                 }
             })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun showHome() {
+        val current = session ?: return showLogin()
+        val content = column().apply {
+            addView(label("LUME MOBILE"))
+            addView(title("Olá, ${current.displayName}"))
+            addView(label("Seus espaços, mensagens e chamadas em um só lugar."))
+            addView(action("Servidores e conversas") { loadSpaces() })
+            addView(action("Canais de voz") { loadChannels() })
+            addView(action("Sair da conta") {
+                leaveCall(false)
+                sessionStore.clear()
+                session = null
+                showLogin()
+            })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadSpaces() {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Buscando seus servidores…")
+            runCatching { api.spaces(current.token) }
+                .onSuccess { showSpaces(it) }
+                .onFailure { showHome(); toast(it.message ?: "Erro ao carregar servidores.") }
+        }
+    }
+
+    private fun showSpaces(spaces: List<LumeSpace>) {
+        val content = column().apply {
+            addView(label("SEUS SERVIDORES"))
+            addView(title("Escolha um espaço"))
+            if (spaces.isEmpty()) addView(label("Você ainda não participa de nenhum servidor."))
+            spaces.forEach { space -> addView(action(space.name) { loadSpaceChannels(space) }) }
+            addView(action("Voltar") { showHome() })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadSpaceChannels(space: LumeSpace) {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Abrindo ${space.name}…")
+            runCatching { api.channels(current.token, space.id) }
+                .onSuccess { showSpaceChannels(space, it) }
+                .onFailure { loadSpaces(); toast(it.message ?: "Erro ao carregar canais.") }
+        }
+    }
+
+    private fun showSpaceChannels(space: LumeSpace, channels: List<LumeChannel>) {
+        val content = column().apply {
+            addView(label("SERVIDOR"))
+            addView(title(space.name))
+            val textChannels = channels.filter { it.type == "text" }
+            val voiceChannels = channels.filter { it.type == "voice" }
+            addView(section("CANAIS DE TEXTO"))
+            if (textChannels.isEmpty()) addView(label("Nenhum canal de texto disponível."))
+            textChannels.forEach { channel -> addView(action("#  ${channel.name}") { loadMessages(space, channel) }) }
+            addView(section("CANAIS DE VOZ"))
+            if (voiceChannels.isEmpty()) addView(label("Nenhum canal de voz disponível."))
+            voiceChannels.forEach { channel ->
+                addView(action("◉  ${channel.name}") {
+                    requestJoin(VoiceChannel(channel.id, channel.name, space.name))
+                })
+            }
+            addView(action("Voltar aos servidores") { loadSpaces() })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadMessages(space: LumeSpace, channel: LumeChannel) {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Carregando #${channel.name}…")
+            runCatching { api.messages(current.token, channel.id) }
+                .onSuccess { showChat(space, channel, it) }
+                .onFailure { loadSpaceChannels(space); toast(it.message ?: "Erro ao carregar mensagens.") }
+        }
+    }
+
+    private fun showChat(space: LumeSpace, channel: LumeChannel, messages: List<LumeMessage>) {
+        val current = session ?: return showLogin()
+        val content = column().apply {
+            addView(label(space.name.uppercase()))
+            addView(title("# ${channel.name}"))
+            channel.topic?.let { addView(label(it)) }
+            if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
+            messages.forEach { message ->
+                val time = DateFormat.format("dd/MM · HH:mm", message.createdAt).toString()
+                addView(messageCard(message.author, time, message.content, message.edited))
+            }
+
+            val composer = input("Mensagem em #${channel.name}").apply {
+                isSingleLine = false
+                maxLines = 5
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            }
+            addView(composer)
+            addView(action("Enviar mensagem") { sendButton ->
+                val text = composer.text.toString().trim()
+                if (text.isBlank()) return@action toast("Digite uma mensagem.")
+                sendButton.isEnabled = false
+                lifecycleScope.launch {
+                    runCatching { api.sendMessage(current.token, channel.id, text) }
+                        .onSuccess { loadMessages(space, channel) }
+                        .onFailure { error ->
+                            sendButton.isEnabled = true
+                            toast(error.message ?: "Não foi possível enviar.")
+                        }
+                }
+            })
+            addView(action("Atualizar conversa") { loadMessages(space, channel) })
+            addView(action("Voltar aos canais") { loadSpaceChannels(space) })
         }
         setContentView(wrap(content))
     }
@@ -105,7 +235,7 @@ class MainActivity : AppCompatActivity() {
                 addView(action("${channel.spaceName}  ·  ${channel.name}") { requestJoin(channel) })
             }
             addView(action("Atualizar") { loadChannels() })
-            addView(action("Sair da conta") { session = null; showLogin() })
+            addView(action("Voltar") { showHome() })
         }
         setContentView(wrap(content))
     }
@@ -243,6 +373,35 @@ class MainActivity : AppCompatActivity() {
         textSize = 15f
         setTextColor(Color.rgb(157, 181, 189))
         setPadding(0, dp(8), 0, dp(16))
+    }
+
+    private fun section(text: String) = TextView(this).apply {
+        this.text = text
+        textSize = 12f
+        setTextColor(Color.rgb(82, 217, 255))
+        setTypeface(typeface, Typeface.BOLD)
+        setPadding(0, dp(22), 0, dp(10))
+    }
+
+    private fun messageCard(author: String, time: String, content: String, edited: Boolean) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(16), dp(12), dp(16), dp(12))
+        setBackgroundColor(Color.rgb(13, 23, 26))
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(10)
+        }
+        addView(TextView(context).apply {
+            text = "$author  ·  $time${if (edited) "  · editada" else ""}"
+            textSize = 13f
+            setTextColor(Color.rgb(82, 217, 255))
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        addView(TextView(context).apply {
+            text = content.ifBlank { "Mensagem sem texto" }
+            textSize = 16f
+            setTextColor(Color.rgb(243, 250, 252))
+            setPadding(0, dp(6), 0, 0)
+        })
     }
 
     private fun input(hint: String) = EditText(this).apply {
