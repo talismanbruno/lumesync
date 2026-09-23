@@ -362,7 +362,7 @@ class MainActivity : AppCompatActivity() {
             addView(username)
             addView(primaryAction("Enviar pedido") { sendButton ->
                 val target = username.text.toString().trim()
-                if (target.isBlank()) return@action toast("Digite o usuário.")
+                if (target.isBlank()) return@primaryAction toast("Digite o usuário.")
                 sendButton.isEnabled = false
                 lifecycleScope.launch {
                     runCatching { api.sendFriendRequest(current.token, target) }
@@ -417,7 +417,7 @@ class MainActivity : AppCompatActivity() {
             addView(composer)
             addView(primaryAction("Enviar mensagem") { sendButton ->
                 val text = composer.text.toString().trim()
-                if (text.isBlank()) return@action toast("Digite uma mensagem.")
+                if (text.isBlank()) return@primaryAction toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
                 lifecycleScope.launch {
                     runCatching { api.sendDmMessage(current.token, dm.id, text, replyToId = replyToId) }
@@ -530,7 +530,7 @@ class MainActivity : AppCompatActivity() {
             addView(composer)
             addView(primaryAction("Enviar mensagem") { sendButton ->
                 val text = composer.text.toString().trim()
-                if (text.isBlank()) return@action toast("Digite uma mensagem.")
+                if (text.isBlank()) return@primaryAction toast("Digite uma mensagem.")
                 sendButton.isEnabled = false
                 lifecycleScope.launch {
                     runCatching { api.sendMessage(current.token, channel.id, text, replyToId = replyToId) }
