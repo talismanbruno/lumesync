@@ -24,12 +24,13 @@ class LumeApiTest {
     }
 
     @Test fun restoresSessionWithoutPersistingPassword() = runBlocking {
-        server.enqueue(json("""{"username":"talisman","displayName":"Talisman"}"""))
+        server.enqueue(json("""{"id":"u1","username":"talisman","displayName":"Talisman"}"""))
 
         val session = api.restoreSession("jwt-token")
         val request = server.takeRequest()
 
         assertEquals("Talisman", session.displayName)
+        assertEquals("u1", session.userId)
         assertEquals("Bearer jwt-token", request.getHeader("Authorization"))
         assertEquals("/api/users/@me", request.path)
     }
@@ -60,6 +61,31 @@ class LumeApiTest {
         assertEquals("/api/channels/c1/messages", request.path)
         assertTrue(request.body.readUtf8().contains("\"content\":\"Oi\""))
         assertEquals("ana", message.author)
+    }
+
+    @Test fun listsDirectMessagesWithoutShowingCurrentUserAsTitle() = runBlocking {
+        server.enqueue(json("""[{"id":"dm1","createdAt":40,"name":null,"members":[{"id":"me","username":"eu","displayName":"Eu"},{"id":"u2","username":"bia","displayName":"Bia"}],"lastMessage":{"content":"Até já","createdAt":50}}]"""))
+
+        val conversations = api.directMessages("token", "me")
+
+        assertEquals("Bia", conversations.single().name)
+        assertEquals("Até já", conversations.single().preview)
+        assertEquals("/api/dm", server.takeRequest().path)
+    }
+
+    @Test fun listsFriendsAndSendsDmMessage() = runBlocking {
+        server.enqueue(json("""[{"id":"u2","username":"bia","displayName":"Bia","status":"working"}]"""))
+        server.enqueue(json("""{"id":"m3","content":"Oi Bia","createdAt":51,"editedAt":null,"user":{"id":"me","username":"eu","displayName":"Eu"}}""", 201))
+
+        val friend = api.friends("token").single()
+        val sent = api.sendDmMessage("token", "dm1", "Oi Bia")
+
+        assertEquals("working", friend.status)
+        assertEquals("Oi Bia", sent.content)
+        server.takeRequest()
+        val sendRequest = server.takeRequest()
+        assertEquals("/api/dm/dm1/messages", sendRequest.path)
+        assertEquals("POST", sendRequest.method)
     }
 
     private fun json(body: String, status: Int = 200) = MockResponse()

@@ -104,6 +104,8 @@ class MainActivity : AppCompatActivity() {
             addView(label("LUME MOBILE"))
             addView(title("Olá, ${current.displayName}"))
             addView(label("Seus espaços, mensagens e chamadas em um só lugar."))
+            addView(action("Mensagens diretas") { loadDirectMessages() })
+            addView(action("Amigos") { loadFriends() })
             addView(action("Servidores e conversas") { loadSpaces() })
             addView(action("Canais de voz") { loadChannels() })
             addView(action("Sair da conta") {
@@ -112,6 +114,106 @@ class MainActivity : AppCompatActivity() {
                 session = null
                 showLogin()
             })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadDirectMessages() {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Buscando suas conversas…")
+            runCatching { api.directMessages(current.token, current.userId) }
+                .onSuccess { showDirectMessages(it) }
+                .onFailure { showHome(); toast(it.message ?: "Erro ao carregar conversas.") }
+        }
+    }
+
+    private fun showDirectMessages(conversations: List<LumeDm>) {
+        val content = column().apply {
+            addView(label("MENSAGENS DIRETAS"))
+            addView(title("Conversas"))
+            if (conversations.isEmpty()) addView(label("Nenhuma conversa ainda. Abra uma pela lista de amigos."))
+            conversations.forEach { dm ->
+                val preview = dm.preview?.replace('\n', ' ')?.take(60)
+                addView(action(if (preview == null) dm.name else "${dm.name}  ·  $preview") { loadDmMessages(dm) })
+            }
+            addView(action("Iniciar conversa com amigo") { loadFriends() })
+            addView(action("Voltar") { showHome() })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadFriends() {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Buscando amigos…")
+            runCatching { api.friends(current.token) }
+                .onSuccess { showFriends(it) }
+                .onFailure { showHome(); toast(it.message ?: "Erro ao carregar amigos.") }
+        }
+    }
+
+    private fun showFriends(friends: List<LumeFriend>) {
+        val current = session ?: return showLogin()
+        val content = column().apply {
+            addView(label("PESSOAS"))
+            addView(title("Amigos"))
+            addView(label("Toque em uma pessoa para abrir a conversa."))
+            if (friends.isEmpty()) addView(label("Sua lista de amigos está vazia."))
+            friends.forEach { friend ->
+                addView(action("${presenceDot(friend.status)}  ${friend.name}  ·  ${presenceLabel(friend.status)}") {
+                    lifecycleScope.launch {
+                        showBusy("Abrindo conversa…")
+                        runCatching { api.openDirectMessage(current.token, friend.id, current.userId) }
+                            .onSuccess { loadDmMessages(it) }
+                            .onFailure { error -> showFriends(friends); toast(error.message ?: "Não foi possível abrir a conversa.") }
+                    }
+                })
+            }
+            addView(action("Voltar") { showHome() })
+        }
+        setContentView(wrap(content))
+    }
+
+    private fun loadDmMessages(dm: LumeDm) {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Abrindo ${dm.name}…")
+            runCatching { api.dmMessages(current.token, dm.id) }
+                .onSuccess { showDmChat(dm, it) }
+                .onFailure { loadDirectMessages(); toast(it.message ?: "Erro ao carregar mensagens.") }
+        }
+    }
+
+    private fun showDmChat(dm: LumeDm, messages: List<LumeMessage>) {
+        val current = session ?: return showLogin()
+        val content = column().apply {
+            addView(label("MENSAGEM DIRETA"))
+            addView(title(dm.name))
+            if (messages.isEmpty()) addView(label("Este é o começo da conversa."))
+            messages.forEach { message ->
+                val time = DateFormat.format("dd/MM · HH:mm", message.createdAt).toString()
+                addView(messageCard(message.author, time, message.content, message.edited))
+            }
+
+            val composer = input("Mensagem para ${dm.name}").apply {
+                isSingleLine = false
+                maxLines = 5
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            }
+            addView(composer)
+            addView(action("Enviar mensagem") { sendButton ->
+                val text = composer.text.toString().trim()
+                if (text.isBlank()) return@action toast("Digite uma mensagem.")
+                sendButton.isEnabled = false
+                lifecycleScope.launch {
+                    runCatching { api.sendDmMessage(current.token, dm.id, text) }
+                        .onSuccess { loadDmMessages(dm) }
+                        .onFailure { error -> sendButton.isEnabled = true; toast(error.message ?: "Não foi possível enviar.") }
+                }
+            })
+            addView(action("Atualizar conversa") { loadDmMessages(dm) })
+            addView(action("Voltar às conversas") { loadDirectMessages() })
         }
         setContentView(wrap(content))
     }
@@ -402,6 +504,22 @@ class MainActivity : AppCompatActivity() {
             setTextColor(Color.rgb(243, 250, 252))
             setPadding(0, dp(6), 0, 0)
         })
+    }
+
+    private fun presenceDot(status: String) = when (status) {
+        "online" -> "●"
+        "working" -> "◆"
+        "idle" -> "◐"
+        "dnd" -> "⊘"
+        else -> "○"
+    }
+
+    private fun presenceLabel(status: String) = when (status) {
+        "online" -> "Disponível"
+        "working" -> "Trabalhando no Lume"
+        "idle" -> "Ausente"
+        "dnd" -> "Não perturbe"
+        else -> "Offline"
     }
 
     private fun input(hint: String) = EditText(this).apply {

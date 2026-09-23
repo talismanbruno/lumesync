@@ -6,6 +6,8 @@ Cliente nativo do Lume para Android, desenvolvido e validado por módulos.
 - sessão persistente sem armazenar a senha;
 - lista de servidores e canais acessíveis;
 - leitura e envio de mensagens em canais de texto;
+- lista de amigos com presença;
+- lista, abertura, leitura e envio de mensagens diretas;
 - lista dos canais de voz acessíveis;
 - áudio bidirecional pelo LiveKit;
 - compartilhamento nativo de tela pelo MediaProjection;

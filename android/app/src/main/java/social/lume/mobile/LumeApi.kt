@@ -13,9 +13,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 
-data class LumeSession(val token: String, val displayName: String)
+data class LumeSession(val token: String, val userId: String, val displayName: String)
 data class LumeSpace(val id: String, val name: String)
 data class LumeChannel(val id: String, val spaceId: String, val name: String, val type: String, val topic: String?)
+data class LumeFriend(val id: String, val name: String, val status: String)
+data class LumeDm(val id: String, val name: String, val preview: String?, val updatedAt: Long)
 data class LumeMessage(
     val id: String,
     val author: String,
@@ -36,6 +38,7 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         val user = json.getJSONObject("user")
         LumeSession(
             token = json.getString("token"),
+            userId = user.getString("id"),
             displayName = displayName(user),
         )
     }
@@ -44,6 +47,7 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         val user = execute("GET", "users/@me", token)
         LumeSession(
             token = token,
+            userId = user.getString("id"),
             displayName = displayName(user),
         )
     }
@@ -64,7 +68,7 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
                     spaceId = it.getString("spaceId"),
                     name = it.getString("name"),
                     type = it.getString("type"),
-                    topic = it.optString("topic").takeIf { topic -> topic.isNotBlank() },
+                    topic = nullableString(it, "topic"),
                 )
             }
         }
@@ -78,6 +82,64 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
     suspend fun sendMessage(token: String, channelId: String, content: String): LumeMessage = withContext(Dispatchers.IO) {
         val body = JSONObject().put("content", content)
         parseMessage(execute("POST", "channels/$channelId/messages", token, body))
+    }
+
+    suspend fun friends(token: String): List<LumeFriend> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "social/friends", token)
+        List(rows.length()) { index ->
+            rows.getJSONObject(index).let {
+                LumeFriend(
+                    id = it.getString("id"),
+                    name = displayName(it),
+                    status = it.optString("status", "offline"),
+                )
+            }
+        }
+    }
+
+    suspend fun directMessages(token: String, currentUserId: String): List<LumeDm> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "dm", token)
+        List(rows.length()) { index ->
+            val row = rows.getJSONObject(index)
+            val members = row.optJSONArray("members") ?: JSONArray()
+            val memberNames = buildList {
+                for (i in 0 until members.length()) {
+                    val member = members.getJSONObject(i)
+                    if (member.optString("id") != currentUserId) add(displayName(member))
+                }
+            }
+            val fallbackName = memberNames.joinToString(", ").ifBlank { "Conversa" }
+            val lastMessage = row.optJSONObject("lastMessage")
+            LumeDm(
+                id = row.getString("id"),
+                name = nullableString(row, "name") ?: fallbackName,
+                preview = lastMessage?.let { nullableString(it, "content") },
+                updatedAt = lastMessage?.optLong("createdAt") ?: row.optLong("createdAt"),
+            )
+        }
+    }
+
+    suspend fun openDirectMessage(token: String, userId: String, currentUserId: String): LumeDm = withContext(Dispatchers.IO) {
+        val row = execute("POST", "dm", token, JSONObject().put("userId", userId))
+        val members = row.optJSONArray("members") ?: JSONArray()
+        var name = "Conversa"
+        for (i in 0 until members.length()) {
+            val member = members.getJSONObject(i)
+            if (member.optString("id") != currentUserId) {
+                name = displayName(member)
+                break
+            }
+        }
+        LumeDm(row.getString("id"), nullableString(row, "name") ?: name, null, row.optLong("createdAt"))
+    }
+
+    suspend fun dmMessages(token: String, dmId: String): List<LumeMessage> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "dm/$dmId/messages?limit=50", token)
+        List(rows.length()) { index -> parseMessage(rows.getJSONObject(index)) }
+    }
+
+    suspend fun sendDmMessage(token: String, dmId: String, content: String): LumeMessage = withContext(Dispatchers.IO) {
+        parseMessage(execute("POST", "dm/$dmId/messages", token, JSONObject().put("content", content)))
     }
 
     suspend fun voiceChannels(token: String): List<VoiceChannel> = withContext(Dispatchers.IO) {
@@ -102,7 +164,7 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         return LumeMessage(
             id = json.getString("id"),
             author = author,
-            content = json.optString("content"),
+            content = nullableString(json, "content").orEmpty(),
             createdAt = json.optLong("createdAt"),
             edited = !json.isNull("editedAt"),
         )
@@ -114,6 +176,9 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         } else {
             user.optString("username", "Usuário")
         }
+
+    private fun nullableString(json: JSONObject, key: String): String? =
+        if (json.isNull(key)) null else json.optString(key).takeIf { it.isNotBlank() }
 
     suspend fun voiceCredentials(token: String, channelId: String): VoiceCredentials = withContext(Dispatchers.IO) {
         val json = execute("POST", "livekit/token", token, JSONObject().put("channelId", channelId))
