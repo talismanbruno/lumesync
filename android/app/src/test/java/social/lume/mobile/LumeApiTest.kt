@@ -88,6 +88,32 @@ class LumeApiTest {
         assertEquals("POST", sendRequest.method)
     }
 
+    @Test fun listsAndAcceptsIncomingFriendRequest() = runBlocking {
+        server.enqueue(json("""[{"id":"r1","fromId":"u2","toId":"me","status":"pending","user":{"id":"u2","username":"bia","displayName":"Bia"}}]"""))
+        server.enqueue(json("""{"success":true}"""))
+
+        val request = api.friendRequests("token", "me").single()
+        api.answerFriendRequest("token", request.id, true)
+
+        assertTrue(request.incoming)
+        assertEquals("Bia", request.name)
+        server.takeRequest()
+        val answer = server.takeRequest()
+        assertEquals("PATCH", answer.method)
+        assertEquals("/api/social/requests/r1", answer.path)
+        assertTrue(answer.body.readUtf8().contains("\"status\":\"accepted\""))
+    }
+
+    @Test fun sendsFriendRequestByUsername() = runBlocking {
+        server.enqueue(json("""{"success":true,"requestId":"r2"}""", 201))
+
+        api.sendFriendRequest("token", "bia@lumesocial.online")
+        val request = server.takeRequest()
+
+        assertEquals("/api/social/requests", request.path)
+        assertTrue(request.body.readUtf8().contains("bia@lumesocial.online"))
+    }
+
     private fun json(body: String, status: Int = 200) = MockResponse()
         .setResponseCode(status)
         .setHeader("Content-Type", "application/json")

@@ -17,6 +17,7 @@ data class LumeSession(val token: String, val userId: String, val displayName: S
 data class LumeSpace(val id: String, val name: String)
 data class LumeChannel(val id: String, val spaceId: String, val name: String, val type: String, val topic: String?)
 data class LumeFriend(val id: String, val name: String, val status: String)
+data class LumeFriendRequest(val id: String, val name: String, val incoming: Boolean)
 data class LumeDm(val id: String, val name: String, val preview: String?, val updatedAt: Long)
 data class LumeMessage(
     val id: String,
@@ -95,6 +96,33 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
                 )
             }
         }
+    }
+
+    suspend fun friendRequests(token: String, currentUserId: String): List<LumeFriendRequest> = withContext(Dispatchers.IO) {
+        val rows = executeArray("GET", "social/requests", token)
+        List(rows.length()) { index ->
+            rows.getJSONObject(index).let {
+                val user = it.optJSONObject("user")
+                LumeFriendRequest(
+                    id = it.getString("id"),
+                    name = if (user == null) "Usuário" else displayName(user),
+                    incoming = it.optString("toId") == currentUserId,
+                )
+            }
+        }
+    }
+
+    suspend fun answerFriendRequest(token: String, requestId: String, accept: Boolean) = withContext(Dispatchers.IO) {
+        execute(
+            "PATCH",
+            "social/requests/$requestId",
+            token,
+            JSONObject().put("status", if (accept) "accepted" else "declined"),
+        )
+    }
+
+    suspend fun sendFriendRequest(token: String, username: String) = withContext(Dispatchers.IO) {
+        execute("POST", "social/requests", token, JSONObject().put("username", username))
     }
 
     suspend fun directMessages(token: String, currentUserId: String): List<LumeDm> = withContext(Dispatchers.IO) {
@@ -192,6 +220,17 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
         return presence
     }
 
+    fun openRealtimeSocket(
+        token: String,
+        onEvent: (JSONObject) -> Unit,
+        onDisconnected: () -> Unit,
+    ): RealtimeSocket {
+        val realtime = RealtimeSocket(token, onEvent, onDisconnected)
+        val request = Request.Builder().url(EndpointConfig.websocket(baseUrl)).build()
+        realtime.socket = http.newWebSocket(request, realtime)
+        return realtime
+    }
+
     private fun execute(method: String, path: String, token: String?, body: JSONObject? = null): JSONObject {
         val response = request(method, path, token, body).execute()
         response.use {
@@ -221,6 +260,44 @@ class LumeApi(private val baseUrl: String = BuildConfig.LUME_BASE_URL) {
     private fun errorMessage(text: String, code: Int): String = runCatching {
         JSONObject(text).optString("error").ifBlank { "Erro $code no servidor" }
     }.getOrDefault("Erro $code no servidor")
+}
+
+class RealtimeSocket(
+    private val token: String,
+    private val onEvent: (JSONObject) -> Unit,
+    private val onDisconnected: () -> Unit,
+) : WebSocketListener() {
+    lateinit var socket: WebSocket
+    private var intentionalClose = false
+    private var disconnectedNotified = false
+
+    override fun onOpen(webSocket: WebSocket, response: Response) {
+        webSocket.send(JSONObject().put("type", "auth").put("token", token).toString())
+    }
+
+    override fun onMessage(webSocket: WebSocket, text: String) {
+        runCatching { JSONObject(text) }.onSuccess(onEvent)
+    }
+
+    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+        notifyDisconnected()
+    }
+
+    override fun onFailure(webSocket: WebSocket, throwable: Throwable, response: Response?) {
+        notifyDisconnected()
+    }
+
+    private fun notifyDisconnected() {
+        if (!intentionalClose && !disconnectedNotified) {
+            disconnectedNotified = true
+            onDisconnected()
+        }
+    }
+
+    fun close() {
+        intentionalClose = true
+        if (::socket.isInitialized) socket.close(1000, "Aplicativo encerrado")
+    }
 }
 
 class PresenceSocket(private val token: String, private val channelId: String) : WebSocketListener() {

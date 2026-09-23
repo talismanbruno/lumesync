@@ -2,6 +2,9 @@ package social.lume.mobile
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -23,6 +26,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 import io.livekit.android.LiveKit
 import io.livekit.android.audio.ScreenAudioCapturer
@@ -32,11 +36,19 @@ import io.livekit.android.room.track.LocalVideoTrack
 import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.screencapture.ScreenCaptureParams
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private val api = LumeApi()
     private lateinit var sessionStore: SessionStore
     private var session: LumeSession? = null
+    private var realtime: RealtimeSocket? = null
+    private var realtimeEnabled = false
+    private var activeView = ActiveView.HOME
+    private var activeSpace: LumeSpace? = null
+    private var activeChannel: LumeChannel? = null
+    private var activeDm: LumeDm? = null
     private var room: Room? = null
     private var presence: PresenceSocket? = null
     private var pendingChannel: VoiceChannel? = null
@@ -49,6 +61,8 @@ class MainActivity : AppCompatActivity() {
             pendingChannel?.let { joinChannel(it) }
         } else toast("O microfone é necessário para entrar na chamada.")
     }
+
+    private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     private val screenCaptureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode != Activity.RESULT_OK || result.data == null) {
@@ -69,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             showBusy("Abrindo o Lume…")
             runCatching { api.restoreSession(token) }
-                .onSuccess { session = it; showHome() }
+                .onSuccess { session = it; connectRealtime(it.token); showHome() }
                 .onFailure { sessionStore.clear(); showLogin() }
         }
     }
@@ -90,7 +104,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     showBusy("Entrando…")
                     runCatching { api.login(user, pass) }
-                        .onSuccess { session = it; sessionStore.save(it.token); showHome() }
+                        .onSuccess { session = it; sessionStore.save(it.token); connectRealtime(it.token); showHome() }
                         .onFailure { showLogin(); toast(it.message ?: "Não foi possível entrar.") }
                 }
             })
@@ -100,22 +114,123 @@ class MainActivity : AppCompatActivity() {
 
     private fun showHome() {
         val current = session ?: return showLogin()
+        activeView = ActiveView.HOME
+        activeSpace = null
+        activeChannel = null
+        activeDm = null
+        requestNotificationPermission()
         val content = column().apply {
             addView(label("LUME MOBILE"))
             addView(title("Olá, ${current.displayName}"))
             addView(label("Seus espaços, mensagens e chamadas em um só lugar."))
             addView(action("Mensagens diretas") { loadDirectMessages() })
             addView(action("Amigos") { loadFriends() })
+            addView(action("Pedidos de amizade") { loadFriendRequests() })
             addView(action("Servidores e conversas") { loadSpaces() })
             addView(action("Canais de voz") { loadChannels() })
             addView(action("Sair da conta") {
                 leaveCall(false)
+                realtimeEnabled = false
+                realtime?.close()
+                realtime = null
                 sessionStore.clear()
                 session = null
                 showLogin()
             })
         }
         setContentView(wrap(content))
+    }
+
+    private fun connectRealtime(token: String) {
+        realtimeEnabled = true
+        realtime?.close()
+        realtime = api.openRealtimeSocket(
+            token = token,
+            onEvent = { event -> runOnUiThread { handleRealtimeEvent(event) } },
+            onDisconnected = {
+                runOnUiThread {
+                    if (!realtimeEnabled || session?.token != token) return@runOnUiThread
+                    lifecycleScope.launch {
+                        delay(5_000)
+                        if (realtimeEnabled && session?.token == token) connectRealtime(token)
+                    }
+                }
+            },
+        )
+    }
+
+    private fun handleRealtimeEvent(event: JSONObject) {
+        when (event.optString("type")) {
+            "message_created" -> {
+                val message = event.optJSONObject("message") ?: return
+                val channelId = message.optString("channelId")
+                if (activeView == ActiveView.CHANNEL && activeChannel?.id == channelId) {
+                    val space = activeSpace ?: return
+                    val channel = activeChannel ?: return
+                    loadMessages(space, channel)
+                } else if (message.optString("userId") != session?.userId) {
+                    showMessageNotification("Nova mensagem no servidor", message)
+                }
+            }
+            "dm_message_created" -> {
+                val message = event.optJSONObject("message") ?: return
+                val dmId = message.optString("dmChannelId")
+                if (activeView == ActiveView.DM && activeDm?.id == dmId) {
+                    activeDm?.let { loadDmMessages(it) }
+                } else if (message.optString("userId") != session?.userId) {
+                    showMessageNotification("Nova mensagem direta", message)
+                }
+            }
+            "presence_update" -> if (activeView == ActiveView.FRIENDS) loadFriends()
+            "friend_request_received" -> {
+                notify("Novo pedido de amizade", "Abra o Lume para responder.")
+                if (activeView == ActiveView.REQUESTS) loadFriendRequests()
+            }
+            "friend_request_accepted", "friend_request_declined", "friend_request_cancelled" -> {
+                if (activeView == ActiveView.REQUESTS) loadFriendRequests()
+                if (activeView == ActiveView.FRIENDS) loadFriends()
+            }
+        }
+    }
+
+    private fun showMessageNotification(title: String, message: JSONObject) {
+        val user = message.optJSONObject("user")
+        val author = if (user == null) "Lume" else user.optString("displayName").takeIf { it.isNotBlank() && it != "null" }
+            ?: user.optString("username", "Lume")
+        val content = message.optString("content").takeIf { it.isNotBlank() && it != "null" } ?: "Enviou um anexo"
+        notify(title, "$author: $content")
+    }
+
+    private fun notify(title: String, text: String) {
+        if (Build.VERSION.SDK_INT >= 33 && !hasPermission(Manifest.permission.POST_NOTIFICATIONS)) return
+        val manager = getSystemService(NotificationManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(NotificationChannel(MESSAGE_CHANNEL, "Mensagens do Lume", NotificationManager.IMPORTANCE_DEFAULT))
+        }
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        manager.notify(
+            (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+            NotificationCompat.Builder(this, MESSAGE_CHANNEL)
+                .setSmallIcon(R.drawable.ic_lume)
+                .setContentTitle(title)
+                .setContentText(text.take(120))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build(),
+        )
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && !hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     private fun loadDirectMessages() {
@@ -129,6 +244,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDirectMessages(conversations: List<LumeDm>) {
+        activeView = ActiveView.DMS
+        activeDm = null
         val content = column().apply {
             addView(label("MENSAGENS DIRETAS"))
             addView(title("Conversas"))
@@ -155,6 +272,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFriends(friends: List<LumeFriend>) {
         val current = session ?: return showLogin()
+        activeView = ActiveView.FRIENDS
         val content = column().apply {
             addView(label("PESSOAS"))
             addView(title("Amigos"))
@@ -175,6 +293,69 @@ class MainActivity : AppCompatActivity() {
         setContentView(wrap(content))
     }
 
+    private fun loadFriendRequests() {
+        val current = session ?: return showLogin()
+        lifecycleScope.launch {
+            showBusy("Buscando pedidos…")
+            runCatching { api.friendRequests(current.token, current.userId) }
+                .onSuccess { showFriendRequests(it) }
+                .onFailure { showHome(); toast(it.message ?: "Erro ao carregar pedidos.") }
+        }
+    }
+
+    private fun showFriendRequests(requests: List<LumeFriendRequest>) {
+        val current = session ?: return showLogin()
+        activeView = ActiveView.REQUESTS
+        val content = column().apply {
+            addView(label("AMIZADES"))
+            addView(title("Pedidos"))
+
+            val incoming = requests.filter { it.incoming }
+            val outgoing = requests.filterNot { it.incoming }
+            addView(section("RECEBIDOS"))
+            if (incoming.isEmpty()) addView(label("Nenhum pedido recebido."))
+            incoming.forEach { request ->
+                addView(label(request.name))
+                addView(action("Aceitar ${request.name}") { answerButton ->
+                    answerButton.isEnabled = false
+                    lifecycleScope.launch {
+                        runCatching { api.answerFriendRequest(current.token, request.id, true) }
+                            .onSuccess { loadFriendRequests() }
+                            .onFailure { error -> answerButton.isEnabled = true; toast(error.message ?: "Não foi possível aceitar.") }
+                    }
+                })
+                addView(action("Recusar") { answerButton ->
+                    answerButton.isEnabled = false
+                    lifecycleScope.launch {
+                        runCatching { api.answerFriendRequest(current.token, request.id, false) }
+                            .onSuccess { loadFriendRequests() }
+                            .onFailure { error -> answerButton.isEnabled = true; toast(error.message ?: "Não foi possível recusar.") }
+                    }
+                })
+            }
+
+            addView(section("ENVIADOS"))
+            if (outgoing.isEmpty()) addView(label("Nenhum pedido enviado aguardando resposta."))
+            outgoing.forEach { request -> addView(label("Aguardando ${request.name}")) }
+
+            addView(section("ADICIONAR PESSOA"))
+            val username = input("usuário ou usuário@servidor")
+            addView(username)
+            addView(action("Enviar pedido") { sendButton ->
+                val target = username.text.toString().trim()
+                if (target.isBlank()) return@action toast("Digite o usuário.")
+                sendButton.isEnabled = false
+                lifecycleScope.launch {
+                    runCatching { api.sendFriendRequest(current.token, target) }
+                        .onSuccess { loadFriendRequests(); toast("Pedido enviado.") }
+                        .onFailure { error -> sendButton.isEnabled = true; toast(error.message ?: "Não foi possível enviar.") }
+                }
+            })
+            addView(action("Voltar") { showHome() })
+        }
+        setContentView(wrap(content))
+    }
+
     private fun loadDmMessages(dm: LumeDm) {
         val current = session ?: return showLogin()
         lifecycleScope.launch {
@@ -187,6 +368,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showDmChat(dm: LumeDm, messages: List<LumeMessage>) {
         val current = session ?: return showLogin()
+        activeView = ActiveView.DM
+        activeDm = dm
         val content = column().apply {
             addView(label("MENSAGEM DIRETA"))
             addView(title(dm.name))
@@ -229,6 +412,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSpaces(spaces: List<LumeSpace>) {
+        activeView = ActiveView.SPACES
         val content = column().apply {
             addView(label("SEUS SERVIDORES"))
             addView(title("Escolha um espaço"))
@@ -250,6 +434,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSpaceChannels(space: LumeSpace, channels: List<LumeChannel>) {
+        activeView = ActiveView.SPACE
+        activeSpace = space
         val content = column().apply {
             addView(label("SERVIDOR"))
             addView(title(space.name))
@@ -282,6 +468,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showChat(space: LumeSpace, channel: LumeChannel, messages: List<LumeMessage>) {
         val current = session ?: return showLogin()
+        activeView = ActiveView.CHANNEL
+        activeSpace = space
+        activeChannel = channel
         val content = column().apply {
             addView(label(space.name.uppercase()))
             addView(title("# ${channel.name}"))
@@ -329,6 +518,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showChannels(channels: List<VoiceChannel>) {
         val current = session ?: return showLogin()
+        activeView = ActiveView.VOICE_LIST
         val content = column().apply {
             addView(title("Olá, ${current.displayName}"))
             addView(label("Escolha um canal de voz"))
@@ -370,6 +560,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCall(channel: VoiceChannel) {
+        activeView = ActiveView.CALL
         val content = column().apply {
             gravity = Gravity.CENTER_HORIZONTAL
             addView(label(channel.spaceName.uppercase()))
@@ -546,7 +737,16 @@ class MainActivity : AppCompatActivity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onDestroy() {
+        realtimeEnabled = false
+        realtime?.close()
+        realtime = null
         leaveCall(false)
         super.onDestroy()
+    }
+
+    private enum class ActiveView { HOME, DMS, DM, FRIENDS, REQUESTS, SPACES, SPACE, CHANNEL, VOICE_LIST, CALL }
+
+    private companion object {
+        const val MESSAGE_CHANNEL = "lume_messages"
     }
 }
