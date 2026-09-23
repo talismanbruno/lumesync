@@ -5,7 +5,7 @@ import { config } from '../config.js';
 import { getInstanceId } from '../utils/federationEpoch.js';
 import type { InstanceInfoResponse } from '@backspace/shared';
 
-const LUME_VERSION = '1.0.0-beta.17';
+const LUME_VERSION = '1.0.0-beta.18';
 
 export async function instanceRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/instance/info', async (_request, reply) => {
