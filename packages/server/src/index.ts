@@ -120,6 +120,13 @@ async function main(): Promise<void> {
       root: webDistPath,
       prefix: '/',
       wildcard: false,
+      setHeaders(response, filePath) {
+        if (path.basename(filePath) === 'index.html') {
+          response.header('Cache-Control', 'no-cache');
+        } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          response.header('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      },
     });
   }
 
@@ -165,6 +172,9 @@ async function main(): Promise<void> {
     app.setNotFoundHandler((request, reply) => {
       if (request.url.startsWith('/api/') || request.url.startsWith('/ws')) {
         return reply.code(404).send({ error: 'Not found', statusCode: 404 });
+      }
+      if (request.url.startsWith('/assets/')) {
+        return reply.code(404).type('text/plain').send('Asset not found');
       }
       return reply.sendFile('index.html');
     });

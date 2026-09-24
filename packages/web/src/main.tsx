@@ -2,8 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
+import { SwAutoUpdate } from './components/ui/SwUpdatePrompt';
 import { startPendingMessageOrchestrator } from './stores/pendingMessageRehydrate';
+import { installStaleChunkRecovery, recoverFromStaleChunk } from './utils/staleChunkRecovery';
 import './styles/globals.css';
+
+installStaleChunkRecovery();
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -20,6 +24,7 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, errorInfo.componentStack);
+    void recoverFromStaleChunk(error);
     // Renderer is alive enough to show the fallback UI — disarm the boot timer.
     // Without this, the timer fires 20s after a caught render error and
     // overrides the in-app error UI with native recovery, which is wrong.
@@ -119,10 +124,11 @@ startPendingMessageOrchestrator();
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
+    <BrowserRouter>
+      <SwAutoUpdate />
+      <ErrorBoundary>
         <App />
-      </BrowserRouter>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </BrowserRouter>
   </React.StrictMode>
 );
