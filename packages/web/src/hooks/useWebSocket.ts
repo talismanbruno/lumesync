@@ -34,6 +34,24 @@ export function getAwaitingApprovalPeerOrigins(): Set<string> {
 // Only DMs from peered origins (or the home instance) are processed.
 const activePeerOrigins = new Set<string>();
 
+export type VoiceReadyReconciliation = 'none' | 'reregister' | 'disconnect';
+
+/**
+ * Decide how to reconcile voice presence after the signalling WebSocket comes
+ * back. Mobile WebViews can suspend the socket while LiveKit keeps the call
+ * alive, so an empty `ready.voiceStates` is not enough to conclude that the
+ * user left the call.
+ */
+export function decideVoiceReadyReconciliation(
+  serverKnowsUs: boolean,
+  liveKitState?: string,
+): VoiceReadyReconciliation {
+  if (serverKnowsUs) return 'none';
+  return liveKitState === 'connected' || liveKitState === 'reconnecting' || liveKitState === 'connecting'
+    ? 'reregister'
+    : 'disconnect';
+}
+
 export function getActivePeerOrigins(): Set<string> {
   return activePeerOrigins;
 }
@@ -367,23 +385,28 @@ function handleEvent(origin: string, event: ServerEvent): void {
         // at broadcast and hardware time.
       }
 
-      // Server-authoritative voice session check: if we had a voice connection
-      // but the server's voiceStates doesn't include us (server restarted and
-      // lost in-memory voiceRooms), tear down the stale LiveKit session cleanly.
-      // If the server still knows about us (WS blip, not a restart), do nothing —
-      // useLiveKit's ConnectionStateChanged handler will re-register if needed.
+      // Reconcile voice presence after signalling reconnects. Android may keep
+      // LiveKit (and native screen sharing) alive while its WebSocket is
+      // suspended in the background. In that case the server has already
+      // removed the socket-owned presence, so re-register the still-live call
+      // instead of making the UI leave it.
       {
         const { currentVoiceChannelId } = useVoiceStore.getState();
         if (currentVoiceChannelId) {
           const voiceOrigin = getChannelOrigin(currentVoiceChannelId);
           if (voiceOrigin === origin) {
             const serverKnowsUs = event.voiceStates?.[currentVoiceChannelId]?.includes(event.user.id);
-            if (!serverKnowsUs) {
+            const activeRoom = getActiveRoom();
+            const action = decideVoiceReadyReconciliation(serverKnowsUs === true, activeRoom?.state);
+            if (action === 'reregister') {
+              wsSend({ type: 'voice_join', channelId: currentVoiceChannelId }, origin);
+              broadcastVoiceStatus(origin);
+            } else if (action === 'disconnect') {
               // leaveVoice() clears currentVoiceChannelId first to prevent
               // AppLayout from auto-reconnecting (disconnect() fires with
               // CLIENT_INITIATED which skips handleForceDisconnect).
               useVoiceStore.getState().leaveVoice();
-              getActiveRoom()?.disconnect();
+              activeRoom?.disconnect();
             }
           }
         }

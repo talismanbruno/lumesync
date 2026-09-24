@@ -82,6 +82,13 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::webView.isInitialized) {
+            webView.post { notifyWeb(screenRoom != null) }
+        }
+    }
+
     @Suppress("SetJavaScriptEnabled")
     private fun configureWebView() {
         CookieManager.getInstance().setAcceptCookie(true)
