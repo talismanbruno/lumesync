@@ -23,7 +23,7 @@ function getApiForOrigin(origin: string) {
 let _friendsLoadInFlight = false;
 let _requestsLoadInFlight = false;
 
-// ─── Auto-connect wait (same pattern as discoverStore) ──────────────────────
+// ─── Auto-connect wait ──────────────────────────────────────────────────────
 
 async function waitForAutoConnect(): Promise<void> {
   if (useInstanceStore.getState()._autoConnectDone) return;

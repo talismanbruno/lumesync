@@ -33,6 +33,7 @@ interface ElectronScreenShareRequest {
 }
 
 interface BackspaceElectronAPI {
+  preferredLanguages?: string[];
   // Platform info
   platform: NodeJS.Platform;
 

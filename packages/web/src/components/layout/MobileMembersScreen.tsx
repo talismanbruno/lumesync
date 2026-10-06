@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
 import type { MemberWithUser, Activity } from '@backspace/shared';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -21,7 +22,7 @@ function getMemberGroup(member: MemberWithUser, ownerId: string | undefined) {
     const ownerRole = member.roles?.find(r => r.position > 0);
     return {
       key: '__owner__',
-      label: 'OWNER',
+      label: uiText("OWNER"),
       color: ownerRole?.color ?? 'rgb(var(--accent-rose))',
       position: Infinity,
     };
@@ -38,7 +39,7 @@ function getMemberGroup(member: MemberWithUser, ownerId: string | undefined) {
   }
   return {
     key: '__online__',
-    label: 'ONLINE',
+    label: uiText("ONLINE"),
     color: undefined,
     position: -1,
   };
@@ -184,10 +185,10 @@ export function MobileMembersScreen({ params }: MobileMembersScreenProps) {
 
   return (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title={totalCount > 0 ? `Members — ${totalCount}` : 'Members'} />
+      <MobileScreenHeader title={totalCount > 0 ? uiText("Members — {0}", [totalCount]) : uiText("Members")} />
       <div className="flex-1 overflow-y-auto p-3">
         {showMemberSkeleton ? (
-          <div className="px-2 pt-2" role="status" aria-label="Loading members">
+          <div className="px-2 pt-2" role="status" aria-label={uiText("Loading members")}>
             {/* Role group 1 — match real row geometry: w-9 h-9 avatar +
                 gap-2.5 + py-2.5 → ~52px row height. */}
             <div
@@ -238,8 +239,7 @@ export function MobileMembersScreen({ params }: MobileMembersScreenProps) {
           </div>
         ) : onlineCount === 0 && offlineMembers.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-txt-tertiary text-sm">
-            No members found
-          </div>
+            {uiText("No members found")}</div>
         ) : (
           <>
             {roleGroups.map(([key, group]) => (
@@ -254,7 +254,7 @@ export function MobileMembersScreen({ params }: MobileMembersScreenProps) {
             {offlineMembers.length > 0 && (
               <div>
                 <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-                  OFFLINE — {offlineMembers.length}
+                  {uiText("OFFLINE — ")}{offlineMembers.length}
                 </h3>
                 {offlineMembers.map((m) => renderMember(m, true))}
               </div>

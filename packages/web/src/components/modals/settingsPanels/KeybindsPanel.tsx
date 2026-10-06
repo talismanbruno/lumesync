@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeybindStore, BINDABLE_ACTIONS, Keybind } from '../../../stores/keybindStore';
 import { isElectron, isElectronMac } from '../../../platform/platform';
@@ -64,12 +65,12 @@ function KeybindRow({ actionId, label, keybind, isRecording, recordingDisplay, o
         <div className="text-xs text-txt-tertiary mt-0.5">
           {isRecording ? (
             <span className="text-accent-mint animate-pulse">
-              {recordingDisplay || 'Press a key combo...'}
+              {recordingDisplay || uiText("Press a key combo...")}
             </span>
           ) : keybind ? (
             keybind.displayLabel
           ) : (
-            'Not bound'
+            uiText("Not bound")
           )}
         </div>
       </div>
@@ -80,20 +81,19 @@ function KeybindRow({ actionId, label, keybind, isRecording, recordingDisplay, o
               onClick={onStartRecording}
               className="text-xs px-2.5 py-1 rounded text-txt-tertiary hover:text-txt-primary hover:bg-white/[0.06] transition-colors"
             >
-              {keybind ? 'Edit' : 'Record'}
+              {keybind ? uiText("Edit") : uiText("Record")}
             </button>
             {keybind && (
               <button
                 onClick={onDelete}
                 className="text-xs px-2.5 py-1 rounded text-txt-tertiary hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
               >
-                Delete
-              </button>
+                {uiText("Delete")}</button>
             )}
           </>
         )}
         {isRecording && (
-          <span className="text-[10px] text-txt-tertiary">ESC to cancel</span>
+          <span className="text-[10px] text-txt-tertiary">{uiText("ESC to cancel")}</span>
         )}
       </div>
     </div>
@@ -286,47 +286,42 @@ export function KeybindsPanel() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">Keybinds</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("Keybinds")}</h2>
       {/* macOS Accessibility Warning */}
       {isElectronMac() && accessibilityTrusted === false && (
         <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3.5">
-          <div className="text-sm text-amber-200 font-medium">Accessibility Permission Required</div>
+          <div className="text-sm text-amber-200 font-medium">{uiText("Accessibility Permission Required")}</div>
           <div className="text-xs text-amber-200/70 mt-1">
-            O Lume precisa da permissão de acessibilidade para usar atalhos globais fora do app.
-          </div>
+            {uiText("O Lume precisa da permissão de acessibilidade para usar atalhos globais fora do app.")}</div>
           <button
             onClick={() => {
               window.backspace?.checkAccessibility().then(setAccessibilityTrusted);
             }}
             className="mt-2 text-xs px-3 py-1.5 rounded bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 transition-colors"
           >
-            Grant Permission
-          </button>
+            {uiText("Grant Permission")}</button>
         </div>
       )}
 
       {/* Linux hook error warning */}
       {isElectron() && hookError && (
         <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3.5">
-          <div className="text-sm text-amber-200 font-medium">Global Shortcuts Unavailable</div>
+          <div className="text-sm text-amber-200 font-medium">{uiText("Global Shortcuts Unavailable")}</div>
           <div className="text-xs text-amber-200/70 mt-1">
-            Failed to start input listener. On Linux, your user may need to be in the <code className="bg-black/20 px-1 rounded">input</code> group.
-          </div>
+            {uiText("Failed to start input listener. On Linux, your user may need to be in the ")}<code className="bg-black/20 px-1 rounded">{uiText("input")}</code> {uiText(" group.")}</div>
         </div>
       )}
 
       {/* Web limitation note */}
       {!isElectron() && (
         <div className="text-xs text-txt-tertiary px-1">
-          Shortcuts work while this tab is focused. For global shortcuts that work in other apps, use the desktop app.
-        </div>
+          {uiText("Shortcuts work while this tab is focused. For global shortcuts that work in other apps, use the desktop app.")}</div>
       )}
 
       {/* Keybind rows */}
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Voice Shortcuts
-        </div>
+          {uiText("Voice Shortcuts")}</div>
         <div className="space-y-1.5">
           {BINDABLE_ACTIONS.map((action) => (
             <KeybindRow
@@ -351,25 +346,22 @@ export function KeybindsPanel() {
       {conflict && (
         <div className="rounded-lg bg-surface-elevated border border-white/[0.06] p-3.5">
           <div className="text-sm text-txt-primary">
-            <span className="font-medium">{conflict.pendingKeybind.displayLabel}</span> is already bound to{' '}
+            <span className="font-medium">{conflict.pendingKeybind.displayLabel}</span> {uiText(" is already bound to")}{' '}
             <span className="font-medium">
               {BINDABLE_ACTIONS.find((a) => a.id === conflict.existingKeybind.actionId)?.label}
             </span>
-            . Overwrite?
-          </div>
+            {uiText(". Overwrite?")}</div>
           <div className="flex gap-2 mt-2.5">
             <button
               onClick={confirmConflict}
               className="text-xs px-3 py-1.5 rounded bg-accent-mint/20 text-accent-mint hover:bg-accent-mint/30 transition-colors"
             >
-              Overwrite
-            </button>
+              {uiText("Overwrite")}</button>
             <button
               onClick={cancelConflict}
               className="text-xs px-3 py-1.5 rounded bg-white/[0.06] text-txt-secondary hover:bg-white/[0.1] transition-colors"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
           </div>
         </div>
       )}

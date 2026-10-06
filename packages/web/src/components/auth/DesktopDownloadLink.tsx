@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { isElectron } from '../../platform/platform';
 import { getDesktopDownload } from '../../config/desktopDownloads';
 
@@ -25,7 +26,7 @@ export function DesktopDownloadLink() {
           <span className="block text-[11px] text-txt-tertiary">{download.detail}</span>
         </span>
       </span>
-      <span className="ml-3 text-xs font-semibold text-accent-primary transition-transform duration-200 group-hover:translate-x-0.5">Baixar</span>
+      <span className="ml-3 text-xs font-semibold text-accent-primary transition-transform duration-200 group-hover:translate-x-0.5">{uiText("Baixar")}</span>
     </a>
   );
 }

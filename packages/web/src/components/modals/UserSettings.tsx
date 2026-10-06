@@ -1,9 +1,7 @@
+import { t as uiText } from '../../i18n';
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
-import { SourceCodeLink } from '../ui/SourceCodeLink';
-import { api } from '../../api/client';
-import type { InstanceInfoResponse } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/authStore';
 import { AccountPanel } from './settingsPanels/AccountPanel';
@@ -62,20 +60,7 @@ export function UserSettingsModal() {
 
   const [tab, setTab] = useState<SettingsTab>('account');
   const [mobileView, setMobileView] = useState<'tabs' | 'content'>('tabs');
-  // AGPL § 13: home-instance source offer. Fetched from the public info endpoint
-  // so the source link reflects the version this instance is actually running.
-  const [instanceInfo, setInstanceInfo] = useState<InstanceInfoResponse | null>(null);
-
   const isOpen = activeModal === 'userSettings';
-
-  useEffect(() => {
-    if (!isOpen) return;
-    let cancelled = false;
-    api.instance.info()
-      .then((info) => { if (!cancelled) setInstanceInfo(info); })
-      .catch(() => { /* Non-critical — link falls back to hidden if unreachable. */ });
-    return () => { cancelled = true; };
-  }, [isOpen]);
 
   // Deep-linking: read modalData.tab when opening
   useEffect(() => {
@@ -134,22 +119,22 @@ export function UserSettingsModal() {
 
           {/* Nav list */}
           <div className="lume-settings-orbit-map p-2 flex-1 flex flex-col">
-            <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
-            <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
-            <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
-            <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
+            <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">{uiText("Minha órbita")}</div>
+            <button onClick={() => handleTabClick('account')} className={tabClass('account')}>{uiText("Identidade")}</button>
+            <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>{uiText("Voz, vídeo e som")}</button>
+            <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>{uiText("Privacidade")}</button>
 
             <div className="border-t border-white/[0.04] my-2 mx-2" />
-            <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">Sistema Lume</div>
-            <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Conexões</button>
-            <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Atalhos</button>
-            {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>Desktop</button>}
+            <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
+            <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
+            <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
+            {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 
             {isAdmin && (
               <>
                 <div className="border-t border-white/[0.04] my-2 mx-2" />
-                <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
-                <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
+                <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">{uiText("Lume Developer")}</div>
+                <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>{uiText("Ferramentas de administração")}</button>
                 {tab === 'instance' && <SidebarSubLinks />}
               </>
             )}
@@ -161,14 +146,7 @@ export function UserSettingsModal() {
               onClick={handleLogout}
               className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
             >
-              Sair do Lume
-            </button>
-
-            {instanceInfo && (
-              <div className="px-3 pt-2">
-                <SourceCodeLink sourceCodeUrl={instanceInfo.sourceCodeUrl} version={instanceInfo.version} commit={instanceInfo.commit} />
-              </div>
-            )}
+              {uiText("Sair")}</button>
           </div>
         </div>
 
@@ -191,22 +169,22 @@ export function UserSettingsModal() {
             </div>
 
             <div className="lume-settings-orbit-map p-2 space-y-0.5">
-              <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">Minha órbita</div>
-              <button onClick={() => handleTabClick('account')} className={tabClass('account')}>Identidade</button>
-              <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>Voz, vídeo e som</button>
-              <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>Privacidade</button>
+              <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">{uiText("Minha órbita")}</div>
+              <button onClick={() => handleTabClick('account')} className={tabClass('account')}>{uiText("Identidade")}</button>
+              <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>{uiText("Voz, vídeo e som")}</button>
+              <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>{uiText("Privacidade")}</button>
 
               <div className="border-t border-white/[0.04] my-2 mx-2" />
-              <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">Sistema Lume</div>
-              <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>Conexões</button>
-              <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>Atalhos</button>
-              {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>Desktop</button>}
+              <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
+              <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
+              <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
+              {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 
               {isAdmin && (
                 <>
                   <div className="border-t border-white/[0.04] my-2 mx-2" />
-                  <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">Lume Developer</div>
-                  <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>Ferramentas de administração</button>
+                  <div className="text-[10px] font-semibold text-cyan-300/70 uppercase tracking-wider px-3 py-1">{uiText("Lume Developer")}</div>
+                  <button onClick={() => handleTabClick('instance')} className={tabClass('instance')}>{uiText("Ferramentas de administração")}</button>
                 </>
               )}
 
@@ -215,14 +193,7 @@ export function UserSettingsModal() {
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
               >
-                Sair do Lume
-              </button>
-
-              {instanceInfo && (
-                <div className="px-3 pt-2">
-                  <SourceCodeLink sourceCodeUrl={instanceInfo.sourceCodeUrl} version={instanceInfo.version} commit={instanceInfo.commit} />
-                </div>
-              )}
+                {uiText("Sair")}</button>
             </div>
           </div>
         )}
@@ -236,13 +207,12 @@ export function UserSettingsModal() {
                 <button
                   onClick={() => setMobileView('tabs')}
                   className="flex items-center gap-1.5 text-txt-tertiary hover:text-txt-secondary mb-4 text-sm"
-                  aria-label="Voltar ao menu de configurações"
+                  aria-label={uiText("Voltar ao menu de configurações")}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
                   </svg>
-                  Settings
-                </button>
+                  {uiText("Settings")}</button>
               )}
               {tab === 'account' && <AccountPanel />}
               {tab === 'voice' && <VoicePanel />}

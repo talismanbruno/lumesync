@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
@@ -268,30 +269,30 @@ export function RegisterPage() {
 
     const trimmed = username.trim();
     if (!trimmed) {
-      setError('Informe seu usuário');
+      setError(uiText("Informe seu usuário"));
       return;
     }
     if (trimmed.length < 3 || trimmed.length > 32) {
-      setError('Username must be between 3 and 32 characters');
+      setError(uiText("Username must be between 3 and 32 characters"));
       return;
     }
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
-      setError('Username can only contain lowercase letters, numbers, and underscores');
+      setError(uiText("Username can only contain lowercase letters, numbers, and underscores"));
       return;
     }
     if (usernameStatus === 'taken' || usernameStatus === 'invalid') {
       return;
     }
     if (!password) {
-      setError('Informe sua senha');
+      setError(uiText("Informe sua senha"));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(uiText("Password must be at least 6 characters"));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(uiText("Passwords do not match"));
       return;
     }
 
@@ -381,7 +382,7 @@ export function RegisterPage() {
         setRetryAfter(err.retryAfter);
         setError('');
       } else {
-        setError(err instanceof Error ? err.message : 'Registration failed');
+        setError(err instanceof Error ? err.message : uiText("Registration failed"));
       }
       setIsRegistering(false);
     }
@@ -396,15 +397,15 @@ export function RegisterPage() {
   if (pendingSession) return (
     <div className="min-h-full flex items-center justify-center bg-surface-base p-5">
       <div className="w-full max-w-lg rounded-xl border border-white/10 bg-surface-raised p-6 text-txt-primary">
-        <h1 className="text-xl font-bold">Guarde seus códigos de recuperação</h1>
-        <p className="mt-2 text-sm text-txt-secondary">Eles permitem trocar sua senha se você perdê-la. Cada código funciona uma vez. Eles não serão mostrados de novo.</p>
+        <h1 className="text-xl font-bold">{uiText("Guarde seus códigos de recuperação")}</h1>
+        <p className="mt-2 text-sm text-txt-secondary">{uiText("Eles permitem trocar sua senha se você perdê-la. Cada código funciona uma vez. Eles não serão mostrados de novo.")}</p>
         <pre className="mt-4 p-4 rounded-lg bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{pendingSession.codes.join('\n')}</pre>
-        <button type="button" className="mt-3 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(pendingSession.codes.join('\n'))}>Copiar códigos</button>
-        <label className="mt-5 flex items-center gap-2 text-sm"><input type="checkbox" checked={codesSaved} onChange={e => setCodesSaved(e.target.checked)} /> Guardei os códigos em lugar seguro</label>
+        <button type="button" className="mt-3 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(pendingSession.codes.join('\n'))}>{uiText("Copiar códigos")}</button>
+        <label className="mt-5 flex items-center gap-2 text-sm"><input type="checkbox" checked={codesSaved} onChange={e => setCodesSaved(e.target.checked)} /> {uiText(" Guardei os códigos em lugar seguro")}</label>
         <button type="button" disabled={!codesSaved} className="mt-4 w-full rounded-lg bg-accent-primary px-4 py-2 text-white disabled:opacity-50" onClick={() => {
           initSession(pendingSession.token, pendingSession.user);
           navigate(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
-        }}>Continuar para o Lume</button>
+        }}>{uiText("Continuar para o Lume")}</button>
       </div>
     </div>
   );
@@ -427,7 +428,7 @@ export function RegisterPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(0,209,255,0.10)_0%,transparent_42%)] pointer-events-none" />
       <div className="min-h-full flex items-center justify-center px-4 py-6 md:py-10 relative z-10">
         <div className="w-full max-w-[480px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-6 md:p-8 shadow-elevation-high overflow-hidden backdrop-blur-xl">
-        <img src="/icons/logo-wordmark.png" alt="Lume" className="h-9 w-auto mx-auto mb-5 object-contain" />
+        <img src="/icons/logo-wordmark.png" alt={uiText("Lume")} className="h-9 w-auto mx-auto mb-5 object-contain" />
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-5">
           <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${step === 1 ? 'bg-accent-primary' : 'bg-txt-tertiary/30'}`} />
@@ -437,7 +438,7 @@ export function RegisterPage() {
         {step === 1 ? (
           <div key="step1" className={`w-full${direction === 'back' ? ' animate-step-back' : ''}`}>
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-txt-primary">Crie sua conta</h1>
+              <h1 className="text-2xl font-bold text-txt-primary">{uiText("Crie sua conta")}</h1>
             </div>
 
             <form onSubmit={handleContinue}>
@@ -452,35 +453,34 @@ export function RegisterPage() {
               {showManualEntry && (
                 <div className="mb-4 p-3 rounded-lg bg-surface-elevated border border-surface-border space-y-2">
                   <div className="text-sm text-txt-secondary">
-                    Registration is invite-only on this instance. Paste your invite link or enter the code below.
-                  </div>
+                    {uiText("Registration is invite-only on this instance. Paste your invite link or enter the code below.")}</div>
                   <input
                     type="text"
                     value={manualInviteToken}
                     onChange={(e) => setManualInviteToken(e.target.value)}
-                    placeholder="Invite code or link"
+                    placeholder={uiText("Invite code or link")}
                     // text-base on mobile prevents iOS Safari from auto-zooming
                     // when the field is focused (any <input> with font-size <16px triggers zoom).
                     className="input-standard w-full px-3 py-2 text-base md:text-sm"
-                    aria-label="Invite code or link"
+                    aria-label={uiText("Invite code or link")}
                     autoComplete="off"
                   />
                   {inviteChecking && (
-                    <div className="text-xs text-txt-tertiary">Checking...</div>
+                    <div className="text-xs text-txt-tertiary">{uiText("Checking...")}</div>
                   )}
                   {!inviteChecking && inviteCheck?.valid === true && (
                     <div className="text-xs text-status-online flex items-center gap-1">
                       <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
-                      Valid invite: {inviteCheck.name}
+                      {uiText("Valid invite: ")}{inviteCheck.name}
                     </div>
                   )}
                   {!inviteChecking && inviteCheck?.valid === false && (
                     <div className="text-xs text-txt-danger">
-                      {inviteCheck.reason === 'expired' && 'This invite link has expired. Ask the admin for a new one.'}
-                      {inviteCheck.reason === 'exhausted' && 'This invite has reached its usage limit. Ask the admin to extend it.'}
-                      {inviteCheck.reason === 'invalid' && 'Invalid invite code.'}
+                      {inviteCheck.reason === 'expired' && uiText("This invite link has expired. Ask the admin for a new one.")}
+                      {inviteCheck.reason === 'exhausted' && uiText("This invite has reached its usage limit. Ask the admin to extend it.")}
+                      {inviteCheck.reason === 'invalid' && uiText("Invalid invite code.")}
                     </div>
                   )}
                 </div>
@@ -499,31 +499,31 @@ export function RegisterPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      <span>Validating invite...</span>
+                      <span>{uiText("Validating invite...")}</span>
                     </>
                   ) : inviteCheck?.valid === true ? (
                     <>
                       <svg className="w-3 h-3 flex-shrink-0 mt-0.5 md:mt-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="break-all">Using invite: {inviteCheck.name}</span>
+                      <span className="break-all">{uiText("Using invite: ")}{inviteCheck.name}</span>
                     </>
                   ) : inviteCheck?.valid === false ? (
                     <>
                       <svg className="w-3 h-3 flex-shrink-0 mt-0.5 md:mt-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
-                      <span>Invalid invite link — please request a new one</span>
+                      <span>{uiText("Invalid invite link — please request a new one")}</span>
                     </>
                   ) : (
-                    <>Validating invite...</>
+                    <>{uiText("Validating invite...")}</>
                   )}
                 </div>
               )}
 
               <div className="mb-5">
                 <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  Username <span className="text-txt-danger">*</span>
+                  {uiText("Username ")}<span className="text-txt-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -563,7 +563,7 @@ export function RegisterPage() {
 
               <div className="mb-5">
                 <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  Password <span className="text-txt-danger">*</span>
+                  {uiText("Password ")}<span className="text-txt-danger">*</span>
                 </label>
                 <input
                   type="password"
@@ -576,7 +576,7 @@ export function RegisterPage() {
 
               <div className="mb-5">
                 <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  Confirm Password <span className="text-txt-danger">*</span>
+                  {uiText("Confirm Password ")}<span className="text-txt-danger">*</span>
                 </label>
                 <input
                   type="password"
@@ -594,35 +594,32 @@ export function RegisterPage() {
                 // tighter desktop look from before.
                 className="w-full py-3 md:py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue
-              </button>
+                {uiText("Continue")}</button>
 
               {/* Helper text when invite is required but not yet entered */}
               {inviteRequired && !manualInviteToken.trim() && !urlInviteToken && (
                 <div className="text-xs text-txt-tertiary mt-2">
-                  An invite is required to register on this instance.
-                </div>
+                  {uiText("An invite is required to register on this instance.")}</div>
               )}
 
               <p className="mt-3 text-sm text-txt-tertiary">
-                Already have an account?{' '}
+                {uiText("Already have an account?")}{' '}
                 <Link to={`/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">
-                  Log In
-                </Link>
+                  {uiText("Log In")}</Link>
               </p>
             </form>
           </div>
         ) : (
           <div key="step2" className={`w-full${direction === 'forward' ? ' animate-step-forward' : ''}`}>
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-txt-primary">Make it yours</h1>
-              <p className="text-txt-tertiary text-sm mt-1">Personalize your profile, or skip for now</p>
+              <h1 className="text-2xl font-bold text-txt-primary">{uiText("Make it yours")}</h1>
+              <p className="text-txt-tertiary text-sm mt-1">{uiText("Personalize your profile, or skip for now")}</p>
             </div>
 
             {retryAfter > 0 && (
               <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-sm">
-                <p className="font-medium text-accent-amber">Too many attempts</p>
-                <p className="text-txt-secondary mt-0.5">Tente novamente em {retryAfter}s</p>
+                <p className="font-medium text-accent-amber">{uiText("Too many attempts")}</p>
+                <p className="text-txt-secondary mt-0.5">{uiText("Tente novamente em ")}{retryAfter}{uiText("s")}</p>
               </div>
             )}
 
@@ -657,8 +654,7 @@ export function RegisterPage() {
                 onClick={() => avatarInputRef.current?.click()}
                 className="text-xs text-accent-primary hover:underline mt-2"
               >
-                Upload photo
-              </button>
+                {uiText("Upload photo")}</button>
               <input
                 ref={avatarInputRef}
                 type="file"
@@ -671,13 +667,12 @@ export function RegisterPage() {
             {/* Display Name */}
             <div className="mb-5">
               <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                Display Name
-              </label>
+                {uiText("Display Name")}</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={username.trim() || 'Display name'}
+                placeholder={username.trim() || uiText("Display name")}
                 className="input-standard w-full py-2.5 text-base md:text-sm"
                 autoComplete="name"
               />
@@ -686,8 +681,7 @@ export function RegisterPage() {
             {/* Avatar Color Picker */}
             <div className="mb-6">
               <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                Avatar Color
-              </label>
+                {uiText("Avatar Color")}</label>
               {/* Color swatch row: gap tightens on narrow viewports so the 7 swatches
                   fit inside a 360 px viewport (p-6 inner content area is ~280 px;
                   7×32 + 6×10 = 284 px would overflow with gap-2.5). */}
@@ -720,10 +714,10 @@ export function RegisterPage() {
               className="w-full py-3 md:py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {retryAfter > 0
-                ? `Tente novamente em ${retryAfter}s`
+                ? uiText("Tente novamente em {0}s", [retryAfter])
                 : isRegistering
-                  ? 'Creating account...'
-                  : 'Get Started'}
+                  ? uiText("Creating account...")
+                  : uiText("Get Started")}
             </button>
 
             <div className="flex items-center justify-between mt-3">
@@ -734,16 +728,14 @@ export function RegisterPage() {
                 // py-2 px-1 widens the tap area on mobile while keeping the visual link style.
                 className="text-sm text-txt-tertiary hover:text-txt-secondary transition-colors disabled:opacity-50 py-2 px-1 -mx-1"
               >
-                Back
-              </button>
+                {uiText("Back")}</button>
               <button
                 type="button"
                 onClick={() => handleRegister(true)}
                 disabled={isDisabled}
                 className="text-sm text-txt-tertiary hover:text-txt-secondary transition-colors disabled:opacity-50 py-2 px-1 -mx-1"
               >
-                Skip for now
-              </button>
+                {uiText("Skip for now")}</button>
             </div>
           </div>
         )}
@@ -766,7 +758,7 @@ export function RegisterPage() {
           onClose={() => setAvatarCropSrc(null)}
           imageSrc={avatarCropSrc}
           onCropComplete={handleAvatarCropComplete}
-          title="Crop Avatar"
+          title={uiText("Crop Avatar")}
           aspectRatio={1}
           cropShape="round"
           maxOutputDimension={256}

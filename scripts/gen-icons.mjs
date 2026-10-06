@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Backspace icon generator
+ * Lume icon generator
  *
  * Reads from assets/brand/{app-icon.svg, app-icon-x{1,2,3}.png, mark.svg,
  * mark-mono-dark.svg} and writes the entire desktop + web icon set:
@@ -20,7 +20,8 @@
  * silhouette (22 %·side ≈ Apple's macOS template radius). The flat
  * app-icon.svg is retained as a source but no longer rendered: at favicon
  * sizes its gradient mark halos into a white perimeter border (see
- * RASTER_THRESHOLD). Tray icons and the PWA maskable inner remain SVG-only.
+ * RASTER_THRESHOLD). Windows tray uses the same full app logo; macOS and
+ * Linux tray icons and the PWA maskable inner remain SVG-only.
  *
  * DETERMINISM: byte-stable for a given lockfile only. After bumping
  * sharp / png-to-ico / png2icons, expect a follow-up regen+commit in
@@ -175,13 +176,6 @@ async function writeAppIconPng(path, sources, size) {
   writeFileSync(path, buf);
 }
 
-async function writeIco(path, svg, sizes) {
-  mkdirSync(dirname(path), { recursive: true });
-  const buffers = await Promise.all(sizes.map((s) => renderPng(svg, s)));
-  const ico = await pngToIco(buffers);
-  writeFileSync(path, ico);
-}
-
 async function writeAppIconIco(path, sources, sizes) {
   // Every pixel size routes through renderAppIcon (3D raster, squircle-
   // masked) so the whole .ico — taskbar/Properties small reps through the
@@ -277,6 +271,14 @@ async function main() {
       path: relative(ROOT, path),
     });
 
+  // Update only the Windows assets without regenerating other platforms or web.
+  if (process.argv.includes('--windows-only')) {
+    await writeAppIconIco(join(DESKTOP_BUILD, 'icon.ico'), appIconSources, [16, 24, 32, 48, 64, 128, 256]);
+    await writeAppIconIco(join(DESKTOP_RES, 'tray-icon.ico'), appIconSources, [16, 20, 24, 32, 40, 48]);
+    console.log('Generated Windows app and tray icons from the full Lume logo.');
+    return;
+  }
+
   // --- Desktop: application icon ---
   const linuxSizes = [16, 32, 48, 64, 128, 256, 512, 1024];
   for (const s of linuxSizes) {
@@ -305,8 +307,8 @@ async function main() {
   await writePng(join(DESKTOP_RES, 'tray-iconTemplate@2x.png'), markMonoDark, 44);
   trace('tray-mac-2x', join(DESKTOP_RES, 'tray-iconTemplate@2x.png'), '44x44');
 
-  await writeIco(join(DESKTOP_RES, 'tray-icon.ico'), mark, [16, 20, 24, 32, 40, 48]);
-  trace('tray-win-ico', join(DESKTOP_RES, 'tray-icon.ico'), '6 sizes');
+  await writeAppIconIco(join(DESKTOP_RES, 'tray-icon.ico'), appIconSources, [16, 20, 24, 32, 40, 48]);
+  trace('tray-win-ico', join(DESKTOP_RES, 'tray-icon.ico'), '6 sizes (full app logo)');
 
   await writePng(join(DESKTOP_RES, 'tray-icon.png'), mark, 22);
   trace('tray-linux', join(DESKTOP_RES, 'tray-icon.png'), '22x22');

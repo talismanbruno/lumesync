@@ -3,12 +3,15 @@ import type { User, UserStatus } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient } from '../../utils/gradients';
 import { resolveAvatarSource } from '../../utils/safeUrls';
+import { getPresenceLabel } from '../../utils/presenceLabels';
+import { Tooltip } from './Tooltip';
 
 interface AvatarProps {
   src?: string | null;
   name: string;
   size?: number;
   status?: UserStatus | null;
+  statusLabel?: string;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   user?: User;
@@ -96,7 +99,7 @@ function getDotMetrics(avatarSize: number, ringWidth: number = 0) {
   return { dot, gap, inset: avatarInset + ringWidth };
 }
 
-export function Avatar({ src, name, size = 40, status, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false }: AvatarProps) {
+export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false }: AvatarProps) {
   const openUserProfile = useUIStore((s) => s.openUserProfile);
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
@@ -128,7 +131,7 @@ export function Avatar({ src, name, size = 40, status, className = '', onClick, 
     ? { maskImage: cutoutMask, WebkitMaskImage: cutoutMask }
     : undefined;
 
-  const { dot: dotDiameter, inset: dotInset } = getDotMetrics(size, ringWidth);
+  const { dot: dotDiameter, gap: dotGap, inset: dotInset } = getDotMetrics(size, ringWidth);
 
   return (
     <div
@@ -172,14 +175,26 @@ export function Avatar({ src, name, size = 40, status, className = '', onClick, 
       {/* Status dot — outside the masked div so it isn't clipped */}
       {status && (
         <div
-          className={`absolute rounded-full ${statusColors[status] ?? 'bg-status-offline'}`}
+          className="absolute flex"
           style={{
-            width: dotDiameter,
-            height: dotDiameter,
-            bottom: dotInset - dotDiameter / 2,
-            right: dotInset - dotDiameter / 2,
+            bottom: dotInset - dotDiameter / 2 - dotGap,
+            right: dotInset - dotDiameter / 2 - dotGap,
           }}
-        />
+        >
+          <Tooltip content={statusLabel ?? getPresenceLabel(status)} position="top">
+            <span
+              role="img"
+              aria-label={statusLabel ?? getPresenceLabel(status)}
+              className="inline-flex"
+              style={{ padding: dotGap }}
+            >
+              <span
+                className={`block rounded-full ${statusColors[status] ?? 'bg-status-offline'}`}
+                style={{ width: dotDiameter, height: dotDiameter }}
+              />
+            </span>
+          </Tooltip>
+        </div>
       )}
     </div>
   );

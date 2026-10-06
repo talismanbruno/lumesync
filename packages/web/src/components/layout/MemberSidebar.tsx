@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
 import type { MemberWithUser, Activity } from '@backspace/shared';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -21,7 +22,7 @@ function getMemberGroup(member: MemberWithUser, ownerId: string | undefined) {
     const ownerRole = member.roles?.find(r => r.position > 0);
     return {
       key: '__owner__',
-      label: 'OWNER',
+      label: uiText("OWNER"),
       color: ownerRole?.color ?? 'rgb(var(--accent-rose))',
       position: Infinity,
     };
@@ -40,7 +41,7 @@ function getMemberGroup(member: MemberWithUser, ownerId: string | undefined) {
   // No explicit roles — just @everyone
   return {
     key: '__online__',
-    label: 'ONLINE',
+    label: uiText("ONLINE"),
     color: undefined,
     position: -1,
   };
@@ -187,7 +188,7 @@ export function MemberSidebar() {
   return (
     <div className="lume-member-panel w-60 bg-surface-members flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
       {showMemberSkeleton ? (
-        <div className="px-3 pt-4" role="status" aria-label="Loading members">
+        <div className="px-3 pt-4" role="status" aria-label={uiText("Loading members")}>
           {/* Role group 1 */}
           <div className="skeleton skeleton-bar h-2 w-[40%] mb-3" style={{ animationDelay: '0s' }} />
           {Array.from({ length: 2 }, (_, i) => (
@@ -221,7 +222,7 @@ export function MemberSidebar() {
         {offlineMembers.length > 0 && (
           <div>
             <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-              OFFLINE — {offlineMembers.length}
+              {uiText("OFFLINE — ")}{offlineMembers.length}
             </h3>
             {offlineMembers.map((m) => renderMember(m, true))}
           </div>

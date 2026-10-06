@@ -32,7 +32,6 @@ vi.mock('../../api/client', () => ({
       cancelRequest: vi.fn().mockResolvedValue({ success: true }),
       removeFriend: vi.fn().mockResolvedValue({ success: true }),
       search: vi.fn().mockResolvedValue([]),
-      discover: vi.fn().mockResolvedValue({ users: [], total: 0 }),
     },
   },
 }));
@@ -46,30 +45,6 @@ vi.mock('../../stores/instanceStore', () => ({
     }),
     {
       getState: () => ({ instances: [], _autoConnectDone: true }),
-      setState: vi.fn(),
-      subscribe: vi.fn(),
-    }
-  ),
-}));
-
-vi.mock('../../stores/discoverStore', () => ({
-  useDiscoverStore: Object.assign(
-    (selector: (s: any) => any) => selector({
-      users: [],
-      isLoading: false,
-      searchQuery: '',
-      setSearchQuery: vi.fn(),
-      fetchUsers: vi.fn(),
-      updateRelationship: vi.fn(),
-    }),
-    {
-      getState: () => ({
-        users: [],
-        isLoading: false,
-        searchQuery: '',
-        fetchUsers: vi.fn(),
-        updateRelationship: vi.fn(),
-      }),
       setState: vi.fn(),
       subscribe: vi.fn(),
     }
@@ -193,8 +168,8 @@ describe('FriendsPage', () => {
       const addFriendTab = screen.getByText('Adicionar');
       await user.click(addFriendTab);
 
-      expect(screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/)).toBeInTheDocument();
-      expect(screen.getByText('Encontrar pessoas')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Digite o nick ou usuario@instancia/)).toBeInTheDocument();
+      expect(screen.getByText('Adicionar pessoa')).toBeInTheDocument();
     });
 
     it('shows Direct Add row and sends request for user@domain input', async () => {
@@ -207,7 +182,7 @@ describe('FriendsPage', () => {
       renderFriendsPage();
       await user.click(screen.getByText('Adicionar'));
 
-      const input = screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/);
+      const input = screen.getByPlaceholderText(/Digite o nick ou usuario@instancia/);
       await user.type(input, 'newbuddy@remote.example.com');
 
       // Direct Add row should appear
@@ -235,7 +210,7 @@ describe('FriendsPage', () => {
       renderFriendsPage();
       await user.click(screen.getByText('Adicionar'));
 
-      const input = screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/);
+      const input = screen.getByPlaceholderText(/Digite o nick ou usuario@instancia/);
       await user.type(input, 'ghost@remote.example.com');
       await user.click(screen.getByText('Enviar pedido'));
 
@@ -249,7 +224,7 @@ describe('FriendsPage', () => {
       renderFriendsPage();
       await user.click(screen.getByText('Adicionar'));
 
-      const input = screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/);
+      const input = screen.getByPlaceholderText(/Digite o nick ou usuario@instancia/);
       await user.type(input, 'marc');
 
       // Direct Add row appears with the resolved form `marc@<window.location.host>`.
@@ -263,7 +238,7 @@ describe('FriendsPage', () => {
       renderFriendsPage();
       await user.click(screen.getByText('Adicionar'));
 
-      const input = screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/);
+      const input = screen.getByPlaceholderText(/Digite o nick ou usuario@instancia/);
 
       // Lone @
       await user.type(input, '@');
@@ -280,23 +255,30 @@ describe('FriendsPage', () => {
       expect(screen.queryByText(/Send friend request to/)).not.toBeInTheDocument();
     });
 
-    it('calls searchUsers when typing a non-@ query', async () => {
-      const user = userEvent.setup();
-      const mockSearchUsers = vi.fn().mockResolvedValue([]);
-      useSocialStore.setState({
-        searchUsers: mockSearchUsers,
-      });
-
+    it('does not search or discover accounts while typing a nickname', async () => {
+      const pointer = userEvent.setup();
+      const searchUsers = vi.fn().mockResolvedValue([]);
+      useSocialStore.setState({ searchUsers });
+      const { api } = await import('../../api/client');
+      vi.mocked(api.social.search).mockClear();
       renderFriendsPage();
-      await user.click(screen.getByText('Adicionar'));
+      await pointer.click(screen.getByText('Adicionar'));
+      await pointer.type(screen.getByRole('textbox', { name: 'Nick da pessoa' }), 'alice');
+      await new Promise(resolve => setTimeout(resolve, 350));
+      expect(searchUsers).not.toHaveBeenCalled();
+      expect(api.social.search).not.toHaveBeenCalled();
+      expect(screen.queryByText('Descobrir pessoas')).not.toBeInTheDocument();
+      expect(screen.queryByText('Carregar mais pessoas')).not.toBeInTheDocument();
+    });
 
-      const input = screen.getByPlaceholderText(/Buscar ou adicionar pelo usuário/);
-      await user.type(input, 'marc');
-
-      // Wait for debounce
-      await waitFor(() => {
-        expect(mockSearchUsers).toHaveBeenCalledWith('marc');
-      }, { timeout: 500 });
+    it('sends a bare nickname with Enter, without a preliminary lookup', async () => {
+      const pointer = userEvent.setup();
+      const sendFriendRequest = vi.fn().mockResolvedValue('request');
+      useSocialStore.setState({ sendFriendRequest });
+      renderFriendsPage();
+      await pointer.click(screen.getByText('Adicionar'));
+      await pointer.type(screen.getByRole('textbox', { name: 'Nick da pessoa' }), 'alice{Enter}');
+      await waitFor(() => expect(sendFriendRequest).toHaveBeenCalledWith('alice'));
     });
   });
 

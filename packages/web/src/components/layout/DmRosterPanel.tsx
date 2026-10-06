@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useMemo, useState } from 'react';
 import type { User } from '@backspace/shared';
 import { useChatStore } from '../../stores/chatStore';
@@ -109,7 +110,7 @@ export function DmRosterPanel() {
         await removeFriendStore(member.id);
       } catch (err) {
         addToast(
-          err instanceof Error ? err.message : 'Failed to remove friend',
+          err instanceof Error ? err.message : uiText("Failed to remove friend"),
           'warning',
           3000,
         );
@@ -133,14 +134,14 @@ export function DmRosterPanel() {
         : undefined;
       await api.dm.kickMember(dmChannel.id, pendingKick.id, federated);
       addToast(
-        `Removed ${pendingKick.displayName ?? parseFederatedUsername(pendingKick.username).baseName} from the group`,
+        uiText("Removed {0} from the group", [pendingKick.displayName ?? parseFederatedUsername(pendingKick.username).baseName]),
         'success',
         3000,
       );
       setPendingKick(null);
     } catch (err) {
       addToast(
-        err instanceof Error ? err.message : 'Failed to remove member',
+        err instanceof Error ? err.message : uiText("Failed to remove member"),
         'warning',
         3000,
       );
@@ -159,14 +160,14 @@ export function DmRosterPanel() {
         : undefined;
       await api.dm.transferOwnership(dmChannel.id, pendingTransfer.id, federated);
       addToast(
-        `Ownership transferred to ${pendingTransfer.displayName ?? parseFederatedUsername(pendingTransfer.username).baseName}`,
+        uiText("Ownership transferred to {0}", [pendingTransfer.displayName ?? parseFederatedUsername(pendingTransfer.username).baseName]),
         'success',
         3000,
       );
       setPendingTransfer(null);
     } catch (err) {
       addToast(
-        err instanceof Error ? err.message : 'Failed to transfer ownership',
+        err instanceof Error ? err.message : uiText("Failed to transfer ownership"),
         'warning',
         3000,
       );
@@ -183,21 +184,20 @@ export function DmRosterPanel() {
   return (
     <div
       data-dm-roster-panel
-      className="w-60 bg-surface-members flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard"
+      className="lume-member-panel w-60 bg-surface-members flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard"
     >
       <div className="p-3">
         <h3
           data-dm-roster-header
           className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-2"
         >
-          Members — {totalCount}
+          {uiText("Members — ")}{totalCount}
         </h3>
 
         {ownerMember && (
           <div data-dm-roster-section="owner" className="mb-4">
             <h4 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-              OWNER
-            </h4>
+              {uiText("OWNER")}</h4>
             <DmMemberRow
               member={ownerMember}
               isOwner
@@ -213,7 +213,7 @@ export function DmRosterPanel() {
         {onlineMembers.length > 0 && (
           <div data-dm-roster-section="online" className="mb-4">
             <h4 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-              ONLINE — {onlineMembers.length}
+              {uiText("ONLINE — ")}{onlineMembers.length}
             </h4>
             {onlineMembers.map((m) => (
               <DmMemberRow
@@ -233,7 +233,7 @@ export function DmRosterPanel() {
         {offlineMembers.length > 0 && (
           <div data-dm-roster-section="offline" className="opacity-60">
             <h4 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-              OFFLINE — {offlineMembers.length}
+              {uiText("OFFLINE — ")}{offlineMembers.length}
             </h4>
             {offlineMembers.map((m) => (
               <DmMemberRow
@@ -255,13 +255,13 @@ export function DmRosterPanel() {
         isOpen={!!pendingKick}
         onClose={() => { if (!submitting) setPendingKick(null); }}
         onConfirm={confirmKick}
-        title="Remove from Group"
+        title={uiText("Remove from Group")}
         description={
           pendingKick
-            ? `Remove ${pendingKick.displayName ?? parseFederatedUsername(pendingKick.username).baseName} from this group? They won't be able to see new messages.`
+            ? uiText("Remove {0} from this group? They won't be able to see new messages.", [pendingKick.displayName ?? parseFederatedUsername(pendingKick.username).baseName])
             : ''
         }
-        confirmLabel="Remove"
+        confirmLabel={uiText("Remove")}
         variant="danger"
         loading={submitting}
       />
@@ -270,13 +270,13 @@ export function DmRosterPanel() {
         isOpen={!!pendingTransfer}
         onClose={() => { if (!submitting) setPendingTransfer(null); }}
         onConfirm={confirmTransfer}
-        title="Transfer Ownership"
+        title={uiText("Transfer Ownership")}
         description={
           pendingTransfer
-            ? `Transfer ownership to ${pendingTransfer.displayName ?? parseFederatedUsername(pendingTransfer.username).baseName}? You'll lose owner privileges.`
+            ? uiText("Transfer ownership to {0}? You'll lose owner privileges.", [pendingTransfer.displayName ?? parseFederatedUsername(pendingTransfer.username).baseName])
             : ''
         }
-        confirmLabel="Transfer"
+        confirmLabel={uiText("Transfer")}
         variant="warning"
         loading={submitting}
       />

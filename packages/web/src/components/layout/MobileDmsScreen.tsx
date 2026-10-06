@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -14,6 +15,7 @@ import { useCanonicalUserView } from '../../utils/userViewLookup';
 import { formatDmSidebarPreview, formatDmHeaderName } from '../../utils/dmFormatters';
 import type { DmChannel, User } from '@backspace/shared';
 import type { TaggedFriend } from '../../stores/socialStore';
+import { getPresenceLabel } from '../../utils/presenceLabels';
 
 const FALLBACK_USER = { id: '', username: '', createdAt: 0, isAdmin: false, replicatedInstances: [] } as unknown as User;
 
@@ -53,7 +55,7 @@ function MobileFriendBubble({
           avatarColor={canonical.avatarColor}
           size={40}
         />
-        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-base ${
+        <span title={getPresenceLabel(friend.status)} aria-label={getPresenceLabel(friend.status)} className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface-base ${
           friend.status === 'online' ? 'bg-status-online' :
           friend.status === 'working' ? 'bg-status-working' :
           friend.status === 'idle' ? 'bg-status-idle' :
@@ -222,7 +224,7 @@ export function MobileDmsScreen() {
       {
         key: 'leave-group',
         type: 'action',
-        label: 'Leave Group',
+        label: uiText("Leave Group"),
         danger: true,
         icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>,
         onClick: () => {
@@ -251,14 +253,13 @@ export function MobileDmsScreen() {
     <div className="flex flex-col h-full bg-surface-base">
       {/* Header */}
       <header className="h-12 flex items-center justify-between px-4 border-b border-border-soft shrink-0">
-        <h1 className="text-base font-semibold text-txt-primary">Messages</h1>
+        <h1 className="text-base font-semibold text-txt-primary">{uiText("Messages")}</h1>
         <div className="flex items-center gap-1">
           <button
             onClick={() => pushMobileScreen('friends')}
             className="h-8 px-3 rounded-lg text-xs font-medium text-accent-primary hover:bg-interactive-hover transition-colors"
           >
-            Friends
-          </button>
+            {uiText("Friends")}</button>
         </div>
       </header>
 
@@ -294,7 +295,7 @@ export function MobileDmsScreen() {
 
         {sortedDms.length === 0 && (
           <div className="flex flex-col items-center justify-center h-40 opacity-80">
-            <p className="text-txt-tertiary text-sm">No conversations yet.</p>
+            <p className="text-txt-tertiary text-sm">{uiText("No conversations yet.")}</p>
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { useSpaceStore } from '../../../stores/spaceStore';
 import { useUIStore } from '../../../stores/uiStore';
@@ -16,36 +17,36 @@ const PERMISSION_GROUPS: { name: string; perms: PermDef[] }[] = [
   {
     name: 'General',
     perms: [
-      { bit: PermissionBits.ADMINISTRATOR, label: 'Administrator' },
-      { bit: PermissionBits.VIEW_CHANNEL, label: 'View Channels' },
-      { bit: PermissionBits.MANAGE_CHANNELS, label: 'Manage Channels' },
-      { bit: PermissionBits.MANAGE_ROLES, label: 'Manage Roles' },
-      { bit: PermissionBits.MANAGE_SPACE, label: 'Manage Space' },
-      { bit: PermissionBits.CREATE_INVITE, label: 'Create Invite' },
-      { bit: PermissionBits.KICK_MEMBERS, label: 'Kick Members' },
-      { bit: PermissionBits.BAN_MEMBERS, label: 'Ban Members' },
+      { bit: PermissionBits.ADMINISTRATOR, label: uiText("Administrator") },
+      { bit: PermissionBits.VIEW_CHANNEL, label: uiText("View Channels") },
+      { bit: PermissionBits.MANAGE_CHANNELS, label: uiText("Manage Channels") },
+      { bit: PermissionBits.MANAGE_ROLES, label: uiText("Manage Roles") },
+      { bit: PermissionBits.MANAGE_SPACE, label: uiText("Manage Space") },
+      { bit: PermissionBits.CREATE_INVITE, label: uiText("Create Invite") },
+      { bit: PermissionBits.KICK_MEMBERS, label: uiText("Kick Members") },
+      { bit: PermissionBits.BAN_MEMBERS, label: uiText("Ban Members") },
     ],
   },
   {
     name: 'Text',
     perms: [
-      { bit: PermissionBits.SEND_MESSAGES, label: 'Send Messages' },
-      { bit: PermissionBits.MANAGE_MESSAGES, label: 'Manage Messages' },
-      { bit: PermissionBits.ATTACH_FILES, label: 'Attach Files' },
-      { bit: PermissionBits.READ_MESSAGE_HISTORY, label: 'Read Message History' },
-      { bit: PermissionBits.ADD_REACTIONS, label: 'Add Reactions' },
+      { bit: PermissionBits.SEND_MESSAGES, label: uiText("Send Messages") },
+      { bit: PermissionBits.MANAGE_MESSAGES, label: uiText("Manage Messages") },
+      { bit: PermissionBits.ATTACH_FILES, label: uiText("Attach Files") },
+      { bit: PermissionBits.READ_MESSAGE_HISTORY, label: uiText("Read Message History") },
+      { bit: PermissionBits.ADD_REACTIONS, label: uiText("Add Reactions") },
     ],
   },
   {
     name: 'Voice',
     perms: [
-      { bit: PermissionBits.CONNECT, label: 'Connect' },
-      { bit: PermissionBits.SPEAK, label: 'Speak' },
-      { bit: PermissionBits.MUTE_MEMBERS, label: 'Mute Members' },
-      { bit: PermissionBits.DEAFEN_MEMBERS, label: 'Deafen Members' },
-      { bit: PermissionBits.MOVE_MEMBERS, label: 'Move Members' },
-      { bit: PermissionBits.DISCONNECT_MEMBERS, label: 'Disconnect Members' },
-      { bit: PermissionBits.STREAM, label: 'Stream' },
+      { bit: PermissionBits.CONNECT, label: uiText("Connect") },
+      { bit: PermissionBits.SPEAK, label: uiText("Speak") },
+      { bit: PermissionBits.MUTE_MEMBERS, label: uiText("Mute Members") },
+      { bit: PermissionBits.DEAFEN_MEMBERS, label: uiText("Deafen Members") },
+      { bit: PermissionBits.MOVE_MEMBERS, label: uiText("Move Members") },
+      { bit: PermissionBits.DISCONNECT_MEMBERS, label: uiText("Disconnect Members") },
+      { bit: PermissionBits.STREAM, label: uiText("Stream") },
     ],
   },
 ];
@@ -101,7 +102,7 @@ export function RolesPanel({ spaceId }: RolesPanelProps) {
       setIsNewRole(true);
       setEditingRoleId(newRole.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create role');
+      setError(err instanceof Error ? err.message : uiText("Failed to create role"));
     } finally {
       setCreating(false);
     }
@@ -128,7 +129,7 @@ export function RolesPanel({ spaceId }: RolesPanelProps) {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">Roles</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("Roles")}</h2>
       {error && (
         <div className="p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">{error}</div>
       )}
@@ -143,13 +144,13 @@ export function RolesPanel({ spaceId }: RolesPanelProps) {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          {creating ? 'Creating...' : 'Create Role'}
+          {creating ? uiText("Creating...") : uiText("Create Role")}
         </button>
       </div>
 
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Roles</div>
-        <p className="text-xs text-txt-tertiary mb-2">Roles define what permissions members have. Higher roles take priority.</p>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Roles")}</div>
+        <p className="text-xs text-txt-tertiary mb-2">{uiText("Roles define what permissions members have. Higher roles take priority.")}</p>
         <div className="rounded-lg bg-white/[0.02] p-2">
           <div className="space-y-0.5">
             {sortedRoles.map((role) => {
@@ -166,7 +167,7 @@ export function RolesPanel({ spaceId }: RolesPanelProps) {
                       style={{ backgroundColor: role.color }}
                     />
                     <span className="text-sm text-txt-primary truncate">
-                      {isEveryone ? '@everyone' : role.name}
+                      {isEveryone ? uiText("@everyone") : role.name}
                     </span>
                   </div>
                   <svg
@@ -254,7 +255,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
       if (hasPermChange) data.permissions = permissionsToString(draftPermissions);
       await api.roles.update(spaceId, role.id, data);
       await loadSpaceDetail(spaceId);
-      addToast('Role saved', 'success', 2000);
+      addToast(uiText("Role saved"), 'success', 2000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save role';
       if (msg.includes('already exists')) {
@@ -288,7 +289,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
       await loadSpaceDetail(spaceId);
       onDeleted();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to delete role');
+      setSaveError(err instanceof Error ? err.message : uiText("Failed to delete role"));
       setConfirmDelete(false);
     } finally {
       setDeleting(false);
@@ -310,7 +311,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
       await loadSpaceDetail(spaceId);
       onCopied(newRole.id);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to copy role');
+      setSaveError(err instanceof Error ? err.message : uiText("Failed to copy role"));
     } finally {
       setCopying(false);
     }
@@ -327,25 +328,22 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to roles
-        </button>
+          {uiText("Back to roles")}</button>
       </div>
 
       {isNew && !hasChanges && (
         <div className="p-2 bg-status-online/10 border border-status-online/30 rounded text-status-online text-sm">
-          Role created — customize it below
-        </div>
+          {uiText("Role created — customize it below")}</div>
       )}
 
       {/* Identity card (Name + Color — not shown for @everyone) */}
       {!isEveryone && (
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Identity</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Identity")}</div>
           <div className="rounded-lg bg-white/[0.02] p-3.5 space-y-4">
             <div>
               <label className="block text-xs text-txt-secondary mb-1.5">
-                Role Name
-              </label>
+                {uiText("Role Name")}</label>
               <input
                 ref={nameInputRef}
                 type="text"
@@ -363,8 +361,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
             </div>
             <div>
               <label className="block text-xs text-txt-secondary mb-1.5">
-                Role Color
-              </label>
+                {uiText("Role Color")}</label>
               <div className="flex items-center gap-2 flex-wrap">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -461,14 +458,13 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
                     onClick={handleDiscard}
                     className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
                   >
-                    Discard
-                  </button>
+                    {uiText("Discard")}</button>
                   <button
                     onClick={handleSave}
                     disabled={saving || (!isEveryone && !draftName.trim()) || !!nameError}
                     className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
                   >
-                    {saving ? 'Saving...' : 'Save'}
+                    {saving ? uiText("Saving...") : uiText("Save")}
                   </button>
                 </>
               )}
@@ -480,7 +476,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
                 disabled={copying}
                 className="px-3 py-1.5 text-sm font-medium rounded-full text-txt-secondary hover:bg-interactive-hover transition-colors disabled:opacity-50"
               >
-                {copying ? 'Copying...' : 'Copy Role'}
+                {copying ? uiText("Copying...") : uiText("Copy Role")}
               </button>
               {!isEveryone && (
                 <>
@@ -494,7 +490,7 @@ function RoleEditView({ role, spaceId, isNew, onBack, onDeleted, onCopied }: Rol
                         : 'text-accent-rose hover:bg-accent-rose/10'
                     }`}
                   >
-                    {deleting ? 'Deleting...' : confirmDelete ? 'Confirm?' : 'Delete Role'}
+                    {deleting ? uiText("Deleting...") : confirmDelete ? uiText("Confirm?") : uiText("Delete Role")}
                   </button>
                 </>
               )}

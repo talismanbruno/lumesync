@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React from 'react';
 
 export type TriState = 'allow' | 'neutral' | 'deny';
@@ -27,21 +28,21 @@ export function TriStateToggle({
       <button
         className={btnClass('deny', value === 'deny')}
         onClick={() => !disabled && onChange(value === 'deny' ? 'neutral' : 'deny')}
-        title="Deny"
+        title={uiText("Deny")}
       >
         ✕
       </button>
       <button
         className={btnClass('neutral', value === 'neutral')}
         onClick={() => !disabled && onChange('neutral')}
-        title="Neutral (inherit)"
+        title={uiText("Neutral (inherit)")}
       >
         /
       </button>
       <button
         className={btnClass('allow', value === 'allow')}
         onClick={() => !disabled && onChange(value === 'allow' ? 'neutral' : 'allow')}
-        title="Allow"
+        title={uiText("Allow")}
       >
         ✓
       </button>

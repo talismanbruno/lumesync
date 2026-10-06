@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef } from 'react';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore, getChannelOrigin } from '../../stores/spaceStore';
@@ -110,7 +111,7 @@ export function VoiceControls() {
             if (!showConnectionInfo) setShowScreenShareSettings(false);
           }}
           className={`w-8 h-8 rounded-lg ${statusBgColor} flex items-center justify-center flex-shrink-0 hover:brightness-125 transition-all`}
-          title="Connection Info"
+          title={uiText("Connection Info")}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className={qualityColor}>
             <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" />
@@ -119,7 +120,7 @@ export function VoiceControls() {
 
         <div className="min-w-0 flex-1">
           <div className={`text-[11px] uppercase tracking-[0.16em] font-bold leading-[18px] ${statusColor}`}>
-            {connectionError ? 'Orbit interrupted' : isLiveKitConnected ? 'Orbit online' : 'Aligning orbit...'}
+            {connectionError ? uiText("Orbit interrupted") : isLiveKitConnected ? uiText("Orbit online") : uiText("Aligning orbit...")}
           </div>
           <div className="text-[12px] text-txt-tertiary truncate leading-[16px]">
             {connectionError ? connectionError : channelName}
@@ -130,7 +131,7 @@ export function VoiceControls() {
           <button
             onClick={handleDisconnect}
             className="lume-disconnect w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-white transition-colors rounded-xl"
-            title="Desconectar"
+            title={uiText("Desconectar")}
           >
             <OrbitalIcon name="hangup" size={19} />
           </button>
@@ -154,7 +155,7 @@ export function VoiceControls() {
                 ? 'bg-surface-base text-status-online hover:bg-surface-channel'
                 : btnDefaultStyle
             }`}
-            title={isCameraOn ? 'Turn Off Camera' : 'Turn On Camera'}
+            title={isCameraOn ? uiText("Turn Off Camera") : uiText("Turn On Camera")}
           >
             <OrbitalIcon name="camera" cut={!isCameraOn} />
           </button>
@@ -168,7 +169,7 @@ export function VoiceControls() {
                 ? 'bg-surface-base text-status-online hover:bg-surface-channel'
                 : btnDefaultStyle
             }`}
-            title={isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
+            title={isScreenSharing ? uiText("Stop Sharing") : uiText("Share Screen")}
           >
             <OrbitalIcon name="screen" />
           </button>
@@ -186,7 +187,7 @@ export function VoiceControls() {
               ? 'bg-surface-base text-accent-primary hover:bg-surface-channel'
               : btnDefaultStyle
           }`}
-          title="Video Quality"
+          title={uiText("Video Quality")}
         >
           <OrbitalIcon name="image" />
         </button>
@@ -199,7 +200,9 @@ export function VoiceControls() {
               ? 'bg-surface-base text-status-online hover:bg-surface-channel'
               : btnDefaultStyle
           }`}
-          title={rnnoiseEnabled ? 'Disable Lume Clear' : 'Enable Lume Clear'}
+          title={rnnoiseEnabled ? uiText("Desativar redução de ruído — Lume Clear") : uiText("Ativar redução de ruído — Lume Clear")}
+          aria-label={rnnoiseEnabled ? uiText("Desativar redução de ruído — Lume Clear") : uiText("Ativar redução de ruído — Lume Clear")}
+          aria-pressed={rnnoiseEnabled}
         >
           <OrbitalIcon name="clear" />
         </button>

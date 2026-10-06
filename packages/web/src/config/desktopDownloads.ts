@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 export const LUME_DESKTOP_VERSION = '1.0.0-beta.16';
 export const LUME_DESKTOP_RELEASE_URL =
   `https://github.com/talismanbruno/lumesync/releases/tag/lume-desktop-v${LUME_DESKTOP_VERSION}`;
@@ -16,7 +17,7 @@ export function getDesktopDownload(): DesktopDownload {
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform)) {
     return {
       url: LUME_DESKTOP_RELEASE_URL,
-      label: 'Baixar Lume para macOS',
+      label: uiText("Baixar Lume para macOS"),
       detail: 'Intel ou Apple Silicon',
     };
   }
@@ -24,7 +25,7 @@ export function getDesktopDownload(): DesktopDownload {
   if (typeof navigator !== 'undefined' && /Win/i.test(navigator.platform)) {
     return {
       url: WINDOWS_INSTALLER_URL,
-      label: 'Baixar Lume para Windows',
+      label: uiText("Baixar Lume para Windows"),
       detail: 'Desktop Beta · 93 MB',
       filename: `Lume-${LUME_DESKTOP_VERSION}-x64.exe`,
     };
@@ -32,7 +33,7 @@ export function getDesktopDownload(): DesktopDownload {
 
   return {
     url: LUME_DESKTOP_RELEASE_URL,
-    label: 'Baixar Lume Desktop',
+    label: uiText("Baixar Lume Desktop"),
     detail: 'Windows e macOS',
   };
 }

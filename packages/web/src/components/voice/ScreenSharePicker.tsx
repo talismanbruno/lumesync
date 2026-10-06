@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { create } from 'zustand';
@@ -123,7 +124,7 @@ export function ScreenSharePicker() {
       <div className="relative w-full max-w-3xl mx-4 glass-modal rounded-lg animate-slide-up flex flex-col max-h-[calc(100vh-4rem)]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
-          <h2 className="text-lg font-bold text-txt-primary">Share Your Screen</h2>
+          <h2 className="text-lg font-bold text-txt-primary">{uiText("Share Your Screen")}</h2>
           <button
             onClick={() => closePicker(null)}
             className="text-txt-tertiary hover:text-txt-primary transition-colors p-1"
@@ -139,13 +140,13 @@ export function ScreenSharePicker() {
           <TabButton
             active={activeTab === 'screens'}
             onClick={() => { setActiveTab('screens'); setSelectedId(null); }}
-            label="Screens"
+            label={uiText("Screens")}
             count={screens.length}
           />
           <TabButton
             active={activeTab === 'windows'}
             onClick={() => { setActiveTab('windows'); setSelectedId(null); }}
-            label="Windows"
+            label={uiText("Windows")}
             count={windows.length}
           />
         </div>
@@ -157,7 +158,7 @@ export function ScreenSharePicker() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search windows..."
+              placeholder={uiText("Search windows...")}
               className="input-search w-full"
               autoFocus
             />
@@ -169,8 +170,8 @@ export function ScreenSharePicker() {
           {activeSources.length === 0 ? (
             <div className="text-center py-12 text-txt-tertiary text-sm">
               {activeTab === 'windows' && search.trim()
-                ? 'No windows match your search'
-                : `No ${activeTab} available`}
+                ? uiText("No windows match your search")
+                : uiText("No {0} available", [activeTab])}
             </div>
           ) : (
             <div className={`grid gap-3 ${activeTab === 'screens' ? 'grid-cols-2' : 'grid-cols-3'}`}>
@@ -197,28 +198,21 @@ export function ScreenSharePicker() {
                 onChange={(e) => setScreenShareConfig({ shareAudio: e.target.checked })}
                 className="w-3.5 h-3.5 rounded accent-accent-primary cursor-pointer"
               />
-              <span className="text-[12px] text-txt-secondary">Share system audio</span>
+              <span className="text-[12px] text-txt-secondary">{uiText("Share system audio")}</span>
             </label>
-            {shareAudio && (
-              <div className="text-[11px] text-accent-amber/80">
-                May echo voices back to viewers — use Chrome browser for echo-free audio
-              </div>
-            )}
           </div>
           <div className="glass-bubble rounded-full px-3 py-2 flex items-center gap-3">
             <button
               onClick={() => closePicker(null)}
               className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
             <button
               onClick={() => closePicker(selectedId, shareAudio)}
               disabled={!selectedId}
               className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary-hover text-white text-sm font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Share
-            </button>
+              {uiText("Share")}</button>
           </div>
         </div>
       </div>

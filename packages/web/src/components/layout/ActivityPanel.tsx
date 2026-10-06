@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useMemo } from 'react';
 import { useSocialStore } from '../../stores/socialStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -152,16 +153,15 @@ export function ActivityPanel() {
     <div className="lume-roster w-60 bg-surface-channel flex-shrink-0 overflow-y-auto select-none no-scrollbar hidden md:block border-l border-border-hard">
       <div className="p-3 relative">
         <div className="px-2 mb-4">
-          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-txt-tertiary">Presença</div>
-          <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">Amigos</h3>
+          <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-txt-tertiary">{uiText("Presença")}</div>
+          <h3 className="text-[18px] font-bold text-txt-primary mt-0.5">{uiText("Amigos")}</h3>
         </div>
 
         {activeFriends.length === 0 && onlineFriends.length === 0 && offlineFriends.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-[15px] font-bold text-txt-primary mb-1">Nada por aqui ainda</div>
+            <div className="text-[15px] font-bold text-txt-primary mb-1">{uiText("Nada por aqui ainda")}</div>
             <div className="text-[12px] text-txt-tertiary max-w-[190px] mx-auto">
-              Atividades e conversas dos seus amigos aparecerão aqui.
-            </div>
+              {uiText("Atividades e conversas dos seus amigos aparecerão aqui.")}</div>
           </div>
         ) : (
           <>
@@ -173,7 +173,7 @@ export function ActivityPanel() {
             {onlineFriends.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-                  Disponíveis — {onlineFriends.length}
+                  {uiText("Disponíveis — ")}{onlineFriends.length}
                 </h3>
                 {onlineFriends.map(f => renderFriend(f))}
               </div>
@@ -181,7 +181,7 @@ export function ActivityPanel() {
             {offlineFriends.length > 0 && (
               <div>
                 <h3 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
-                  Offline — {offlineFriends.length}
+                  {uiText("Offline — ")}{offlineFriends.length}
                 </h3>
                 {offlineFriends.map(f => renderFriend(f, true))}
               </div>

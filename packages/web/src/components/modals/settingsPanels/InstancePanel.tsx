@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useSettingsSections } from '../../../hooks/useSettingsSections';
@@ -11,10 +12,9 @@ import { StoragePanel } from '../instanceSettingsPanels/StoragePanel';
 import { UsersPanel } from '../instanceSettingsPanels/UsersPanel';
 import { InsightsPanel } from '../instanceSettingsPanels/InsightsPanel';
 import { SpacesPanel } from '../instanceSettingsPanels/SpacesPanel';
-import { AuditPanel } from '../instanceSettingsPanels/AuditPanel';
 import { HealthPanel } from '../instanceSettingsPanels/HealthPanel';
 
-type SubTab = 'insights' | 'health' | 'spaces' | 'audit' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
+type SubTab = 'insights' | 'health' | 'spaces' | 'general' | 'registration' | 'federation' | 'streaming' | 'storage' | 'users';
 
 export function InstancePanel() {
   const fetchInstanceSettings = useSettingsStore((s) => s.fetchInstanceSettings);
@@ -24,16 +24,15 @@ export function InstancePanel() {
   const [approvalCount, setApprovalCount] = useState(0);
 
   const sections = useMemo<SettingsSection[]>(() => [
-    { id: 'insights', label: 'Visão geral' },
-    { id: 'health', label: 'Saúde do sistema' },
-    { id: 'spaces', label: 'Servidores' },
-    { id: 'audit', label: 'Histórico admin' },
-    { id: 'general', label: 'General' },
-    { id: 'registration', label: 'Registration' },
-    { id: 'federation', label: 'Federation', badgeCount: approvalCount },
-    { id: 'streaming', label: 'Streaming' },
-    { id: 'storage', label: 'Storage' },
-    { id: 'users', label: 'Usuários e selos' },
+    { id: 'insights', label: uiText("Visão geral") },
+    { id: 'health', label: uiText("Saúde do sistema") },
+    { id: 'spaces', label: uiText("Servidores") },
+    { id: 'general', label: uiText("General") },
+    { id: 'registration', label: uiText("Registration") },
+    { id: 'federation', label: uiText("Federation"), badgeCount: approvalCount },
+    { id: 'streaming', label: uiText("Streaming") },
+    { id: 'storage', label: uiText("Storage") },
+    { id: 'users', label: uiText("Usuários e selos") },
   ], [approvalCount]);
 
   const handleNavigate = useCallback((id: string) => {
@@ -55,7 +54,6 @@ export function InstancePanel() {
       {subTab === 'insights' && <InsightsPanel />}
       {subTab === 'health' && <HealthPanel />}
       {subTab === 'spaces' && <SpacesPanel />}
-      {subTab === 'audit' && <AuditPanel />}
       {subTab === 'general' && <GeneralPanel />}
       {subTab === 'registration' && <RegistrationPanel />}
       {subTab === 'federation' && <FederationPanel onApprovalCountChange={setApprovalCount} />}

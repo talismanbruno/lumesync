@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { permissionsToString, stringToPermissions } from '../../utils/permissions';
@@ -65,7 +66,7 @@ export function PermissionsEditor({
         setOverrides(data);
       })
       .catch((err: Error) => {
-        setFetchError(err.message || 'Failed to load overrides');
+        setFetchError(err.message || uiText("Failed to load overrides"));
       });
   }, []);
 
@@ -308,7 +309,7 @@ export function PermissionsEditor({
       const failures = results.filter(r => r.status === 'rejected');
       if (failures.length > 0) {
         const first = failures[0] as PromiseRejectedResult;
-        setSaveError(first.reason?.message || `${failures.length} override(s) failed to save`);
+        setSaveError(first.reason?.message || uiText("{0} override(s) failed to save", [failures.length]));
       }
 
       // Reset draft state and re-fetch overrides
@@ -317,7 +318,7 @@ export function PermissionsEditor({
       setPendingRemovals(new Set());
       fetchOverrides();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save overrides');
+      setSaveError(err instanceof Error ? err.message : uiText("Failed to save overrides"));
     } finally {
       setSaving(false);
     }
@@ -391,8 +392,7 @@ export function PermissionsEditor({
       {/* Role Overrides */}
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">
-          Role Overrides
-        </div>
+          {uiText("Role Overrides")}</div>
         <div className="space-y-1.5">
           {roleOverrides.map(({ key, role }) => {
             const eff = getEffective(key);
@@ -422,13 +422,12 @@ export function PermissionsEditor({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
               </svg>
-              Add Role
-            </button>
+              {uiText("Add Role")}</button>
           ) : (
             <div ref={roleDropdownRef} className="glass rounded-lg overflow-hidden">
               <div className="p-1.5 max-h-48 overflow-y-auto scrollbar-thin">
                 {availableRoles.length === 0 ? (
-                  <div className="px-2.5 py-1.5 text-xs text-txt-muted">No more roles to add</div>
+                  <div className="px-2.5 py-1.5 text-xs text-txt-muted">{uiText("No more roles to add")}</div>
                 ) : (
                   availableRoles.map(role => (
                     <button
@@ -450,8 +449,7 @@ export function PermissionsEditor({
                   onClick={() => setShowAddRole(false)}
                   className="w-full text-xs text-txt-muted hover:text-txt-tertiary px-2.5 py-1 transition-colors"
                 >
-                  Cancel
-                </button>
+                  {uiText("Cancel")}</button>
               </div>
             </div>
           )}
@@ -461,8 +459,7 @@ export function PermissionsEditor({
       {/* Member Overrides */}
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">
-          Member Overrides
-        </div>
+          {uiText("Member Overrides")}</div>
         <div className="space-y-1.5">
           {memberOverrides.map(({ key, member }) => {
             const eff = getEffective(key);
@@ -490,8 +487,7 @@ export function PermissionsEditor({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
               </svg>
-              Add Member
-            </button>
+              {uiText("Add Member")}</button>
           ) : (
             <div ref={memberDropdownRef} className="glass rounded-lg overflow-hidden">
               <div className="p-1.5">
@@ -499,14 +495,14 @@ export function PermissionsEditor({
                   type="text"
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Search members..."
+                  placeholder={uiText("Search members...")}
                   className="input-search w-full mb-1"
                   autoFocus
                 />
               </div>
               <div className="px-1.5 max-h-48 overflow-y-auto scrollbar-thin">
                 {availableMembers.length === 0 ? (
-                  <div className="px-2.5 py-1.5 text-xs text-txt-muted">No members found</div>
+                  <div className="px-2.5 py-1.5 text-xs text-txt-muted">{uiText("No members found")}</div>
                 ) : (
                   availableMembers.map(member => (
                     <button
@@ -527,8 +523,7 @@ export function PermissionsEditor({
                   onClick={() => { setShowAddMember(false); setMemberSearch(''); }}
                   className="w-full text-xs text-txt-muted hover:text-txt-tertiary px-2.5 py-1 transition-colors"
                 >
-                  Cancel
-                </button>
+                  {uiText("Cancel")}</button>
               </div>
             </div>
           )}
@@ -551,14 +546,13 @@ export function PermissionsEditor({
                 onClick={handleDiscard}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Discard
-              </button>
+                {uiText("Discard")}</button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? uiText("Saving...") : uiText("Save")}
               </button>
             </div>
           </div>

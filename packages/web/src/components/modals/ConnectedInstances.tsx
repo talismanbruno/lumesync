@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -163,14 +164,14 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
       {/* Step 1: Enter URL */}
       {step === 'url' && (
         <>
-          <div className="text-sm text-txt-primary font-medium">Add Remote Instance</div>
+          <div className="text-sm text-txt-primary font-medium">{uiText("Add Remote Instance")}</div>
           <div className="flex gap-2">
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !isLoading && url.trim() && handleProbe()}
-              placeholder="https://instance.example.com"
+              placeholder={uiText("https://instance.example.com")}
               className="input-standard flex-1"
               disabled={isLoading}
             />
@@ -179,15 +180,14 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
               disabled={isLoading || !url.trim()}
               className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Probing...' : 'Connect'}
+              {isLoading ? uiText("Probing...") : uiText("Connect")}
             </button>
           </div>
           <button
             onClick={onDone}
             className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
           >
-            Cancel
-          </button>
+            {uiText("Cancel")}</button>
         </>
       )}
 
@@ -205,36 +205,34 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
 
           {!probeResult.federatedRegistrationOpen && (
             <div className="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300">
-              This instance has disabled new federated registrations. Existing accounts can still sign in.
-            </div>
+              {uiText("This instance has disabled new federated registrations. Existing accounts can still sign in.")}</div>
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleConnect(); }} className="space-y-2">
             <input type="text" autoComplete="username" value={user?.username || ''} readOnly tabIndex={-1} className="sr-only" />
             <div>
               <label className="block text-xs text-txt-tertiary mb-1">
-                Enter your password to connect to {new URL(probeResult.origin).host}
+                {uiText("Enter your password to connect to ")}{new URL(probeResult.origin).host}
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Your account password"
+                placeholder={uiText("Your account password")}
                 className="input-standard w-full"
                 disabled={isLoading}
                 autoFocus
                 autoComplete="current-password"
               />
               <div className="text-xs text-txt-tertiary mt-1">
-                Your password is verified locally, then used to create or access your account on the remote instance.
-              </div>
+                {uiText("Your password is verified locally, then used to create or access your account on the remote instance.")}</div>
             </div>
             <button
               type="submit"
               disabled={isLoading || !password}
               className="w-full px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Connecting...' : 'Connect'}
+              {isLoading ? uiText("Connecting...") : uiText("Connect")}
             </button>
           </form>
 
@@ -243,14 +241,12 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
               onClick={() => { setStep('url'); setProbeResult(null); setError(''); }}
               className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
             >
-              Back
-            </button>
+              {uiText("Back")}</button>
             <button
               onClick={onDone}
               className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
           </div>
         </>
       )}
@@ -268,29 +264,28 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
           </div>
 
           <div className="p-2 bg-accent-amber/10 border border-accent-amber/30 rounded text-xs text-accent-amber">
-            An account already exists on this instance with a different password. Enter the credentials you used on that instance.
-          </div>
+            {uiText("An account already exists on this instance with a different password. Enter the credentials you used on that instance.")}</div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleFallbackLogin(); }} className="space-y-2">
             <div>
-              <label className="block text-xs text-txt-tertiary mb-1">Username</label>
+              <label className="block text-xs text-txt-tertiary mb-1">{uiText("Username")}</label>
               <input
                 type="text"
                 value={fallbackUsername}
                 onChange={(e) => setFallbackUsername(e.target.value)}
-                placeholder="Your username on this instance"
+                placeholder={uiText("Your username on this instance")}
                 className="input-standard w-full"
                 disabled={isLoading}
                 autoComplete="username"
               />
             </div>
             <div>
-              <label className="block text-xs text-txt-tertiary mb-1">Password for this instance</label>
+              <label className="block text-xs text-txt-tertiary mb-1">{uiText("Password for this instance")}</label>
               <input
                 type="password"
                 value={fallbackPassword}
                 onChange={(e) => setFallbackPassword(e.target.value)}
-                placeholder="Password on the remote instance"
+                placeholder={uiText("Password on the remote instance")}
                 className="input-standard w-full"
                 disabled={isLoading}
                 autoFocus
@@ -302,7 +297,7 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
               disabled={isLoading || !fallbackUsername || !fallbackPassword}
               className="w-full px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Logging in...' : 'Login & Connect'}
+              {isLoading ? uiText("Logging in...") : uiText("Login & Connect")}
             </button>
           </form>
 
@@ -311,14 +306,12 @@ function AddInstanceFlow({ onDone }: { onDone: () => void }) {
               onClick={() => { setAuthPhase('password'); setPassword(''); setError(''); }}
               className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
             >
-              Back
-            </button>
+              {uiText("Back")}</button>
             <button
               onClick={onDone}
               className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
           </div>
         </>
       )}
@@ -356,16 +349,16 @@ function RegistryFilterBar({
   const [sortOpen, setSortOpen] = useState(false);
 
   const tabs: Array<{ key: StatusFilter; label: string; count: number }> = [
-    { key: 'all', label: 'All', count: counts.all },
-    { key: 'connected', label: 'Connected', count: counts.connected },
-    { key: 'disconnected', label: 'Disconnected', count: counts.disconnected },
-    { key: 'issues', label: 'Issues', count: counts.issues },
+    { key: 'all', label: uiText("All"), count: counts.all },
+    { key: 'connected', label: uiText("Connected"), count: counts.connected },
+    { key: 'disconnected', label: uiText("Disconnected"), count: counts.disconnected },
+    { key: 'issues', label: uiText("Issues"), count: counts.issues },
   ];
 
   const sortOptions: Array<{ key: SortBy; label: string }> = [
-    { key: 'name', label: 'Name (A-Z)' },
-    { key: 'dateAdded', label: 'Date Added' },
-    { key: 'lastConnected', label: 'Last Connected' },
+    { key: 'name', label: uiText("Name (A-Z)") },
+    { key: 'dateAdded', label: uiText("Date Added") },
+    { key: 'lastConnected', label: uiText("Last Connected") },
   ];
 
   return (
@@ -394,15 +387,14 @@ function RegistryFilterBar({
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="opacity-60">
             <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          Sort
-          <span className="text-[10px]">&#9662;</span>
+          {uiText("Sort")}<span className="text-[10px]">&#9662;</span>
         </button>
 
         {sortOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setSortOpen(false)} />
             <div className="absolute right-0 top-full mt-1 z-50 glass rounded-lg p-1.5 w-44">
-              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-2 py-1">Sort by</div>
+              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-2 py-1">{uiText("Sort by")}</div>
               {sortOptions.map((opt) => (
                 <button
                   key={opt.key}
@@ -471,10 +463,10 @@ function DeleteIdentityDialog({
     if (failed.length === 0) {
       useUIStore.getState().addToast(
         mode === 'leave'
-          ? 'Disconnected successfully'
+          ? uiText("Disconnected successfully")
           : targetOrigins.length === 1
-            ? 'Identity deleted successfully'
-            : `Identity deleted on ${targetOrigins.length} instances`,
+            ? uiText("Identity deleted successfully")
+            : uiText("Identity deleted on {0} instances", [targetOrigins.length]),
         'success',
         3000,
       );
@@ -485,7 +477,7 @@ function DeleteIdentityDialog({
         try { host = new URL(failOrigin).hostname; } catch { host = failOrigin; }
         if (result.error === 'owns_spaces') {
           useUIStore.getState().addToast(
-            `${host}: Transfer space ownership first`,
+            uiText("{0}: Transfer space ownership first", [host]),
             'warning',
             5000,
           );
@@ -514,10 +506,9 @@ function DeleteIdentityDialog({
         onClick={loading ? undefined : onClose}
       />
       <div className="relative max-w-md w-full mx-4 glass-modal rounded-xl p-6 animate-slide-up">
-        <h3 className="text-base font-semibold text-txt-primary mb-1">Delete Identity</h3>
+        <h3 className="text-base font-semibold text-txt-primary mb-1">{uiText("Delete Identity")}</h3>
         <p className="text-xs text-txt-tertiary mb-4">
-          Remove your federated identity on <span className="text-txt-secondary font-medium">{label}</span>. Choose how your data should be handled.
-        </p>
+          {uiText("Remove your federated identity on ")}<span className="text-txt-secondary font-medium">{label}</span>{uiText(". Choose how your data should be handled.")}</p>
 
         {/* Deletion mode selection */}
         <div className="space-y-2 mb-4">
@@ -532,10 +523,9 @@ function DeleteIdentityDialog({
                 : 'bg-transparent border-white/[0.04] hover:border-white/[0.06]'
             } disabled:opacity-50`}
           >
-            <div className="text-sm font-medium text-txt-primary">Leave quietly</div>
+            <div className="text-sm font-medium text-txt-primary">{uiText("Leave quietly")}</div>
             <div className="text-[11px] text-txt-tertiary mt-0.5">
-              Disconnect from this instance. Your account and all data remain.
-            </div>
+              {uiText("Disconnect from this instance. Your account and all data remain.")}</div>
           </button>
 
           {/* Delete User (soft) */}
@@ -549,10 +539,9 @@ function DeleteIdentityDialog({
                 : 'bg-transparent border-white/[0.04] hover:border-white/[0.06]'
             } disabled:opacity-50`}
           >
-            <div className="text-sm font-medium text-txt-primary">Delete User</div>
+            <div className="text-sm font-medium text-txt-primary">{uiText("Delete User")}</div>
             <div className="text-[11px] text-txt-tertiary mt-0.5">
-              Delete your account but keep your messages. You appear as &lsquo;Deleted User&rsquo;.
-            </div>
+              {uiText("Delete your account but keep your messages. You appear as &lsquo;Deleted User&rsquo;.")}</div>
           </button>
 
           {/* Nuke everything (full) */}
@@ -567,29 +556,27 @@ function DeleteIdentityDialog({
             } disabled:opacity-50`}
           >
             <div className={`text-sm font-medium ${mode === 'full' ? 'text-txt-danger' : 'text-txt-primary'}`}>
-              Nuke everything
-            </div>
+              {uiText("Nuke everything")}</div>
             <div className="text-[11px] text-txt-tertiary mt-0.5">
-              Delete your account and all your messages, DMs, reactions, and files. Nothing remains.
-            </div>
+              {uiText("Delete your account and all your messages, DMs, reactions, and files. Nothing remains.")}</div>
           </button>
         </div>
 
         {/* Scope selector */}
         <div className="mb-4">
-          <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Scope</div>
+          <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Scope")}</div>
           <div className="flex gap-1.5">
             {([
-              { key: 'this' as DeletionScope, label: 'This instance only', disabled: false },
-              { key: 'select' as DeletionScope, label: 'Select instances...', disabled: false },
-              { key: 'all' as DeletionScope, label: 'All remote instances', disabled: false },
+              { key: 'this' as DeletionScope, label: uiText("This instance only"), disabled: false },
+              { key: 'select' as DeletionScope, label: uiText("Select instances..."), disabled: false },
+              { key: 'all' as DeletionScope, label: uiText("All remote instances"), disabled: false },
             ]).map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => !opt.disabled && setScope(opt.key)}
                 disabled={opt.disabled || loading}
-                title={opt.disabled ? 'Coming soon' : undefined}
+                title={opt.disabled ? uiText("Coming soon") : undefined}
                 className={`flex-1 px-2 py-1.5 text-[11px] font-medium rounded transition-colors ${
                   opt.disabled
                     ? 'bg-white/[0.02] text-txt-tertiary/40 cursor-not-allowed'
@@ -642,14 +629,13 @@ function DeleteIdentityDialog({
             disabled={loading}
             className="flex-1 py-2.5 text-sm font-medium text-txt-secondary bg-interactive-hover hover:bg-interactive-selected rounded-lg transition-colors disabled:opacity-50"
           >
-            Cancel
-          </button>
+            {uiText("Cancel")}</button>
           <button
             onClick={handleConfirm}
             disabled={loading || (scope === 'select' && selectedOrigins.size === 0)}
             className="flex-1 py-2.5 bg-accent-rose hover:bg-accent-rose/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Deleting...' : mode === 'leave' ? 'Disconnect' : 'Delete Identity'}
+            {loading ? uiText("Deleting...") : mode === 'leave' ? uiText("Disconnect") : uiText("Delete Identity")}
           </button>
         </div>
       </div>
@@ -759,7 +745,7 @@ function RegistryRow({
               <div className="text-[11px] text-txt-tertiary truncate">
                 {safeHost(entry.origin)}
                 {entry.username && (
-                  <span className="ml-1">as {entry.username}</span>
+                  <span className="ml-1">{uiText("as ")}{entry.username}</span>
                 )}
               </div>
               <div className="text-[10px] text-txt-tertiary">{metadataText}</div>
@@ -775,26 +761,26 @@ function RegistryRow({
               {/* Stats grid */}
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
-                  <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">Remote User ID</div>
-                  <div className="text-xs text-txt-secondary truncate" title={entry.remoteUserId || 'Unknown'}>
-                    {entry.remoteUserId ? entry.remoteUserId.slice(0, 12) + '...' : 'Unknown'}
+                  <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Remote User ID")}</div>
+                  <div className="text-xs text-txt-secondary truncate" title={entry.remoteUserId || uiText("Unknown")}>
+                    {entry.remoteUserId ? entry.remoteUserId.slice(0, 12) + '...' : uiText("Unknown")}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">Added</div>
+                  <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Added")}</div>
                   <div className="text-xs text-txt-secondary">{formatAbsoluteDate(entry.addedAt)}</div>
                 </div>
                 <div>
                   {isDisconnected && entry.disconnectedAt ? (
                     <>
-                      <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">Disconnected</div>
+                      <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Disconnected")}</div>
                       <div className="text-xs text-txt-secondary">{formatAbsoluteDate(entry.disconnectedAt)}</div>
                     </>
                   ) : (
                     <>
-                      <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">Last Connected</div>
+                      <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Last Connected")}</div>
                       <div className="text-xs text-txt-secondary">
-                        {entry.lastConnectedAt ? formatAbsoluteDate(entry.lastConnectedAt) : 'Never'}
+                        {entry.lastConnectedAt ? formatAbsoluteDate(entry.lastConnectedAt) : uiText("Never")}
                       </div>
                     </>
                   )}
@@ -817,7 +803,7 @@ function RegistryRow({
                       type="password"
                       value={reauthPassword}
                       onChange={(e) => setReauthPassword(e.target.value)}
-                      placeholder="Your account password"
+                      placeholder={uiText("Your account password")}
                       className="input-standard flex-1 py-1.5"
                       disabled={reauthLoading}
                       autoFocus
@@ -828,15 +814,14 @@ function RegistryRow({
                       disabled={reauthLoading || !reauthPassword}
                       className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-xs font-medium rounded transition-colors disabled:opacity-50"
                     >
-                      {reauthLoading ? 'Connecting...' : 'Connect'}
+                      {reauthLoading ? uiText("Connecting...") : uiText("Connect")}
                     </button>
                     <button
                       type="button"
                       onClick={() => { setShowReauth(false); setReauthPassword(''); setReauthError(''); }}
                       className="px-2 py-1.5 text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
                     >
-                      Cancel
-                    </button>
+                      {uiText("Cancel")}</button>
                   </div>
                   {reauthError && (
                     <div className="p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-xs">
@@ -855,16 +840,14 @@ function RegistryRow({
                       onClick={(e) => { e.stopPropagation(); handleDisconnect(); }}
                       className="px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.1] text-txt-secondary rounded transition-colors"
                     >
-                      Disconnect
-                    </button>
+                      {uiText("Disconnect")}</button>
                     <button
                       type="button"
                       disabled
                       className="px-3 py-1.5 text-xs font-medium bg-accent-rose/10 text-txt-danger rounded opacity-50 cursor-not-allowed"
-                      title="Disconnect first to delete identity"
+                      title={uiText("Disconnect first to delete identity")}
                     >
-                      Delete Identity
-                    </button>
+                      {uiText("Delete Identity")}</button>
                   </>
                 )}
 
@@ -876,23 +859,20 @@ function RegistryRow({
                         onClick={(e) => { e.stopPropagation(); handleReconnect(); }}
                         className="px-3 py-1.5 text-xs font-medium bg-accent-lavender/15 text-accent-lavender hover:bg-accent-lavender/25 rounded transition-colors"
                       >
-                        Reconnect
-                      </button>
+                        {uiText("Reconnect")}</button>
                     )}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowReauth((v) => !v); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-amber/15 text-accent-amber hover:bg-accent-amber/25 rounded transition-colors"
                     >
-                      Re-authenticate
-                    </button>
+                      {uiText("Re-authenticate")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowDeleteIdentity(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-rose/10 text-txt-danger hover:bg-accent-rose/20 rounded transition-colors"
                     >
-                      Delete Identity
-                    </button>
+                      {uiText("Delete Identity")}</button>
                   </>
                 )}
 
@@ -904,8 +884,7 @@ function RegistryRow({
                         onClick={(e) => { e.stopPropagation(); handleReconnect(); }}
                         className="px-3 py-1.5 text-xs font-medium bg-accent-lavender/15 text-accent-lavender hover:bg-accent-lavender/25 rounded transition-colors"
                       >
-                        Reconnect
-                      </button>
+                        {uiText("Reconnect")}</button>
                     )}
                     {entry.status === 'auth_expired' && (
                       <button
@@ -913,23 +892,20 @@ function RegistryRow({
                         onClick={(e) => { e.stopPropagation(); setShowReauth((v) => !v); }}
                         className="px-3 py-1.5 text-xs font-medium bg-accent-amber/15 text-accent-amber hover:bg-accent-amber/25 rounded transition-colors"
                       >
-                        Re-authenticate
-                      </button>
+                        {uiText("Re-authenticate")}</button>
                     )}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowForceRemoveConfirm(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.1] text-txt-secondary rounded transition-colors"
                     >
-                      Force Remove
-                    </button>
+                      {uiText("Force Remove")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowDeleteIdentity(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-rose/10 text-txt-danger hover:bg-accent-rose/20 rounded transition-colors"
                     >
-                      Delete Identity
-                    </button>
+                      {uiText("Delete Identity")}</button>
                   </>
                 )}
               </div>
@@ -943,9 +919,9 @@ function RegistryRow({
         isOpen={showForceRemoveConfirm}
         onClose={() => setShowForceRemoveConfirm(false)}
         onConfirm={handleForceRemove}
-        title="Force Remove Entry"
-        description={`This will remove the registry entry for ${name}. The remote instance will not be notified. Use this only if the instance is permanently unreachable.`}
-        confirmLabel="Force Remove"
+        title={uiText("Force Remove Entry")}
+        description={uiText("This will remove the registry entry for {0}. The remote instance will not be notified. Use this only if the instance is permanently unreachable.", [name])}
+        confirmLabel={uiText("Force Remove")}
         variant="warning"
       />
 
@@ -1013,10 +989,10 @@ function PendingSubscriptionRow({ subscription }: { subscription: PeeringSubscri
     setBusy(true);
     try {
       await cancelPeeringSubscription(subscription.id);
-      addToast('Peering request cancelled', 'success', 3000);
+      addToast(uiText("Peering request cancelled"), 'success', 3000);
     } catch (err) {
       addToast(
-        `Failed to cancel: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        uiText("Failed to cancel: {0}", [err instanceof Error ? err.message : 'Unknown error']),
         'warning',
         5000,
       );
@@ -1031,7 +1007,7 @@ function PendingSubscriptionRow({ subscription }: { subscription: PeeringSubscri
           {actionVerbPhrase(subscription.triggerReason, subscription.triggerTarget)}
         </div>
         <div className="text-[11px] text-txt-tertiary truncate">
-          on <span className="text-txt-secondary">{peerLabel}</span>
+          {uiText("on ")}<span className="text-txt-secondary">{peerLabel}</span>
           {subscription.peerInstanceName && (
             <span className="ml-1 text-txt-tertiary/70">({host})</span>
           )}
@@ -1043,7 +1019,7 @@ function PendingSubscriptionRow({ subscription }: { subscription: PeeringSubscri
         disabled={busy}
         className="px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.1] text-txt-secondary rounded transition-colors shrink-0 disabled:opacity-50"
       >
-        {busy ? 'Cancelling...' : 'Cancel'}
+        {busy ? uiText("Cancelling...") : uiText("Cancel")}
       </button>
     </div>
   );
@@ -1057,11 +1033,9 @@ function PendingPeeringSubscriptionsSection() {
   return (
     <div>
       <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-        Pending Peering Approvals
-      </div>
+        {uiText("Pending Peering Approvals")}</div>
       <p className="text-xs text-txt-tertiary mb-2">
-        Your admin must approve before these requests can proceed.
-      </p>
+        {uiText("Your admin must approve before these requests can proceed.")}</p>
       <div className="rounded-lg bg-white/[0.02] p-3 space-y-2">
         {subscriptions.map((s) => (
           <PendingSubscriptionRow key={s.id} subscription={s} />
@@ -1143,7 +1117,7 @@ function PeeringNotificationCard({
       await markPeeringNotificationRead(notification.id);
     } catch (err) {
       addToast(
-        `Failed to dismiss: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        uiText("Failed to dismiss: {0}", [err instanceof Error ? err.message : 'Unknown error']),
         'warning',
         5000,
       );
@@ -1188,7 +1162,7 @@ function PeeringNotificationCard({
                 onClick={() => onRetry(notification)}
                 className="px-3 py-1.5 text-xs font-medium bg-status-online/15 text-status-online hover:bg-status-online/25 rounded transition-colors"
               >
-                Retry your {actionLabel(notification.triggerReason)}
+                {uiText("Retry your ")}{actionLabel(notification.triggerReason)}
               </button>
             )}
             <button
@@ -1197,7 +1171,7 @@ function PeeringNotificationCard({
               disabled={busy}
               className="px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.1] text-txt-secondary rounded transition-colors disabled:opacity-50"
             >
-              {busy ? 'Dismissing...' : 'Dismiss'}
+              {busy ? uiText("Dismissing...") : uiText("Dismiss")}
             </button>
           </div>
         </div>
@@ -1252,7 +1226,7 @@ function RecentPeeringOutcomesSection() {
       await markAllPeeringNotificationsRead();
     } catch (err) {
       addToast(
-        `Failed to dismiss all: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        uiText("Failed to dismiss all: {0}", [err instanceof Error ? err.message : 'Unknown error']),
         'warning',
         5000,
       );
@@ -1264,8 +1238,7 @@ function RecentPeeringOutcomesSection() {
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider">
-          Recent Peering Outcomes
-        </div>
+          {uiText("Recent Peering Outcomes")}</div>
         {notifications.length > 1 && (
           <button
             type="button"
@@ -1273,7 +1246,7 @@ function RecentPeeringOutcomesSection() {
             disabled={bulkBusy}
             className="text-[11px] text-txt-tertiary hover:text-txt-secondary transition-colors disabled:opacity-50"
           >
-            {bulkBusy ? 'Dismissing...' : 'Dismiss all'}
+            {bulkBusy ? uiText("Dismissing...") : uiText("Dismiss all")}
           </button>
         )}
       </div>
@@ -1365,9 +1338,8 @@ export function ConnectedInstances() {
 
       <div>
       <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-        Connected Instances
-      </div>
-      <p className="text-xs text-txt-tertiary mb-2">Conecte suas contas entre instâncias compatíveis do Lume.</p>
+        {uiText("Connected Instances")}</div>
+      <p className="text-xs text-txt-tertiary mb-2">{uiText("Conecte suas contas entre instâncias compatíveis do Lume.")}</p>
 
       <div className="rounded-lg bg-white/[0.02] p-3 space-y-2">
         {/* Home instance (always pinned, non-filterable) */}
@@ -1376,25 +1348,23 @@ export function ConnectedInstances() {
             <StatusDot status="connected" />
             <div className="min-w-0">
               <div className="text-sm text-txt-primary font-medium truncate">
-                Home Instance
-              </div>
+                {uiText("Home Instance")}</div>
               <div className="text-xs text-txt-tertiary truncate">
                 {window.location.host}
                 {user?.username && (
-                  <span className="ml-1">as {user.username}</span>
+                  <span className="ml-1">{uiText("as ")}{user.username}</span>
                 )}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 ml-2">
-            <span className="text-xs text-txt-tertiary">Local</span>
+            <span className="text-xs text-txt-tertiary">{uiText("Local")}</span>
             {isElectron() && (
               <button
                 onClick={() => window.backspace?.clearInstanceUrl()}
                 className="px-2 py-1 text-xs text-txt-secondary hover:text-txt-primary hover:bg-white/[0.04] rounded transition-colors"
               >
-                Change
-              </button>
+                {uiText("Change")}</button>
             )}
           </div>
         </div>
@@ -1431,8 +1401,7 @@ export function ConnectedInstances() {
 
         {registryEntries.length === 0 && !showAddForm && (
           <div className="text-xs text-txt-tertiary py-2">
-            No remote instances connected. Add one to start federating.
-          </div>
+            {uiText("No remote instances connected. Add one to start federating.")}</div>
         )}
 
         {/* Add instance button / flow */}
@@ -1443,8 +1412,7 @@ export function ConnectedInstances() {
             onClick={() => setShowAddForm(true)}
             className="w-full p-2 text-sm text-txt-secondary hover:text-txt-primary hover:bg-surface-channel/50 rounded-lg border border-dashed border-white/[0.06] hover:border-white/[0.12] transition-colors"
           >
-            + Add Instance
-          </button>
+            {uiText("+ Add Instance")}</button>
         )}
       </div>
       </div>

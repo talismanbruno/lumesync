@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { MemberWithUser } from '@backspace/shared';
@@ -88,8 +89,7 @@ function MemberList({
   return (
     <>
       <div className="px-2 py-1.5 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-        Members
-      </div>
+        {uiText("Members")}</div>
       {filtered.map((member, i) => (
         <MentionMemberRow
           key={member.userId}

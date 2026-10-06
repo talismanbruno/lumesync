@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import type { MemberWithUser } from '@backspace/shared';
@@ -124,10 +125,10 @@ export function TransferOwnershipModal({ spaceId, onClose }: { spaceId: string; 
     setTransferring(true);
     try {
       await transferOwnership(spaceId, selectedUserId);
-      addToast(`Ownership transferred to ${selectedMember?.user.displayName || selectedMember?.user.username}`, 'success', 3000);
+      addToast(uiText("Ownership transferred to {0}", [selectedMember?.user.displayName || selectedMember?.user.username]), 'success', 3000);
       onClose();
     } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Failed to transfer ownership', 'warning', 3000);
+      addToast(err instanceof Error ? err.message : uiText("Failed to transfer ownership"), 'warning', 3000);
     } finally {
       setTransferring(false);
     }
@@ -141,9 +142,9 @@ export function TransferOwnershipModal({ spaceId, onClose }: { spaceId: string; 
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3 border-b border-white/[0.06]">
-          <h3 className="text-base font-semibold text-txt-primary">Transfer Ownership</h3>
+          <h3 className="text-base font-semibold text-txt-primary">{uiText("Transfer Ownership")}</h3>
           <p className="text-xs text-txt-tertiary mt-0.5">
-            Choose a member to become the new owner of <span className="font-medium text-txt-secondary">{space.name}</span>
+            {uiText("Choose a member to become the new owner of ")}<span className="font-medium text-txt-secondary">{space.name}</span>
           </p>
         </div>
 
@@ -152,10 +153,10 @@ export function TransferOwnershipModal({ spaceId, onClose }: { spaceId: string; 
           <div className="p-4 flex flex-col gap-4">
             <div className="p-3 rounded-lg bg-accent-amber/10 border border-accent-amber/20">
               <p className="text-sm text-txt-secondary">
-                Transfer ownership of <span className="font-semibold text-txt-primary">{space.name}</span> to{' '}
+                {uiText("Transfer ownership of ")}<span className="font-semibold text-txt-primary">{space.name}</span> {uiText(" to")}{' '}
                 <span className="font-semibold text-txt-primary">{selectedMember.user.displayName || selectedMember.user.username}</span>?
               </p>
-              <p className="text-xs text-txt-tertiary mt-1.5">You will become a regular member.</p>
+              <p className="text-xs text-txt-tertiary mt-1.5">{uiText("You will become a regular member.")}</p>
             </div>
             <div className="flex gap-3">
               <button
@@ -163,14 +164,13 @@ export function TransferOwnershipModal({ spaceId, onClose }: { spaceId: string; 
                 className="flex-1 py-2.5 text-sm font-medium text-txt-secondary bg-interactive-hover hover:bg-interactive-selected rounded-lg transition-colors disabled:opacity-50"
                 disabled={transferring}
               >
-                Cancel
-              </button>
+                {uiText("Cancel")}</button>
               <button
                 onClick={handleTransfer}
                 disabled={transferring}
                 className="flex-1 py-2.5 bg-accent-amber hover:bg-accent-amber/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
-                {transferring ? 'Transferring...' : 'Transfer'}
+                {transferring ? uiText("Transferring...") : uiText("Transfer")}
               </button>
             </div>
           </div>
@@ -182,16 +182,16 @@ export function TransferOwnershipModal({ spaceId, onClose }: { spaceId: string; 
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search members..."
+                placeholder={uiText("Search members...")}
                 className="input-search w-full"
                 autoFocus
               />
             </div>
             <div className="flex-1 overflow-y-auto p-2 min-h-0">
               {loading ? (
-                <p className="text-xs text-txt-tertiary text-center py-4">Loading members...</p>
+                <p className="text-xs text-txt-tertiary text-center py-4">{uiText("Loading members...")}</p>
               ) : filteredMembers.length === 0 ? (
-                <p className="text-xs text-txt-tertiary text-center py-4">No members found</p>
+                <p className="text-xs text-txt-tertiary text-center py-4">{uiText("No members found")}</p>
               ) : (
                 filteredMembers.map((member) => (
                   <TransferMemberRow

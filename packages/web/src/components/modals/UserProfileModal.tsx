@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -253,9 +254,9 @@ export function UserProfileModal() {
   };
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
-    { key: 'about', label: 'About' },
-    { key: 'friends', label: 'Mutual Friends', count: mutualFriends.length },
-    { key: 'spaces', label: 'Mutual Spaces', count: mutualSpaces.length },
+    { key: 'about', label: uiText("About") },
+    { key: 'friends', label: uiText("Mutual Friends"), count: mutualFriends.length },
+    { key: 'spaces', label: uiText("Mutual Spaces"), count: mutualSpaces.length },
   ];
 
   return (
@@ -345,8 +346,7 @@ export function UserProfileModal() {
               {user.bio && (
                 <div>
                   <span className="text-[11px] uppercase tracking-wide font-semibold text-txt-tertiary">
-                    About Me
-                  </span>
+                    {uiText("About Me")}</span>
                   <div className="text-[13px] text-txt-secondary mt-1 whitespace-pre-wrap break-words leading-relaxed [&_strong]:font-semibold [&_strong]:text-txt-primary [&_em]:italic [&_a]:text-accent-primary [&_a]:underline">
                     <ReactMarkdown
                       allowedElements={['p', 'strong', 'em', 'a', 'br']}
@@ -366,8 +366,7 @@ export function UserProfileModal() {
               {/* Member Since */}
               <div>
                 <span className="text-[11px] uppercase tracking-wide font-semibold text-txt-tertiary">
-                  Member Since
-                </span>
+                  {uiText("Member Since")}</span>
                 <div className="text-[13px] text-txt-secondary mt-1">
                   {new Date(user.createdAt).toLocaleDateString(undefined, {
                     month: 'long',
@@ -391,8 +390,7 @@ export function UserProfileModal() {
                 </div>
               ) : mutualFriends.length === 0 ? (
                 <div className="text-center py-8 text-txt-tertiary text-[13px]">
-                  No mutual friends
-                </div>
+                  {uiText("No mutual friends")}</div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {mutualFriends.map((friend) => {
@@ -446,8 +444,7 @@ export function UserProfileModal() {
                 </div>
               ) : mutualSpaces.length === 0 ? (
                 <div className="text-center py-8 text-txt-tertiary text-[13px]">
-                  No mutual spaces
-                </div>
+                  {uiText("No mutual spaces")}</div>
               ) : (
                 <div className="space-y-1">
                   {mutualSpaces.map((space) => {
@@ -509,20 +506,19 @@ export function UserProfileModal() {
             onClick={handleSendMessage}
             className="flex-1 py-2 rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/80 transition-colors"
           >
-            Send Message
-          </button>
+            {uiText("Send Message")}</button>
 
           {friendship.state === 'none' && (
             <button onClick={handleAddFriend} disabled={friendActionLoading}
               className="flex-1 py-2 rounded-lg text-[13px] font-medium text-txt-primary border border-white/[0.08] bg-white/[0.06] hover:bg-white/[0.10] transition-colors disabled:opacity-50">
-              {friendActionLoading ? '...' : 'Add Friend'}
+              {friendActionLoading ? '...' : uiText("Add Friend")}
             </button>
           )}
 
           {friendship.state === 'outbound_pending' && (
             <button onClick={handleCancelRequest} disabled={friendActionLoading}
               className="flex-1 py-2 rounded-lg text-[13px] font-medium text-amber-400 border border-amber-400/30 hover:bg-amber-400/10 transition-colors disabled:opacity-50">
-              {friendActionLoading ? '...' : 'Cancel Request'}
+              {friendActionLoading ? '...' : uiText("Cancel Request")}
             </button>
           )}
 
@@ -530,11 +526,11 @@ export function UserProfileModal() {
             <>
               <button onClick={handleAcceptRequest} disabled={friendActionLoading}
                 className="flex-1 py-2 rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/80 transition-colors disabled:opacity-50">
-                {friendActionLoading ? '...' : 'Accept'}
+                {friendActionLoading ? '...' : uiText("Accept")}
               </button>
               <button onClick={handleDeclineRequest} disabled={friendActionLoading}
                 className="py-2 px-3 rounded-lg text-[13px] font-medium text-txt-tertiary border border-white/[0.06] hover:bg-white/[0.06] transition-colors disabled:opacity-50">
-                {friendActionLoading ? '...' : 'Ignore'}
+                {friendActionLoading ? '...' : uiText("Ignore")}
               </button>
             </>
           )}
@@ -542,7 +538,7 @@ export function UserProfileModal() {
           {friendship.state === 'friends' && (
             <button onClick={handleRemoveFriend} disabled={friendActionLoading}
               className="flex-1 py-2 rounded-lg text-[13px] font-medium text-txt-danger border border-txt-danger/30 hover:bg-txt-danger/10 transition-colors disabled:opacity-50">
-              {friendActionLoading ? '...' : 'Remove Friend'}
+              {friendActionLoading ? '...' : uiText("Remove Friend")}
             </button>
           )}
         </div>

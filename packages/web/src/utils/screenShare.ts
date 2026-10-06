@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { Room, Track, BackupCodecPolicy } from 'livekit-client';
 import { useVoiceStore } from '../stores/voiceStore';
 import type { ScreenShareConfig } from '../stores/voiceStore';
@@ -6,6 +7,7 @@ import { getPublisherPC, getMediaStreamTrack } from './livekitInternals';
 import { broadcastVoiceStatus } from './voice';
 import { activate as activateHwOverdrive, deactivate as deactivateHwOverdrive } from './hwOverdrive';
 import { useUIStore } from '../stores/uiStore';
+import { isElectron } from '../platform/platform';
 import {
   STANDARD_RESOLUTIONS, STANDARD_FRAMERATES, WIDTH_MAP,
   BITRATE_MATRIX_KBPS,
@@ -255,8 +257,10 @@ export async function startScreenShare(room: Room): Promise<boolean> {
   try {
     // For native mode: omit resolution constraint to capture at display's full native resolution
     const captureOptions: any = {
-      audio: config.shareAudio ? {
-        // Chrome 141+: exclude this tab's own audio from system audio capture
+      // The desktop picker decides whether audio is granted after this request
+      // begins. Request it up front so enabling it inside the picker works too.
+      audio: (isElectron() || config.shareAudio) ? {
+        // Electron 43.4+ respects this constraint for system loopback too.
         // @ts-ignore — restrictOwnAudio is not yet in all TS type definitions
         restrictOwnAudio: true,
         echoCancellation: false,
@@ -286,7 +290,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
     console.log('[SS] setScreenShareEnabled returned:', !!track);
     if (!track) {
       if (hwOverdrive) deactivateHwOverdrive();
-      useUIStore.getState().addToast('O compartilhamento não começou. Tente selecionar outra tela ou janela.', 'warning');
+      useUIStore.getState().addToast(uiText("O compartilhamento não começou. Tente selecionar outra tela ou janela."), 'warning');
       return false;
     }
 
@@ -298,6 +302,15 @@ export async function startScreenShare(room: Room): Promise<boolean> {
     }
 
     useVoiceStore.setState({ isScreenSharing: true });
+    const audioPublication = room.localParticipant.getTrackPublications().find(p => p.source === Track.Source.ScreenShareAudio && p.track);
+    if (useVoiceStore.getState().screenShareConfig.shareAudio && !audioPublication) {
+      useUIStore.getState().addToast(uiText("A tela está sendo compartilhada sem áudio. Para transmitir o som, selecione uma fonte com áudio e habilite a opção no seletor."), 'warning', 7000);
+    } else if (isElectron() && audioPublication?.track?.mediaStreamTrack) {
+      const settings = audioPublication.track.mediaStreamTrack.getSettings() as MediaTrackSettings & { restrictOwnAudio?: boolean };
+      if (settings.restrictOwnAudio === false) {
+        useUIStore.getState().addToast(uiText("Este sistema ainda inclui o som do Lume no compartilhamento. As vozes da chamada podem voltar como eco para quem assiste."), 'warning', 9000);
+      }
+    }
     applyScreenShareOverdrive(room, ++screenShareGeneration);
 
     // Schedule hardware encoder detection
@@ -317,7 +330,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
       ? 'Compartilhamento cancelado ou permissão negada.'
       : errorName === 'NotFoundError'
         ? 'Nenhuma tela ou janela disponível para compartilhar.'
-        : config.shareAudio
+        : useVoiceStore.getState().screenShareConfig.shareAudio
           ? 'Não foi possível compartilhar com áudio. Desative o áudio do sistema e tente novamente.'
           : 'Não foi possível iniciar o compartilhamento de tela. Tente novamente.';
     useUIStore.getState().addToast(message, 'warning', 7000);
@@ -415,7 +428,7 @@ function scheduleEncoderDetection(room: Room): void {
 
       if (encoderImpl && /openh264/i.test(encoderImpl)) {
         useUIStore.getState().addToast(
-          'Hardware encoder not available — using software fallback. Switch to VP9 for better performance.',
+          uiText("Hardware encoder not available — using software fallback. Switch to VP9 for better performance."),
           'warning',
           8000,
         );

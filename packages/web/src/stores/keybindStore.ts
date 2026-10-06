@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -9,12 +10,12 @@ export interface Keybind {
 }
 
 export const BINDABLE_ACTIONS = [
-  { id: 'toggleMute', label: 'Toggle Mute', type: 'toggle' as const },
-  { id: 'toggleDeafen', label: 'Toggle Deafen', type: 'toggle' as const },
-  { id: 'pushToTalk', label: 'Push to Talk', type: 'hold' as const },
-  { id: 'toggleCamera', label: 'Toggle Camera', type: 'toggle' as const },
-  { id: 'toggleScreenShare', label: 'Toggle Screen Share', type: 'toggle' as const },
-  { id: 'disconnect', label: 'Disconnect', type: 'toggle' as const },
+  { id: 'toggleMute', label: uiText("Toggle Mute"), type: 'toggle' as const },
+  { id: 'toggleDeafen', label: uiText("Toggle Deafen"), type: 'toggle' as const },
+  { id: 'pushToTalk', label: uiText("Push to Talk"), type: 'hold' as const },
+  { id: 'toggleCamera', label: uiText("Toggle Camera"), type: 'toggle' as const },
+  { id: 'toggleScreenShare', label: uiText("Toggle Screen Share"), type: 'toggle' as const },
+  { id: 'disconnect', label: uiText("Disconnect"), type: 'toggle' as const },
 ] as const;
 
 /** Mouse buttons that must not be bound (would break OS interaction) */

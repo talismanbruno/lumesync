@@ -729,25 +729,6 @@ export interface Friend {
   homeInstance: string | null;
 }
 
-export interface DiscoverUser {
-  id: string;
-  username: string;
-  displayName: string | null;
-  avatar: string | null;
-  banner: string | null;
-  avatarColor: AvatarColor | null;
-  bio: string | null;
-  status: UserStatus;
-  customStatus: string | null;
-  createdAt: number;
-  homeInstance: string | null;
-  homeUserId: string | null;
-  mutualFriendCount: number;
-  mutualSpaceCount: number;
-  relationship: 'none' | 'friends' | 'outbound_pending' | 'inbound_pending';
-  requestId?: string;
-}
-
 export type FriendRequestStatus = 'pending' | 'accepted' | 'declined';
 
 export interface FriendRequest {

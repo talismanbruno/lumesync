@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVoiceStore } from '../../stores/voiceStore';
@@ -444,8 +445,7 @@ export function PictureInPicture() {
       {/* LIVE badge */}
       {isScreen && (
         <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-accent-rose rounded text-[11px] font-bold text-white uppercase tracking-wide">
-          LIVE
-        </div>
+          {uiText("LIVE")}</div>
       )}
 
       {/* Close button */}

@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { useUIStore } from '../stores/uiStore';
 import { useTransferStore } from '../stores/transferStore';
 
@@ -32,7 +33,7 @@ export async function saveImage(url: string, filename?: string): Promise<void> {
     }
   } catch {
     window.open(url, '_blank', 'noopener');
-    useUIStore.getState().addToast('Opened in new tab', 'info', 3000);
+    useUIStore.getState().addToast(uiText("Opened in new tab"), 'info', 3000);
   }
 }
 
@@ -45,7 +46,7 @@ export async function copyImageToClipboard(url: string): Promise<void> {
   // GIFs lose animation when converted to PNG — copy the URL instead
   if (isGifUrl(url)) {
     await navigator.clipboard.writeText(url);
-    useUIStore.getState().addToast('Copied GIF link', 'success', 3000);
+    useUIStore.getState().addToast(uiText("Copied GIF link"), 'success', 3000);
     return;
   }
 
@@ -57,7 +58,7 @@ export async function copyImageToClipboard(url: string): Promise<void> {
     // If the server returned a GIF despite the URL not ending in .gif
     if (blob.type === 'image/gif') {
       await navigator.clipboard.writeText(url);
-      useUIStore.getState().addToast('Copied GIF link', 'success', 3000);
+      useUIStore.getState().addToast(uiText("Copied GIF link"), 'success', 3000);
       return;
     }
 
@@ -68,7 +69,7 @@ export async function copyImageToClipboard(url: string): Promise<void> {
     ]);
   } catch {
     await navigator.clipboard.writeText(url);
-    useUIStore.getState().addToast('Copied image link', 'info', 3000);
+    useUIStore.getState().addToast(uiText("Copied image link"), 'info', 3000);
   }
 }
 

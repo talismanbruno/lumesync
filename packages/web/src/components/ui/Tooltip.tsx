@@ -48,6 +48,7 @@ export function Tooltip({ content, children, position = 'right', delay = 200 }: 
       {children}
       {isVisible && createPortal(
         <div
+          role="tooltip"
           ref={floatingRef}
           style={style}
           className="px-3 py-1.5 text-sm font-medium text-txt-primary glass rounded-md whitespace-nowrap pointer-events-none"

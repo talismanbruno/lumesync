@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../ui/Modal';
@@ -180,15 +181,15 @@ export function NewDmModal() {
       useUIStore.getState().setShowDms(true);
       navigate(`/channels/@me/${channel.id}`);
     } catch (err) {
-      setError((err as Error).message || 'Não foi possível criar a conversa');
+      setError((err as Error).message || uiText("Não foi possível criar a conversa"));
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title="Nova mensagem" mobileStyle="sheet">
+    <Modal isOpen={isOpen} onClose={closeModal} title={uiText("Nova mensagem")} mobileStyle="sheet">
       <div className="space-y-3">
         {isAdmin && (
-          <div className="flex gap-1 rounded-[6px] bg-bg-tertiary p-1" role="tablist" aria-label="Quem pode receber a mensagem">
+          <div className="flex gap-1 rounded-[6px] bg-bg-tertiary p-1" role="tablist" aria-label={uiText("Quem pode receber a mensagem")}>
             <button
               type="button"
               role="tab"
@@ -196,8 +197,7 @@ export function NewDmModal() {
               onClick={() => handleModeChange('friends')}
               className={`flex-1 rounded-[4px] px-3 py-2 text-[13px] font-semibold transition-colors ${mode === 'friends' ? 'bg-interactive-active text-txt-primary' : 'text-txt-secondary hover:text-txt-primary'}`}
             >
-              Amigos
-            </button>
+              {uiText("Amigos")}</button>
             <button
               type="button"
               role="tab"
@@ -205,15 +205,13 @@ export function NewDmModal() {
               onClick={() => handleModeChange('all')}
               className={`flex-1 rounded-[4px] px-3 py-2 text-[13px] font-semibold transition-colors ${mode === 'all' ? 'bg-interactive-active text-txt-primary' : 'text-txt-secondary hover:text-txt-primary'}`}
             >
-              Todos os usuários
-            </button>
+              {uiText("Todos os usuários")}</button>
           </div>
         )}
 
         {mode === 'all' && (
           <p className="text-[12px] text-txt-tertiary">
-            Ferramenta de administrador: inicie uma conversa com qualquer conta sem precisar adicioná-la.
-          </p>
+            {uiText("Ferramenta de administrador: inicie uma conversa com qualquer conta sem precisar adicioná-la.")}</p>
         )}
 
         <input
@@ -221,7 +219,7 @@ export function NewDmModal() {
           type="text"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder={mode === 'all' ? 'Buscar qualquer usuário...' : 'Buscar nos seus amigos...'}
+          placeholder={mode === 'all' ? uiText("Buscar qualquer usuário...") : uiText("Buscar nos seus amigos...")}
           className="input-search w-full py-2 text-[14px]"
         />
 
@@ -231,17 +229,17 @@ export function NewDmModal() {
 
         <div className="max-h-[300px] overflow-y-auto space-y-[2px]">
           {isSearching && (
-            <div className="py-4 text-center text-txt-tertiary text-[14px]">Buscando...</div>
+            <div className="py-4 text-center text-txt-tertiary text-[14px]">{uiText("Buscando...")}</div>
           )}
 
           {!isSearching && results.length === 0 && (mode === 'friends' || query.trim().length >= 2) && (
             <div className="py-4 text-center text-txt-tertiary text-[14px]">
-              {mode === 'friends' ? 'Nenhum amigo encontrado' : 'Nenhum usuário encontrado'}
+              {mode === 'friends' ? uiText("Nenhum amigo encontrado") : uiText("Nenhum usuário encontrado")}
             </div>
           )}
 
           {!isSearching && mode === 'all' && query.trim().length < 2 && (
-            <div className="py-4 text-center text-txt-tertiary text-[14px]">Digite pelo menos 2 caracteres</div>
+            <div className="py-4 text-center text-txt-tertiary text-[14px]">{uiText("Digite pelo menos 2 caracteres")}</div>
           )}
 
           {results.map((user) => (

@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef } from 'react';
 import { Modal } from '../ui/Modal';
 import { ImageCropModal } from '../ui/ImageCropModal';
@@ -11,9 +12,9 @@ import type { SpaceVisibility, AvatarColor } from '@backspace/shared';
 import { SPACE_GRADIENT_MAP, getSpaceGradient } from '../../utils/gradients';
 
 const visibilityOptions: { value: SpaceVisibility; label: string; desc: string }[] = [
-  { value: 'private', label: 'Private', desc: 'Only people with an invite link can join' },
-  { value: 'request', label: 'Request to Join', desc: 'Visible in Explore — people can request to join' },
-  { value: 'public', label: 'Public', desc: 'Visible in Explore — anyone can join instantly' },
+  { value: 'private', label: uiText("Private"), desc: 'Only people with an invite link can join' },
+  { value: 'request', label: uiText("Request to Join"), desc: 'Visible in Explore — people can request to join' },
+  { value: 'public', label: uiText("Public"), desc: 'Visible in Explore — anyone can join instantly' },
 ];
 
 export function CreateSpaceModal() {
@@ -65,7 +66,7 @@ export function CreateSpaceModal() {
       const { filename } = await waitForTransferAttachment(tid);
       setIconFilename(filename);
     } catch {
-      setError('Failed to upload icon');
+      setError(uiText("Failed to upload icon"));
       setIconPreview(null);
       URL.revokeObjectURL(previewUrl);
     } finally {
@@ -97,7 +98,7 @@ export function CreateSpaceModal() {
     setError('');
 
     if (!name.trim()) {
-      setError('Space name is required');
+      setError(uiText("Space name is required"));
       return;
     }
 
@@ -113,7 +114,7 @@ export function CreateSpaceModal() {
       handleClose();
       navigate(`/channels/${space.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create space');
+      setError(err instanceof Error ? err.message : uiText("Failed to create space"));
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +122,7 @@ export function CreateSpaceModal() {
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create a Space" mobileStyle="sheet">
+    <Modal isOpen={isOpen} onClose={handleClose} title={uiText("Create a Space")} mobileStyle="sheet">
       <form onSubmit={handleSubmit}>
         {error && (
           <div className="mb-3 p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">
@@ -140,7 +141,7 @@ export function CreateSpaceModal() {
           >
             {iconPreview ? (
               <>
-                <img src={iconPreview} alt="Icon preview" className="w-full h-full object-cover" />
+                <img src={iconPreview} alt={uiText("Icon preview")} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -158,7 +159,7 @@ export function CreateSpaceModal() {
                 ) : (
                   <>
                     <span className="text-2xl font-bold">{(name || 'S').charAt(0).toUpperCase()}</span>
-                    <span className="text-[9px] font-medium opacity-60">Upload</span>
+                    <span className="text-[9px] font-medium opacity-60">{uiText("Upload")}</span>
                   </>
                 )}
               </div>
@@ -177,16 +178,14 @@ export function CreateSpaceModal() {
               onClick={handleRemoveIcon}
               className="ml-2 self-start mt-1 text-txt-tertiary hover:text-txt-danger text-xs transition-colors"
             >
-              Remove
-            </button>
+              {uiText("Remove")}</button>
           )}
         </div>
 
         {/* Icon Color */}
         <div className="mb-4">
           <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            Icon Color
-          </label>
+            {uiText("Icon Color")}</label>
           <div className="flex gap-2 justify-center">
             {AVATAR_COLORS.map((key) => {
               const entry = SPACE_GRADIENT_MAP[key];
@@ -211,14 +210,13 @@ export function CreateSpaceModal() {
         {/* Space Name */}
         <div className="mb-4">
           <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            Space Name
-          </label>
+            {uiText("Space Name")}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-standard w-full"
-            placeholder="My Awesome Space"
+            placeholder={uiText("My Awesome Space")}
             autoFocus
           />
         </div>
@@ -226,8 +224,7 @@ export function CreateSpaceModal() {
         {/* Visibility */}
         <div className="mb-4">
           <div className="text-[11px] text-txt-tertiary font-semibold uppercase tracking-wider mb-2">
-            Visibility
-          </div>
+            {uiText("Visibility")}</div>
           <div className="space-y-1.5">
             {visibilityOptions.map((opt) => (
               <label
@@ -258,12 +255,11 @@ export function CreateSpaceModal() {
         {/* Description */}
         <div className="mb-4">
           <div className="text-[11px] text-txt-tertiary font-semibold uppercase tracking-wider mb-1.5">
-            Description
-          </div>
+            {uiText("Description")}</div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 200))}
-            placeholder="A short description for your space..."
+            placeholder={uiText("A short description for your space...")}
             rows={3}
             className="input-standard w-full resize-none"
           />
@@ -279,14 +275,13 @@ export function CreateSpaceModal() {
                 onClick={handleClose}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Cancel
-              </button>
+                {uiText("Cancel")}</button>
               <button
                 type="submit"
                 disabled={isLoading || uploadingIcon}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Creating...' : 'Create'}
+                {isLoading ? uiText("Creating...") : uiText("Create")}
               </button>
             </div>
           </div>
@@ -299,7 +294,7 @@ export function CreateSpaceModal() {
       onClose={() => setCropSrc(null)}
       imageSrc={cropSrc ?? ''}
       onCropComplete={handleCropComplete}
-      title="Crop Space Icon"
+      title={uiText("Crop Space Icon")}
       cropShape="round"
       aspectRatio={1}
       maxOutputDimension={256}

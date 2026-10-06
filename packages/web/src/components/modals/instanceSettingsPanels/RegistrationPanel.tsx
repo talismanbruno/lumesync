@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InviteLinkSummary, InviteRedemption, InviteStatus } from '@backspace/shared';
@@ -145,17 +146,17 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
 
   const activeSortOptions: Array<{ key: ActiveSort; label: string }> = [
-    { key: 'recent', label: 'Most recent' },
-    { key: 'oldest', label: 'Oldest' },
-    { key: 'name', label: 'Name (A–Z)' },
-    { key: 'mostUsed', label: 'Most used' },
-    { key: 'expiringSoonest', label: 'Expiring soonest' },
+    { key: 'recent', label: uiText("Most recent") },
+    { key: 'oldest', label: uiText("Oldest") },
+    { key: 'name', label: uiText("Name (A–Z)") },
+    { key: 'mostUsed', label: uiText("Most used") },
+    { key: 'expiringSoonest', label: uiText("Expiring soonest") },
   ];
 
   const archivedSortOptions: Array<{ key: ArchivedSort; label: string }> = [
-    { key: 'recent', label: 'Most recent' },
-    { key: 'oldest', label: 'Oldest' },
-    { key: 'name', label: 'Name (A–Z)' },
+    { key: 'recent', label: uiText("Most recent") },
+    { key: 'oldest', label: uiText("Oldest") },
+    { key: 'name', label: uiText("Name (A–Z)") },
   ];
 
   const archivedStatusOptions: ArchivedStatus[] = ['expired', 'exhausted', 'revoked'];
@@ -176,8 +177,7 @@ function FilterDropdown({
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="opacity-60">
           <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
-        Filter
-        <span className="text-[10px]">▾</span>
+        {uiText("Filter")}<span className="text-[10px]">▾</span>
       </button>
 
       {open && (
@@ -187,8 +187,7 @@ function FilterDropdown({
             {view === 'archived' && (
               <>
                 <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-2 py-1">
-                  Status
-                </div>
+                  {uiText("Status")}</div>
                 {archivedStatusOptions.map((s) => (
                   <button
                     key={s}
@@ -208,8 +207,7 @@ function FilterDropdown({
               </>
             )}
             <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-2 py-1">
-              Sort by
-            </div>
+              {uiText("Sort by")}</div>
             {view === 'active'
               ? activeSortOptions.map((opt) => (
                   <button
@@ -252,14 +250,14 @@ type ExpiryPresetId = '1h' | '24h' | '7d' | '30d' | 'never' | 'custom';
 type EditExpiryId = 'keep' | ExpiryPresetId;
 
 const EXPIRY_PRESETS: ReadonlyArray<{ id: ExpiryPresetId; label: string; ms: number | null }> = [
-  { id: '1h', label: '1 hour', ms: 3_600_000 },
-  { id: '24h', label: '24 hours', ms: 86_400_000 },
-  { id: '7d', label: '7 days', ms: 7 * 86_400_000 },
-  { id: '30d', label: '30 days', ms: 30 * 86_400_000 },
-  { id: 'never', label: 'Never', ms: null },
+  { id: '1h', label: uiText("1 hour"), ms: 3_600_000 },
+  { id: '24h', label: uiText("24 hours"), ms: 86_400_000 },
+  { id: '7d', label: uiText("7 days"), ms: 7 * 86_400_000 },
+  { id: '30d', label: uiText("30 days"), ms: 30 * 86_400_000 },
+  { id: 'never', label: uiText("Never"), ms: null },
   // Custom uses a free-form datetime input rendered below the preset row;
   // ms is intentionally null and ignored for this id.
-  { id: 'custom', label: 'Custom…', ms: null },
+  { id: 'custom', label: uiText("Custom…"), ms: null },
 ];
 
 /**
@@ -307,8 +305,7 @@ function ExpirySelector({ value, customDateTime, onChange, showKeep, disabled }:
                 : 'bg-surface-input text-txt-tertiary hover:text-txt-secondary'
             }`}
           >
-            Keep current
-          </button>
+            {uiText("Keep current")}</button>
         )}
         {EXPIRY_PRESETS.map((p) => (
           <button
@@ -405,14 +402,14 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
   const handleCreate = async () => {
     const trimmed = name.trim();
     if (trimmed.length === 0 || trimmed.length > 64) {
-      addToast('Name must be 1–64 characters', 'warning');
+      addToast(uiText("Name must be 1–64 characters"), 'warning');
       return;
     }
     let maxUsesNum: number | null = null;
     if (!unlimited) {
       const parsed = Number(maxUses);
       if (!Number.isInteger(parsed) || parsed < 1) {
-        addToast('Max uses must be a positive integer', 'warning');
+        addToast(uiText("Max uses must be a positive integer"), 'warning');
         return;
       }
       maxUsesNum = parsed;
@@ -427,7 +424,7 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
     if (resolved.kind === 'omit') {
       // Unreachable: ExpirySelector for Create is rendered with showKeep={false}, so
       // 'keep' cannot be selected. Defensive guard so future refactors fail loudly.
-      addToast('Invalid expiry selection', 'warning');
+      addToast(uiText("Invalid expiry selection"), 'warning');
       return;
     }
     const expiresAt = resolved.expiresAt;
@@ -437,14 +434,14 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
       const created = await api.invites.create({ name: trimmed, maxUses: maxUsesNum, expiresAt });
       try {
         await navigator.clipboard.writeText(created.url);
-        addToast('Link created. Copied to clipboard.', 'success', 2000);
+        addToast(uiText("Link created. Copied to clipboard."), 'success', 2000);
       } catch {
-        addToast('Link created. Copy manually from the row.', 'success', 2000);
+        addToast(uiText("Link created. Copy manually from the row."), 'success', 2000);
       }
       onCreated(created);
       onClose();
     } catch (err) {
-      addToast(`Failed to create invite: ${(err as Error).message}`, 'warning');
+      addToast(uiText("Failed to create invite: {0}", [(err as Error).message]), 'warning');
     } finally {
       setSubmitting(false);
     }
@@ -454,7 +451,7 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
     <Modal
       isOpen
       onClose={handleClose}
-      title="Create invite link"
+      title={uiText("Create invite link")}
       mobileStyle="fullscreen"
       maxWidth="max-w-md"
     >
@@ -469,8 +466,7 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
           </svg>
         </div>
         <p className="text-[13px] text-txt-secondary leading-snug min-w-0">
-          Generate a shareable link that lets people register on this instance. You'll set how many times it can be used and when it expires.
-        </p>
+          {uiText("Generate a shareable link that lets people register on this instance. You'll set how many times it can be used and when it expires.")}</p>
       </div>
 
       <form
@@ -482,14 +478,14 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
       >
         {/* Name */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Name</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Name")}</div>
           <input
             ref={nameInputRef}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={64}
-            placeholder="e.g. Friends batch 1"
+            placeholder={uiText("e.g. Friends batch 1")}
             className="input-standard w-full"
             disabled={submitting}
           />
@@ -497,7 +493,7 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
 
         {/* Max uses */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Max uses</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Max uses")}</div>
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -508,7 +504,7 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
                 disabled={submitting}
                 className="accent-accent-primary"
               />
-              <span className="text-txt-primary">Unlimited</span>
+              <span className="text-txt-primary">{uiText("Unlimited")}</span>
             </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -531,14 +527,14 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
                 disabled={submitting}
                 className="input-standard w-16 text-center disabled:opacity-50"
               />
-              <span className="text-txt-secondary">uses</span>
+              <span className="text-txt-secondary">{uiText("uses")}</span>
             </label>
           </div>
         </div>
 
         {/* Expiry */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Expires</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Expires")}</div>
           <ExpirySelector
             value={expiryId}
             customDateTime={customDateTime}
@@ -563,14 +559,13 @@ function CreateInviteModal({ onClose, onCreated }: CreateInviteModalProps) {
               disabled={submitting}
               className="px-3 py-1 text-sm text-txt-secondary hover:text-txt-primary transition-colors disabled:opacity-50"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
             <button
               type="submit"
               disabled={submitting}
               className="px-4 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Creating…' : 'Create link'}
+              {submitting ? uiText("Creating…") : uiText("Create link")}
             </button>
           </div>
         </div>
@@ -615,7 +610,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
   const handleSave = async () => {
     const trimmed = name.trim();
     if (trimmed.length === 0 || trimmed.length > 64) {
-      addToast('Name must be 1–64 characters', 'warning');
+      addToast(uiText("Name must be 1–64 characters"), 'warning');
       return;
     }
 
@@ -625,12 +620,12 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
     if (!unlimited) {
       const parsed = Number(maxUses);
       if (!Number.isInteger(parsed) || parsed < 1) {
-        addToast('Max uses must be a positive integer', 'warning');
+        addToast(uiText("Max uses must be a positive integer"), 'warning');
         return;
       }
       if (parsed < invite.usedCount) {
         addToast(
-          `Max uses cannot be less than current uses (${invite.usedCount})`,
+          uiText("Max uses cannot be less than current uses ({0})", [invite.usedCount]),
           'warning',
         );
         return;
@@ -654,18 +649,18 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
     // 'omit' (Keep current) → leave expiresAt off the body entirely.
 
     if (Object.keys(body).length === 0) {
-      addToast('No changes to save', 'warning');
+      addToast(uiText("No changes to save"), 'warning');
       return;
     }
 
     setSubmitting(true);
     try {
       await api.invites.update(invite.id, body);
-      addToast('Invite updated', 'success', 2000);
+      addToast(uiText("Invite updated"), 'success', 2000);
       onUpdated();
       onClose();
     } catch (err) {
-      addToast(`Failed to update invite: ${(err as Error).message}`, 'warning');
+      addToast(uiText("Failed to update invite: {0}", [(err as Error).message]), 'warning');
     } finally {
       setSubmitting(false);
     }
@@ -679,7 +674,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
     <Modal
       isOpen
       onClose={handleClose}
-      title={`Edit "${invite.name}"`}
+      title={uiText("Edit \"{0}\"", [invite.name])}
       mobileStyle="fullscreen"
       maxWidth="max-w-md"
     >
@@ -691,8 +686,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
           </svg>
         </div>
         <p className="text-[13px] text-txt-secondary leading-snug min-w-0">
-          Adjust the limits on this invite link. The URL stays the same — anyone who already has it can still redeem under the new constraints.
-        </p>
+          {uiText("Adjust the limits on this invite link. The URL stays the same — anyone who already has it can still redeem under the new constraints.")}</p>
       </div>
 
       <form
@@ -704,7 +698,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
       >
         {/* Name */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Name</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Name")}</div>
           <input
             ref={nameInputRef}
             type="text"
@@ -719,7 +713,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
         {/* Max uses */}
         <div>
           <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">
-            Max uses <span className="normal-case font-normal text-txt-tertiary">({invite.usedCount} used)</span>
+            {uiText("Max uses ")}<span className="normal-case font-normal text-txt-tertiary">({invite.usedCount} {uiText(" used)")}</span>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -731,7 +725,7 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
                 disabled={submitting}
                 className="accent-accent-primary"
               />
-              <span className="text-txt-primary">Unlimited</span>
+              <span className="text-txt-primary">{uiText("Unlimited")}</span>
             </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -754,14 +748,14 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
                 disabled={submitting}
                 className="input-standard w-16 text-center disabled:opacity-50"
               />
-              <span className="text-txt-secondary">uses</span>
+              <span className="text-txt-secondary">{uiText("uses")}</span>
             </label>
           </div>
         </div>
 
         {/* Expiry */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Expires</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Expires")}</div>
           <ExpirySelector
             value={expiryId}
             customDateTime={customDateTime}
@@ -783,14 +777,13 @@ function EditInviteModal({ invite, onClose, onUpdated }: EditInviteModalProps) {
               disabled={submitting}
               className="px-3 py-1 text-sm text-txt-secondary hover:text-txt-primary transition-colors disabled:opacity-50"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
             <button
               type="submit"
               disabled={submitting}
               className="px-4 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Saving…' : 'Save changes'}
+              {submitting ? uiText("Saving…") : uiText("Save changes")}
             </button>
           </div>
         </div>
@@ -848,7 +841,7 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
       const parsed = Number(maxUses);
       if (!Number.isInteger(parsed) || parsed < maxUsesMin) {
         addToast(
-          `Max uses must be at least ${maxUsesMin} (current uses: ${invite.usedCount})`,
+          uiText("Max uses must be at least {0} (current uses: {1})", [maxUsesMin, invite.usedCount]),
           'warning',
         );
         return;
@@ -864,7 +857,7 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
     }
     if (resolved.kind === 'omit') {
       // Unreachable: ExpirySelector for Reinstate is rendered with showKeep={false}.
-      addToast('Invalid expiry selection', 'warning');
+      addToast(uiText("Invalid expiry selection"), 'warning');
       return;
     }
 
@@ -879,17 +872,17 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
       if (result.tokenRotated) {
         try {
           await navigator.clipboard.writeText(result.invite.url);
-          addToast('Reinstated with new link. Copied to clipboard.', 'success', 2500);
+          addToast(uiText("Reinstated with new link. Copied to clipboard."), 'success', 2500);
         } catch {
-          addToast('Reinstated with new link. Copy manually from the row.', 'success', 2500);
+          addToast(uiText("Reinstated with new link. Copy manually from the row."), 'success', 2500);
         }
       } else {
-        addToast('Reinstated. The same link is active again.', 'success', 2500);
+        addToast(uiText("Reinstated. The same link is active again."), 'success', 2500);
       }
       onReinstated();
       onClose();
     } catch (err) {
-      addToast(`Failed to reinstate: ${(err as Error).message}`, 'warning');
+      addToast(uiText("Failed to reinstate: {0}", [(err as Error).message]), 'warning');
     } finally {
       setSubmitting(false);
     }
@@ -903,7 +896,7 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
     <Modal
       isOpen
       onClose={handleClose}
-      title={`Reinstate "${invite.name}"`}
+      title={uiText("Reinstate \"{0}\"", [invite.name])}
       mobileStyle="fullscreen"
       maxWidth="max-w-md"
     >
@@ -927,14 +920,13 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
         {/* Amber callout — only for revoked variant to reinforce the "new URL" consequence */}
         {isRevoked && (
           <div className="p-3 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-[13px] text-accent-amber">
-            A new link will be generated. Anyone who had the old URL will not be able to use it.
-          </div>
+            {uiText("A new link will be generated. Anyone who had the old URL will not be able to use it.")}</div>
         )}
 
         {/* Max uses */}
         <div>
           <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">
-            Max uses <span className="normal-case font-normal text-txt-tertiary">(current: {invite.maxUses ?? '∞'}, used: {invite.usedCount})</span>
+            {uiText("Max uses ")}<span className="normal-case font-normal text-txt-tertiary">{uiText("(current: ")}{invite.maxUses ?? '∞'}{uiText(", used: ")}{invite.usedCount})</span>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -946,7 +938,7 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
                 disabled={submitting}
                 className="accent-accent-primary"
               />
-              <span className="text-txt-primary">Unlimited</span>
+              <span className="text-txt-primary">{uiText("Unlimited")}</span>
             </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -969,14 +961,14 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
                 disabled={submitting}
                 className="input-standard w-16 text-center disabled:opacity-50"
               />
-              <span className="text-txt-secondary">uses</span>
+              <span className="text-txt-secondary">{uiText("uses")}</span>
             </label>
           </div>
         </div>
 
         {/* Expiry */}
         <div>
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">Expires</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-2">{uiText("Expires")}</div>
           <ExpirySelector
             value={expiryId}
             customDateTime={customDateTime}
@@ -999,18 +991,17 @@ function ReinstateInviteModal({ invite, onClose, onReinstated }: ReinstateInvite
               disabled={submitting}
               className="px-3 py-1 text-sm text-txt-secondary hover:text-txt-primary transition-colors disabled:opacity-50"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
             <button
               type="submit"
               disabled={submitting}
               className="px-4 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
             >
               {submitting
-                ? 'Reinstating…'
+                ? uiText("Reinstating…")
                 : isRevoked
-                  ? 'Reinstate with new link'
-                  : 'Reinstate'}
+                  ? uiText("Reinstate with new link")
+                  : uiText("Reinstate")}
             </button>
           </div>
         </div>
@@ -1052,7 +1043,7 @@ function RedemptionsModal({ invite, onClose }: RedemptionsModalProps) {
         if (cancelled) return;
         setError(true);
         setRedemptions([]);
-        addToast('Failed to load redemptions', 'warning');
+        addToast(uiText("Failed to load redemptions"), 'warning');
       });
     return () => {
       cancelled = true;
@@ -1063,7 +1054,7 @@ function RedemptionsModal({ invite, onClose }: RedemptionsModalProps) {
     <Modal
       isOpen
       onClose={onClose}
-      title={`Redemptions for "${invite.name}"`}
+      title={uiText("Redemptions for \"{0}\"", [invite.name])}
       mobileStyle="fullscreen"
       maxWidth="max-w-lg"
     >
@@ -1074,8 +1065,7 @@ function RedemptionsModal({ invite, onClose }: RedemptionsModalProps) {
           </svg>
         </div>
         <p className="text-[13px] text-txt-secondary leading-snug min-w-0">
-          Users who registered using this invite link, in the order they signed up.
-        </p>
+          {uiText("Users who registered using this invite link, in the order they signed up.")}</p>
       </div>
 
       {/* Sticky summary band — pins at top of scroll area so the count + revoked
@@ -1087,27 +1077,24 @@ function RedemptionsModal({ invite, onClose }: RedemptionsModalProps) {
       >
         {invite.status === 'revoked' && (
           <div className="bg-accent-rose/10 border border-accent-rose/30 rounded p-2.5 text-xs text-accent-rose leading-relaxed">
-            This invite was revoked
-            {invite.revokedAt
+            {uiText("This invite was revoked")}{invite.revokedAt
               ? ` ${new Date(invite.revokedAt).toLocaleDateString()}`
               : ''}
-            . The redemptions below represent users who registered before revocation.
-          </div>
+            {uiText(". The redemptions below represent users who registered before revocation.")}</div>
         )}
 
         <div className="text-sm text-txt-tertiary">
           {invite.usedCount}
-          {invite.maxUses !== null ? ` of ${invite.maxUses}` : ''} use
-          {invite.usedCount === 1 ? '' : 's'}
+          {invite.maxUses !== null ? uiText(" of {0}", [invite.maxUses]) : ''} {uiText(" use")}{invite.usedCount === 1 ? '' : uiText("s")}
         </div>
       </div>
 
       <div className="-mx-1">
         {redemptions === null ? (
-          <div className="text-sm text-txt-tertiary px-3 py-2">Loading…</div>
+          <div className="text-sm text-txt-tertiary px-3 py-2">{uiText("Loading…")}</div>
         ) : redemptions.length === 0 ? (
           <div className="text-sm text-txt-tertiary px-3 py-2">
-            {error ? 'Could not load redemptions.' : 'No redemptions yet.'}
+            {error ? uiText("Could not load redemptions.") : uiText("No redemptions yet.")}
           </div>
         ) : (
           <div className="space-y-0.5">
@@ -1126,7 +1113,7 @@ function RedemptionsModal({ invite, onClose }: RedemptionsModalProps) {
                     {(r.isDeleted || showCurrent) && (
                       <span className="text-txt-tertiary">
                         {' '}
-                        (now {r.isDeleted ? 'Deleted User' : r.currentUsername})
+                        {uiText("(now ")}{r.isDeleted ? uiText("Deleted User") : r.currentUsername})
                       </span>
                     )}
                   </span>
@@ -1181,9 +1168,9 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(invite.url);
-      addToast('Invite link copied', 'success', 2000);
+      addToast(uiText("Invite link copied"), 'success', 2000);
     } catch {
-      addToast('Failed to copy link', 'warning');
+      addToast(uiText("Failed to copy link"), 'warning');
     }
   };
 
@@ -1191,11 +1178,11 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
     setActionLoading(true);
     try {
       await api.invites.revoke(invite.id);
-      addToast('Invite revoked', 'success', 2000);
+      addToast(uiText("Invite revoked"), 'success', 2000);
       setConfirmRevoke(false);
       onMutate();
     } catch (err) {
-      addToast(`Failed to revoke: ${(err as Error).message}`, 'warning');
+      addToast(uiText("Failed to revoke: {0}", [(err as Error).message]), 'warning');
     } finally {
       setActionLoading(false);
     }
@@ -1205,11 +1192,11 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
     setActionLoading(true);
     try {
       await api.invites.delete(invite.id);
-      addToast('Invite deleted', 'success', 2000);
+      addToast(uiText("Invite deleted"), 'success', 2000);
       setConfirmDelete(false);
       onMutate();
     } catch (err) {
-      addToast(`Failed to delete: ${(err as Error).message}`, 'warning');
+      addToast(uiText("Failed to delete: {0}", [(err as Error).message]), 'warning');
     } finally {
       setActionLoading(false);
     }
@@ -1290,7 +1277,7 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
               {/* Row 1: USED · (EXPIRES | terminal-status AT) · CREATED */}
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
-                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Used</div>
+                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Used")}</div>
                   <div
                     className={`text-xs ${
                       usageNearLimit ? 'text-accent-amber font-medium' : 'text-txt-secondary'
@@ -1301,7 +1288,7 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
                 </div>
                 {isActive ? (
                   <div>
-                    <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Expires</div>
+                    <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Expires")}</div>
                     <div className="text-xs text-txt-secondary">{formatExpiry(invite)}</div>
                   </div>
                 ) : (
@@ -1313,7 +1300,7 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
                   </div>
                 )}
                 <div>
-                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Created</div>
+                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Created")}</div>
                   <div className="text-xs text-txt-secondary">{formatRelative(invite.createdAt)}</div>
                 </div>
               </div>
@@ -1321,19 +1308,19 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
               {/* Row 2: CREATED BY · TOKEN · LAST REDEEMED */}
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
-                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Created by</div>
+                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Created by")}</div>
                   <div className="text-xs text-txt-secondary truncate" title={createdByLabel}>
                     {createdByLabel}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Token</div>
+                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Token")}</div>
                   <div className="text-xs font-mono text-txt-secondary" title={invite.token}>
                     {tokenDisplay}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">Last redeemed</div>
+                  <div className="text-[10px] text-txt-tertiary uppercase tracking-wider mb-0.5">{uiText("Last redeemed")}</div>
                   <div className="text-xs text-txt-secondary">{lastRedeemedDisplay}</div>
                 </div>
               </div>
@@ -1347,29 +1334,25 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
                       onClick={(e) => { e.stopPropagation(); handleCopy(); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-lavender/10 text-accent-lavender hover:bg-accent-lavender/20 rounded transition-colors"
                     >
-                      Copy link
-                    </button>
+                      {uiText("Copy link")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowEdit(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-lavender/10 text-accent-lavender hover:bg-accent-lavender/20 rounded transition-colors"
                     >
-                      Edit
-                    </button>
+                      {uiText("Edit")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setConfirmRevoke(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-rose/10 text-txt-danger hover:bg-accent-rose/20 rounded transition-colors"
                     >
-                      Revoke
-                    </button>
+                      {uiText("Revoke")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowRedemptions(true); }}
                       className="text-[11px] text-txt-tertiary hover:text-txt-secondary underline decoration-dotted transition-colors ml-1"
                     >
-                      View redemptions
-                    </button>
+                      {uiText("View redemptions")}</button>
                   </>
                 ) : (
                   <>
@@ -1378,22 +1361,19 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
                       onClick={(e) => { e.stopPropagation(); setShowReinstate(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-status-online/10 text-status-online hover:bg-status-online/20 rounded transition-colors"
                     >
-                      Reinstate
-                    </button>
+                      {uiText("Reinstate")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
                       className="px-3 py-1.5 text-xs font-medium bg-accent-rose/10 text-txt-danger hover:bg-accent-rose/20 rounded transition-colors"
                     >
-                      Delete permanently
-                    </button>
+                      {uiText("Delete permanently")}</button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowRedemptions(true); }}
                       className="text-[11px] text-txt-tertiary hover:text-txt-secondary underline decoration-dotted transition-colors ml-1"
                     >
-                      View redemptions
-                    </button>
+                      {uiText("View redemptions")}</button>
                   </>
                 )}
               </div>
@@ -1424,16 +1404,14 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
         isOpen={confirmRevoke}
         onClose={() => setConfirmRevoke(false)}
         onConfirm={performRevoke}
-        title={`Revoke "${invite.name}"?`}
+        title={uiText("Revoke \"{0}\"?", [invite.name])}
         description={
           <>
-            The link stops working immediately. Anyone who has the URL can no longer use it.
+            {uiText("The link stops working immediately. Anyone who has the URL can no longer use it.")}<br />
             <br />
-            <br />
-            If you change your mind later, <strong>Reinstate</strong> issues a fresh link under this entry — the original URL stays inactive.
-          </>
+            {uiText("If you change your mind later, ")}<strong>{uiText("Reinstate")}</strong> {uiText(" issues a fresh link under this entry — the original URL stays inactive.")}</>
         }
-        confirmLabel="Revoke link"
+        confirmLabel={uiText("Revoke link")}
         variant="danger"
         loading={actionLoading}
       />
@@ -1442,15 +1420,13 @@ function InviteRow({ invite, expanded, onToggleExpand, onMutate }: InviteRowProp
         isOpen={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         onConfirm={performDelete}
-        title={`Delete "${invite.name}" permanently?`}
+        title={uiText("Delete \"{0}\" permanently?", [invite.name])}
         description={
           <>
-            This cannot be undone. Redemption history for this link will also be removed.
-            If you only want to stop the link from working, use <strong>Revoke</strong>{' '}
-            instead — that preserves the redemption record.
-          </>
+            {uiText("This cannot be undone. Redemption history for this link will also be removed. If you only want to stop the link from working, use ")}<strong>{uiText("Revoke")}</strong>{' '}
+            {uiText("instead — that preserves the redemption record.")}</>
         }
-        confirmLabel="Delete permanently"
+        confirmLabel={uiText("Delete permanently")}
         variant="danger"
         loading={actionLoading}
       />
@@ -1518,7 +1494,7 @@ export function RegistrationPanel() {
         if (tabRef.current !== which) return;
         setInvites(res.invites);
       } catch {
-        if (tabRef.current === which) addToast('Failed to load invites', 'warning');
+        if (tabRef.current === which) addToast(uiText("Failed to load invites"), 'warning');
       } finally {
         if (tabRef.current === which) setInvitesLoading(false);
       }
@@ -1569,7 +1545,7 @@ export function RegistrationPanel() {
     return list;
   }, [invites, tab, activeSort, archivedSort, archivedStatusFilter]);
 
-  if (!draft) return <div className="text-sm text-txt-tertiary">Loading settings...</div>;
+  if (!draft) return <div className="text-sm text-txt-tertiary">{uiText("Loading settings...")}</div>;
 
   const hasChanges = !!instanceSettings && (
     draft.registrationOpen !== instanceSettings.registrationOpen ||
@@ -1584,11 +1560,11 @@ export function RegistrationPanel() {
         registrationOpen: draft.registrationOpen,
         federatedRegistrationOpen: draft.federatedRegistrationOpen,
       });
-      addToast('Registration settings saved', 'success', 2000);
+      addToast(uiText("Registration settings saved"), 'success', 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save';
       setSaveError(message);
-      addToast('Failed to update registration settings', 'warning');
+      addToast(uiText("Failed to update registration settings"), 'warning');
     } finally {
       setSaving(false);
     }
@@ -1607,23 +1583,19 @@ export function RegistrationPanel() {
   return (
     <>
     <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-      <h2 className="text-lg font-semibold text-txt-primary">Registration</h2>
+      <h2 className="text-lg font-semibold text-txt-primary">{uiText("Registration")}</h2>
       <div className="text-xs text-txt-tertiary">
-        Control who can create accounts on this instance. Public registration covers local
-        sign-ups; federated registration covers users from peered instances creating an account here.
-      </div>
+        {uiText("Control who can create accounts on this instance. Public registration covers local sign-ups; federated registration covers users from peered instances creating an account here.")}</div>
 
       {/* Public registration */}
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Public Registration</div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Public Registration")}</div>
         <div className="rounded-lg bg-white/[0.02] p-3.5">
           <label className="flex items-center justify-between cursor-pointer gap-4">
             <div className="flex-1">
-              <div className="text-sm font-medium text-txt-primary">Allow new local accounts</div>
+              <div className="text-sm font-medium text-txt-primary">{uiText("Allow new local accounts")}</div>
               <div className="text-xs text-txt-tertiary mt-0.5">
-                Anyone can create a local account from the registration page. When off, only invite
-                links can create new local accounts.
-              </div>
+                {uiText("Anyone can create a local account from the registration page. When off, only invite links can create new local accounts.")}</div>
             </div>
             <Toggle
               enabled={draft.registrationOpen}
@@ -1635,15 +1607,13 @@ export function RegistrationPanel() {
 
       {/* Federated registration */}
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Federated Registration</div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Federated Registration")}</div>
         <div className="rounded-lg bg-white/[0.02] p-3.5">
           <label className="flex items-center justify-between cursor-pointer gap-4">
             <div className="flex-1">
-              <div className="text-sm font-medium text-txt-primary">Allow new federated accounts</div>
+              <div className="text-sm font-medium text-txt-primary">{uiText("Allow new federated accounts")}</div>
               <div className="text-xs text-txt-tertiary mt-0.5">
-                Users from other instances can create a federated account here via their Connections
-                settings. Existing federated accounts can always log in regardless of this setting.
-              </div>
+                {uiText("Users from other instances can create a federated account here via their Connections settings. Existing federated accounts can always log in regardless of this setting.")}</div>
             </div>
             <Toggle
               enabled={draft.federatedRegistrationOpen}
@@ -1657,14 +1627,13 @@ export function RegistrationPanel() {
       <div className="border-t border-white/[0.06] pt-5">
         {/* Row 1: heading + create button */}
         <div className="flex items-center justify-between mb-3">
-          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider">Invite Links</div>
+          <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider">{uiText("Invite Links")}</div>
           <button
             type="button"
             onClick={() => setShowCreate(true)}
             className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + Create link
-          </button>
+            {uiText("+ Create link")}</button>
         </div>
 
         {/* Row 2: tab strip (left) + FilterDropdown (right) */}
@@ -1677,7 +1646,7 @@ export function RegistrationPanel() {
                 tab === 'active' ? 'bg-white/[0.08] text-txt-primary' : 'text-txt-tertiary hover:text-txt-secondary'
               }`}
             >
-              Active <span className="text-[10px] text-txt-tertiary ml-0.5">{activeCount}</span>
+              {uiText("Active ")}<span className="text-[10px] text-txt-tertiary ml-0.5">{activeCount}</span>
             </button>
             <button
               type="button"
@@ -1686,7 +1655,7 @@ export function RegistrationPanel() {
                 tab === 'archived' ? 'bg-white/[0.08] text-txt-primary' : 'text-txt-tertiary hover:text-txt-secondary'
               }`}
             >
-              Archived <span className="text-[10px] text-txt-tertiary ml-0.5">{archivedCount}</span>
+              {uiText("Archived ")}<span className="text-[10px] text-txt-tertiary ml-0.5">{archivedCount}</span>
             </button>
           </div>
           <FilterDropdown
@@ -1701,15 +1670,14 @@ export function RegistrationPanel() {
         </div>
 
         {invitesLoading ? (
-          <div className="text-sm text-txt-tertiary">Loading...</div>
+          <div className="text-sm text-txt-tertiary">{uiText("Loading...")}</div>
         ) : invites.length === 0 ? (
           <div className="text-sm text-txt-tertiary">
-            {tab === 'active' ? 'No active invite links.' : 'No archived invite links.'}
+            {tab === 'active' ? uiText("No active invite links.") : uiText("No archived invite links.")}
           </div>
         ) : displayInvites.length === 0 ? (
           <div className="text-[11px] text-txt-tertiary py-3 text-center">
-            No invites match the current filter.
-          </div>
+            {uiText("No invites match the current filter.")}</div>
         ) : (
           <div className="space-y-2">
             {displayInvites.map((inv) => (
@@ -1740,14 +1708,13 @@ export function RegistrationPanel() {
                 onClick={handleReset}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Reset
-              </button>
+                {uiText("Reset")}</button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? uiText("Saving...") : uiText("Save")}
               </button>
             </div>
           </div>

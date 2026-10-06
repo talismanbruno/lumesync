@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { useUIStore } from '../../stores/uiStore';
@@ -31,12 +32,12 @@ export function CreateChannelModal() {
     setError('');
 
     if (!name.trim()) {
-      setError('Channel name is required');
+      setError(uiText("Channel name is required"));
       return;
     }
 
     if (!currentSpaceId) {
-      setError('No space selected');
+      setError(uiText("No space selected"));
       return;
     }
 
@@ -49,14 +50,14 @@ export function CreateChannelModal() {
       setType('text');
       setCategoryId('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create channel');
+      setError(err instanceof Error ? err.message : uiText("Failed to create channel"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title="Create Channel" mobileStyle="sheet">
+    <Modal isOpen={isOpen} onClose={closeModal} title={uiText("Create Channel")} mobileStyle="sheet">
       <form onSubmit={handleSubmit}>
         {error && (
           <div className="mb-3 p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">
@@ -66,8 +67,7 @@ export function CreateChannelModal() {
 
         <div className="mb-4">
           <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            Channel Type
-          </label>
+            {uiText("Channel Type")}</label>
           <div className="space-y-2">
             {(['text', 'voice'] as const).map((t) => (
               <label
@@ -97,8 +97,8 @@ export function CreateChannelModal() {
                 <div>
                   <div className="text-sm font-medium text-txt-primary capitalize">{t}</div>
                   <div className="text-xs text-txt-tertiary">
-                    {t === 'text' && 'Send messages, images, and files'}
-                    {t === 'voice' && 'Hang out with voice and video'}
+                    {t === 'text' && uiText("Send messages, images, and files")}
+                    {t === 'voice' && uiText("Hang out with voice and video")}
                   </div>
                 </div>
               </label>
@@ -108,14 +108,13 @@ export function CreateChannelModal() {
 
         <div className="mb-4">
           <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            Channel Name
-          </label>
+            {uiText("Channel Name")}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-standard w-full"
-            placeholder="new-channel"
+            placeholder={uiText("new-channel")}
             autoFocus
           />
         </div>
@@ -123,14 +122,13 @@ export function CreateChannelModal() {
         {type === 'text' && (
           <div className="mb-4">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Topic (optional)
-            </label>
+              {uiText("Topic (optional)")}</label>
             <input
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               className="input-standard w-full"
-              placeholder="What's this channel about?"
+              placeholder={uiText("What's this channel about?")}
             />
           </div>
         )}
@@ -138,14 +136,13 @@ export function CreateChannelModal() {
         {categories.length > 0 && (
           <div className="mb-4">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Category
-            </label>
+              {uiText("Category")}</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               className="input-standard w-full"
             >
-              <option value="">No Category</option>
+              <option value="">{uiText("No Category")}</option>
               {[...categories].sort((a, b) => a.position - b.position).map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
@@ -161,14 +158,13 @@ export function CreateChannelModal() {
                 onClick={closeModal}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Cancel
-              </button>
+                {uiText("Cancel")}</button>
               <button
                 type="submit"
                 disabled={isLoading}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Creating...' : 'Create Channel'}
+                {isLoading ? uiText("Creating...") : uiText("Create Channel")}
               </button>
             </div>
           </div>

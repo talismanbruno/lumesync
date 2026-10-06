@@ -1,3 +1,4 @@
+import { t as uiText, initializeLanguage } from './i18n';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { startPendingMessageOrchestrator } from './stores/pendingMessageRehydrat
 import { installStaleChunkRecovery, recoverFromStaleChunk } from './utils/staleChunkRecovery';
 import './styles/globals.css';
 
+initializeLanguage();
 installStaleChunkRecovery();
 
 class ErrorBoundary extends React.Component<
@@ -51,7 +53,7 @@ class ErrorBoundary extends React.Component<
           gap: '16px',
           padding: '24px',
         }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Something went wrong</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>{uiText("Something went wrong")}</h1>
           <p style={{ color: '#a0a0aa', maxWidth: '480px', textAlign: 'center' }}>{this.state.error?.message}</p>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
@@ -67,8 +69,7 @@ class ErrorBoundary extends React.Component<
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              Try Again
-            </button>
+              {uiText("Try Again")}</button>
             <button
               onClick={() => window.location.reload()}
               style={{
@@ -82,8 +83,7 @@ class ErrorBoundary extends React.Component<
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              Reload Page
-            </button>
+              {uiText("Reload Page")}</button>
           </div>
           {this.state.error?.stack && (
             <details
@@ -92,8 +92,7 @@ class ErrorBoundary extends React.Component<
               style={{ maxWidth: '600px', width: '100%', marginTop: '8px' }}
             >
               <summary style={{ color: '#a0a0aa', cursor: 'pointer', fontSize: '13px' }}>
-                Error details
-              </summary>
+                {uiText("Error details")}</summary>
               <pre style={{
                 marginTop: '8px',
                 padding: '12px',

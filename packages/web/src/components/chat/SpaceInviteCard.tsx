@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
@@ -81,7 +82,7 @@ export function SpaceInviteCard({ payload, senderName }: Props) {
         landOnSpace(payload.spaceId);
         return;
       }
-      setJoinError(msg || 'Failed to join');
+      setJoinError(msg || uiText("Failed to join"));
       setJoining(false);
     }
   };
@@ -89,8 +90,7 @@ export function SpaceInviteCard({ payload, senderName }: Props) {
   return (
     <div className={`my-1.5 max-w-md rounded-lg border border-white/[0.06] bg-surface-channel overflow-hidden ${isRevoked ? 'opacity-50' : ''}`}>
       <div className="px-3 py-1 text-[11px] text-txt-tertiary border-b border-white/[0.06]">
-        {senderName} sent an invite
-      </div>
+        {senderName} {uiText(" sent an invite")}</div>
       <div className="flex items-center gap-3 p-3">
         <Avatar
           src={payload.snapshot.icon}
@@ -103,7 +103,7 @@ export function SpaceInviteCard({ payload, senderName }: Props) {
             {payload.snapshot.spaceName}
           </div>
           <div className="text-[12px] text-txt-tertiary truncate">
-            {memberCount} {memberCount === 1 ? 'member' : 'members'}
+            {memberCount} {memberCount === 1 ? uiText("member") : uiText("members")}
             {payload.snapshot.instanceName ? ` · ${payload.snapshot.instanceName}` : ''}
             {live.kind === 'loading' && (
               <span aria-hidden className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-txt-tertiary animate-pulse" />
@@ -112,15 +112,14 @@ export function SpaceInviteCard({ payload, senderName }: Props) {
         </div>
         {isRevoked ? (
           <span className="glass-pill px-3 py-1 text-[12px] text-txt-tertiary">
-            Invite no longer valid
-          </span>
+            {uiText("Invite no longer valid")}</span>
         ) : (
           <button
             onClick={onJoin}
             disabled={joining}
             className="px-4 py-1.5 rounded-md text-[13px] font-medium bg-accent-mint text-surface-base hover:bg-accent-mint/90 disabled:opacity-50"
           >
-            {joining ? 'Joining…' : 'Join'}
+            {joining ? uiText("Joining…") : uiText("Join")}
           </button>
         )}
       </div>

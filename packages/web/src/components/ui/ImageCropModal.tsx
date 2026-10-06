@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useCallback, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
@@ -128,15 +129,14 @@ export function ImageCropModal({
             onClick={onClose}
             className="flex-1 py-2.5 text-sm font-medium text-txt-secondary bg-interactive-hover hover:bg-interactive-selected rounded-lg transition-colors"
           >
-            Cancel
-          </button>
+            {uiText("Cancel")}</button>
           <button
             type="button"
             onClick={handleApply}
             disabled={isProcessing || !croppedAreaPixels}
             className="flex-1 py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            {isProcessing ? 'Applying...' : 'Apply'}
+            {isProcessing ? uiText("Applying...") : uiText("Apply")}
           </button>
         </div>
       </div>

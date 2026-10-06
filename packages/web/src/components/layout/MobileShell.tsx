@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect } from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useVoiceStore } from '../../stores/voiceStore';
@@ -33,7 +34,6 @@ const StoragePanel = React.lazy(() => import('../modals/instanceSettingsPanels/S
 const UsersPanel = React.lazy(() => import('../modals/instanceSettingsPanels/UsersPanel').then((m) => ({ default: m.UsersPanel })));
 const InsightsPanel = React.lazy(() => import('../modals/instanceSettingsPanels/InsightsPanel').then((m) => ({ default: m.InsightsPanel })));
 const SpacesPanel = React.lazy(() => import('../modals/instanceSettingsPanels/SpacesPanel').then((m) => ({ default: m.SpacesPanel })));
-const AuditPanel = React.lazy(() => import('../modals/instanceSettingsPanels/AuditPanel').then((m) => ({ default: m.AuditPanel })));
 const HealthPanel = React.lazy(() => import('../modals/instanceSettingsPanels/HealthPanel').then((m) => ({ default: m.HealthPanel })));
 
 /**
@@ -46,7 +46,7 @@ function MobileFederationPanelWrapper() {
   const setApprovalCount = useUIStore((s) => s.setFederationApprovalCount);
   return (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Federation" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Federation")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4">
         <FederationPanel onApprovalCountChange={setApprovalCount} />
       </div>
@@ -67,56 +67,50 @@ const screenMap: Record<string, (params?: Record<string, string>) => React.React
   'settings-instance': () => <MobileInstancePanel />,
   'settings-instance-insights': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Visão geral" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Visão geral")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><InsightsPanel /></div>
     </div>
   ),
   'settings-instance-health': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Saúde do sistema" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Saúde do sistema")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><HealthPanel /></div>
     </div>
   ),
   'settings-instance-spaces': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Servidores" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Servidores")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><SpacesPanel /></div>
-    </div>
-  ),
-  'settings-instance-audit': () => (
-    <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Histórico admin" rightActions={<TransferIndicator />} />
-      <div className="flex-1 overflow-y-auto p-4"><AuditPanel /></div>
     </div>
   ),
   'settings-instance-general': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="General" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("General")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><GeneralPanel /></div>
     </div>
   ),
   'settings-instance-registration': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Registration" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Registration")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><RegistrationPanel /></div>
     </div>
   ),
   'settings-instance-federation': () => <MobileFederationPanelWrapper />,
   'settings-instance-streaming': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Streaming" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Streaming")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><StreamingPanel /></div>
     </div>
   ),
   'settings-instance-storage': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Storage" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Storage")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><StoragePanel /></div>
     </div>
   ),
   'settings-instance-users': () => (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Users" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Users")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto p-4"><UsersPanel /></div>
     </div>
   ),
@@ -240,7 +234,7 @@ export function MobileShell() {
 
   return (
     <div className="flex flex-col" style={{ height: shellHeight }}>
-      <React.Suspense fallback={<div role="status" className="flex flex-1 items-center justify-center text-sm text-txt-secondary">Abrindo tela…</div>}>
+      <React.Suspense fallback={<div role="status" className="flex flex-1 items-center justify-center text-sm text-txt-secondary">{uiText("Abrindo tela…")}</div>}>
         <MobileScreenStack
           rootScreen={rootScreens[mobileScreen]}
           screenMap={screenMap}

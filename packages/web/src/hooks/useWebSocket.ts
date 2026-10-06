@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import React, { useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useSpaceStore, getChannelOrigin, getMyUserIdForOrigin, setMyUserIdForOrigin, resolveDmChannelId } from '../stores/spaceStore';
@@ -14,7 +15,6 @@ import { registerSelfId } from '../utils/identity';
 import { getActiveRoom } from './useLiveKit';
 import { useUIStore } from '../stores/uiStore';
 import { useActivityStore } from '../stores/activityStore';
-import { useDiscoverStore } from '../stores/discoverStore';
 import { useFederationStore } from '../stores/federationStore';
 
 // ─── Rejected peer origins (for unreachable member indicators) ───────────────
@@ -497,7 +497,7 @@ function handleEvent(origin: string, event: ServerEvent): void {
           const { addToast } = useUIStore.getState();
           const count = event.pendingApprovalCount;
           addToast(
-            `You have ${count} pending peering request${count === 1 ? '' : 's'}`,
+            uiText("You have {0} pending peering request{1}", [count, count === 1 ? '' : 's']),
             'info',
             5000,
           );
@@ -591,7 +591,6 @@ function handleEvent(origin: string, event: ServerEvent): void {
         useSocialStore.getState().removeFriendLocally(event.user.id, origin);
         useSocialStore.getState().removeRequestsForUser(event.user.id);
         useActivityStore.getState().clearUserActivities(event.user.id);
-        useDiscoverStore.getState().removeUser(event.user.id);
         useChatStore.getState().clearTypingForUser(event.user.id);
       }
       break;
@@ -673,9 +672,9 @@ function handleEvent(origin: string, event: ServerEvent): void {
           useVoiceStore.getState().handleForceDisconnect();
           getActiveRoom()?.disconnect();
           if (event.reason === 'displaced') {
-            useUIStore.getState().addToast('Voice disconnected — joined from another session', 'info');
+            useUIStore.getState().addToast(uiText("Voice disconnected — joined from another session"), 'info');
           } else if (event.reason === 'capacity') {
-            useUIStore.getState().addToast('Esta call está cheia no momento', 'warning');
+            useUIStore.getState().addToast(uiText("Esta call está cheia no momento"), 'warning');
           }
         }
       }
@@ -837,7 +836,7 @@ function handleEvent(origin: string, event: ServerEvent): void {
       activePeerOrigins.delete(event.peerOrigin);
       const label = event.peerLabel || event.peerOrigin;
       addToast(
-        `Cannot relay messages to ${label} — ${event.reason}`,
+        uiText("Cannot relay messages to {0} — {1}", [label, event.reason]),
         'warning',
         10000,
       );
@@ -993,7 +992,7 @@ function handleEvent(origin: string, event: ServerEvent): void {
       removeRequestById(event.requestId, origin);
       const { addToast } = useUIStore.getState();
       addToast(
-        `Friend request to ${event.targetHandle} could not be delivered: ${event.message}`,
+        uiText("Friend request to {0} could not be delivered: {1}", [event.targetHandle, event.message]),
         'warning',
       );
       break;
@@ -1005,36 +1004,24 @@ function handleEvent(origin: string, event: ServerEvent): void {
       upsertUserView(event.friend as unknown as User, origin);
       const { addFriendFromAccepted } = useSocialStore.getState();
       addFriendFromAccepted(event.friend, event.requestId, origin);
-      import('../stores/discoverStore').then(({ useDiscoverStore }) => {
-        useDiscoverStore.getState().updateRelationship(event.friend.id, origin, 'friends');
-      });
       break;
     }
 
     case 'friend_removed': {
       const { removeFriendLocally } = useSocialStore.getState();
       removeFriendLocally(event.userId, origin);
-      import('../stores/discoverStore').then(({ useDiscoverStore }) => {
-        useDiscoverStore.getState().updateRelationship(event.userId, origin, 'none');
-      });
       break;
     }
 
     case 'friend_request_cancelled': {
       const { removeRequestById } = useSocialStore.getState();
       removeRequestById(event.requestId, origin, event.userId);
-      import('../stores/discoverStore').then(({ useDiscoverStore }) => {
-        useDiscoverStore.getState().updateRelationship(event.userId, origin, 'none');
-      });
       break;
     }
 
     case 'friend_request_declined': {
       const { removeRequestById } = useSocialStore.getState();
       removeRequestById(event.requestId, origin, event.userId);
-      import('../stores/discoverStore').then(({ useDiscoverStore }) => {
-        useDiscoverStore.getState().updateRelationship(event.userId, origin, 'none');
-      });
       break;
     }
 

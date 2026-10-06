@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { usePortalContainer } from '../../hooks/usePortalContainer';
@@ -71,7 +72,7 @@ export function ConfirmDialog({
               disabled={loading}
               className={`flex-1 py-2.5 ${confirmBg} text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50`}
             >
-              {loading ? 'Please wait...' : confirmLabel}
+              {loading ? uiText("Please wait...") : confirmLabel}
             </button>
           </div>
         </div>

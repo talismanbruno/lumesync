@@ -91,7 +91,10 @@ upsert_env BACKSPACE_SOURCE_URL "https://github.com/talismanbruno/lumesync/tree/
 # Rewrite only the image field inside the lume service. Building is disabled:
 # production must run the exact image already scanned and published by CI.
 awk -v image="$image" '
-  /\.\/web-dist:\/app\/packages\/web\/dist/ { next }
+  # Old deployments may still bind a host web-dist directory over the frontend
+  # baked into the reviewed image. Drop any such mount regardless of relative
+  # or absolute host path, spacing, or read-only suffix.
+  /web-dist[^:]*:[[:space:]]*\/app\/packages\/web\/dist([:]ro)?[[:space:]]*$/ { next }
   /^  lume:[[:space:]]*$/ { in_lume = 1; print; next }
   in_lume && /^    image:/ && !done { print "    image: " image; done = 1; next }
   in_lume && /^  [A-Za-z0-9_-]+:/ { in_lume = 0 }

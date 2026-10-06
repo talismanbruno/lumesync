@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from '../ui/Modal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -11,23 +12,23 @@ import type { PermissionDef } from '../ui/OverrideEntry';
 // ─── Permission Definitions for Channel Overrides ──────────────────────────────
 
 const TEXT_CHANNEL_PERMISSIONS: PermissionDef[] = [
-  { key: 'VIEW_CHANNEL', label: 'View Channel', bit: PermissionBits.VIEW_CHANNEL },
-  { key: 'SEND_MESSAGES', label: 'Send Messages', bit: PermissionBits.SEND_MESSAGES },
-  { key: 'MANAGE_MESSAGES', label: 'Manage Messages', bit: PermissionBits.MANAGE_MESSAGES },
-  { key: 'ATTACH_FILES', label: 'Attach Files', bit: PermissionBits.ATTACH_FILES },
-  { key: 'READ_MESSAGE_HISTORY', label: 'Read Message History', bit: PermissionBits.READ_MESSAGE_HISTORY },
-  { key: 'ADD_REACTIONS', label: 'Add Reactions', bit: PermissionBits.ADD_REACTIONS },
+  { key: 'VIEW_CHANNEL', label: uiText("View Channel"), bit: PermissionBits.VIEW_CHANNEL },
+  { key: 'SEND_MESSAGES', label: uiText("Send Messages"), bit: PermissionBits.SEND_MESSAGES },
+  { key: 'MANAGE_MESSAGES', label: uiText("Manage Messages"), bit: PermissionBits.MANAGE_MESSAGES },
+  { key: 'ATTACH_FILES', label: uiText("Attach Files"), bit: PermissionBits.ATTACH_FILES },
+  { key: 'READ_MESSAGE_HISTORY', label: uiText("Read Message History"), bit: PermissionBits.READ_MESSAGE_HISTORY },
+  { key: 'ADD_REACTIONS', label: uiText("Add Reactions"), bit: PermissionBits.ADD_REACTIONS },
 ];
 
 const VOICE_CHANNEL_PERMISSIONS: PermissionDef[] = [
-  { key: 'VIEW_CHANNEL', label: 'View Channel', bit: PermissionBits.VIEW_CHANNEL },
-  { key: 'CONNECT', label: 'Connect', bit: PermissionBits.CONNECT },
-  { key: 'SPEAK', label: 'Speak', bit: PermissionBits.SPEAK },
-  { key: 'STREAM', label: 'Stream', bit: PermissionBits.STREAM },
-  { key: 'MUTE_MEMBERS', label: 'Mute Members', bit: PermissionBits.MUTE_MEMBERS },
-  { key: 'DEAFEN_MEMBERS', label: 'Deafen Members', bit: PermissionBits.DEAFEN_MEMBERS },
-  { key: 'MOVE_MEMBERS', label: 'Move Members', bit: PermissionBits.MOVE_MEMBERS },
-  { key: 'DISCONNECT_MEMBERS', label: 'Disconnect Members', bit: PermissionBits.DISCONNECT_MEMBERS },
+  { key: 'VIEW_CHANNEL', label: uiText("View Channel"), bit: PermissionBits.VIEW_CHANNEL },
+  { key: 'CONNECT', label: uiText("Connect"), bit: PermissionBits.CONNECT },
+  { key: 'SPEAK', label: uiText("Speak"), bit: PermissionBits.SPEAK },
+  { key: 'STREAM', label: uiText("Stream"), bit: PermissionBits.STREAM },
+  { key: 'MUTE_MEMBERS', label: uiText("Mute Members"), bit: PermissionBits.MUTE_MEMBERS },
+  { key: 'DEAFEN_MEMBERS', label: uiText("Deafen Members"), bit: PermissionBits.DEAFEN_MEMBERS },
+  { key: 'MOVE_MEMBERS', label: uiText("Move Members"), bit: PermissionBits.MOVE_MEMBERS },
+  { key: 'DISCONNECT_MEMBERS', label: uiText("Disconnect Members"), bit: PermissionBits.DISCONNECT_MEMBERS },
 ];
 
 // ─── Overview Tab ───────────────────────────────────────────────────────────────
@@ -59,8 +60,7 @@ function OverviewTab({
     <div className="space-y-4">
       <div>
         <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-          Channel
-        </label>
+          {uiText("Channel")}</label>
         <div className="flex items-center gap-2 text-txt-primary">
           {isPrivate ? (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="opacity-60 flex-shrink-0">
@@ -84,10 +84,9 @@ function OverviewTab({
       <div className="pt-2 border-t border-border-soft">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-txt-primary">Private Channel</div>
+            <div className="text-sm font-medium text-txt-primary">{uiText("Private Channel")}</div>
             <div className="text-xs text-txt-tertiary mt-0.5">
-              Only selected members and roles will be able to view this channel.
-            </div>
+              {uiText("Only selected members and roles will be able to view this channel.")}</div>
           </div>
           <div className={`flex-shrink-0 ml-4 ${(isLoading || isFetching) ? 'opacity-50 pointer-events-none' : ''}`}>
             <Toggle enabled={isPrivate} onChange={onTogglePrivate} />
@@ -101,20 +100,18 @@ function OverviewTab({
             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
           </svg>
           <span>
-            This channel is hidden from members without explicit access. Users with the Administrator permission or space owners can always see all channels.
-          </span>
+            {uiText("This channel is hidden from members without explicit access. Users with the Administrator permission or space owners can always see all channels.")}</span>
         </div>
       )}
 
       {canManageChannels && (
         <div className="pt-4 border-t border-border-soft">
-          <label className="block text-xs font-bold text-accent-rose uppercase mb-2">Danger Zone</label>
+          <label className="block text-xs font-bold text-accent-rose uppercase mb-2">{uiText("Danger Zone")}</label>
           <button
             onClick={onDeleteChannel}
             className="w-full px-3 py-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-accent-rose text-sm font-medium hover:bg-accent-rose/20 transition-colors"
           >
-            Delete Channel
-          </button>
+            {uiText("Delete Channel")}</button>
         </div>
       )}
     </div>
@@ -181,7 +178,7 @@ export function ChannelSettingsModal() {
         }
       })
       .catch((err: Error) => {
-        setError(err.message || 'Failed to load channel overrides');
+        setError(err.message || uiText("Failed to load channel overrides"));
       })
       .finally(() => {
         setIsFetching(false);
@@ -224,7 +221,7 @@ export function ChannelSettingsModal() {
       // Re-fetch to keep in sync
       fetchPrivateState();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update channel privacy');
+      setError(err instanceof Error ? err.message : uiText("Failed to update channel privacy"));
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +235,7 @@ export function ChannelSettingsModal() {
       await channelApi.channels.delete(channelId);
       closeModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete channel');
+      setError(err instanceof Error ? err.message : uiText("Failed to delete channel"));
       setIsDeleting(false);
     }
   };
@@ -252,18 +249,16 @@ export function ChannelSettingsModal() {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={closeModal} title="Channel Settings" mobileStyle="fullscreen" maxWidth={showTabs ? 'max-w-2xl' : 'max-w-md'}>
+      <Modal isOpen={isOpen} onClose={closeModal} title={uiText("Channel Settings")} mobileStyle="fullscreen" maxWidth={showTabs ? 'max-w-2xl' : 'max-w-md'}>
         {showTabs ? (
           <div className="flex gap-4 h-[min(520px,70vh)]">
             {/* Tabs */}
             <div className="w-32 flex-shrink-0 self-start z-10">
               <div className="glass-bubble rounded-lg p-1.5 space-y-0.5">
                 <button onClick={() => setTab('overview')} className={tabClass('overview')}>
-                  Overview
-                </button>
+                  {uiText("Overview")}</button>
                 <button onClick={() => setTab('permissions')} className={tabClass('permissions')}>
-                  Permissions
-                </button>
+                  {uiText("Permissions")}</button>
               </div>
             </div>
 
@@ -325,13 +320,11 @@ export function ChannelSettingsModal() {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteChannel}
-        title={`Delete #${channel.name}?`}
+        title={uiText("Delete #{0}?", [channel.name])}
         description={<>
-          This will permanently delete <strong>#{channel.name}</strong> and all of its messages.
-          {channel.type === 'voice' && ' Any users currently in this voice channel will be disconnected.'}
-          {' '}This action cannot be undone.
-        </>}
-        confirmLabel="Delete Channel"
+          {uiText("This will permanently delete ")}<strong>#{channel.name}</strong> {uiText(" and all of its messages.")}{channel.type === 'voice' && uiText(" Any users currently in this voice channel will be disconnected.")}
+          {' '}{uiText("This action cannot be undone.")}</>}
+        confirmLabel={uiText("Delete Channel")}
         variant="danger"
         loading={isDeleting}
       />

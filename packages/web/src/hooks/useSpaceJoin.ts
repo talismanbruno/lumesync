@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { useState } from 'react';
 import { useExploreStore, type TaggedExploreSpace } from '../stores/exploreStore';
 import type { SpaceWithChannelsAndMembers } from '@backspace/shared';
@@ -48,7 +49,7 @@ export function useSpaceJoin(space: TaggedExploreSpace): SpaceJoinControls {
     try {
       return await publicJoin(space);
     } catch (err) {
-      setJoinError(err instanceof Error ? err.message : 'Failed to join');
+      setJoinError(err instanceof Error ? err.message : uiText("Failed to join"));
       setJoining(false);
       return null;
     }
@@ -62,7 +63,7 @@ export function useSpaceJoin(space: TaggedExploreSpace): SpaceJoinControls {
       setLocalRequestSent(true);
       setShowRequestForm(false);
     } catch (err) {
-      setJoinError(err instanceof Error ? err.message : 'Failed to send request');
+      setJoinError(err instanceof Error ? err.message : uiText("Failed to send request"));
     } finally {
       setJoining(false);
     }

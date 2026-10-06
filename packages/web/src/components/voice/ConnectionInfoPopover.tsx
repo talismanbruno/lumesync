@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTrackStats, AudioTrackStat, VideoTrackStat } from '../../hooks/useTrackStats';
@@ -151,36 +152,36 @@ export function ConnectionInfoPopover({ open, onClose, anchorRef }: ConnectionIn
       className="w-[300px] glass rounded-lg overflow-hidden"
     >
       <div className="px-3 py-2 border-b border-border-hard">
-        <span className="text-[14px] font-bold text-txt-primary">Connection Info</span>
+        <span className="text-[14px] font-bold text-txt-primary">{uiText("Connection Info")}</span>
       </div>
 
       <div className="px-3 py-2 max-h-[calc(100vh-32px)] overflow-y-auto scrollbar-thin">
         {!room ? (
-          <div className="text-[12px] text-txt-tertiary py-2 text-center">Not connected</div>
+          <div className="text-[12px] text-txt-tertiary py-2 text-center">{uiText("Not connected")}</div>
         ) : !stats ? (
-          <div className="text-[12px] text-txt-tertiary py-2 text-center">Gathering stats...</div>
+          <div className="text-[12px] text-txt-tertiary py-2 text-center">{uiText("Gathering stats...")}</div>
         ) : (
           <>
             {/* Network */}
-            <SectionHeader title="Network" />
+            <SectionHeader title={uiText("Network")} />
             <Row
-              label="Ping"
+              label={uiText("Ping")}
               value={stats.network.ping !== null ? `${stats.network.ping} ms` : '\u2014'}
               colorClass={stats.network.ping !== null ? pingColor(stats.network.ping) : undefined}
             />
             <Row
-              label="Packet Loss"
+              label={uiText("Packet Loss")}
               value={stats.network.packetLoss !== null ? `${stats.network.packetLoss.toFixed(1)}%` : '\u2014'}
               colorClass={stats.network.packetLoss !== null ? lossColor(stats.network.packetLoss) : undefined}
             />
             <Row
-              label="Jitter"
+              label={uiText("Jitter")}
               value={stats.network.jitter !== null ? `${stats.network.jitter} ms` : '\u2014'}
               colorClass={stats.network.jitter !== null ? jitterColor(stats.network.jitter) : undefined}
             />
-            <Row label="Server" value={stats.network.serverAddress ?? '\u2014'} />
+            <Row label={uiText("Server")} value={stats.network.serverAddress ?? '\u2014'} />
             <Row
-              label="Protocol"
+              label={uiText("Protocol")}
               value={
                 stats.network.protocol
                   ? `${stats.network.protocol}${stats.network.candidateType ? ` (${stats.network.candidateType})` : ''}`
@@ -192,7 +193,7 @@ export function ConnectionInfoPopover({ open, onClose, anchorRef }: ConnectionIn
             {stats.audioTracks.length > 0 && (
               <>
                 <Divider />
-                <SectionHeader title="Audio" />
+                <SectionHeader title={uiText("Audio")} />
                 {stats.audioTracks.map((t) => (
                   <AudioTrackRow key={t.key} track={t} />
                 ))}
@@ -203,7 +204,7 @@ export function ConnectionInfoPopover({ open, onClose, anchorRef }: ConnectionIn
             {stats.videoTracks.length > 0 && (
               <>
                 <Divider />
-                <SectionHeader title="Video" />
+                <SectionHeader title={uiText("Video")} />
                 {stats.videoTracks.map((t) => (
                   <VideoTrackRow key={t.key} track={t} />
                 ))}

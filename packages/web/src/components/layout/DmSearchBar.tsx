@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -307,7 +308,7 @@ export function DmSearchBar() {
         useUIStore.getState().setShowDms(true);
         navigate(`/channels/@me/${channel.id}`);
       } catch (err) {
-        setError((err as Error).message || 'Failed to create DM');
+        setError((err as Error).message || uiText("Failed to create DM"));
       }
     }
   }, [close, navigate, addDmChannel]);
@@ -364,8 +365,7 @@ export function DmSearchBar() {
 
         {allItems.length === 0 && !isSearching && query.trim().length === 0 && dmItems.length === 0 && (
           <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">
-            Busque por uma pessoa para começar a conversar
-          </div>
+            {uiText("Busque por uma pessoa para começar a conversar")}</div>
         )}
 
         {/* DM conversations section */}
@@ -373,8 +373,7 @@ export function DmSearchBar() {
           <>
             {query.trim().length >= 2 && (
               <div className="px-3 pt-1.5 pb-1 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-                Conversas
-              </div>
+                {uiText("Conversas")}</div>
             )}
             {dmItems.map((item, i) => {
               const globalIndex = i;
@@ -396,10 +395,9 @@ export function DmSearchBar() {
         {(filteredUserResults.length > 0 || (isSearching && query.trim().length >= 2)) && (
           <>
             <div className="px-3 pt-1.5 pb-1 text-[11px] font-bold text-txt-tertiary uppercase tracking-wider">
-              Usuários
-            </div>
+              {uiText("Usuários")}</div>
             {isSearching && filteredUserResults.length === 0 && (
-              <div className="px-3 py-2 text-center text-txt-tertiary text-[13px]">Buscando...</div>
+              <div className="px-3 py-2 text-center text-txt-tertiary text-[13px]">{uiText("Buscando...")}</div>
             )}
             {filteredUserResults.map((item, i) => {
               const globalIndex = dmItems.length + i;
@@ -419,7 +417,7 @@ export function DmSearchBar() {
 
         {/* No results */}
         {!isSearching && query.trim().length >= 2 && allItems.length === 0 && (
-          <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">Nenhum resultado encontrado</div>
+          <div className="px-3 py-4 text-center text-txt-tertiary text-[13px]">{uiText("Nenhum resultado encontrado")}</div>
         )}
       </div>
     </div>,
@@ -439,7 +437,7 @@ export function DmSearchBar() {
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
-            placeholder="Buscar..."
+            placeholder={uiText("Buscar...")}
             className="input-embedded flex-1 min-w-0 text-[13px] font-medium py-[5px]"
           />
         </div>
@@ -448,8 +446,7 @@ export function DmSearchBar() {
           onClick={open}
           className="w-full min-h-8 bg-surface-input text-txt-tertiary text-[13px] font-medium py-[5px] px-2 rounded-[4px] text-left border border-white/[0.06] shadow-input hover:border-white/[0.1] transition-colors"
         >
-          Buscar ou iniciar conversa
-        </button>
+          {uiText("Buscar ou iniciar conversa")}</button>
       )}
       {dropdown}
     </div>

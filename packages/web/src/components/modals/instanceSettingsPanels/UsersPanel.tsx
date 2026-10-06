@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../../api/client';
 import { Avatar } from '../../ui/Avatar';
@@ -52,7 +53,7 @@ export function UsersPanel() {
       } : previous);
       setBadgeNotice(updated.isSuspended ? `@${updated.username} foi suspenso e desconectado.` : `@${updated.username} foi reativado.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível alterar a suspensão.');
+      setError(err instanceof Error ? err.message : uiText("Não foi possível alterar a suspensão."));
     } finally {
       setModerationPendingId(null);
     }
@@ -73,7 +74,7 @@ export function UsersPanel() {
         ? `Selo Colaborador Beta concedido a @${updated.username}.`
         : `Selo Colaborador Beta removido de @${updated.username}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível alterar o selo.');
+      setError(err instanceof Error ? err.message : uiText("Não foi possível alterar o selo."));
     } finally {
       setBadgePendingId(null);
     }
@@ -108,7 +109,7 @@ export function UsersPanel() {
       });
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load users');
+      setError(err instanceof Error ? err.message : uiText("Failed to load users"));
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,7 @@ export function UsersPanel() {
       await api.admin.setUserRole(user.id, true);
       fetchUsers(query, page, showDeleted, filtersRef.current);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update role');
+      setError(err instanceof Error ? err.message : uiText("Failed to update role"));
     }
   };
 
@@ -160,7 +161,7 @@ export function UsersPanel() {
       setTempPassword({ userId: resetConfirmUser.id, password: result.temporaryPassword });
       setResetConfirmUser(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password');
+      setError(err instanceof Error ? err.message : uiText("Failed to reset password"));
       setResetConfirmUser(null);
     } finally {
       setResetLoading(false);
@@ -187,7 +188,7 @@ export function UsersPanel() {
       setConfirmAction(null);
       fetchUsers(query, page, showDeleted, filtersRef.current);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
+      setError(err instanceof Error ? err.message : uiText("Action failed"));
       setConfirmAction(null);
     } finally {
       setActionLoading(false);
@@ -203,15 +204,14 @@ export function UsersPanel() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-txt-primary">Usuários</h2>
+      <h2 className="text-lg font-semibold text-txt-primary">{uiText("Usuários")}</h2>
       <div className="text-xs text-txt-tertiary">
-        Gerencie as contas e os selos dos usuários do Lume.
-      </div>
+        {uiText("Gerencie as contas e os selos dos usuários do Lume.")}</div>
       <div className="flex items-center gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.04] p-3">
         <BetaContributorBadge size={32} />
         <div className="min-w-0 text-xs text-txt-secondary">
-          <p className="font-semibold text-cyan-200">Colaborador Beta</p>
-          <p>Reconheça quem ajudou a melhorar o Lume com testes, ideias e relatos de bugs. O selo não concede permissões de admin.</p>
+          <p className="font-semibold text-cyan-200">{uiText("Colaborador Beta")}</p>
+          <p>{uiText("Reconheça quem ajudou a melhorar o Lume com testes, ideias e relatos de bugs. O selo não concede permissões de admin.")}</p>
         </div>
       </div>
       {badgeNotice && <p role="status" className="text-xs text-cyan-200">{badgeNotice}</p>}
@@ -222,7 +222,7 @@ export function UsersPanel() {
           type="text"
           value={query}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Search users..."
+          placeholder={uiText("Search users...")}
           className="input-search flex-1"
         />
       </div>
@@ -234,8 +234,8 @@ export function UsersPanel() {
           onChange={(e) => { setInstanceFilter(e.target.value); setPage(1); }}
           className="input-search text-xs py-1"
         >
-          <option value="">All instances</option>
-          <option value="local">Local only</option>
+          <option value="">{uiText("All instances")}</option>
+          <option value="local">{uiText("Local only")}</option>
           {instances.map((inst) => (
             <option key={inst} value={inst}>{inst}</option>
           ))}
@@ -246,9 +246,9 @@ export function UsersPanel() {
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
           className="input-search text-xs py-1"
         >
-          <option value="">All roles</option>
-          <option value="admin">Admin</option>
-          <option value="non-admin">Non-admin</option>
+          <option value="">{uiText("All roles")}</option>
+          <option value="admin">{uiText("Admin")}</option>
+          <option value="non-admin">{uiText("Non-admin")}</option>
         </select>
 
         <input
@@ -256,14 +256,14 @@ export function UsersPanel() {
           value={joinedAfter}
           onChange={(e) => { setJoinedAfter(e.target.value); setPage(1); }}
           className="input-search text-xs py-1"
-          title="Joined after"
+          title={uiText("Joined after")}
         />
         <input
           type="date"
           value={joinedBefore}
           onChange={(e) => { setJoinedBefore(e.target.value); setPage(1); }}
           className="input-search text-xs py-1"
-          title="Joined before"
+          title={uiText("Joined before")}
         />
 
         <select
@@ -271,10 +271,10 @@ export function UsersPanel() {
           onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
           className="input-search text-xs py-1"
         >
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="az">Name A-Z</option>
-          <option value="za">Name Z-A</option>
+          <option value="newest">{uiText("Newest first")}</option>
+          <option value="oldest">{uiText("Oldest first")}</option>
+          <option value="az">{uiText("Name A-Z")}</option>
+          <option value="za">{uiText("Name Z-A")}</option>
         </select>
 
         <label className="flex items-center gap-1.5 text-xs text-txt-secondary cursor-pointer whitespace-nowrap">
@@ -284,8 +284,7 @@ export function UsersPanel() {
             onChange={(e) => { setShowDeleted(e.target.checked); setPage(1); }}
             className="w-3 h-3 rounded border-border-soft accent-accent-primary"
           />
-          Deleted
-        </label>
+          {uiText("Deleted")}</label>
 
         {(instanceFilter || roleFilter || joinedAfter || joinedBefore || sortBy !== 'newest' || showDeleted || query) && (
           <button
@@ -297,8 +296,7 @@ export function UsersPanel() {
             }}
             className="text-xs text-accent-primary hover:text-accent-primary/80 whitespace-nowrap"
           >
-            Clear filters
-          </button>
+            {uiText("Clear filters")}</button>
         )}
       </div>
 
@@ -309,14 +307,14 @@ export function UsersPanel() {
 
       {/* Loading */}
       {loading && !data && (
-        <div className="text-sm text-txt-tertiary py-4">Loading users...</div>
+        <div className="text-sm text-txt-tertiary py-4">{uiText("Loading users...")}</div>
       )}
 
       {/* User list */}
       {data && (
         <div className="space-y-1.5">
           {data.users.length === 0 && (
-            <div className="text-sm text-txt-tertiary py-4 text-center">No users found</div>
+            <div className="text-sm text-txt-tertiary py-4 text-center">{uiText("No users found")}</div>
           )}
           {data.users.map((user) => {
             const isSelf = user.id === currentUser?.id;
@@ -352,8 +350,7 @@ export function UsersPanel() {
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {user.isAdmin && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent-amber/20 text-accent-amber">
-                          Admin
-                        </span>
+                          {uiText("Admin")}</span>
                       )}
                       {isFederated && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent-sky/20 text-accent-sky truncate max-w-[120px]">
@@ -362,23 +359,21 @@ export function UsersPanel() {
                       )}
                       {isDeleted && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent-rose/20 text-accent-rose">
-                          Deleted
-                        </span>
+                          {uiText("Deleted")}</span>
                       )}
                       {user.isSuspended && !isDeleted && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent-rose/20 text-accent-rose" title={user.suspensionReason || undefined}>
-                          Suspenso
-                        </span>
+                          {uiText("Suspenso")}</span>
                       )}
                       <span className="text-[10px] text-txt-tertiary">
                         {formatDate(user.createdAt)}
                       </span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-txt-tertiary">
-                      <span>Região: {user.registrationCountryCode ? regionNames?.of(user.registrationCountryCode) ?? user.registrationCountryCode : 'pendente'}</span>
-                      <span>Fuso: {user.registrationTimezone || 'pendente'}</span>
-                      <span>IP: {user.lastIp || 'pendente'}</span>
-                      <span>Visto: {user.lastSeenAt ? new Date(user.lastSeenAt).toLocaleString('pt-BR') : 'pendente'}</span>
+                      <span>{uiText("Região: ")}{user.registrationCountryCode ? regionNames?.of(user.registrationCountryCode) ?? user.registrationCountryCode : uiText("pendente")}</span>
+                      <span>{uiText("Fuso: ")}{user.registrationTimezone || uiText("pendente")}</span>
+                      <span>{uiText("IP: ")}{user.lastIp || uiText("pendente")}</span>
+                      <span>{uiText("Visto: ")}{user.lastSeenAt ? new Date(user.lastSeenAt).toLocaleString('pt-BR') : uiText("pendente")}</span>
                     </div>
                   </div>
 
@@ -389,37 +384,36 @@ export function UsersPanel() {
                         type="button"
                         onClick={() => void handleToggleSuspension(user)}
                         disabled={isSelf || moderationPendingId !== null}
-                        title={isSelf ? 'Você não pode suspender sua própria conta' : user.isSuspended ? 'Reativar conta' : 'Suspender e desconectar conta'}
+                        title={isSelf ? uiText("Você não pode suspender sua própria conta") : user.isSuspended ? uiText("Reativar conta") : uiText("Suspender e desconectar conta")}
                         className={`rounded-lg border px-2 py-1.5 text-[11px] transition-colors disabled:opacity-40 ${user.isSuspended ? 'border-status-online/30 text-status-online hover:bg-status-online/10' : 'border-accent-rose/30 text-accent-rose hover:bg-accent-rose/10'}`}
                       >
-                        {moderationPendingId === user.id ? 'Salvando…' : user.isSuspended ? 'Reativar' : 'Suspender'}
+                        {moderationPendingId === user.id ? uiText("Salvando…") : user.isSuspended ? uiText("Reativar") : uiText("Suspender")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmAction({ type: 'disconnect', user })}
                         disabled={isSelf}
-                        title={isSelf ? 'Sua sessão atual não pode ser derrubada aqui' : 'Encerrar todas as sessões deste usuário'}
+                        title={isSelf ? uiText("Sua sessão atual não pode ser derrubada aqui") : uiText("Encerrar todas as sessões deste usuário")}
                         className="rounded-lg border border-border-subtle px-2 py-1.5 text-[11px] text-txt-secondary hover:bg-white/[0.06] disabled:opacity-40"
                       >
-                        Desconectar
-                      </button>
+                        {uiText("Desconectar")}</button>
                       {!isFederated && (
                         <button
                           type="button"
                           onClick={() => handleToggleBetaContributor(user)}
                           disabled={badgePendingId !== null}
-                          aria-label={`${user.isBetaContributor ? 'Remover' : 'Conceder'} selo Colaborador Beta ${user.isBetaContributor ? 'de' : 'a'} @${user.username}`}
+                          aria-label={uiText("{0} selo Colaborador Beta {1} @{2}", [user.isBetaContributor ? 'Remover' : 'Conceder', user.isBetaContributor ? 'de' : 'a', user.username])}
                           className="flex items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2 py-1.5 text-[11px] text-cyan-200 hover:bg-cyan-300/10 disabled:opacity-40"
                         >
                           <BetaContributorBadge size={16} />
-                          {badgePendingId === user.id ? 'Salvando…' : user.isBetaContributor ? 'Remover selo' : 'Conceder selo'}
+                          {badgePendingId === user.id ? uiText("Salvando…") : user.isBetaContributor ? uiText("Remover selo") : uiText("Conceder selo")}
                         </button>
                       )}
                       {/* Toggle admin */}
                       <button
                         onClick={() => handleToggleAdmin(user)}
                         disabled={isFederated && !user.isAdmin}
-                        title={user.isAdmin ? 'Demote from admin' : isFederated ? 'Federated users cannot be admin' : 'Promote to admin'}
+                        title={user.isAdmin ? uiText("Demote from admin") : isFederated ? uiText("Federated users cannot be admin") : uiText("Promote to admin")}
                         className={`p-1.5 rounded transition-colors ${
                           user.isAdmin
                             ? 'text-accent-amber hover:bg-accent-amber/10'
@@ -437,7 +431,7 @@ export function UsersPanel() {
                       <button
                         onClick={() => handleResetPassword(user)}
                         disabled={isFederated}
-                        title={isFederated ? 'Federated users authenticate via home instance' : 'Reset password'}
+                        title={isFederated ? uiText("Federated users authenticate via home instance") : uiText("Reset password")}
                         className={`p-1.5 rounded transition-colors ${
                           isFederated
                             ? 'text-txt-tertiary/30 cursor-not-allowed'
@@ -453,7 +447,7 @@ export function UsersPanel() {
                       <button
                         onClick={() => handleDeleteUser(user)}
                         disabled={isSelf}
-                        title={isSelf ? 'Use account settings to delete your own account' : 'Delete user'}
+                        title={isSelf ? uiText("Use account settings to delete your own account") : uiText("Delete user")}
                         className={`p-1.5 rounded transition-colors ${
                           isSelf
                             ? 'text-txt-tertiary/30 cursor-not-allowed'
@@ -472,13 +466,12 @@ export function UsersPanel() {
                 {hasTempPassword && (
                   <div className="p-3 bg-status-online/10 border border-status-online/30 border-t-0 rounded-b-lg">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs text-txt-secondary">Temporary password:</div>
+                      <div className="text-xs text-txt-secondary">{uiText("Temporary password:")}</div>
                       <button
                         onClick={() => setTempPassword(null)}
                         className="text-txt-tertiary hover:text-txt-secondary text-xs"
                       >
-                        Dismiss
-                      </button>
+                        {uiText("Dismiss")}</button>
                     </div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <code className="px-2 py-1 bg-black/30 rounded text-sm font-mono text-status-online select-all">
@@ -488,12 +481,10 @@ export function UsersPanel() {
                         onClick={() => navigator.clipboard.writeText(tempPassword.password)}
                         className="px-2 py-1 bg-white/[0.06] hover:bg-white/[0.1] text-txt-secondary text-xs rounded transition-colors"
                       >
-                        Copy
-                      </button>
+                        {uiText("Copy")}</button>
                     </div>
                     <div className="text-[10px] text-txt-tertiary mt-1">
-                      Shown once. User has been disconnected and must log in again.
-                    </div>
+                      {uiText("Shown once. User has been disconnected and must log in again.")}</div>
                   </div>
                 )}
               </div>
@@ -510,18 +501,16 @@ export function UsersPanel() {
             disabled={page <= 1}
             className="px-3 py-1 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Previous
-          </button>
+            {uiText("Previous")}</button>
           <span className="text-xs text-txt-tertiary">
-            Page {page} of {totalPages} ({data.total} user{data.total !== 1 ? 's' : ''})
+            {uiText("Page ")}{page} {uiText(" of ")}{totalPages} ({data.total} {uiText(" user")}{data.total !== 1 ? uiText("s") : ''})
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
             className="px-3 py-1 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Next
-          </button>
+            {uiText("Next")}</button>
         </div>
       )}
 
@@ -530,9 +519,9 @@ export function UsersPanel() {
         isOpen={confirmAction?.type === 'disconnect'}
         onClose={() => setConfirmAction(null)}
         onConfirm={handleConfirm}
-        title="Encerrar sessões"
-        description={<>Desconectar <strong>{confirmAction?.user.username}</strong> de todos os aparelhos? A senha não será alterada.</>}
-        confirmLabel="Desconectar"
+        title={uiText("Encerrar sessões")}
+        description={<>{uiText("Desconectar ")}<strong>{confirmAction?.user.username}</strong> {uiText(" de todos os aparelhos? A senha não será alterada.")}</>}
+        confirmLabel={uiText("Desconectar")}
         variant="warning"
         loading={actionLoading}
       />
@@ -540,9 +529,9 @@ export function UsersPanel() {
         isOpen={!!resetConfirmUser}
         onClose={() => setResetConfirmUser(null)}
         onConfirm={handleResetConfirm}
-        title="Reset Password"
-        description={<>Reset the password for <strong>{resetConfirmUser?.username}</strong>? They will be disconnected immediately and must log in with the new temporary password.</>}
-        confirmLabel="Reset Password"
+        title={uiText("Reset Password")}
+        description={<>{uiText("Reset the password for ")}<strong>{resetConfirmUser?.username}</strong>{uiText("? They will be disconnected immediately and must log in with the new temporary password.")}</>}
+        confirmLabel={uiText("Reset Password")}
         variant="warning"
         loading={resetLoading}
       />
@@ -550,9 +539,9 @@ export function UsersPanel() {
         isOpen={confirmAction?.type === 'demote'}
         onClose={() => setConfirmAction(null)}
         onConfirm={handleConfirm}
-        title="Demote Admin"
-        description={<>Remove admin privileges from <strong>{confirmAction?.user.username}</strong>? They will lose access to instance settings.</>}
-        confirmLabel="Demote"
+        title={uiText("Demote Admin")}
+        description={<>{uiText("Remove admin privileges from ")}<strong>{confirmAction?.user.username}</strong>{uiText("? They will lose access to instance settings.")}</>}
+        confirmLabel={uiText("Demote")}
         variant="warning"
         loading={actionLoading}
       />
@@ -560,9 +549,9 @@ export function UsersPanel() {
         isOpen={confirmAction?.type === 'delete'}
         onClose={() => setConfirmAction(null)}
         onConfirm={handleConfirm}
-        title="Delete User"
-        description={<>Permanently delete <strong>{confirmAction?.user.username}</strong>? This will remove them from all spaces, DMs, and friends lists. This cannot be undone.</>}
-        confirmLabel="Delete User"
+        title={uiText("Delete User")}
+        description={<>{uiText("Permanently delete ")}<strong>{confirmAction?.user.username}</strong>{uiText("? This will remove them from all spaces, DMs, and friends lists. This cannot be undone.")}</>}
+        confirmLabel={uiText("Delete User")}
         variant="danger"
         loading={actionLoading}
       />

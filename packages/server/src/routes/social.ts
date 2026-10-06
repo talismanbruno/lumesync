@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { eq, and, or, ne, like, sql, inArray, isNull } from 'drizzle-orm';
+import { eq, and, or, ne, sql, isNull } from 'drizzle-orm';
 import { getDb, getRawDb, schema } from '../db/index.js';
 import { authenticate } from '../utils/auth.js';
 import { generateSnowflake } from '../utils/snowflake.js';
@@ -16,7 +16,6 @@ import type {
   FriendRequest,
   SendFriendRequest,
   UpdateFriendRequest,
-  DiscoverUser,
 } from '@backspace/shared';
 import { sanitizeUser } from '../utils/sanitize.js';
 
@@ -796,174 +795,7 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
     return reply.code(200).send({ success: true });
   });
 
-  // GET /api/social/discover - Discover users on this instance
-  app.get<{ Querystring: { q?: string; limit?: string; offset?: string } }>('/api/social/discover', {
-    preHandler: authenticate,
-    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
-  }, async (request, reply) => {
-    const db = getDb();
-    const q = request.query.q?.trim() || '';
-    const limit = Math.min(Math.max(parseInt(request.query.limit || '24', 10) || 24, 1), 100);
-    const offset = Math.max(parseInt(request.query.offset || '0', 10) || 0, 0);
-    const myId = request.userId;
-
-    // Build WHERE clause
-    const conditions = [
-      eq(schema.users.discoverable, 1),
-      eq(schema.users.isDeleted, 0),
-      ne(schema.users.id, myId),
-      // Exclude replicated federated users — each instance only surfaces its own native users.
-      // Federated users are discovered through the parallel fetch across connected instances.
-      sql`(${schema.users.homeInstance} IS NULL OR ${schema.users.homeInstance} = '')`,
-    ];
-
-    if (q) {
-      const pattern = `%${q}%`;
-      conditions.push(or(
-        like(schema.users.username, pattern),
-        like(schema.users.displayName, pattern),
-      )!);
-    }
-
-    // Get total count
-    const countResult = db.select({ count: sql<number>`count(*)` })
-      .from(schema.users)
-      .where(and(...conditions))
-      .get();
-    const total = countResult?.count ?? 0;
-
-    if (total === 0) {
-      return reply.code(200).send({ users: [], total: 0 });
-    }
-
-    // Pre-load my social graph
-    const myFriendRows = db.select().from(schema.friends).where(
-      or(eq(schema.friends.userId, myId), eq(schema.friends.friendId, myId))
-    ).all();
-    const myFriendIds = new Set(myFriendRows.map(f => f.userId === myId ? f.friendId : f.userId));
-
-    const mySpaceRows = db.select({ spaceId: schema.spaceMembers.spaceId })
-      .from(schema.spaceMembers)
-      .where(eq(schema.spaceMembers.userId, myId))
-      .all();
-    const mySpaceIds = new Set(mySpaceRows.map(s => s.spaceId));
-
-    const outboundRequests = db.select().from(schema.friendRequests).where(
-      and(eq(schema.friendRequests.fromId, myId), eq(schema.friendRequests.status, 'pending'))
-    ).all();
-    const outboundMap = new Map(outboundRequests.map(r => [r.toId, r.id]));
-
-    const inboundRequests = db.select().from(schema.friendRequests).where(
-      and(eq(schema.friendRequests.toId, myId), eq(schema.friendRequests.status, 'pending'))
-    ).all();
-    const inboundMap = new Map(inboundRequests.map(r => [r.fromId, r.id]));
-
-    // Fetch page of users
-    const userRows = db.select()
-      .from(schema.users)
-      .where(and(...conditions))
-      .orderBy(sql`created_at DESC`)
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    // Batch fetch friends and space memberships for all page users
-    const pageUserIds = userRows.map(r => r.id);
-
-    // Batch fetch all friends for page users
-    const pageFriendRows = pageUserIds.length > 0
-      ? db.select().from(schema.friends).where(
-          or(
-            inArray(schema.friends.userId, pageUserIds),
-            inArray(schema.friends.friendId, pageUserIds),
-          )
-        ).all()
-      : [];
-
-    // Build Map<userId, Set<friendId>> for page users
-    const friendIdsByUser = new Map<string, Set<string>>();
-    for (const f of pageFriendRows) {
-      // Map both directions
-      if (pageUserIds.includes(f.userId)) {
-        if (!friendIdsByUser.has(f.userId)) friendIdsByUser.set(f.userId, new Set());
-        friendIdsByUser.get(f.userId)!.add(f.friendId);
-      }
-      if (pageUserIds.includes(f.friendId)) {
-        if (!friendIdsByUser.has(f.friendId)) friendIdsByUser.set(f.friendId, new Set());
-        friendIdsByUser.get(f.friendId)!.add(f.userId);
-      }
-    }
-
-    // Batch fetch all space memberships for page users
-    const pageSpaceMemberRows = pageUserIds.length > 0
-      ? db.select({ userId: schema.spaceMembers.userId, spaceId: schema.spaceMembers.spaceId })
-          .from(schema.spaceMembers)
-          .where(inArray(schema.spaceMembers.userId, pageUserIds))
-          .all()
-      : [];
-
-    // Build Map<userId, Set<spaceId>> for page users
-    const spaceIdsByUser = new Map<string, Set<string>>();
-    for (const sm of pageSpaceMemberRows) {
-      if (!spaceIdsByUser.has(sm.userId)) spaceIdsByUser.set(sm.userId, new Set());
-      spaceIdsByUser.get(sm.userId)!.add(sm.spaceId);
-    }
-
-    // Compute mutual counts + relationship for each user
-    const discoverUsers: DiscoverUser[] = userRows.map(row => {
-      const u = sanitizeUser(row);
-
-      // Mutual friends (using batch-fetched data)
-      const theirFriendIds = friendIdsByUser.get(row.id) ?? new Set();
-      const mutualFriendCount = [...myFriendIds].filter(id => theirFriendIds.has(id)).length;
-
-      // Mutual spaces (using batch-fetched data)
-      const theirSpaceIds = spaceIdsByUser.get(row.id) ?? new Set();
-      const mutualSpaceCount = [...mySpaceIds].filter(id => theirSpaceIds.has(id)).length;
-
-      // Relationship
-      let relationship: DiscoverUser['relationship'] = 'none';
-      let requestId: string | undefined;
-      if (myFriendIds.has(row.id)) {
-        relationship = 'friends';
-      } else if (outboundMap.has(row.id)) {
-        relationship = 'outbound_pending';
-        requestId = outboundMap.get(row.id);
-      } else if (inboundMap.has(row.id)) {
-        relationship = 'inbound_pending';
-        requestId = inboundMap.get(row.id);
-      }
-
-      return {
-        id: u.id,
-        username: u.username,
-        displayName: u.displayName,
-        avatar: u.avatar,
-        banner: u.banner,
-        avatarColor: u.avatarColor,
-        bio: u.bio,
-        status: u.status,
-        customStatus: u.customStatus,
-        createdAt: u.createdAt,
-        homeInstance: u.homeInstance,
-        homeUserId: u.homeUserId,
-        mutualFriendCount,
-        mutualSpaceCount,
-        relationship,
-        ...(requestId ? { requestId } : {}),
-      };
-    });
-
-    // Sort: mutual friends DESC, then created_at DESC
-    discoverUsers.sort((a, b) => {
-      if (b.mutualFriendCount !== a.mutualFriendCount) return b.mutualFriendCount - a.mutualFriendCount;
-      return b.createdAt - a.createdAt;
-    });
-
-    return reply.code(200).send({ users: discoverUsers, total });
-  });
-
-  // GET /api/social/search?q=... - Search for users to add as friends
+  // Exact nickname lookup only; platform-wide discovery is disabled.
   app.get<{ Querystring: { q: string } }>('/api/social/search', {
     preHandler: authenticate,
     config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
@@ -975,27 +807,20 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(200).send([]);
     }
 
-    const pattern = `%${q}%`;
+    const username = q.trim();
 
     const conditions = [
       eq(schema.users.isDeleted, 0),
-      eq(schema.users.discoverable, 1),
       ne(schema.users.id, request.userId),
-      // Exclude replicated federated stubs: their stored username is
-      // `<homeUserId>@<domain>`, so a substring of the domain would match
-      // every stub from that instance. Federated users are surfaced via
-      // the client-side cross-instance fan-out instead.
+      // Connected instances resolve their own native nicknames.
       sql`(${schema.users.homeInstance} IS NULL OR ${schema.users.homeInstance} = '')`,
-      or(
-        like(schema.users.username, pattern),
-        like(schema.users.displayName, pattern),
-      )!,
+      sql`lower(${schema.users.username}) = lower(${username})`,
     ];
 
     const users = db.select()
       .from(schema.users)
       .where(and(...conditions))
-      .limit(10)
+      .limit(1)
       .all();
 
     return reply.code(200).send(users.map(u => sanitizeUser(u)));

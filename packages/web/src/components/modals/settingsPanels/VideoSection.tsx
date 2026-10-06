@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Track } from 'livekit-client';
 import { useVoiceStore } from '../../../stores/voiceStore';
@@ -337,12 +338,12 @@ export function VideoSection() {
       } catch (err) {
         if (gen !== startGenRef.current || !mountedRef.current) return;
         const name = errorName(err);
-        if (name === 'NotReadableError') setPreviewError('Camera is in use by another application.');
-        else if (name === 'OverconstrainedError') setPreviewError('Selected camera is unavailable.');
+        if (name === 'NotReadableError') setPreviewError(uiText("Camera is in use by another application."));
+        else if (name === 'OverconstrainedError') setPreviewError(uiText("Selected camera is unavailable."));
         else if (name === 'NotAllowedError') {
           setPermState('denied');
           setPreviewActive(false);
-        } else setPreviewError('Could not start camera preview.');
+        } else setPreviewError(uiText("Could not start camera preview."));
       }
     };
 
@@ -403,13 +404,13 @@ export function VideoSection() {
         setPermState((prev) => (prev === 'denied' ? 'hard-blocked' : 'denied'));
         setPreviewActive(false);
       } else if (name === 'NotReadableError') {
-        setPreviewError('Camera is in use by another application.');
+        setPreviewError(uiText("Camera is in use by another application."));
       } else if (name === 'OverconstrainedError') {
-        setPreviewError('Selected camera is unavailable.');
+        setPreviewError(uiText("Selected camera is unavailable."));
       } else if (name === 'NotFoundError') {
-        setPreviewError('No camera detected.');
+        setPreviewError(uiText("No camera detected."));
       } else {
-        setPreviewError('Could not start camera preview.');
+        setPreviewError(uiText("Could not start camera preview."));
       }
     }
   };
@@ -428,11 +429,9 @@ export function VideoSection() {
     return (
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Video
-        </div>
+          {uiText("Video")}</div>
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 text-sm text-txt-tertiary">
-          Checking camera access…
-        </div>
+          {uiText("Checking camera access…")}</div>
       </div>
     );
   }
@@ -441,21 +440,19 @@ export function VideoSection() {
     return (
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Video
-        </div>
+          {uiText("Video")}</div>
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-2">
-          <div className="text-sm text-txt-primary">⚠ Camera access denied</div>
+          <div className="text-sm text-txt-primary">{uiText("⚠ Camera access denied")}</div>
           <div className="text-xs text-txt-tertiary">
             {permState === 'hard-blocked'
               ? getHardBlockedCopy()
-              : 'Grant camera permission to choose a camera.'}
+              : uiText("Grant camera permission to choose a camera.")}
           </div>
           <button
             onClick={startPreviewFromUser}
             className="text-xs px-3 py-1.5 rounded-md bg-surface-base hover:bg-interactive-hover text-txt-secondary transition-colors"
           >
-            Try again
-          </button>
+            {uiText("Try again")}</button>
         </div>
       </div>
     );
@@ -465,23 +462,20 @@ export function VideoSection() {
     return (
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Video
-        </div>
+          {uiText("Video")}</div>
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
           <div className="aspect-video w-full rounded-lg bg-surface-base overflow-hidden relative flex flex-col items-center justify-center text-center px-6">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary mb-2">
               <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z" />
             </svg>
             <div className="text-sm text-txt-secondary mb-1">
-              Camera permission needed to choose a camera and preview.
-            </div>
+              {uiText("Camera permission needed to choose a camera and preview.")}</div>
           </div>
           <button
             onClick={startPreviewFromUser}
             className="w-full text-[13px] px-3 py-2 rounded-md bg-accent-primary hover:bg-accent-primary-hover active:bg-accent-primary-active text-white font-medium transition-colors"
           >
-            Enable camera preview
-          </button>
+            {uiText("Enable camera preview")}</button>
         </div>
       </div>
     );
@@ -507,8 +501,7 @@ export function VideoSection() {
   return (
     <div>
       <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-        Video
-      </div>
+        {uiText("Video")}</div>
       <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5">
         <div className="aspect-video w-full rounded-lg bg-surface-base overflow-hidden relative mb-3 group">
           <video
@@ -523,13 +516,13 @@ export function VideoSection() {
             <button
               type="button"
               onClick={startPreviewFromUser}
-              aria-label="Test camera"
+              aria-label={uiText("Test camera")}
               className="absolute inset-0 flex flex-col items-center justify-center text-txt-tertiary hover:text-txt-secondary hover:bg-white/[0.02] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
             >
               <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="mb-2">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              <span className="text-xs">Click to test camera</span>
+              <span className="text-xs">{uiText("Click to test camera")}</span>
             </button>
           )}
           {previewActive && !previewError && (
@@ -542,8 +535,7 @@ export function VideoSection() {
                          min-h-[44px] min-w-[44px] px-3 py-2 text-xs flex items-center justify-center
                          md:min-h-0 md:min-w-0 md:text-[11px] md:px-2 md:py-1 md:opacity-0 md:group-hover:opacity-100"
             >
-              Stop preview
-            </button>
+              {uiText("Stop preview")}</button>
           )}
           {previewError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-base/90 text-xs text-txt-tertiary text-center px-4 gap-2">
@@ -553,12 +545,11 @@ export function VideoSection() {
                 onClick={startPreviewFromUser}
                 className="text-[11px] px-2 py-1 rounded-md bg-surface-base hover:bg-interactive-hover text-txt-secondary transition-colors"
               >
-                Try again
-              </button>
+                {uiText("Try again")}</button>
             </div>
           )}
         </div>
-        <div className="text-[13px] font-medium text-txt-primary mb-1.5">Camera</div>
+        <div className="text-[13px] font-medium text-txt-primary mb-1.5">{uiText("Camera")}</div>
         <div ref={dropdownRef}>
           <button
             type="button"
@@ -579,7 +570,7 @@ export function VideoSection() {
           {listOpen && (
             <div className="mt-1 rounded-md bg-surface-base border border-border-hard py-1">
               <DropdownItem
-                label="Auto (system default)"
+                label={uiText("Auto (system default)")}
                 active={cameraDeviceId === null}
                 onClick={() => handleSelect(null)}
               />
@@ -602,10 +593,10 @@ export function VideoSection() {
             const label = m
               ? displayLabels.get(activeDeviceId) ?? (m.label || 'detected camera')
               : 'detected camera';
-            return <div className="text-xs text-txt-tertiary mt-1">Currently using: {label}</div>;
+            return <div className="text-xs text-txt-tertiary mt-1">{uiText("Currently using: ")}{label}</div>;
           })()}
         {devices.length === 0 && (
-          <div className="text-xs text-txt-tertiary mt-1">No cameras detected.</div>
+          <div className="text-xs text-txt-tertiary mt-1">{uiText("No cameras detected.")}</div>
         )}
       </div>
     </div>

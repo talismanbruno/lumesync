@@ -78,6 +78,7 @@ tmp/
 lume-core-deploy.tgz
 lume-web-*.tgz
 deploy/*.tgz
+/release/*.tar.gz
 
 # Worktrees
 .worktrees/

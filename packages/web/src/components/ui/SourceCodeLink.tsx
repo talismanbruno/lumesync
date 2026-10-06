@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 interface SourceCodeLinkProps {
   /** URL to the Corresponding Source of the running version (AGPL § 13). */
   sourceCodeUrl: string;
@@ -32,7 +33,7 @@ export function SourceCodeLink({ sourceCodeUrl, version, commit, className }: So
       className={`inline-flex items-center gap-1.5 text-xs text-txt-tertiary hover:text-txt-secondary transition-colors${
         className ? ` ${className}` : ''
       }`}
-      title="View the source code of the version this instance is running (AGPL-3.0)"
+      title={uiText("View the source code of the version this instance is running (AGPL-3.0)")}
     >
       <svg
         width="12"

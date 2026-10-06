@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import React, { useState } from 'react';
 import { Avatar } from '../../ui/Avatar';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
@@ -75,8 +76,7 @@ function MembersPanelRow({
             <div className="flex items-center gap-1 flex-wrap">
               {isOwner && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-rose/20 text-txt-danger font-medium">
-                  Owner
-                </span>
+                  {uiText("Owner")}</span>
               )}
               {member.roles?.filter((r) => r.id !== spaceId).map((r) => (
                 <span
@@ -88,7 +88,7 @@ function MembersPanelRow({
                 </span>
               ))}
               {!isOwner && (!member.roles || member.roles.filter((r) => r.id !== spaceId).length === 0) && (
-                <span className="text-[10px] text-txt-tertiary">No roles</span>
+                <span className="text-[10px] text-txt-tertiary">{uiText("No roles")}</span>
               )}
             </div>
           </div>
@@ -100,16 +100,14 @@ function MembersPanelRow({
               onClick={(e) => { e.stopPropagation(); onPendingAction({ type: 'ban', userId: member.userId, displayName }); }}
               className="px-2 py-1 text-xs text-txt-danger hover:bg-accent-rose/10 rounded transition-colors"
             >
-              Ban
-            </button>
+              {uiText("Ban")}</button>
           )}
           {canKick && member.userId !== currentUserId && !isOwner && (
             <button
               onClick={(e) => { e.stopPropagation(); onPendingAction({ type: 'kick', userId: member.userId, displayName }); }}
               className="px-2 py-1 text-xs text-txt-danger hover:bg-accent-rose/10 rounded transition-colors"
             >
-              Kick
-            </button>
+              {uiText("Kick")}</button>
           )}
           {expandable && (
             <svg
@@ -150,14 +148,12 @@ function MembersPanelRow({
                 onClick={() => onSaveRoles(member.userId)}
                 className="px-2 py-0.5 text-xs bg-accent-primary hover:bg-accent-primary/80 text-white rounded transition-colors"
               >
-                Save
-              </button>
+                {uiText("Save")}</button>
               <button
                 onClick={() => onCancelRoleChange(member.userId)}
                 className="px-2 py-0.5 text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Cancel
-              </button>
+                {uiText("Cancel")}</button>
             </div>
           )}
         </div>
@@ -224,7 +220,7 @@ export function MembersPanel({ spaceId }: MembersPanelProps) {
       setExpandedMemberId(null);
       await loadSpaceDetail(spaceId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update roles');
+      setError(err instanceof Error ? err.message : uiText("Failed to update roles"));
     }
   };
 
@@ -241,7 +237,7 @@ export function MembersPanel({ spaceId }: MembersPanelProps) {
       await spaceApi.spaces.removeMember(spaceId, userId);
       await loadSpaceDetail(spaceId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to kick member');
+      setError(err instanceof Error ? err.message : uiText("Failed to kick member"));
     }
   };
 
@@ -250,7 +246,7 @@ export function MembersPanel({ spaceId }: MembersPanelProps) {
       await spaceApi.spaces.ban(spaceId, userId);
       await loadSpaceDetail(spaceId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to ban member');
+      setError(err instanceof Error ? err.message : uiText("Failed to ban member"));
     }
   };
 
@@ -259,15 +255,15 @@ export function MembersPanel({ spaceId }: MembersPanelProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">Members</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("Members")}</h2>
       {error && (
         <div className="p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">{error}</div>
       )}
-      <p className="text-xs text-txt-tertiary">Manage members of this space. Click a member to edit their roles.</p>
+      <p className="text-xs text-txt-tertiary">{uiText("Manage members of this space. Click a member to edit their roles.")}</p>
 
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Members ({members.length})
+          {uiText("Members (")}{members.length})
         </div>
         <div className="rounded-lg bg-white/[0.02] p-2">
           <div className="space-y-0.5">
@@ -308,14 +304,14 @@ export function MembersPanel({ spaceId }: MembersPanelProps) {
           }
           setPendingAction(null);
         }}
-        title={pendingAction?.type === 'ban' ? `Ban ${pendingAction.displayName}` : `Kick ${pendingAction?.displayName ?? ''}`}
+        title={pendingAction?.type === 'ban' ? uiText("Ban {0}", [pendingAction.displayName]) : uiText("Kick {0}", [pendingAction?.displayName ?? ''])}
         description={
           pendingAction?.type === 'ban'
-            ? 'They will be permanently banned from this space until unbanned.'
-            : 'They can rejoin with an invite link.'
+            ? uiText("They will be permanently banned from this space until unbanned.")
+            : uiText("They can rejoin with an invite link.")
         }
         variant={pendingAction?.type === 'ban' ? 'danger' : 'warning'}
-        confirmLabel={pendingAction?.type === 'ban' ? 'Ban' : 'Kick'}
+        confirmLabel={pendingAction?.type === 'ban' ? uiText("Ban") : uiText("Kick")}
       />
     </div>
   );

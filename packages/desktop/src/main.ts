@@ -547,6 +547,9 @@ function showNotification(title: string, body: string, onClick?: () => void): vo
 // ─── IPC Handlers ───────────────────────────────────────────────────────────
 
 function registerIpcHandlers(): void {
+  ipcMain.on('get-preferred-languages', (event) => {
+    event.returnValue = app.getPreferredSystemLanguages();
+  });
   ipcMain.on('show-notification', (
     _event,
     data: { title: string; body: string; target?: NotificationNavigationTarget },
@@ -997,7 +1000,7 @@ if (!gotTheLock) {
 
     // Intercept getDisplayMedia() — show custom picker in renderer.
     // Audio loopback controlled by user's shareAudio toggle.
-    session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
       console.log('[Main:ScreenShare] Handler invoked');
       try {
         const sources = await desktopCapturer.getSources({
@@ -1072,7 +1075,7 @@ if (!gotTheLock) {
         //     `PulseaudioLoopbackForScreenShare` feature flag we enable above.
         //     Fails on PipeWire-only systems without pulse compat — the
         //     renderer catches that and toasts the user.
-        callback({ video: selected, ...(shareAudio ? { audio: 'loopback' } : {}) });
+        callback({ video: selected, ...(shareAudio && request.audioRequested ? { audio: 'loopback' } : {}) });
       } catch (err) {
         console.error('[Main:ScreenShare] Handler error:', err);
         // @ts-ignore — deny the request without crashing

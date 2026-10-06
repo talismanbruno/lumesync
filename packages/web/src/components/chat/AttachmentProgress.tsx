@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React from 'react';
 import type { TransferState } from '../../stores/transferStore';
 
@@ -63,13 +64,13 @@ export function AttachmentProgress({ loaded, total, state, filename, error, onPa
       {!isFinal && (
         <div className="absolute top-1 right-1 flex gap-1">
           {state === 'paused' && onResume && (
-            <button onClick={onResume} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label="Resume">▶</button>
+            <button onClick={onResume} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label={uiText("Resume")}>▶</button>
           )}
           {state === 'active' && onPause && (
-            <button onClick={onPause} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label="Pause">⏸</button>
+            <button onClick={onPause} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label={uiText("Pause")}>⏸</button>
           )}
           {onAbort && (
-            <button onClick={onAbort} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label="Abort">✕</button>
+            <button onClick={onAbort} className="bg-black/60 hover:bg-black/80 text-white w-5 h-5 rounded text-[9px]" aria-label={uiText("Abort")}>✕</button>
           )}
         </div>
       )}

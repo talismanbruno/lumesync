@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { useVoiceStore } from '../stores/voiceStore';
 import { getChannelOrigin, getMyUserIdForOrigin, useSpaceStore } from '../stores/spaceStore';
 import { wsSend } from '../hooks/useWebSocket';
@@ -185,14 +186,14 @@ export function joinVoiceChannel(
     if (name === 'NotAllowedError') {
       useVoiceStore.getState().setMicPermissionDenied(true);
       useUIStore.getState().addToast(
-        'Microphone access denied. You joined as a listener — tap "Allow microphone" to grant access.',
+        uiText("Microphone access denied. You joined as a listener — tap \"Allow microphone\" to grant access."),
         'warning',
       );
     } else if (name === 'NotFoundError') {
       // No mic hardware available. Proceed as listener.
       useVoiceStore.getState().setMicPermissionDenied(true);
       useUIStore.getState().addToast(
-        'No microphone detected. You joined as a listener.',
+        uiText("No microphone detected. You joined as a listener."),
         'info',
       );
     } else {
@@ -238,17 +239,17 @@ export async function requestMicPermission(): Promise<boolean> {
     const name = err instanceof Error ? err.name : '';
     if (name === 'NotAllowedError') {
       useUIStore.getState().addToast(
-        'A permissão do microfone continua bloqueada. Libere o acesso nas configurações do navegador.',
+        uiText("A permissão do microfone continua bloqueada. Libere o acesso nas configurações do navegador."),
         'warning',
       );
     } else if (name === 'NotFoundError') {
       useUIStore.getState().addToast(
-        'Nenhum microfone foi detectado.',
+        uiText("Nenhum microfone foi detectado."),
         'warning',
       );
     } else {
       useUIStore.getState().addToast(
-        'Could not access the microphone.',
+        uiText("Could not access the microphone."),
         'warning',
       );
     }

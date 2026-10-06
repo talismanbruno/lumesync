@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -12,7 +13,6 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { TransferOwnershipModal } from '../modals/TransferOwnershipModal';
 import type { SpaceLayoutItem, SpaceFolder } from '@backspace/shared';
 
-import { getSpaceGradient } from '../../utils/gradients';
 import { isElectron } from '../../platform/platform';
 import { getDesktopDownload } from '../../config/desktopDownloads';
 import { useFloatingPosition } from '../../hooks/useFloatingPosition';
@@ -37,11 +37,15 @@ const FOLDER_COLORS = [
 
 // ─── SidebarItem ─────────────────────────────────────────────────────────
 
+function getSpaceInitials(name: string): string {
+  const words = name.match(/[\p{L}\p{N}]+/gu) ?? [];
+  return words.slice(0, 2).map(word => Array.from(word)[0] ?? '').join('').toLocaleUpperCase() || '?';
+}
+
 interface SidebarItemProps {
   id: string;
   name: string;
   icon?: string | null;
-  avatarColor?: string | null;
   active: boolean;
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
@@ -61,9 +65,9 @@ interface SidebarItemProps {
   dropIndicator?: 'before' | 'after' | 'merge' | null;
 }
 
-function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMenu, type = 'space', actionType, hasUnread, dimmed, federationBadge, federationDisconnected, tooltipText, draggable, onDragStart, onDragOver, onDragEnd, onDrop, isDragging, dropIndicator }: SidebarItemProps) {
+function SidebarItem({ id, name, icon, active, onClick, onContextMenu, type = 'space', actionType, hasUnread, dimmed, federationBadge, federationDisconnected, tooltipText, draggable, onDragStart, onDragOver, onDragEnd, onDrop, isDragging, dropIndicator }: SidebarItemProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const firstLetter = name.charAt(0).toUpperCase();
+  const initials = getSpaceInitials(name);
 
   const getPillHeight = () => {
     if (active) return 'h-8';
@@ -79,23 +83,14 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
       };
     }
 
-    if (type === 'dm') {
-      const lit = active || isHovered;
-      return { background: lit ? 'rgb(var(--accent-primary))' : 'rgb(var(--interactive-muted))' };
-    }
-
-    // Space type — if it has a custom icon image, no gradient needed
-    if (icon) return undefined;
-
-    const spaceGrad = getSpaceGradient(id, name, avatarColor);
-    return { background: spaceGrad.gradient };
-  }, [type, id, name, icon, avatarColor, isHovered, active]);
+    return undefined;
+  }, [type, isHovered]);
 
   const getButtonClasses = () => {
-    const base = `lume-rail-node ${type === 'action' ? 'lume-rail-action' : ''} ${active ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 overflow-hidden`;
+    const base = `lume-rail-node ${type === 'action' ? 'lume-rail-action' : ''} ${active && type !== 'dm' ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 ${type === 'dm' ? 'overflow-visible' : 'overflow-hidden'}`;
 
     if (type === 'dm') {
-      return `${base} text-white`;
+      return `${base} lume-home-button text-white`;
     }
 
     if (type === 'action') {
@@ -106,30 +101,47 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
       return base;
     }
 
-    return `${base} text-white`;
+    return `${base} lume-community-monogram`;
   };
 
   const buttonContent = (
-    <button onClick={onClick} className={`${getButtonClasses()} ${dimmed ? 'opacity-40 saturate-50' : ''}`} style={backgroundStyle} title={tooltipText ? undefined : name}>
+    <button onClick={onClick} className={`${getButtonClasses()} ${dimmed ? 'opacity-40 saturate-50' : ''}`} style={backgroundStyle} aria-label={name} title={tooltipText ? undefined : name}>
       {type === 'dm' ? (
-        <img src="/icons/logo.png" alt="Lume" className="w-[27px] h-[27px] object-contain" />
+        <>
+          <span className="lume-home-light" aria-hidden="true">
+            <span /><span /><span />
+          </span>
+          <img src="/icons/logo.png" alt={uiText("Lume")} className="lume-home-logo w-[27px] h-[27px] object-contain" />
+          <span className="lume-home-reflection" aria-hidden="true" />
+        </>
       ) : type === 'action' ? (
         actionType === 'add' ? (
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M12 4v16M4 12h16" /><circle cx="12" cy="12" r="9" opacity=".35" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M9 12h6M12 9v6" />
           </svg>
         ) : actionType === 'explore' ? (
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 17c3-7 7-10 14-11-1 7-4 11-11 13" /><path d="m9 15 6-6" /><circle cx="12" cy="12" r="9" opacity=".25" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
           </svg>
         ) : actionType === 'download' ? (
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 4v10" /><path d="m8 10 4 4 4-4" /><path d="M5 19h14" />
           </svg>
         ) : (
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h12" /><path d="m13 8 4 4-4 4" /><path d="M7 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
-          </svg>
+          <span className="relative flex h-5 w-5 items-center justify-center" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 21a8 8 0 0 0-16 0" />
+              <circle cx="10" cy="8" r="5" />
+              <path d="M22 20c0-4-2-6-4-7M16 3a5 5 0 0 1 0 10" />
+            </svg>
+            <span className="absolute -right-px -bottom-px flex h-[10px] w-[10px] items-center justify-center rounded-[2px] bg-surface-base">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 17V7h10M7 7l10 10" />
+              </svg>
+            </span>
+          </span>
         )
       ) : icon ? (
         <img
@@ -138,7 +150,7 @@ function SidebarItem({ id, name, icon, avatarColor, active, onClick, onContextMe
           className="w-full h-full object-cover"
         />
       ) : (
-        <span className="text-[15px] font-bold">{firstLetter}</span>
+        <span className="text-[15px] font-bold">{initials}</span>
       )}
     </button>
   );
@@ -213,13 +225,11 @@ function MiniSpaceIcon({ space }: { space: TaggedSpace }) {
       />
     );
   }
-  const grad = getSpaceGradient(space.id, space.name, space.avatarColor);
   return (
     <div
-      className="w-full h-full rounded-[3px] flex items-center justify-center text-white"
-      style={{ background: grad.gradient }}
+      className="lume-community-monogram w-full h-full rounded-[3px] flex items-center justify-center"
     >
-      <span className="text-[7px] font-bold leading-none">{space.name.charAt(0).toUpperCase()}</span>
+      <span className="text-[7px] font-bold leading-none">{getSpaceInitials(space.name)}</span>
     </div>
   );
 }
@@ -431,7 +441,6 @@ function FolderFlyout({
         const isFederated = !!origin;
         const isDimmed = isFederated && disconnectedOrigins.has(origin);
         const icon = space.icon;
-        const grad = !icon ? getSpaceGradient(space.id, space.name, space.avatarColor) : null;
 
         return (
           <React.Fragment key={space.id}>
@@ -443,7 +452,7 @@ function FolderFlyout({
             <button
               className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 mx-1 rounded-md transition-colors ${
                 isDimmed ? 'opacity-40 saturate-50' : ''
-              } ${isActive ? 'bg-white/[0.10]' : 'hover:bg-white/[0.06]'}`}
+              } ${isActive ? 'bg-cyan-400/[0.08]' : 'hover:bg-cyan-400/[0.055]'}`}
               style={{ width: 'calc(100% - 8px)' }}
               draggable
               onDragStart={(e) => onDragStart(e, space.id)}
@@ -459,7 +468,7 @@ function FolderFlyout({
               }}
             >
               {/* Space icon */}
-              <div className="w-8 h-8 rounded-[10px] flex-shrink-0 overflow-hidden flex items-center justify-center" style={grad ? { background: grad.gradient } : undefined}>
+              <div className={`w-8 h-8 rounded-[10px] flex-shrink-0 overflow-hidden flex items-center justify-center ${icon ? '' : 'lume-community-monogram'}`}>
                 {icon ? (
                   <img
                     src={icon.startsWith('http') || icon.startsWith('/') ? icon : `/api/uploads/${icon}`}
@@ -467,7 +476,7 @@ function FolderFlyout({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-[13px] font-bold text-white">{space.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-[13px] font-bold">{getSpaceInitials(space.name)}</span>
                 )}
               </div>
 
@@ -639,7 +648,7 @@ export function SpaceSidebar() {
       {
         key: 'invite',
         type: 'action',
-        label: 'Invite People',
+        label: uiText("Invite People"),
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
@@ -651,16 +660,16 @@ export function SpaceSidebar() {
             const origin = (space as TaggedSpace)._instanceOrigin || window.location.origin;
             const url = `${origin}/invite/${code}`;
             await navigator.clipboard.writeText(url);
-            useUIStore.getState().addToast('Invite link copied to clipboard', 'success', 3000);
+            useUIStore.getState().addToast(uiText("Invite link copied to clipboard"), 'success', 3000);
           } catch {
-            useUIStore.getState().addToast('Failed to generate invite', 'warning', 3000);
+            useUIStore.getState().addToast(uiText("Failed to generate invite"), 'warning', 3000);
           }
         },
       },
       {
         key: 'transfer',
         type: 'action',
-        label: 'Transfer Ownership',
+        label: uiText("Transfer Ownership"),
         hidden: !isOwner,
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -672,7 +681,7 @@ export function SpaceSidebar() {
       {
         key: 'leave',
         type: 'action',
-        label: 'Leave Space',
+        label: uiText("Leave Space"),
         hidden: isOwner,
         danger: true,
         icon: (
@@ -779,7 +788,7 @@ export function SpaceSidebar() {
     const origin = space?._instanceOrigin;
     if (origin && disconnectedOrigins.has(origin)) {
       const inst = instances.find(i => i.origin === origin);
-      addToast(`Reconnecting to ${inst?.label || 'remote instance'}...`, 'warning', 4000);
+      addToast(uiText("Reconnecting to {0}...", [inst?.label || 'remote instance']), 'warning', 4000);
       return;
     }
     setCurrentSpace(spaceId);
@@ -1119,7 +1128,6 @@ export function SpaceSidebar() {
               id={item.space.id}
               name={item.space.name}
               icon={item.space.icon}
-              avatarColor={item.space.avatarColor}
               active={currentSpaceId === item.space.id}
               onClick={() => handleSpaceClick(item.space.id)}
               onContextMenu={(e) => handleSpaceContextMenu(item.space.id, e)}
@@ -1163,7 +1171,7 @@ export function SpaceSidebar() {
                 {
                   key: 'rename',
                   type: 'action',
-                  label: 'Rename Folder',
+                  label: uiText("Rename Folder"),
                   icon: (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
@@ -1179,12 +1187,12 @@ export function SpaceSidebar() {
                   type: 'custom',
                   render: () => (
                     <div className="px-3 py-1.5">
-                      <p className="text-[11px] text-txt-tertiary mb-1.5">Folder Color</p>
+                      <p className="text-[11px] text-txt-tertiary mb-1.5">{uiText("Folder Color")}</p>
                       <div className="flex gap-1.5">
                         <button
                           className={`w-5 h-5 rounded-full border-2 ${!folderRef.color ? 'border-white/40' : 'border-transparent'} bg-white/10`}
                           onClick={() => { handleFolderColorChange(folderRef.id, null); useContextMenuStore.getState().close(); }}
-                          title="Default"
+                          title={uiText("Default")}
                         />
                         {FOLDER_COLORS.map((c) => (
                           <button
@@ -1206,7 +1214,7 @@ export function SpaceSidebar() {
                 {
                   key: 'ungroup',
                   type: 'action',
-                  label: 'Ungroup',
+                  label: uiText("Ungroup"),
                   danger: true,
                   icon: (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -1234,7 +1242,7 @@ export function SpaceSidebar() {
 
       <SidebarItem
         id="add-space"
-        name="Add a Space"
+        name="Criar comunidade"
         active={false}
         onClick={() => openModal('createSpace')}
         type="action"
@@ -1243,7 +1251,7 @@ export function SpaceSidebar() {
 
       <SidebarItem
         id="join-space"
-        name="Join a Space"
+        name="Entrar por convite"
         active={false}
         onClick={() => openModal('joinSpace')}
         type="action"
@@ -1252,7 +1260,7 @@ export function SpaceSidebar() {
 
       <SidebarItem
         id="explore"
-        name="Explore Spaces"
+        name="Explorar comunidades"
         active={location.pathname === '/explore'}
         onClick={handleExploreClick}
         type="action"
@@ -1304,10 +1312,10 @@ export function SpaceSidebar() {
               leaveSpace(leaveConfirmSpaceId);
               setLeaveConfirmSpaceId(null);
             }}
-            title={`Leave ${space?.name ?? 'Space'}`}
-            description="Are you sure you want to leave this space? You'll need a new invite to rejoin."
+            title={uiText("Leave {0}", [space?.name ?? 'Space'])}
+            description={uiText("Are you sure you want to leave this space? You'll need a new invite to rejoin.")}
             variant="danger"
-            confirmLabel="Leave"
+            confirmLabel={uiText("Leave")}
           />
         );
       })()}

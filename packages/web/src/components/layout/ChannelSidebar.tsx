@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { Channel, UserStatus } from '@backspace/shared';
@@ -21,12 +22,13 @@ import { DmListItem } from './DmListItem';
 import { useDragManager, type DropTarget, type LayoutItem } from '../../hooks/useDragManager';
 import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 import { useAudioDevices } from '../../hooks/useAudioDevices';
-import { DropdownItem } from '../modals/settingsPanels/_shared/SettingsPickerPrimitives';
+import { AudioDevicePanel } from '../voice/AudioDevicePanel';
 import { VerifiedBadge } from '../ui/VerifiedBadge';
 import { PioneerBadge } from '../ui/PioneerBadge';
 import { BetaContributorBadge } from '../ui/BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
+import { PeopleIcon } from '../ui/PeopleIcon';
 
 export function ChannelSidebar() {
   const spaces = useSpaceStore((s) => s.spaces);
@@ -321,7 +323,7 @@ export function ChannelSidebar() {
       items.push({
         key: 'create-channel',
         type: 'action',
-        label: 'Create Channel',
+        label: uiText("Create Channel"),
         icon: (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2.5 12.5v-9l5-2v9l-5 2zm6-9v9l5-2v-9l-5 2z" opacity="0.5" />
@@ -333,7 +335,7 @@ export function ChannelSidebar() {
       items.push({
         key: 'create-category',
         type: 'action',
-        label: 'Create Category',
+        label: uiText("Create Category"),
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
@@ -346,7 +348,7 @@ export function ChannelSidebar() {
       items.push({
         key: 'invite',
         type: 'action',
-        label: 'Invite People',
+        label: uiText("Invite People"),
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21 3H24V5H21V8H19V5H16V3H19V0H21V3ZM10 12C12.21 12 14 10.21 14 8C14 5.79 12.21 4 10 4C7.79 4 6 5.79 6 8C6 10.21 7.79 12 10 12ZM10 13C6.69 13 1 14.66 1 18V20H19V18C19 14.66 13.31 13 10 13Z" />
@@ -358,7 +360,7 @@ export function ChannelSidebar() {
     items.push({
       key: 'settings',
       type: 'action',
-      label: 'Space Settings',
+      label: uiText("Space Settings"),
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z" />
@@ -376,7 +378,7 @@ export function ChannelSidebar() {
       {
         key: 'leave-group',
         type: 'action',
-        label: 'Leave Group',
+        label: uiText("Leave Group"),
         danger: true,
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -451,20 +453,16 @@ export function ChannelSidebar() {
                 : 'text-txt-tertiary hover:bg-interactive-hover hover:text-txt-secondary'
             }`}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={`flex-shrink-0 ${!currentChannelId ? 'text-white' : 'opacity-70 group-hover:opacity-100'}`}>
-              <path d="M13 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-2-4a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z" />
-              <path d="M3 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-1c0-2.76-5.37-4-8-4s-8 1.24-8 4v1Z" />
-              <path d="M3.5 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" opacity=".5" />
-            </svg>
-            <span className="font-medium text-[16px]">Pessoas</span>
+            <PeopleIcon className={`flex-shrink-0 ${!currentChannelId ? 'text-cyan-200' : 'opacity-70 group-hover:opacity-100'}`} />
+            <span className="font-medium text-[16px]">{uiText("Pessoas")}</span>
           </div>
 
           <div className="mt-[18px] px-2 mb-1 flex items-center justify-between group">
-            <span className="text-[12px] font-bold text-txt-tertiary tracking-wider">Mensagens Diretas</span>
+            <span className="text-[12px] font-bold text-txt-tertiary tracking-wider">{uiText("Mensagens Diretas")}</span>
             <button
               onClick={() => openModal('newDm')}
               className="text-txt-tertiary hover:text-txt-primary transition-colors"
-              title="Nova mensagem direta"
+              title={uiText("Nova mensagem direta")}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
@@ -494,7 +492,7 @@ export function ChannelSidebar() {
             ))}
             {dmChannels.length === 0 && (
               <div className="flex flex-col items-center py-6 opacity-80">
-                <p className="text-[13px] text-txt-tertiary">Nenhuma conversa ainda.</p>
+                <p className="text-[13px] text-txt-tertiary">{uiText("Nenhuma conversa ainda.")}</p>
               </div>
             )}
           </div>
@@ -521,9 +519,9 @@ export function ChannelSidebar() {
             setLeaveGroupDmLoading(false);
           }
         }}
-        title="Leave Group DM"
-        description="Are you sure you want to leave? You won't be able to rejoin unless someone adds you back."
-        confirmLabel="Leave"
+        title={uiText("Leave Group DM")}
+        description={uiText("Are you sure you want to leave? You won't be able to rejoin unless someone adds you back.")}
+        confirmLabel={uiText("Leave")}
         variant="danger"
         loading={leaveGroupDmLoading}
       />
@@ -556,7 +554,7 @@ export function ChannelSidebar() {
           <button
             onClick={() => openModal('invite')}
             className="w-10 h-full flex items-center justify-center text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover transition-all flex-shrink-0"
-            title="Invite People"
+            title={uiText("Invite People")}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M21 3H24V5H21V8H19V5H16V3H19V0H21V3ZM10 12C12.21 12 14 10.21 14 8C14 5.79 12.21 4 10 4C7.79 4 6 5.79 6 8C6 10.21 7.79 12 10 12ZM10 13C6.69 13 1 14.66 1 18V20H19V18C19 14.66 13.31 13 10 13Z" />
@@ -568,7 +566,7 @@ export function ChannelSidebar() {
       {/* Channels — dynamic category layout */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pt-3 px-2 no-scrollbar" style={{ paddingBottom: floatingPanelHeight + 24 }} onDrop={containerHandlers.onDrop} onDragOver={containerHandlers.onDragOver} onContextMenu={handleSidebarContextMenu}>
         {showChannelSkeleton ? (
-          <div className="px-2 pt-3" role="status" aria-label="Loading channels">
+          <div className="px-2 pt-3" role="status" aria-label={uiText("Loading channels")}>
             {/* Category group 1 */}
             <div className="skeleton skeleton-bar h-2 w-[45%] ml-2 mb-3" />
             {Array.from({ length: 3 }, (_, i) => (
@@ -595,7 +593,7 @@ export function ChannelSidebar() {
                 <button
                   onClick={() => openModal('createChannel')}
                   className="text-txt-tertiary hover:text-txt-primary transition-colors"
-                  title="Create Channel"
+                  title={uiText("Create Channel")}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
@@ -669,7 +667,7 @@ export function ChannelSidebar() {
                         openModal('createChannel', { categoryId: category.id });
                       }}
                       className="text-txt-tertiary hover:text-txt-primary transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
-                      title="Create Channel"
+                      title={uiText("Create Channel")}
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
@@ -690,7 +688,7 @@ export function ChannelSidebar() {
                     {
                       key: 'category-settings',
                       type: 'action',
-                      label: 'Category Settings',
+                      label: uiText("Category Settings"),
                       icon: (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.611 3.611 0 0112 15.6z" />
@@ -701,7 +699,7 @@ export function ChannelSidebar() {
                     {
                       key: 'delete-category',
                       type: 'action',
-                      label: 'Delete Category',
+                      label: uiText("Delete Category"),
                       danger: true,
                       icon: (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -742,7 +740,7 @@ export function ChannelSidebar() {
                     />
                   ))}
                   {catChannels.length === 0 && (
-                    <div className="px-2 py-2 text-[12px] text-txt-tertiary italic opacity-40">No channels</div>
+                    <div className="px-2 py-2 text-[12px] text-txt-tertiary italic opacity-40">{uiText("No channels")}</div>
                   )}
                 </div>
               )}
@@ -761,7 +759,7 @@ export function ChannelSidebar() {
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0 opacity-70">
                   <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
                 </svg>
-                <span className="text-[12px]">Create Channel</span>
+                <span className="text-[12px]">{uiText("Create Channel")}</span>
               </button>
             )}
             <button
@@ -771,7 +769,7 @@ export function ChannelSidebar() {
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0 opacity-70">
                 <path d="M8 2a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 2z" />
               </svg>
-              <span className="text-[12px]">Create Category</span>
+              <span className="text-[12px]">{uiText("Create Category")}</span>
             </button>
           </div>
         )}
@@ -796,9 +794,9 @@ export function ChannelSidebar() {
           setDeleteCategoryLoading(false);
         }
       }}
-      title="Delete Category"
-      description="Are you sure you want to delete this category? Channels in this category will be moved to uncategorized — no channels will be deleted."
-      confirmLabel="Delete"
+      title={uiText("Delete Category")}
+      description={uiText("Are you sure you want to delete this category? Channels in this category will be moved to uncategorized — no channels will be deleted.")}
+      confirmLabel={uiText("Delete")}
       variant="danger"
       loading={deleteCategoryLoading}
     />
@@ -842,18 +840,16 @@ function UserAreaPanel({
   const { permState, inputs: inputDevices, outputs: outputDevices, inputLabels, outputLabels, requestPermission } = useAudioDevices();
 
   const selectedInputLabel = inputDeviceId === 'default'
-    ? 'System Default'
-    : inputLabels.get(inputDeviceId) ?? 'System Default';
+    ? 'Padrão do sistema'
+    : inputLabels.get(inputDeviceId) ?? 'Padrão do sistema';
   const selectedOutputLabel = outputDeviceId === 'default'
-    ? 'System Default'
-    : outputLabels.get(outputDeviceId) ?? 'System Default';
+    ? 'Padrão do sistema'
+    : outputLabels.get(outputDeviceId) ?? 'Padrão do sistema';
 
   const inputVolume = useVoiceStore((s) => s.inputVolume);
   const storeSetInputVolume = useVoiceStore((s) => s.setInputVolume);
   const outputVolume = useVoiceStore((s) => s.outputVolume);
   const storeSetOutputVolume = useVoiceStore((s) => s.setOutputVolume);
-  const [showInputDeviceList, setShowInputDeviceList] = useState(false);
-  const [showOutputDeviceList, setShowOutputDeviceList] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -868,9 +864,11 @@ function UserAreaPanel({
       return;
     }
 
+    let disposed = false;
     const start = async () => {
       try {
         await AudioManager.getInstance().resumeContext();
+        if (disposed) return;
         const analyser = AudioManager.getInstance().getAnalyserNode();
         analyser.fftSize = 256;
         analyserRef.current = analyser;
@@ -888,6 +886,7 @@ function UserAreaPanel({
     };
     start();
     return () => {
+      disposed = true;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       analyserRef.current = null;
     };
@@ -897,8 +896,6 @@ function UserAreaPanel({
     const handleClick = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpenPanel(null);
-        setShowInputDeviceList(false);
-        setShowOutputDeviceList(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -910,8 +907,6 @@ function UserAreaPanel({
       setOpenPanel(null);
     } else {
       setOpenPanel(panel);
-      setShowInputDeviceList(false);
-      setShowOutputDeviceList(false);
       // Resume the AudioContext so the mic-level meter starts measuring on open.
       AudioManager.getInstance().resumeContext();
     }
@@ -946,18 +941,13 @@ function UserAreaPanel({
   const selectInput = (deviceId: string) => {
     setInputDevice(deviceId); // Pure state update → triggers syncMic if in voice call
     AudioManager.getInstance().setInputDevice(deviceId).catch(() => {});
-    setShowInputDeviceList(false);
   };
 
   const selectOutput = (deviceId: string) => {
     setOutputDevice(deviceId);
     AudioManager.getInstance().setOutputDevice(deviceId).catch(() => {});
-    setShowOutputDeviceList(false);
   };
 
-  // Generate mic level bars (20 bars like Discord)
-  const micBars = 20;
-  const activeBars = Math.round(micLevel * micBars * (inputVolume / 100));
 
   return (
     <div className="relative" ref={panelRef}>
@@ -966,7 +956,7 @@ function UserAreaPanel({
           <div className="relative px-3.5 pt-3.5 pb-3 border-b border-white/[0.06]">
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
             <div className="flex items-center gap-3">
-              <Avatar src={user.avatar} name={user.displayName ?? user.username} size={42} status={user.status as UserStatus} />
+              <Avatar src={user.avatar} name={user.displayName ?? user.username} size={42} status={user.status as UserStatus} statusLabel={user.status === 'offline' ? 'Invisível' : undefined} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="truncate text-[14px] font-bold text-txt-primary">{user.displayName ?? user.username}</span>
@@ -976,12 +966,12 @@ function UserAreaPanel({
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-txt-secondary">Status</span>
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-txt-secondary">{uiText("Status")}</span>
             </div>
           </div>
 
           <div className="p-2.5">
-            <div className="mb-2 px-1 text-[9px] font-bold uppercase tracking-[0.18em] text-txt-tertiary">Presença</div>
+            <div className="mb-2 px-1 text-[9px] font-bold uppercase tracking-[0.18em] text-txt-tertiary">{uiText("Presença")}</div>
             <div className="grid grid-cols-2 gap-1.5">
               {([
                 ['online', 'Disponível', 'Aberto para conversar', 'bg-status-online'],
@@ -1001,207 +991,38 @@ function UserAreaPanel({
             </div>
 
             <form className="mt-2.5 flex gap-1.5" onSubmit={(e) => { e.preventDefault(); saveCustomStatus(); }}>
-              <input value={customStatus} maxLength={80} onChange={(e) => setCustomStatus(e.target.value)} placeholder="Escreva um status..." className="min-w-0 flex-1 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2 text-[11px] text-txt-primary outline-none transition-colors placeholder:text-txt-tertiary focus:border-cyan-400/35" />
-              <button disabled={isSavingPresence} className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.12] px-3 text-[10px] font-bold text-cyan-200 hover:bg-cyan-400/[0.2] disabled:opacity-50">Salvar</button>
+              <input value={customStatus} maxLength={80} onChange={(e) => setCustomStatus(e.target.value)} placeholder={uiText("Escreva um status...")} className="min-w-0 flex-1 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2 text-[11px] text-txt-primary outline-none transition-colors placeholder:text-txt-tertiary focus:border-cyan-400/35" />
+              <button disabled={isSavingPresence} className="rounded-xl border border-cyan-300/20 bg-cyan-400/[0.12] px-3 text-[10px] font-bold text-cyan-200 hover:bg-cyan-400/[0.2] disabled:opacity-50">{uiText("Salvar")}</button>
             </form>
           </div>
 
           <div className="flex gap-1.5 border-t border-white/[0.06] p-2.5">
-            <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('account'); }} className="flex-1 rounded-xl px-3 py-2 text-left text-[11px] font-semibold text-txt-secondary hover:bg-white/[0.05] hover:text-white">Editar perfil</button>
-            {user.isAdmin && <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('instance'); }} className="flex-1 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-left text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/[0.1]">Ferramentas Lume</button>}
+            <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('account'); }} className="flex-1 rounded-xl px-3 py-2 text-left text-[11px] font-semibold text-txt-secondary hover:bg-white/[0.05] hover:text-white">{uiText("Editar perfil")}</button>
+            {user.isAdmin && <button type="button" onClick={() => { setOpenPanel(null); onSettingsClick('instance'); }} className="flex-1 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-left text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/[0.1]">{uiText("Ferramentas Lume")}</button>}
           </div>
         </div>
       )}
 
-      {/* Input settings panel */}
-      {openPanel === 'input' && (
-        <div className="absolute bottom-full left-0 right-0 mb-0 bg-surface-channel rounded-t-lg shadow-lg z-[150] border-t border-x border-border-hard">
-          {/* Input Device */}
-          <div className="relative">
-            <button
-              onClick={() => setShowInputDeviceList(!showInputDeviceList)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-interactive-hover transition-colors"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="text-[15px] font-semibold text-txt-primary text-left">Input Device</div>
-                <div className="text-[13px] text-txt-tertiary truncate text-left">{selectedInputLabel}</div>
-              </div>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary flex-shrink-0 ml-2">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-              </svg>
-            </button>
-            {showInputDeviceList && (
-              <div className="bg-surface-base rounded-lg shadow-lg mx-2 mb-2 py-1 border border-border-hard max-h-64 overflow-y-auto">
-                {permState !== 'granted' && (
-                  <div className="px-3 py-2 text-[12px] text-txt-tertiary">
-                    Microphone permission needed.{' '}
-                    <button
-                      onClick={() => { requestPermission().catch(() => {}); }}
-                      className="underline text-accent-primary"
-                    >
-                      Enable
-                    </button>
-                  </div>
-                )}
-                {permState === 'granted' && (
-                  <>
-                    <DropdownItem
-                      label="System Default"
-                      active={inputDeviceId === 'default'}
-                      onClick={() => selectInput('default')}
-                    />
-                    {inputDevices.filter(d => d.deviceId !== 'default').map(d => (
-                      <DropdownItem
-                        key={d.deviceId}
-                        label={inputLabels.get(d.deviceId) ?? d.deviceId}
-                        active={inputDeviceId === d.deviceId}
-                        onClick={() => selectInput(d.deviceId)}
-                      />
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="mx-4 border-t border-border-soft" />
-
-                      {/* Input Volume */}
-                      <div className="px-4 py-3">
-                        <div className="text-[15px] font-semibold text-txt-primary mb-2">Input Volume</div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={200}
-                          value={inputVolume}
-                          onChange={(e) => {
-                            const vol = Number(e.target.value);
-                            storeSetInputVolume(vol);
-                          }}
-                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-accent-primary bg-surface-base [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
-                          style={{
-                            background: `linear-gradient(to right, rgb(var(--accent-primary)) 0%, rgb(var(--accent-primary)) ${inputVolume / 2}%, rgb(var(--interactive-muted)) ${inputVolume / 2}%, rgb(var(--interactive-muted)) 100%)`,
-                          }}
-                        />
-                        {/* Mic level meter */}
-                        <div className="flex items-center gap-[3px] mt-2.5">
-                          {Array.from({ length: micBars }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`flex-1 h-[6px] rounded-[1px] transition-colors duration-75 ${
-                                i < activeBars ? 'bg-txt-tertiary' : 'bg-interactive-muted'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-          
-                      <div className="mx-4 border-t border-border-soft" />
-          
-                      {/* Voice Settings link */}
-                      <button
-                        onClick={() => onSettingsClick('voice')}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-interactive-hover transition-colors"
-                      >
-                        <span className="text-[15px] font-semibold text-txt-primary">Voice Settings</span>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
-                          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-          
-                  {/* Output settings panel */}
-                  {openPanel === 'output' && (
-                    <div className="absolute bottom-full left-0 right-0 mb-0 bg-surface-channel rounded-t-lg shadow-lg z-[150] border-t border-x border-border-hard">
-                      {/* Output Device */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowOutputDeviceList(!showOutputDeviceList)}
-                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-interactive-hover transition-colors"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[15px] font-semibold text-txt-primary text-left">Output Device</div>
-                            <div className="text-[13px] text-txt-tertiary truncate text-left">{selectedOutputLabel}</div>
-                          </div>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary flex-shrink-0 ml-2">
-                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-                          </svg>
-                        </button>
-                        {showOutputDeviceList && (
-                          <div className="bg-surface-base rounded-lg shadow-lg mx-2 mb-2 py-1 border border-border-hard max-h-64 overflow-y-auto">
-                            {permState !== 'granted' && (
-                              <div className="px-3 py-2 text-[12px] text-txt-tertiary">
-                                Audio permission needed.{' '}
-                                <button
-                                  onClick={() => { requestPermission().catch(() => {}); }}
-                                  className="underline text-accent-primary"
-                                >
-                                  Enable
-                                </button>
-                              </div>
-                            )}
-                            {permState === 'granted' && (
-                              <>
-                                <DropdownItem
-                                  label="System Default"
-                                  active={outputDeviceId === 'default'}
-                                  onClick={() => selectOutput('default')}
-                                />
-                                {outputDevices.filter(d => d.deviceId !== 'default').map(d => (
-                                  <DropdownItem
-                                    key={d.deviceId}
-                                    label={outputLabels.get(d.deviceId) ?? d.deviceId}
-                                    active={outputDeviceId === d.deviceId}
-                                    onClick={() => selectOutput(d.deviceId)}
-                                  />
-                                ))}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-          
-                      <div className="mx-4 border-t border-border-soft" />
-          
-                      {/* Output Volume */}
-                      <div className="px-4 py-3">
-                        <div className="text-[15px] font-semibold text-txt-primary mb-2">Output Volume</div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={200}
-                          value={outputVolume}
-                          onChange={(e) => {
-                            const vol = Number(e.target.value);
-                            storeSetOutputVolume(vol);
-                          }}
-                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-surface-base [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
-                          style={{
-                            background: `linear-gradient(to right, rgb(var(--accent-primary)) 0%, rgb(var(--accent-primary)) ${outputVolume / 2}%, rgb(var(--interactive-muted)) ${outputVolume / 2}%, rgb(var(--interactive-muted)) 100%)`,
-                          }}
-                        />
-                      </div>
-          <div className="mx-4 border-t border-border-soft" />
-
-          {/* Voice Settings link */}
-          <button
-            onClick={() => onSettingsClick('voice')}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-interactive-hover transition-colors"
-          >
-            <span className="text-[15px] font-semibold text-txt-primary">Voice Settings</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
-              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-            </svg>
-          </button>
-        </div>
+      {(openPanel === 'input' || openPanel === 'output') && (
+        <AudioDevicePanel key={openPanel} kind={openPanel}
+          deviceId={openPanel === 'input' ? inputDeviceId : outputDeviceId}
+          deviceLabel={openPanel === 'input' ? selectedInputLabel : selectedOutputLabel}
+          devices={openPanel === 'input' ? inputDevices : outputDevices}
+          deviceLabels={openPanel === 'input' ? inputLabels : outputLabels}
+          permission={permState} requestPermission={requestPermission}
+          onSelectDevice={openPanel === 'input' ? selectInput : selectOutput}
+          volume={openPanel === 'input' ? inputVolume : outputVolume}
+          onVolumeChange={openPanel === 'input' ? storeSetInputVolume : storeSetOutputVolume}
+          level={openPanel === 'input' ? micLevel * (inputVolume / 100) : undefined}
+          onClose={() => setOpenPanel(null)}
+          onSettings={() => { setOpenPanel(null); onSettingsClick('voice'); }} />
       )}
 
       {/* User area bar */}
       <div className="h-[52px] px-2 flex items-center select-none">
         {/* Avatar + name */}
         <button type="button" onClick={() => setOpenPanel(openPanel === 'presence' ? null : 'presence')} className={`p-1 hover:bg-interactive-hover rounded-[7px] flex items-center gap-2 flex-1 min-w-0 cursor-pointer transition-colors group text-left ${openPanel === 'presence' ? 'bg-cyan-400/[0.07]' : ''}`}>
-          <Avatar src={user.avatar} name={user.displayName ?? user.username} size={34} status={user.status as any} />
+          <Avatar src={user.avatar} name={user.displayName ?? user.username} size={34} status={user.status as any} statusLabel={user.status === 'offline' ? 'Invisível' : undefined} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 min-w-0">
               <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight">{user.displayName ?? user.username}</span>
@@ -1222,7 +1043,7 @@ function UserAreaPanel({
               (isSpaceMuted || isSpaceDeafened || isPermissionMuted) ? 'text-accent-amber cursor-not-allowed'
                 : isMuted || isDeafened ? 'text-txt-danger' : 'text-txt-tertiary hover:text-txt-primary'
             }`}
-            title={(isPermissionMuted) ? 'Muted (No Speak Permission)' : (isSpaceMuted || isSpaceDeafened) ? 'Space Muted' : isMuted ? 'Unmute' : 'Mute'}
+            title={(isPermissionMuted) ? uiText("Muted (No Speak Permission)") : (isSpaceMuted || isSpaceDeafened) ? uiText("Space Muted") : isMuted ? uiText("Unmute") : uiText("Mute")}
           >
             <OrbitalIcon name="mic" cut={isMuted || isDeafened || isSpaceMuted || isSpaceDeafened || isPermissionMuted} />
           </button>
@@ -1232,7 +1053,9 @@ function UserAreaPanel({
             className={`w-[18px] h-8 flex items-center justify-center hover:bg-interactive-hover rounded-r-[4px] transition-colors ${
               openPanel === 'input' ? 'text-txt-primary bg-interactive-hover' : 'text-txt-tertiary hover:text-txt-primary'
             }`}
-            title="Input Devices"
+            title={uiText("Opções do microfone")}
+            aria-label={uiText("Opções do microfone")}
+            aria-expanded={openPanel === 'input'}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className={`transition-transform ${openPanel === 'input' ? 'rotate-180' : ''}`}>
               <path d="M7 10l5 5 5-5z" />
@@ -1246,7 +1069,7 @@ function UserAreaPanel({
               isSpaceDeafened ? 'text-accent-amber cursor-not-allowed'
                 : isDeafened ? 'text-txt-danger' : 'text-txt-tertiary hover:text-txt-primary'
             }`}
-            title={isSpaceDeafened ? 'Space Deafened' : isDeafened ? 'Undeafen' : 'Deafen'}
+            title={isSpaceDeafened ? uiText("Space Deafened") : isDeafened ? uiText("Undeafen") : uiText("Deafen")}
           >
             <OrbitalIcon name="audio" cut={isDeafened || isSpaceDeafened} />
           </button>
@@ -1256,7 +1079,9 @@ function UserAreaPanel({
             className={`w-[18px] h-8 flex items-center justify-center hover:bg-interactive-hover rounded-r-[4px] transition-colors ${
               openPanel === 'output' ? 'text-txt-primary bg-interactive-hover' : 'text-txt-tertiary hover:text-txt-primary'
             }`}
-            title="Output Devices"
+            title={uiText("Opções de áudio")}
+            aria-label={uiText("Opções de áudio")}
+            aria-expanded={openPanel === 'output'}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className={`transition-transform ${openPanel === 'output' ? 'rotate-180' : ''}`}>
               <path d="M7 10l5 5 5-5z" />
@@ -1267,7 +1092,8 @@ function UserAreaPanel({
           <button
             onClick={() => onSettingsClick()}
             className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover rounded-[4px] transition-colors"
-            title="Settings"
+            title={uiText("Configurações")}
+            aria-label={uiText("Configurações")}
           >
             <OrbitalIcon name="tune" />
           </button>
@@ -1357,24 +1183,15 @@ function ChannelItem({
       {dropIndicator === 'before' && <div className="absolute -top-[1px] left-2 right-2 h-[2px] bg-accent-mint rounded-full z-10" />}
       <button
         onClick={onChannelClick}
-        className={`relative w-full flex items-center gap-1.5 px-[10px] h-8 rounded-[6px] group transition-colors ${
-          isActive
-            ? 'bg-surface-elevated text-txt-primary'
-            : isUnread
-              ? 'text-white hover:text-white hover:bg-interactive-hover'
-              : 'text-txt-tertiary hover:text-txt-secondary hover:bg-interactive-hover'
-        }`}
+        className="lume-channel-link relative w-full flex items-center gap-1.5 px-[10px] h-8 rounded-[6px] group transition-colors"
+        data-active={isActive}
+        data-unread={isUnread || undefined}
+        aria-current={isActive ? 'page' : undefined}
       >
-        {isActive && (
-          <div
-            className="absolute -left-[2px] top-1/2 -translate-y-1/2 w-[3px] bg-white rounded-r-full"
-            style={{ height: '55%', opacity: 0.7 }}
-          />
-        )}
         {isUnread && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-accent-rose" />
         )}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0 text-[#6e6e7a]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="lume-channel-symbol flex-shrink-0">
           <path d="M5.88657 21C5.57547 21 5.3399 20.7189 5.39427 20.4126L6.00001 17H2.59511C2.28449 17 2.04905 16.7198 2.10259 16.4138L2.27759 15.4138C2.31946 15.1746 2.52722 15 2.77011 15H6.35001L7.41001 9H4.00511C3.69449 9 3.45905 8.71977 3.51259 8.41381L3.68759 7.41381C3.72946 7.17456 3.93722 7 4.18011 7H7.76001L8.39677 3.41262C8.43914 3.17391 8.64664 3 8.88907 3H9.87344C10.1845 3 10.4201 3.28107 10.3657 3.58738L9.76001 7H15.76L16.3968 3.41262C16.4391 3.17391 16.6466 3 16.8891 3H17.8734C18.1845 3 18.4201 3.28107 18.3657 3.58738L17.76 7H21.1649C21.4755 7 21.711 7.28023 21.6574 7.58619L21.4824 8.58619C21.4406 8.82544 21.2328 9 20.9899 9H17.41L16.35 15H19.7549C20.0655 15 20.301 15.2802 20.2474 15.5862L20.0724 16.5862C20.0306 16.8254 19.8228 17 19.5799 17H16L15.3632 20.5874C15.3209 20.8261 15.1134 21 14.8709 21H13.8866C13.5755 21 13.3399 20.7189 13.3943 20.4126L14 17H8.00001L7.36325 20.5874C7.32088 20.8261 7.11337 21 6.87094 21H5.88657ZM9.41001 9L8.35001 15H14.35L15.41 9H9.41001Z" />
         </svg>
         <span className={`truncate text-[15px] leading-5 tracking-[0.01em] flex-1 text-left ${isUnread ? 'font-semibold' : 'font-medium'}`}>{channel.name}</span>

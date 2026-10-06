@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useTransferStore } from '../../stores/transferStore';
@@ -23,23 +24,22 @@ export function SwAutoUpdate() {
   return (
     <div className="fixed bottom-6 left-6 z-[300] glass-pill rounded-xl px-4 py-3 flex items-center gap-3 max-w-[360px]">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-txt-primary">Atualização pronta</p>
+        <p className="text-sm font-medium text-txt-primary">{uiText("Atualização pronta")}</p>
         <p className="text-xs text-txt-secondary">
-          {busy ? 'Finalize a chamada ou o envio antes de atualizar.' : 'Salve qualquer mensagem em edição antes de atualizar.'}
+          {busy ? uiText("Finalize a chamada ou o envio antes de atualizar.") : uiText("Salve qualquer mensagem em edição antes de atualizar.")}
         </p>
       </div>
       <button
         type="button"
         disabled={busy}
         onClick={() => {
-          if (window.confirm('Atualizar agora? Mensagens ainda não enviadas podem ser perdidas.')) {
+          if (window.confirm(uiText("Atualizar agora? Mensagens ainda não enviadas podem ser perdidas."))) {
             void updateServiceWorker(true);
           }
         }}
         className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-primary text-white disabled:opacity-50"
       >
-        Atualizar
-      </button>
+        {uiText("Atualizar")}</button>
     </div>
   );
 }

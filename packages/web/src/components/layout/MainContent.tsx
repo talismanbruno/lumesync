@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { t as uiText } from '../../i18n';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useChatStore } from '../../stores/chatStore';
@@ -9,6 +10,8 @@ import { MessageInput } from '../chat/MessageInput';
 import { VoiceGrid } from '../voice/VoiceGrid';
 import { VoiceControlBar } from '../voice/VoiceControlBar';
 import { VoiceChatPanel } from '../voice/VoiceChatPanel';
+import { DmCallWorkspace } from '../voice/DmCallWorkspace';
+import { getVoiceFullscreenElement, exitVoiceFullscreen } from '../../utils/voiceFullscreen';
 import { FriendsPage } from '../chat/FriendsPage';
 import { ExplorePage } from '../chat/ExplorePage';
 import { Avatar } from '../ui/Avatar';
@@ -67,34 +70,9 @@ export function MainContent() {
     setSearchOpen(false);
   }, [currentChannelId]);
 
-  // Handle actual browser fullscreen API.
-  //
-  // iOS Safari (and iPadOS pre-16.4) does NOT implement the standard
-  // `Element.requestFullscreen()` on generic elements. Older WebKit exposes a
-  // `webkitRequestFullscreen` variant; pure iPhone has neither for a `<div>`
-  // (only `HTMLVideoElement.webkitEnterFullscreen()` works, which we cannot use
-  // for the multi-tile voice container). On those platforms we still want the
-  // toggle to work as an in-page maximize: the `voiceFullscreen` flag flips the
-  // container to `h-screen` so the call view fills the viewport — that's the
-  // graceful fallback. Calling a missing API directly threw
-  // `TypeError: requestFullscreen is not a function` on iPhone, taking down
-  // the whole voice UI; the guards below contain the platform difference.
-  type FullscreenCapableElement = HTMLElement & {
-    webkitRequestFullscreen?: () => Promise<void> | void;
-  };
-  type FullscreenCapableDocument = Document & {
-    webkitFullscreenElement?: Element | null;
-    webkitExitFullscreen?: () => Promise<void> | void;
-  };
-
-  const getFullscreenElement = useCallback((): Element | null => {
-    const d = document as FullscreenCapableDocument;
-    return document.fullscreenElement ?? d.webkitFullscreenElement ?? null;
-  }, []);
-
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setVoiceFullscreen(!!getFullscreenElement());
+      setVoiceFullscreen(getVoiceFullscreenElement() === voiceContainerRef.current && !!voiceContainerRef.current);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
@@ -102,50 +80,17 @@ export function MainContent() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
-  }, [setVoiceFullscreen, getFullscreenElement]);
+  }, [setVoiceFullscreen]);
 
   useEffect(() => {
-    const el = voiceContainerRef.current as FullscreenCapableElement | null;
-    const d = document as FullscreenCapableDocument;
-    const inFullscreen = !!getFullscreenElement();
-
-    const enter = async () => {
-      if (!el) return;
-      try {
-        if (typeof el.requestFullscreen === 'function') {
-          await el.requestFullscreen();
-        } else if (typeof el.webkitRequestFullscreen === 'function') {
-          await Promise.resolve(el.webkitRequestFullscreen());
-        }
-        // If neither API exists (iPhone Safari / PWA standalone for non-video
-        // elements), fall through silently — the `voiceFullscreen` flag still
-        // applies `h-screen` to give an in-page maximize, which is the
-        // documented graceful fallback.
-      } catch (err) {
-        // Permission denied, user gesture missing, or platform refusal. Keep
-        // the in-page fallback (h-screen) without surfacing a console error.
-        console.warn('Native fullscreen unavailable, using in-page fallback:', err);
-      }
-    };
-
-    const exit = async () => {
-      try {
-        if (typeof document.exitFullscreen === 'function') {
-          await document.exitFullscreen();
-        } else if (typeof d.webkitExitFullscreen === 'function') {
-          await Promise.resolve(d.webkitExitFullscreen());
-        }
-      } catch {
-        // best-effort
-      }
-    };
-
-    if (voiceFullscreen && el && !inFullscreen) {
-      void enter();
-    } else if (!voiceFullscreen && inFullscreen) {
-      void exit();
+    if (!voiceFullscreen && voiceContainerRef.current && getVoiceFullscreenElement() === voiceContainerRef.current) {
+      void exitVoiceFullscreen().catch(() => {});
     }
-  }, [voiceFullscreen, getFullscreenElement]);
+  }, [voiceFullscreen]);
+
+  useEffect(() => {
+    if (!voiceContainerRef.current) setVoiceFullscreen(false);
+  }, [currentChannelId, currentVoiceChannelId, activeDmCall?.dmChannelId, setVoiceFullscreen]);
 
   // 2. LOGIC AND EARLY RETURNS
   const channel = channels.find(c => c.id === currentChannelId);
@@ -200,63 +145,22 @@ export function MainContent() {
       wsSend({ type: 'dm_call_end', dmChannelId: currentChannelId, federatedCallId }, origin);
     };
 
-    if (isInDmCall) {
-      return (
-        <div
-          ref={voiceContainerRef}
-          className={`flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
-        >
-          <div className={`h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
-            <div className="flex items-center gap-[10px]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
-                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
-              </svg>
-              <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary">{dmName}</span>
-              {connectionError ? (
-                <span className="text-xs text-txt-danger font-medium ml-2">Connection Failed</span>
-              ) : isLiveKitConnected ? (
-                <>
-                  <span className="text-xs text-status-online font-medium ml-2">Connected</span>
-                  <span className="text-xs text-txt-tertiary ml-1">{participants.length} in call</span>
-                </>
-              ) : (
-                <span className="text-xs text-status-idle font-medium ml-2">Connecting...</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <TransferIndicator />
-              <MemberListToggleButton />
-            </div>
-          </div>
-
-          <div className="flex-1 flex overflow-hidden pb-20">
-            <VoiceGrid participants={participants} />
-            {voiceChatOpen && !voiceFullscreen && (
-              <VoiceChatPanel channelId={currentChannelId} channelName={`@${dmName}`} />
-            )}
-          </div>
-
-          <VoiceControlBar />
-        </div>
-      );
-    }
-
     return (
-      <div className="flex-1 flex flex-col bg-surface-chat min-w-0 relative">
+      <div ref={isInDmCall ? voiceContainerRef : undefined} data-voice-fullscreen={isInDmCall ? '' : undefined}
+        className={`flex-1 flex flex-col bg-surface-chat min-w-0 min-h-0 relative ${isInDmCall && voiceFullscreen ? 'lume-voice-expanded' : ''}`}>
         {isCallingThisDm && (
           <div className="bg-status-online/10 border-b border-status-online/20 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-status-online animate-pulse">
                 <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
               </svg>
-              <span className="text-status-online text-sm font-medium">Calling {dmName}...</span>
+              <span className="text-status-online text-sm font-medium">{uiText("Calling ")}{dmName}...</span>
             </div>
             <button
               onClick={handleCancelCall}
               className="px-3 py-1 bg-accent-rose hover:bg-accent-rose/80 text-white text-xs font-medium rounded transition-colors"
             >
-              Cancel
-            </button>
+              {uiText("Cancel")}</button>
           </div>
         )}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
@@ -265,14 +169,12 @@ export function MainContent() {
               <div
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'overview' })}
                 className="flex-shrink-0 cursor-pointer"
-                aria-label="Open group settings"
+                aria-label={uiText("Open group settings")}
               >
                 <AvatarStack members={otherMembers} size={32} border="chat" iconUrl={dmChannel?.icon} />
               </div>
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary flex-shrink-0">
-                <path d="M12.5 2A6.5 6.5 0 0 0 6 8.5c0 1.82.75 3.47 1.95 4.65A10.02 10.02 0 0 0 2 22h2c0-4.42 3.58-8 8-8 .35 0 .69.03 1.03.07A6.49 6.49 0 0 0 19 8.5 6.5 6.5 0 0 0 12.5 2Zm0 11A4.5 4.5 0 1 1 17 8.5a4.5 4.5 0 0 1-4.5 4.5Z" />
-              </svg>
+              <OrbitalIcon name="chat" size={20} className="text-txt-tertiary flex-shrink-0" />
             )}
             {isGroupDm ? (
               <span
@@ -307,14 +209,13 @@ export function MainContent() {
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'members' })}
                 className="text-xs text-txt-tertiary flex-shrink-0 cursor-pointer"
               >
-                ({dmChannel?.members.length} members)
-              </span>
+                ({dmChannel?.members.length} {uiText(" members)")}</span>
             )}
             {isGroupDm && (
               <button
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'overview' })}
                 className="w-7 h-7 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover flex-shrink-0"
-                title="Group Settings"
+                title={uiText("Group Settings")}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
@@ -323,11 +224,12 @@ export function MainContent() {
             )}
           </div>
           <div className="lume-header-actions flex items-center gap-1 flex-shrink-0">
+            {!isInDmCall && <>
             <button
               onClick={handleStartVoiceCall}
               disabled={!!outgoingCall || !!activeDmCall}
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Start Voice Call"
+              title={uiText("Start Voice Call")}
             >
               <OrbitalIcon name="call" size={22} />
             </button>
@@ -335,14 +237,15 @@ export function MainContent() {
               onClick={handleStartVoiceCall}
               disabled={!!outgoingCall || !!activeDmCall}
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Start Video Call"
+              title={uiText("Start Video Call")}
             >
               <OrbitalIcon name="video" size={22} />
             </button>
+            </>}
             <button
               onClick={() => openModal('addDmMember', { dmChannelId: currentChannelId })}
               className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover"
-              title="Add Friends to DM"
+              title={uiText("Add Friends to DM")}
             >
               <OrbitalIcon name="personAdd" size={22} />
             </button>
@@ -350,7 +253,7 @@ export function MainContent() {
               ref={searchButtonRef}
               onClick={() => setSearchOpen(!searchOpen)}
               className={`w-8 h-8 flex items-center justify-center transition-colors rounded-[6px] ${searchOpen ? 'text-txt-primary bg-interactive-active' : 'text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover'}`}
-              title="Search"
+              title={uiText("Search")}
             >
               <OrbitalIcon name="search" size={22} />
             </button>
@@ -359,10 +262,18 @@ export function MainContent() {
             <MemberListToggleButton />
           </div>
         </div>
-        <MessageList channelId={currentChannelId} jumpToMessageId={jumpToMessageId} onJumpComplete={() => setJumpToMessageId(null)} />
-        {dmPartnerDeleted
-          ? <DmDeletedNotice />
-          : <MessageInput channelId={currentChannelId} channelName={`@${dmName}`} placeholder={dmInputPlaceholder} />}
+        {isInDmCall ? (
+          <DmCallWorkspace key={currentChannelId} channelId={currentChannelId} channelName={`@${dmName}`}
+            inputPlaceholder={dmInputPlaceholder} partnerDeleted={dmPartnerDeleted}
+            jumpToMessageId={jumpToMessageId} onJumpComplete={() => setJumpToMessageId(null)} />
+        ) : (
+          <>
+            <MessageList channelId={currentChannelId} jumpToMessageId={jumpToMessageId} onJumpComplete={() => setJumpToMessageId(null)} />
+            {dmPartnerDeleted
+              ? <DmDeletedNotice />
+              : <MessageInput channelId={currentChannelId} channelName={`@${dmName}`} placeholder={dmInputPlaceholder} />}
+          </>
+        )}
         <SearchPopover
           open={searchOpen}
           onClose={() => setSearchOpen(false)}
@@ -379,14 +290,14 @@ export function MainContent() {
     return (
       <div className="flex-1 flex flex-col bg-surface-chat relative">
         <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard">
-          <span className="text-txt-tertiary">Select a channel</span>
+          <span className="text-txt-tertiary">{uiText("Select a channel")}</span>
           <div className="flex items-center gap-1 flex-shrink-0">
             <TransferIndicator />
             <MemberListToggleButton />
           </div>
         </div>
         <div className="flex-1 flex items-center justify-center text-txt-tertiary">
-          <p>Select a text or voice channel to get started</p>
+          <p>{uiText("Select a text or voice channel to get started")}</p>
         </div>
       </div>
     );
@@ -414,14 +325,13 @@ export function MainContent() {
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,108,246,0.12)_0%,transparent_70%)] animate-gradient-pulse pointer-events-none" />
             <div className="text-center relative z-10">
               <h2 className="text-[28px] font-bold text-white mb-3">{channel.name}</h2>
-              <p className="text-txt-tertiary text-[15px]">No one is currently in this voice channel.</p>
+              <p className="text-txt-tertiary text-[15px]">{uiText("No one is currently in this voice channel.")}</p>
             </div>
             <button
               onClick={() => joinVoiceChannel(currentChannelId, useVoiceStore.getState().connectFn ?? undefined)}
               className="relative z-10 px-8 py-3 bg-accent-primary hover:bg-accent-primary-hover text-white font-semibold rounded-full transition-all text-[15px] shadow-[0_4px_20px_rgba(124,108,246,0.3)]"
             >
-              Join Voice
-            </button>
+              {uiText("Join Voice")}</button>
           </div>
         </div>
       );
@@ -430,7 +340,8 @@ export function MainContent() {
     return (
       <div 
         ref={voiceContainerRef}
-        className={`flex-1 flex flex-col bg-surface-base min-w-0 group/voice relative ${voiceFullscreen ? 'h-screen' : ''}`}
+        data-voice-fullscreen=""
+        className={`flex-1 flex flex-col bg-surface-base min-w-0 min-h-0 group/voice relative ${voiceFullscreen ? 'lume-voice-expanded' : ''}`}
       >
         <div className={`h-14 px-5 flex items-center justify-between border-b border-border-hard flex-shrink-0 bg-surface-base transition-opacity duration-300 ${voiceFullscreen ? 'opacity-0 hover:opacity-100' : ''}`}>
           <div className="flex items-center gap-[10px]">
@@ -439,14 +350,14 @@ export function MainContent() {
             </svg>
             <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary">{channel.name}</span>
             {connectionError ? (
-              <span className="text-xs text-txt-danger font-medium ml-2">Connection Failed</span>
+              <span className="text-xs text-txt-danger font-medium ml-2">{uiText("Connection Failed")}</span>
             ) : isLiveKitConnected ? (
               <>
-                <span className="text-xs text-status-online font-medium ml-2">Connected</span>
-                <span className="text-xs text-txt-tertiary ml-1">{participants.length} connected</span>
+                <span className="text-xs text-status-online font-medium ml-2">{uiText("Connected")}</span>
+                <span className="text-xs text-txt-tertiary ml-1">{participants.length} {uiText(" connected")}</span>
               </>
             ) : (
-              <span className="text-xs text-status-idle font-medium ml-2">Connecting...</span>
+              <span className="text-xs text-status-idle font-medium ml-2">{uiText("Connecting...")}</span>
             )}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -455,14 +366,18 @@ export function MainContent() {
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden pb-20">
-          <VoiceGrid participants={participants} />
-          {voiceChatOpen && !voiceFullscreen && (
-            <VoiceChatPanel channelId={currentChannelId} channelName={channel.name} />
-          )}
+        <div className="lume-dm-call-workspace flex-1 min-h-0 min-w-0">
+          <div className={`lume-dm-call-layout ${voiceChatOpen ? '' : 'is-chat-closed'}`}>
+            <section className="lume-dm-call-video min-w-0 min-h-0 flex flex-col">
+              <div className="flex-1 flex min-h-0 overflow-hidden p-2"><VoiceGrid participants={participants} /></div>
+              <VoiceControlBar docked />
+            </section>
+            <section hidden={!voiceChatOpen} className={`lume-dm-call-chat relative min-w-0 min-h-0 ${voiceChatOpen ? '' : 'hidden'}`}>
+              <VoiceChatPanel channelId={currentChannelId} channelName={channel.name} />
+            </section>
+          </div>
         </div>
 
-        <VoiceControlBar />
       </div>
     );
   }
@@ -481,16 +396,11 @@ export function MainContent() {
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button className="w-8 h-8 flex items-center justify-center text-txt-tertiary hover:text-txt-primary transition-colors rounded-[6px] hover:bg-interactive-hover" title="Notification Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-            </svg>
-          </button>
           <button
             ref={searchButtonRef}
             onClick={() => setSearchOpen(!searchOpen)}
             className={`w-8 h-8 flex items-center justify-center transition-colors rounded-[6px] ${searchOpen ? 'text-txt-primary bg-interactive-active' : 'text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover'}`}
-            title="Search"
+            title={uiText("Search")}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M21.707 20.293l-5.395-5.395A7.457 7.457 0 0018 10.5 7.5 7.5 0 1010.5 18c1.575 0 3.027-.486 4.228-1.31l5.476 5.476a.997.997 0 001.414 0l.089-.089a1 1 0 000-1.414l.001-.37zM10.5 16a5.5 5.5 0 110-11 5.5 5.5 0 010 11z" />

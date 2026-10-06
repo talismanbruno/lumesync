@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import type { VideoCaptureOptions } from 'livekit-client';
 import { useVoiceStore } from '../stores/voiceStore';
 import { useUIStore } from '../stores/uiStore';
@@ -109,14 +110,14 @@ export async function handleScreenShareAction(): Promise<void> {
   if (screenShareActionPending) return;
   const room = getActiveRoom();
   if (!room) {
-    useUIStore.getState().addToast('Entre em uma chamada antes de compartilhar a tela.', 'warning');
+    useUIStore.getState().addToast(uiText("Entre em uma chamada antes de compartilhar a tela."), 'warning');
     return;
   }
   const isScreenSharing = useVoiceStore.getState().isScreenSharing;
   const usesNativeAndroidCapture = hasAndroidNativeHost();
   if (!isScreenSharing && !usesNativeAndroidCapture && !isElectron() && !navigator.mediaDevices?.getDisplayMedia) {
     useUIStore.getState().addToast(
-      'Este navegador não permite compartilhar a tela. Você ainda pode assistir ao compartilhamento de outras pessoas.',
+      uiText("Este navegador não permite compartilhar a tela. Você ainda pode assistir ao compartilhamento de outras pessoas."),
       'warning',
       7000,
     );
@@ -136,7 +137,7 @@ export async function handleScreenShareAction(): Promise<void> {
     }
   } catch (err) {
     console.error('[voiceActions] Failed to toggle screen share:', err);
-    useUIStore.getState().addToast('Não foi possível alterar o compartilhamento. Tente novamente.', 'warning');
+    useUIStore.getState().addToast(uiText("Não foi possível alterar o compartilhamento. Tente novamente."), 'warning');
   } finally {
     screenShareActionPending = false;
   }

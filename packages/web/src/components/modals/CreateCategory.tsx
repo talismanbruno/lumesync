@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { useUIStore } from '../../stores/uiStore';
@@ -19,12 +20,12 @@ export function CreateCategoryModal() {
     setError('');
 
     if (!name.trim()) {
-      setError('Category name is required');
+      setError(uiText("Category name is required"));
       return;
     }
 
     if (!currentSpaceId) {
-      setError('No space selected');
+      setError(uiText("No space selected"));
       return;
     }
 
@@ -34,14 +35,14 @@ export function CreateCategoryModal() {
       closeModal();
       setName('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create category');
+      setError(err instanceof Error ? err.message : uiText("Failed to create category"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title="Create Category" mobileStyle="sheet">
+    <Modal isOpen={isOpen} onClose={closeModal} title={uiText("Create Category")} mobileStyle="sheet">
       <form onSubmit={handleSubmit}>
         {error && (
           <div className="mb-3 p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">
@@ -51,14 +52,13 @@ export function CreateCategoryModal() {
 
         <div className="mb-4">
           <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            Category Name
-          </label>
+            {uiText("Category Name")}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-standard w-full"
-            placeholder="new-category"
+            placeholder={uiText("new-category")}
             autoFocus
           />
         </div>
@@ -71,14 +71,13 @@ export function CreateCategoryModal() {
                 onClick={closeModal}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Cancel
-              </button>
+                {uiText("Cancel")}</button>
               <button
                 type="submit"
                 disabled={isLoading}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Creating...' : 'Create Category'}
+                {isLoading ? uiText("Creating...") : uiText("Create Category")}
               </button>
             </div>
           </div>

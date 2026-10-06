@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -147,8 +148,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
             <div className="border-t border-white/[0.06] my-3" />
             <div>
               <span className="text-[11px] uppercase tracking-wide font-semibold text-txt-tertiary">
-                About Me
-              </span>
+                {uiText("About Me")}</span>
               <div className="text-[13px] text-txt-secondary mt-1 whitespace-pre-wrap break-words leading-relaxed [&_strong]:font-semibold [&_strong]:text-txt-primary [&_em]:italic [&_a]:text-accent-primary [&_a]:underline">
                 <ReactMarkdown
                   allowedElements={['p', 'strong', 'em', 'a', 'br']}
@@ -172,8 +172,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
         <div className="space-y-1.5">
           <div>
             <span className="text-[11px] uppercase tracking-wide font-semibold text-txt-tertiary">
-              Member Since
-            </span>
+              {uiText("Member Since")}</span>
             <span className="text-[12px] text-txt-secondary ml-2">
               {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
@@ -181,13 +180,13 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
           {mutualCounts && (mutualCounts.friends > 0 || mutualCounts.spaces > 0) && (
             <div className="text-[12px] text-txt-tertiary">
               {mutualCounts.friends > 0 && (
-                <span>{mutualCounts.friends} mutual friend{mutualCounts.friends !== 1 ? 's' : ''}</span>
+                <span>{mutualCounts.friends} {uiText(" mutual friend")}{mutualCounts.friends !== 1 ? uiText("s") : ''}</span>
               )}
               {mutualCounts.friends > 0 && mutualCounts.spaces > 0 && (
-                <span className="mx-1">&middot;</span>
+                <span className="mx-1">{uiText("&middot;")}</span>
               )}
               {mutualCounts.spaces > 0 && (
-                <span>{mutualCounts.spaces} mutual space{mutualCounts.spaces !== 1 ? 's' : ''}</span>
+                <span>{mutualCounts.spaces} {uiText(" mutual space")}{mutualCounts.spaces !== 1 ? uiText("s") : ''}</span>
               )}
             </div>
           )}
@@ -198,14 +197,12 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
           onClick={handleSendMessage}
           className="w-full mt-3 py-2 rounded-lg text-[13px] font-medium text-txt-primary bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.08] transition-colors"
         >
-          Send Message
-        </button>
+          {uiText("Send Message")}</button>
         <button
           onClick={handleViewFullProfile}
           className="w-full mt-1.5 py-2 rounded-lg text-[13px] font-medium text-txt-tertiary hover:text-txt-secondary bg-transparent hover:bg-white/[0.04] transition-colors"
         >
-          View Full Profile
-        </button>
+          {uiText("View Full Profile")}</button>
       </div>
     </div>
   );

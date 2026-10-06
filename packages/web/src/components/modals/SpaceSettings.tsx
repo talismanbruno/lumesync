@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { useUIStore } from '../../stores/uiStore';
@@ -45,9 +46,9 @@ function DiscoveryPanel({ spaceId }: { spaceId: string }) {
     setSaveError('');
     try {
       await api.spaces.update(spaceId, { visibility, description: description.trim() });
-      addToast('Settings saved', 'success', 2000);
+      addToast(uiText("Settings saved"), 'success', 2000);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save');
+      setSaveError(err instanceof Error ? err.message : uiText("Failed to save"));
     } finally {
       setSaving(false);
     }
@@ -60,23 +61,22 @@ function DiscoveryPanel({ spaceId }: { spaceId: string }) {
   };
 
   const visibilityOptions: { value: SpaceVisibility; label: string; desc: string }[] = [
-    { value: 'private', label: 'Private', desc: 'Only people with an invite link can join' },
-    { value: 'request', label: 'Request to Join', desc: 'Visible in Explore — people can request to join' },
-    { value: 'public', label: 'Public', desc: 'Visible in Explore — anyone can join instantly' },
+    { value: 'private', label: uiText("Private"), desc: 'Only people with an invite link can join' },
+    { value: 'request', label: uiText("Request to Join"), desc: 'Visible in Explore — people can request to join' },
+    { value: 'public', label: uiText("Public"), desc: 'Visible in Explore — anyone can join instantly' },
   ];
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">Discovery</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("Discovery")}</h2>
       {!discoveryEnabled && (
         <div className="p-2.5 bg-accent-amber/10 border border-accent-amber/30 rounded text-[13px] text-accent-amber">
-          Space discovery is disabled by the instance administrator. Changing visibility will have no effect until discovery is re-enabled.
-        </div>
+          {uiText("Space discovery is disabled by the instance administrator. Changing visibility will have no effect until discovery is re-enabled.")}</div>
       )}
 
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Visibility</div>
-        <p className="text-xs text-txt-tertiary mb-2">Control who can discover and join this space.</p>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Visibility")}</div>
+        <p className="text-xs text-txt-tertiary mb-2">{uiText("Control who can discover and join this space.")}</p>
         <div className="rounded-lg bg-white/[0.02] p-3.5">
           <div className="space-y-1.5">
             {visibilityOptions.map((opt) => (
@@ -107,13 +107,13 @@ function DiscoveryPanel({ spaceId }: { spaceId: string }) {
       </div>
 
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Description</div>
-        <p className="text-xs text-txt-tertiary mb-2">A short summary shown on the Explore page.</p>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Description")}</div>
+        <p className="text-xs text-txt-tertiary mb-2">{uiText("A short summary shown on the Explore page.")}</p>
         <div className="rounded-lg bg-white/[0.02] p-3.5">
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 200))}
-            placeholder="A short description for the Explore page..."
+            placeholder={uiText("A short description for the Explore page...")}
             rows={3}
             className="input-standard w-full resize-none"
           />
@@ -137,14 +137,13 @@ function DiscoveryPanel({ spaceId }: { spaceId: string }) {
                 onClick={handleReset}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Reset
-              </button>
+                {uiText("Reset")}</button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? uiText("Saving...") : uiText("Save")}
               </button>
             </div>
           </div>
@@ -181,15 +180,14 @@ function JoinRequestsSection({ spaceId }: { spaceId: string }) {
       await api.explore.decideJoinRequest(spaceId, requestId, action);
       setRequests(prev => prev.filter(r => r.id !== requestId));
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Action failed');
+      setActionError(err instanceof Error ? err.message : uiText("Action failed"));
     }
   };
 
   return (
     <div className="pt-4 border-t border-border-soft">
       <div className="text-[11px] text-txt-tertiary font-semibold uppercase tracking-wider mb-2">
-        Pending Join Requests
-      </div>
+        {uiText("Pending Join Requests")}</div>
 
       {actionError && (
         <div className="mb-2 p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-xs">
@@ -198,9 +196,9 @@ function JoinRequestsSection({ spaceId }: { spaceId: string }) {
       )}
 
       {loading ? (
-        <div className="text-sm text-txt-tertiary">Loading...</div>
+        <div className="text-sm text-txt-tertiary">{uiText("Loading...")}</div>
       ) : requests.length === 0 ? (
-        <div className="text-sm text-txt-tertiary">No pending join requests</div>
+        <div className="text-sm text-txt-tertiary">{uiText("No pending join requests")}</div>
       ) : (
         <div className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
           {requests.map((req) => {
@@ -233,7 +231,7 @@ function JoinRequestsSection({ spaceId }: { spaceId: string }) {
                   <button
                     onClick={() => handleDecide(req.id, 'accept')}
                     className="p-1.5 rounded text-status-online hover:bg-status-online/20 transition-colors"
-                    title="Accept"
+                    title={uiText("Accept")}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -242,7 +240,7 @@ function JoinRequestsSection({ spaceId }: { spaceId: string }) {
                   <button
                     onClick={() => handleDecide(req.id, 'decline')}
                     className="p-1.5 rounded text-txt-danger hover:bg-accent-rose/20 transition-colors"
-                    title="Decline"
+                    title={uiText("Decline")}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -316,20 +314,20 @@ export function SpaceSettingsModal() {
 
           {/* Nav list */}
           <div className="glass-bubble rounded-lg p-2 flex-1 flex flex-col">
-            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">General</div>
-            <button onClick={() => handleTabClick('overview')} className={tabClass('overview')}>Overview</button>
+            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">{uiText("General")}</div>
+            <button onClick={() => handleTabClick('overview')} className={tabClass('overview')}>{uiText("Overview")}</button>
             {canManageSpace && (
-              <button onClick={() => handleTabClick('discovery')} className={tabClass('discovery')}>Discovery</button>
+              <button onClick={() => handleTabClick('discovery')} className={tabClass('discovery')}>{uiText("Discovery")}</button>
             )}
 
             <div className="border-t border-white/[0.04] my-2 mx-2" />
-            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">Management</div>
-            <button onClick={() => handleTabClick('members')} className={tabClass('members')}>Members</button>
+            <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">{uiText("Management")}</div>
+            <button onClick={() => handleTabClick('members')} className={tabClass('members')}>{uiText("Members")}</button>
             {canManageRoles && (
-              <button onClick={() => handleTabClick('roles')} className={tabClass('roles')}>Roles</button>
+              <button onClick={() => handleTabClick('roles')} className={tabClass('roles')}>{uiText("Roles")}</button>
             )}
             {canBanMembers && (
-              <button onClick={() => handleTabClick('bans')} className={tabClass('bans')}>Bans</button>
+              <button onClick={() => handleTabClick('bans')} className={tabClass('bans')}>{uiText("Bans")}</button>
             )}
           </div>
         </div>
@@ -351,20 +349,20 @@ export function SpaceSettingsModal() {
             </div>
 
             <div className="glass-bubble rounded-lg p-2 space-y-0.5">
-              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">General</div>
-              <button onClick={() => handleTabClick('overview')} className={tabClass('overview')}>Overview</button>
+              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">{uiText("General")}</div>
+              <button onClick={() => handleTabClick('overview')} className={tabClass('overview')}>{uiText("Overview")}</button>
               {canManageSpace && (
-                <button onClick={() => handleTabClick('discovery')} className={tabClass('discovery')}>Discovery</button>
+                <button onClick={() => handleTabClick('discovery')} className={tabClass('discovery')}>{uiText("Discovery")}</button>
               )}
 
               <div className="border-t border-white/[0.04] my-2 mx-2" />
-              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">Management</div>
-              <button onClick={() => handleTabClick('members')} className={tabClass('members')}>Members</button>
+              <div className="text-[10px] font-semibold text-txt-tertiary uppercase tracking-wider px-3 py-1">{uiText("Management")}</div>
+              <button onClick={() => handleTabClick('members')} className={tabClass('members')}>{uiText("Members")}</button>
               {canManageRoles && (
-                <button onClick={() => handleTabClick('roles')} className={tabClass('roles')}>Roles</button>
+                <button onClick={() => handleTabClick('roles')} className={tabClass('roles')}>{uiText("Roles")}</button>
               )}
               {canBanMembers && (
-                <button onClick={() => handleTabClick('bans')} className={tabClass('bans')}>Bans</button>
+                <button onClick={() => handleTabClick('bans')} className={tabClass('bans')}>{uiText("Bans")}</button>
               )}
             </div>
           </div>
@@ -379,13 +377,12 @@ export function SpaceSettingsModal() {
                 <button
                   onClick={() => setMobileView('tabs')}
                   className="flex items-center gap-1.5 text-txt-tertiary hover:text-txt-secondary mb-4 text-sm"
-                  aria-label="Back to space settings menu"
+                  aria-label={uiText("Back to space settings menu")}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
                   </svg>
-                  Space Settings
-                </button>
+                  {uiText("Space Settings")}</button>
               )}
               {tab === 'overview' && <OverviewPanel spaceId={currentSpaceId} />}
               {tab === 'discovery' && canManageSpace && <DiscoveryPanel spaceId={currentSpaceId} />}

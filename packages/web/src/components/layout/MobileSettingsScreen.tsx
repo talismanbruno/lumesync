@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -16,12 +17,12 @@ interface MobileSettingsScreenProps {
 }
 
 const panelConfig: Record<string, { title: string; component: React.ReactNode }> = {
-  account: { title: 'Account', component: <AccountPanel /> },
-  voice: { title: 'Voice & Video', component: <VoicePanel /> },
-  privacy: { title: 'Privacy', component: <PrivacyPanel /> },
-  connections: { title: 'Connections', component: <ConnectionsPanel /> },
-  keybinds: { title: 'Keybinds', component: <KeybindsPanel /> },
-  desktop: { title: 'Desktop', component: <DesktopPanel /> },
+  account: { title: uiText("Account"), component: <AccountPanel /> },
+  voice: { title: uiText("Voice & Video"), component: <VoicePanel /> },
+  privacy: { title: uiText("Privacy"), component: <PrivacyPanel /> },
+  connections: { title: uiText("Connections"), component: <ConnectionsPanel /> },
+  keybinds: { title: uiText("Keybinds"), component: <KeybindsPanel /> },
+  desktop: { title: uiText("Desktop"), component: <DesktopPanel /> },
 };
 
 const sectionIcons: Record<string, React.ReactNode> = {
@@ -89,17 +90,17 @@ export function MobileSettingsScreen({ initialPanel }: MobileSettingsScreenProps
   // since the panel's only-when-tab-focused web fallback isn't a useful
   // mobile feature (no global hooks, no recording flow on touch keyboards).
   const sections = [
-    { id: 'account', label: 'Account' },
-    { id: 'voice', label: 'Voice & Video' },
-    { id: 'privacy', label: 'Privacy' },
-    { id: 'connections', label: 'Connections' },
-    ...(isElectron() ? [{ id: 'keybinds', label: 'Keybinds' }, { id: 'desktop', label: 'Desktop' }] : []),
-    ...(isAdmin ? [{ id: 'instance', label: 'Instance' }] : []),
+    { id: 'account', label: uiText("Account") },
+    { id: 'voice', label: uiText("Voice & Video") },
+    { id: 'privacy', label: uiText("Privacy") },
+    { id: 'connections', label: uiText("Connections") },
+    ...(isElectron() ? [{ id: 'keybinds', label: uiText("Keybinds") }, { id: 'desktop', label: uiText("Desktop") }] : []),
+    ...(isAdmin ? [{ id: 'instance', label: uiText("Instance") }] : []),
   ];
 
   return (
     <div className="flex flex-col h-full bg-surface-base">
-      <MobileScreenHeader title="Settings" rightActions={<TransferIndicator />} />
+      <MobileScreenHeader title={uiText("Settings")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto">
         {sections.map((section) => (
           <button

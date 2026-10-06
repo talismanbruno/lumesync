@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState } from 'react';
 import type { Attachment } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
@@ -118,7 +119,7 @@ function VideoAttachment({ attachment, attUrl, thumbUrl, federationInlineBadge }
                 <svg className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                 </svg>
-                <span className="text-[12px] font-medium">Can't play here — download</span>
+                <span className="text-[12px] font-medium">{uiText("Can't play here — download")}</span>
               </div>
             </div>
           )}
@@ -133,8 +134,7 @@ function VideoAttachment({ attachment, attUrl, thumbUrl, federationInlineBadge }
             <div className="min-w-0 flex-1">
               <p className="text-txt-link text-[14px] font-medium truncate group-hover/vid:underline">{originalName}</p>
               <p className="text-[12px] text-txt-tertiary">
-                {meta ? `${meta} · ` : ''}Unsupported video format
-              </p>
+                {meta ? `${meta} · ` : ''}{uiText("Unsupported video format")}</p>
             </div>
           </div>
         </button>
@@ -157,8 +157,7 @@ function VideoAttachment({ attachment, attUrl, thumbUrl, federationInlineBadge }
           onError={() => setFailed(true)}
           className="w-full h-full rounded-lg"
         >
-          Your browser does not support video playback.
-        </video>
+          {uiText("Your browser does not support video playback.")}</video>
       </div>
       {federationInlineBadge && <div className="mt-1">{federationInlineBadge}</div>}
     </div>
@@ -284,8 +283,7 @@ export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
         </div>
         <audio controls preload="metadata" className="w-full mt-2 h-8">
           <source src={attUrl} type={mimetype} />
-          Your browser does not support audio playback.
-        </audio>
+          {uiText("Your browser does not support audio playback.")}</audio>
       </div>
     );
   }

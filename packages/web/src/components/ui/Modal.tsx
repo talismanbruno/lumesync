@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useCallback } from 'react';
 import { useUIStore } from '../../stores/uiStore';
 
@@ -40,7 +41,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
             <button
               onClick={onClose}
               className="text-txt-tertiary hover:text-txt-primary transition-colors p-1"
-              aria-label={size === 'settings' ? 'Close settings' : undefined}
+              aria-label={size === 'settings' ? uiText("Close settings") : undefined}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.4 4L12 10.4L5.6 4L4 5.6L10.4 12L4 18.4L5.6 20L12 13.6L18.4 20L20 18.4L13.6 12L20 5.6L18.4 4Z" />
@@ -98,7 +99,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-surface-elevated/50 backdrop-blur-sm text-txt-tertiary hover:text-txt-primary transition-colors"
-            aria-label="Close settings"
+            aria-label={uiText("Close settings")}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.4 4L12 10.4L5.6 4L4 5.6L10.4 12L4 18.4L5.6 20L12 13.6L18.4 20L20 18.4L13.6 12L20 5.6L18.4 4Z" />

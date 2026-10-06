@@ -6,6 +6,7 @@ import { useAuthStore } from './authStore';
 import { normalizeMessageAssets } from '../utils/assetUrls';
 import { sortDmChannels } from '../utils/dmSorting';
 import { usePendingMessageStore } from './pendingMessageStore';
+import { preloadMessageHistory } from '../utils/preloadMessageHistory';
 
 const MAX_MESSAGES_PER_CHANNEL = 200;
 const MAX_CACHED_CHANNELS = 20;
@@ -27,6 +28,7 @@ const EVICT_TO_CHANNELS = 15;
 // any of them are still waiting on the 30 s api-client timeout.
 const inFlightLoads = new Map<string, Promise<void>>();
 const inFlightLoadMores = new Map<string, Promise<boolean>>();
+let cacheEpoch = 0;
 
 interface TypingUser {
   userId: string;
@@ -51,13 +53,15 @@ interface ChatState {
   unreadChannels: Set<string>;
   realtimeMessageEvents: RealtimeMessageEvent[];
   channelAccessTimes: Map<string, number>;
+  historyChannels: Set<string>;
   scrollPositions: Map<string, string>;
   setCurrentChannel: (channelId: string | null) => void;
   saveScrollPosition: (channelId: string, messageId: string) => void;
   setReplyTo: (message: MessageWithUser | null) => void;
-  loadMessages: (channelId: string, force?: boolean) => Promise<void>;
+  loadMessages: (channelId: string, force?: boolean, background?: boolean) => Promise<void>;
+  preloadSpaceHistory: (channelIds: string[], signal: AbortSignal) => Promise<boolean>;
   clearAllMessages: () => void;
-  loadMoreMessages: (channelId: string) => Promise<boolean>;
+  loadMoreMessages: (channelId: string, limit?: number) => Promise<boolean>;
   sendMessage: (channelId: string, content: string, attachmentIds?: string[]) => Promise<void>;
   editMessage: (messageId: string, content: string, channelId: string) => Promise<void>;
   deleteMessage: (messageId: string, channelId: string) => Promise<void>;
@@ -108,6 +112,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   unreadChannels: new Set(),
   realtimeMessageEvents: [],
   channelAccessTimes: new Map(),
+  historyChannels: new Set(),
   scrollPositions: new Map(),
 
   saveScrollPosition: (channelId, messageId) => {
@@ -131,7 +136,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       let newScrollPositions = state.scrollPositions;
       if (state.messages.size > MAX_CACHED_CHANNELS) {
         const entries = [...newAccessTimes.entries()]
-          .filter(([id]) => id !== channelId)
+          .filter(([id]) => id !== channelId && !state.historyChannels.has(id))
           .sort((a, b) => a[1] - b[1]);
         const toEvict = state.messages.size - EVICT_TO_CHANNELS;
         const evictIds = new Set(entries.slice(0, toEvict).map(([id]) => id));
@@ -159,20 +164,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
   setReplyTo: (message) => set({ replyTo: message }),
 
-  clearAllMessages: () => set({
-    messages: new Map(),
-    hasMore: new Map(),
-    typingUsers: new Map(),
-    readStates: new Map(),
-    unreadChannels: new Set(),
-    realtimeMessageEvents: [],
-    channelAccessTimes: new Map(),
-    scrollPositions: new Map(),
-    currentChannelId: null,
-    replyTo: null,
-  }),
+  clearAllMessages: () => {
+    cacheEpoch++;
+    inFlightLoads.clear();
+    inFlightLoadMores.clear();
+    set({
+      messages: new Map(),
+      hasMore: new Map(),
+      typingUsers: new Map(),
+      readStates: new Map(),
+      unreadChannels: new Set(),
+      realtimeMessageEvents: [],
+      channelAccessTimes: new Map(),
+      historyChannels: new Set(),
+      scrollPositions: new Map(),
+      currentChannelId: null,
+      replyTo: null,
+      isLoading: false,
+      loadError: null,
+    });
+  },
 
-  loadMessages: async (channelId: string, force?: boolean) => {
+  preloadSpaceHistory: async (channelIds, signal) => {
+    const epoch = cacheEpoch;
+    set({ historyChannels: new Set(channelIds) });
+    return preloadMessageHistory(channelIds, {
+      loadInitial: channelId => get().loadMessages(channelId, false, true),
+      loadOlder: channelId => get().loadMoreMessages(channelId, 100),
+      hasOlder: channelId => get().hasMore.get(channelId),
+      isCurrent: () => epoch === cacheEpoch,
+    }, signal);
+  },
+
+  loadMessages: async (channelId: string, force?: boolean, background = false) => {
     if (!force && get().hasMore.has(channelId)) return;
     const isDm = isDmChannel(channelId);
     // For server channels, bail if we don't know which instance owns this channel yet.
@@ -194,13 +218,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     const promise = (async () => {
-      set({ isLoading: true, loadError: null });
+      const epoch = cacheEpoch;
+      if (!background) set({ isLoading: true, loadError: null });
       try {
         const origin = getChannelOrigin(channelId);
         const client = getApiForOrigin(origin);
         const messages = isDm
           ? await client.dm.messages(channelId)
           : await client.channels.messages(channelId);
+        if (epoch !== cacheEpoch) return;
 
         // Normalize remote asset URLs (avatars, attachment filenames)
         if (origin) {
@@ -209,15 +235,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         set((state) => {
           const newMessages = new Map(state.messages);
-          newMessages.set(channelId, messages as MessageWithUser[]);
+          // Retain messages that arrived over WS while the initial fetch was pending.
+          const byId = new Map(messages.map(message => [message.id, message as MessageWithUser]));
+          const newestFetchedId = messages[messages.length - 1]?.id;
+          for (const message of state.messages.get(channelId) ?? []) {
+            if (message.id.startsWith('temp_') || !newestFetchedId || message.id > newestFetchedId) byId.set(message.id, message);
+          }
+          newMessages.set(channelId, [...byId.values()].sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)));
           const newHasMore = new Map(state.hasMore);
           newHasMore.set(channelId, messages.length >= 50);
           const newAccessTimes = new Map(state.channelAccessTimes);
           newAccessTimes.set(channelId, Date.now());
-          return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes, isLoading: false, loadError: null };
+          return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes,
+            ...(!background ? { isLoading: false, loadError: null } : {}) };
         });
       } catch (err) {
-        set({ isLoading: false, loadError: (err as Error).message || 'Failed to load messages' });
+        if (epoch === cacheEpoch && !background) set({ isLoading: false, loadError: (err as Error).message || 'Failed to load messages' });
       }
     })();
 
@@ -234,7 +267,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  loadMoreMessages: async (channelId: string) => {
+  loadMoreMessages: async (channelId: string, limit = 50) => {
     const existing = get().messages.get(channelId);
     if (!existing || existing.length === 0) return false;
     if (!get().hasMore.get(channelId)) return false;
@@ -254,13 +287,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (existingPromise) return existingPromise;
 
     const promise = (async () => {
+      const epoch = cacheEpoch;
       try {
         const isDm = isDmChannel(channelId);
         const origin = getChannelOrigin(channelId);
         const client = getApiForOrigin(origin);
         const olderMessages = isDm
-          ? await client.dm.messages(channelId, oldestMessage.id)
-          : await client.channels.messages(channelId, oldestMessage.id);
+          ? await client.dm.messages(channelId, oldestMessage.id, limit)
+          : await client.channels.messages(channelId, oldestMessage.id, limit);
+        if (epoch !== cacheEpoch || !get().hasMore.has(channelId)) return false;
 
         // Normalize remote asset URLs (avatars, attachment filenames)
         if (origin) {
@@ -270,12 +305,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set((state) => {
           const newMessages = new Map(state.messages);
           const current = newMessages.get(channelId) ?? [];
-          newMessages.set(channelId, [...(olderMessages as MessageWithUser[]), ...current]);
+          const byId = new Map([...olderMessages, ...current].map(message => [message.id, message as MessageWithUser]));
+          newMessages.set(channelId, [...byId.values()].sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)));
           const newHasMore = new Map(state.hasMore);
-          newHasMore.set(channelId, olderMessages.length >= 50);
+          newHasMore.set(channelId, olderMessages.length >= limit);
           return { messages: newMessages, hasMore: newHasMore };
         });
-        return olderMessages.length > 0;
+        return olderMessages.some(message => message.id < oldestMessage.id);
       } catch {
         return false;
       }
@@ -448,11 +484,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
       let updated = [...filtered, normalizedMessage];
       // Cap per-channel messages to prevent memory growth
-      if (updated.length > MAX_MESSAGES_PER_CHANNEL) {
+      if (updated.length > MAX_MESSAGES_PER_CHANNEL && !state.historyChannels.has(channelId)) {
         updated = updated.slice(updated.length - MAX_MESSAGES_PER_CHANNEL);
       }
       newMessages.set(channelId, updated);
-      return { messages: newMessages };
+      const hasMore = new Map(state.hasMore);
+      if (updated.length < filtered.length + 1) hasMore.set(channelId, true);
+      return { messages: newMessages, hasMore };
     });
   },
 
@@ -483,14 +521,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
       let updated = [...filtered, normalizedMessage];
       // Cap per-channel messages to prevent memory growth
-      if (updated.length > MAX_MESSAGES_PER_CHANNEL) {
+      if (updated.length > MAX_MESSAGES_PER_CHANNEL && !state.historyChannels.has(channelId)) {
         updated = updated.slice(updated.length - MAX_MESSAGES_PER_CHANNEL);
       }
       newMessages.set(channelId, updated);
       // Append to realtimeMessageEvents (capped at 50)
       const newEvents = [...state.realtimeMessageEvents, { channelId, message: normalizedMessage }];
       if (newEvents.length > 50) newEvents.splice(0, newEvents.length - 50);
-      return { messages: newMessages, realtimeMessageEvents: newEvents };
+      const hasMore = new Map(state.hasMore);
+      if (updated.length < filtered.length + 1) hasMore.set(channelId, true);
+      return { messages: newMessages, realtimeMessageEvents: newEvents, hasMore };
     });
   },
 
@@ -776,13 +816,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const newReadStates = new Map(state.readStates);
       const newMessages = new Map(state.messages);
       const newHasMore = new Map(state.hasMore);
+      const historyChannels = new Set(state.historyChannels);
       for (const channelId of channelIds) {
         newUnread.delete(channelId);
         newReadStates.delete(channelId);
         newMessages.delete(channelId);
         newHasMore.delete(channelId);
+        historyChannels.delete(channelId);
       }
-      return { unreadChannels: newUnread, readStates: newReadStates, messages: newMessages, hasMore: newHasMore };
+      return { unreadChannels: newUnread, readStates: newReadStates, messages: newMessages, hasMore: newHasMore, historyChannels };
     });
   },
 

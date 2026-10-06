@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { usePendingMessageStore, type PendingBubble } from './pendingMessageStore';
 import { useTransferStore } from './transferStore';
 import { useUIStore } from './uiStore';
@@ -15,7 +16,7 @@ export function startPendingMessageOrchestrator(): void {
   const dropped = usePendingMessageStore.getState().discardExpired(Date.now());
   for (const b of dropped) {
     useUIStore.getState().addToast(
-      `Couldn't send "${b.content || '(attachment-only)'}" — upload expired.`,
+      uiText("Couldn't send \"{0}\" — upload expired.", [b.content || '(attachment-only)']),
       'warning',
     );
   }

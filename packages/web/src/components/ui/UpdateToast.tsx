@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useState, useEffect } from 'react';
 import { isElectron } from '../../platform/platform';
 import { useVoiceStore } from '../../stores/voiceStore';
@@ -53,11 +54,11 @@ export function UpdateToast() {
       <div className="fixed bottom-6 left-6 z-[300] animate-slide-up">
         <div className="glass-pill rounded-xl px-4 py-3 flex items-center gap-3 max-w-[340px]">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-txt-primary">Atualização pronta</p>
+            <p className="text-sm font-medium text-txt-primary">{uiText("Atualização pronta")}</p>
             <p className="text-xs text-txt-secondary truncate">
               {voiceActive
-                ? 'Finalize a chamada para reiniciar com segurança'
-                : `Versão ${downloadedVersion} baixada`}
+                ? uiText("Finalize a chamada para reiniciar com segurança")
+                : uiText("Versão {0} baixada", [downloadedVersion])}
             </p>
           </div>
           <button
@@ -65,12 +66,12 @@ export function UpdateToast() {
             disabled={voiceActive}
             className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-primary hover:bg-accent-primary/80 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {voiceActive ? 'Em chamada' : 'Reiniciar'}
+            {voiceActive ? uiText("Em chamada") : uiText("Reiniciar")}
           </button>
           <button
             onClick={() => setDownloadedVersion(null)}
             className="shrink-0 p-1 text-txt-tertiary hover:text-txt-secondary transition-colors"
-            aria-label="Dismiss"
+            aria-label={uiText("Dismiss")}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -86,10 +87,9 @@ export function UpdateToast() {
     <div className="fixed bottom-6 left-6 z-[300] animate-slide-up">
       <div className="glass-pill rounded-xl px-4 py-3 flex items-center gap-3 max-w-[380px]">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-txt-primary">Update failed</p>
+          <p className="text-sm font-medium text-txt-primary">{uiText("Update failed")}</p>
           <p className="text-xs text-txt-secondary truncate">
-            Auto-update failed — download manually
-          </p>
+            {uiText("Auto-update failed — download manually")}</p>
         </div>
         <a
           href={failedUpdate!.releaseUrl}
@@ -97,12 +97,11 @@ export function UpdateToast() {
           rel="noopener noreferrer"
           className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-primary hover:bg-accent-primary/80 text-white transition-colors"
         >
-          Download
-        </a>
+          {uiText("Download")}</a>
         <button
           onClick={() => setFailedUpdate(null)}
           className="shrink-0 p-1 text-txt-tertiary hover:text-txt-secondary transition-colors"
-          aria-label="Dismiss"
+          aria-label={uiText("Dismiss")}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

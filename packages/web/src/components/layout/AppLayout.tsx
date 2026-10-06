@@ -1,5 +1,7 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useCommunityHistory } from '../../hooks/useCommunityHistory';
 import { ImagePreview } from '../chat/ImagePreview';
 import { CreateSpaceModal } from '../modals/CreateSpace';
 import { JoinSpaceModal } from '../modals/JoinSpace';
@@ -179,7 +181,7 @@ export function AppLayout() {
           );
           const label = newest?.label || 'New audio device';
           useUIStore.getState().addToast(
-            `${label} detected — choose it in Voice settings to switch`,
+            uiText("{0} detected — choose it in Voice settings to switch", [label]),
             'info',
             6000,
           );
@@ -320,6 +322,8 @@ export function AppLayout() {
     }
   }, [channelId, spaceId, setCurrentChannel, loadMessages]);
 
+  useCommunityHistory(spaceId);
+
   // Auto-select last visited (or first) channel when opening a server without a channelId.
   // Desktop-only: on mobile, `/channels/<spaceId>` should leave the user at the channel
   // sidebar overview (MobileSpacesScreen), not auto-jump into a text channel — otherwise
@@ -363,12 +367,12 @@ export function AppLayout() {
 
   if (!user || showBootSkeleton) {
     return (
-      <div className="h-full flex items-center justify-center bg-surface-base" role="status" aria-label="Sincronizando o Lume">
+      <div className="h-full flex items-center justify-center bg-surface-base" role="status" aria-label={uiText("Sincronizando o Lume")}>
         <div className="flex flex-col items-center gap-5">
           <div className="relative w-20 h-20 rounded-[26px] bg-[#071216] border border-accent-primary/20 shadow-[0_0_48px_rgba(0,209,255,0.12)] flex items-center justify-center">
             <img src="/icons/logo.png" alt="" className="w-14 h-14 object-contain animate-pulse" />
           </div>
-          <p className="text-xs font-semibold tracking-[0.28em] uppercase text-accent-primary">Sincronizando o Lume</p>
+          <p className="text-xs font-semibold tracking-[0.28em] uppercase text-accent-primary">{uiText("Sincronizando o Lume")}</p>
         </div>
       </div>
     );
@@ -378,7 +382,7 @@ export function AppLayout() {
   if (isMobile) {
     return (
       <>
-        <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">Abrindo o Lume…</div>}>
+        <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">{uiText("Abrindo o Lume…")}</div>}>
           <MobileShell />
         </React.Suspense>
         {/* Modals still render globally for both mobile and desktop */}
@@ -418,7 +422,7 @@ export function AppLayout() {
 
   // ── Desktop layout ──
   return (
-    <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">Abrindo o Lume…</div>}>
+    <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center bg-surface-base text-sm text-txt-secondary">{uiText("Abrindo o Lume…")}</div>}>
     <div className="lume-shell h-full flex flex-col md:grid md:grid-cols-[312px_1fr] md:grid-rows-[minmax(0,1fr)] bg-surface-base overflow-hidden">
       {/* Space sidebar - always visible on desktop */}
       <div className={`lume-navigation-shell fixed inset-y-0 left-0 z-40 flex w-[312px] transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:static md:z-auto md:w-auto md:transform-none`}>
@@ -428,7 +432,9 @@ export function AppLayout() {
 
       {/* Main content area */}
       <div className="lume-content-stage flex-1 flex min-w-0 min-h-0 bg-surface-chat relative">
-        <MainContent />
+        <div className="lume-main-panel flex flex-1 min-w-0 min-h-0 relative">
+          <MainContent />
+        </div>
         <RightPanel />
       </div>
 

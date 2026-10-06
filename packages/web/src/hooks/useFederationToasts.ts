@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { useEffect, useRef } from 'react';
 import { useInstanceStore, type ConnectedInstance } from '../stores/instanceStore';
 import { useUIStore } from '../stores/uiStore';
@@ -28,12 +29,12 @@ export function useFederationToasts() {
         prevStatus === 'connected' &&
         (inst.status === 'disconnected' || inst.status === 'error')
       ) {
-        addToast(`Lost connection to ${label} — reconnecting...`, 'warning');
+        addToast(uiText("Lost connection to {0} — reconnecting...", [label]), 'warning');
       } else if (
         (prevStatus === 'disconnected' || prevStatus === 'error' || prevStatus === 'connecting') &&
         inst.status === 'connected'
       ) {
-        addToast(`Reconnected to ${label}`, 'success');
+        addToast(uiText("Reconnected to {0}", [label]), 'success');
       }
     }
 

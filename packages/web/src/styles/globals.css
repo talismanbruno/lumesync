@@ -611,18 +611,20 @@
 }
 
 .lume-content-stage {
+  --lume-panel-header-surface: linear-gradient(180deg, rgba(13, 16, 19, 0.92), rgba(7, 9, 11, 0.72));
   background: rgb(var(--bg-chat));
 }
 
-.lume-content-stage > div {
+.lume-main-panel > div {
   background-color: transparent;
 }
 
-.lume-content-stage [class*="h-14"][class*="border-b"] {
+.lume-content-stage [class*="h-14"][class*="border-b"],
+.lume-content-stage .lume-friends-command {
   min-height: 58px;
   height: 58px;
   border-bottom-color: rgba(255, 255, 255, 0.055);
-  background: linear-gradient(180deg, rgba(13, 16, 19, 0.92), rgba(7, 9, 11, 0.72));
+  background: var(--lume-panel-header-surface);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
 }
@@ -730,6 +732,91 @@
   background: transparent;
 }
 
+.lume-audio-popover {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background: linear-gradient(165deg, rgba(18, 25, 29, 0.98), rgba(8, 12, 15, 0.98));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  max-height: min(440px, calc(100dvh - 100px));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.lume-audio-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 11px; color: rgb(var(--accent-primary)); background: rgb(var(--accent-primary) / 0.08); }
+.lume-audio-close { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 8px; color: rgb(var(--text-tertiary)); }
+.lume-audio-close:hover, .lume-audio-settings:hover { color: rgb(var(--text-primary)); background: rgba(255, 255, 255, 0.04); }
+.lume-audio-device { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 11px; background: rgba(255, 255, 255, 0.025); }
+.lume-audio-device:hover { border-color: rgb(var(--accent-primary) / 0.22); }
+.lume-audio-device-list { max-height: 164px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 3px; background: rgb(var(--bg-base)); }
+.lume-audio-device-option { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 8px; border-radius: 7px; cursor: pointer; font-size: 11px; color: rgb(var(--text-secondary)); }
+.lume-audio-device-option:hover, .lume-audio-device-option:focus-within { background: rgba(255, 255, 255, 0.05); }
+.lume-audio-device-option.is-selected { color: rgb(var(--accent-primary)); background: rgb(var(--accent-primary) / 0.07); }
+.lume-audio-device-option:focus-within { box-shadow: inset 0 0 0 2px rgb(var(--accent-primary) / 0.5); }
+.lume-audio-device-dot { width: 6px; height: 6px; border-radius: 50%; background: transparent; flex-shrink: 0; }
+.is-selected .lume-audio-device-dot { background: currentColor; }
+.lume-volume-value { min-width: 42px; padding: 3px 5px; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 7px; background: rgba(255, 255, 255, 0.03); text-align: center; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; color: rgb(var(--text-secondary)); }
+.lume-volume-value.is-boosted { color: rgb(var(--accent-primary)); border-color: rgb(var(--accent-primary) / 0.16); }
+.lume-volume-reset { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; color: rgb(var(--text-tertiary)); }
+.lume-volume-reset:hover:enabled { color: rgb(var(--text-primary)); background: rgba(255, 255, 255, 0.05); }
+.lume-volume-reset:disabled { opacity: 0.3; cursor: default; }
+.lume-audio-popover button:focus-visible, .lume-volume-reset:focus-visible { box-shadow: inset 0 0 0 2px rgb(var(--accent-primary) / 0.5); }
+.lume-volume-slider { appearance: none; display: block; height: 28px; margin: 0; background: transparent; cursor: pointer; border-radius: 7px; }
+.lume-volume-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 8px; background: linear-gradient(to right, rgb(var(--accent-primary)) var(--lume-volume-fill), rgba(255, 255, 255, 0.11) var(--lume-volume-fill)); }
+.lume-volume-slider::-moz-range-track { height: 4px; border-radius: 8px; background: linear-gradient(to right, rgb(var(--accent-primary)) var(--lume-volume-fill), rgba(255, 255, 255, 0.11) var(--lume-volume-fill)); }
+.lume-volume-slider::-webkit-slider-thumb { appearance: none; margin-top: -4px; width: 12px; height: 12px; border: 2px solid rgb(var(--accent-primary)); border-radius: 50%; background: rgb(var(--bg-channel)); box-shadow: 0 0 0 3px rgb(var(--accent-primary) / 0.08); }
+.lume-volume-slider::-moz-range-thumb { width: 8px; height: 8px; border: 2px solid rgb(var(--accent-primary)); border-radius: 50%; background: rgb(var(--bg-channel)); box-shadow: 0 0 0 3px rgb(var(--accent-primary) / 0.08); }
+.lume-volume-slider:focus-visible { box-shadow: 0 0 0 2px rgb(var(--accent-primary) / 0.5); }
+.lume-volume-reference { position: absolute; left: 50%; top: 22px; height: 4px; width: 1px; background: rgba(255, 255, 255, 0.25); pointer-events: none; }
+.lume-mic-level { display: flex; gap: 3px; }
+.lume-mic-level span { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.06); transition: background-color 75ms; }
+.lume-mic-level span.is-active { background: rgb(var(--status-online)); }
+
+.lume-dm-call-workspace {
+  container-type: inline-size;
+  container-name: dm-call;
+}
+
+.lume-dm-call-layout {
+  display: grid;
+  height: 100%;
+  grid-template-rows: minmax(190px, 42%) minmax(0, 1fr);
+}
+
+.lume-dm-call-chat {
+  border-top: 1px solid rgb(var(--border-soft));
+  background: rgb(var(--bg-chat));
+}
+
+.lume-dm-call-layout.is-chat-closed {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lume-call-controls > div > button {
+  width: 34px;
+  height: 34px;
+}
+
+.lume-voice-expanded:not(:fullscreen) {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 150;
+  background: rgb(var(--bg-base));
+}
+
+@container dm-call (min-width: 760px) {
+  .lume-dm-call-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .lume-dm-call-chat {
+    border-top: 0;
+    border-left: 1px solid rgb(var(--border-soft));
+  }
+}
+
 .lume-friend-row {
   margin-top: 6px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.026), rgba(255, 255, 255, 0.012));
@@ -746,15 +833,6 @@
   border-color: rgba(255, 255, 255, 0.1);
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
   box-shadow: none;
-}
-
-.lume-member-panel {
-  margin: 10px 10px 10px 0;
-  height: calc(100% - 20px);
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(12, 15, 18, 0.9), rgba(7, 9, 11, 0.94));
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
 }
 
 .lume-profile-card {
@@ -791,6 +869,188 @@
   box-shadow:
     0 0 0 2px rgba(0, 209, 255, 0.06),
     0 4px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+.lume-community-monogram {
+  background: linear-gradient(145deg, #174551, #101a23);
+  color: #d6f5fa;
+}
+
+.lume-rail-node.lume-community-monogram {
+  border-color: rgba(0, 209, 255, 0.2);
+}
+
+.lume-rail-node.lume-community-monogram:is(:hover, :focus-visible),
+.lume-community-monogram.lume-rail-node-active {
+  border-color: rgba(0, 209, 255, 0.45);
+}
+
+.lume-context-panel .lume-channel-link {
+  color: rgb(var(--text-tertiary));
+  background: transparent;
+  border-radius: 5px;
+}
+
+.lume-channel-link > .lume-channel-symbol {
+  color: #6d707d;
+  transition: color var(--lume-fast) var(--lume-ease);
+}
+
+.lume-channel-link[data-unread="true"] {
+  color: rgb(var(--text-primary));
+}
+
+.lume-channel-link:not([data-locked="true"]):is(:hover, :focus-visible) {
+  color: #65dcef;
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.065), rgba(0, 209, 255, 0.015));
+}
+
+.lume-channel-link:not([data-locked="true"]):is(:hover, :focus-visible) > .lume-channel-symbol,
+.lume-channel-link[data-active="true"] > .lume-channel-symbol {
+  color: #65dcef;
+}
+
+.lume-context-panel .lume-channel-link[data-active="true"] {
+  color: #edfaff;
+  background: linear-gradient(90deg, rgba(0, 209, 255, 0.085), rgba(0, 209, 255, 0.015));
+}
+
+.lume-channel-link[data-active="true"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 14px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: #00d1ff;
+  box-shadow: 0 0 7px rgba(0, 209, 255, 0.2);
+  pointer-events: none;
+}
+
+.lume-channel-link[data-locked="true"],
+.lume-channel-link[data-locked="true"] > .lume-channel-symbol {
+  color: rgb(var(--text-tertiary) / 0.5);
+  cursor: not-allowed;
+}
+
+/* Home logo: incoming-call light, in cyan, only during hover or keyboard focus. */
+.lume-rail-node.lume-home-button {
+  isolation: isolate;
+  overflow: visible;
+  background: #0b0e10;
+  box-shadow: none;
+  border-radius: 14px !important;
+}
+
+.lume-rail .lume-home-button:hover {
+  transform: none;
+  border-radius: 14px !important;
+}
+
+.lume-home-logo {
+  position: relative;
+  z-index: 2;
+}
+
+.lume-home-light {
+  position: absolute;
+  inset: -12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.lume-home-light > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px;
+  border-radius: 50%;
+  filter: blur(6px);
+  background: radial-gradient(circle,
+    rgba(0, 209, 255, 0.32) 0%,
+    rgba(0, 209, 255, 0.12) 35%,
+    rgba(0, 209, 255, 0.03) 55%,
+    transparent 70%);
+  opacity: 0;
+}
+
+.lume-home-reflection {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.lume-home-reflection::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(105deg,
+    transparent 0%, transparent 35%,
+    rgba(0, 209, 255, 0.06) 42%,
+    rgba(0, 209, 255, 0.16) 50%,
+    rgba(0, 209, 255, 0.06) 58%,
+    transparent 65%, transparent 100%);
+}
+
+@keyframes lumeHomeGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 209, 255, 0.08), 0 0 20px rgba(0, 209, 255, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 209, 255, 0.18), 0 0 24px rgba(0, 209, 255, 0.08);
+  }
+}
+
+.lume-home-button:is(:hover, :focus-visible) {
+  border-color: rgba(0, 209, 255, 0.3);
+  animation: lumeHomeGlow 4s ease-in-out infinite;
+}
+
+.lume-home-button:is(:hover, :focus-visible) .lume-home-light,
+.lume-home-button:is(:hover, :focus-visible) .lume-home-reflection {
+  opacity: 1;
+}
+
+.lume-home-button:is(:hover, :focus-visible) .lume-home-light > span {
+  animation: callRippleLiquid 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+.lume-home-button:is(:hover, :focus-visible) .lume-home-light > span:nth-child(2) {
+  animation-delay: 1.3s;
+}
+
+.lume-home-button:is(:hover, :focus-visible) .lume-home-light > span:nth-child(3) {
+  animation-delay: 2.6s;
+}
+
+.lume-home-button:is(:hover, :focus-visible) .lume-home-reflection::after {
+  animation: callRefraction 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lume-home-button,
+  .lume-home-light,
+  .lume-home-light > span,
+  .lume-home-reflection,
+  .lume-home-reflection::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .lume-home-button:is(:hover, :focus-visible) {
+    box-shadow: 0 0 12px rgba(0, 209, 255, 0.12);
+  }
+  .lume-home-reflection { display: none; }
 }
 
 .lume-connection-panel {
@@ -1190,12 +1450,33 @@
   }
 
   .lume-content-stage {
+    gap: 10px;
+    background: transparent;
+  }
+
+  .lume-main-panel,
+  .lume-member-panel,
+  .lume-roster {
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 22px;
     overflow: hidden;
     box-shadow:
       0 22px 70px rgba(0, 0, 0, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  }
+
+  .lume-main-panel {
+    background: rgb(var(--bg-chat));
+  }
+
+  .lume-member-panel,
+  .lume-roster {
+    margin: 0;
+    height: 100%;
+    overflow-y: auto;
+    background:
+      var(--lume-panel-header-surface) top / 100% 58px no-repeat,
+      rgb(var(--bg-chat));
   }
 }
 

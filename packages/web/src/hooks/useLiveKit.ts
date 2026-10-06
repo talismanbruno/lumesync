@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Room,
@@ -430,7 +431,7 @@ export function useLiveKit() {
           if (err?.name === 'NotAllowedError') {
             useVoiceStore.getState().setMicPermissionDenied(true);
             useUIStore.getState().addToast(
-              'Microphone access denied. You joined as a listener — tap "Allow microphone" to grant access.',
+              uiText("Microphone access denied. You joined as a listener — tap \"Allow microphone\" to grant access."),
               'warning',
             );
             return;
@@ -550,7 +551,7 @@ export function useLiveKit() {
         // A newer device-switch attempt has superseded ours. Don't write stale
         // rollback state; let the newer attempt's outcome stand.
         if (myGen !== switchCameraGenRef.current) {
-          useUIStore.getState().addToast('Could not switch camera', 'warning');
+          useUIStore.getState().addToast(uiText("Could not switch camera"), 'warning');
           return;
         }
         const stillLive = camPub.track?.mediaStreamTrack?.readyState === 'live';
@@ -570,7 +571,7 @@ export function useLiveKit() {
           useVoiceStore.setState({ isCameraOn: false });
           broadcastVoiceStatus();
         }
-        useUIStore.getState().addToast('Could not switch camera', 'warning');
+        useUIStore.getState().addToast(uiText("Could not switch camera"), 'warning');
       }
     })();
   }, [cameraDeviceId, isCameraOn, isConnected]);
@@ -903,7 +904,7 @@ export function useLiveKit() {
       }
       
       updateParticipants();
-    } catch (err) { if (gen === _connectGeneration) { setConnectionError('Failed to connect'); useVoiceStore.getState().setConnectionError('Failed to connect'); useVoiceStore.getState().leaveVoice(); } }
+    } catch (err) { if (gen === _connectGeneration) { setConnectionError(uiText("Failed to connect")); useVoiceStore.getState().setConnectionError(uiText("Failed to connect")); useVoiceStore.getState().leaveVoice(); } }
     finally { if (gen === _connectGeneration) setIsConnecting(false); }
   }, [updateParticipants, handleDataReceived]);
 

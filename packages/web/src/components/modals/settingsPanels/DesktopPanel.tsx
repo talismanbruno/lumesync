@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { useState, useEffect } from 'react';
 import { Toggle } from '../../ui/Toggle';
 
@@ -49,19 +50,17 @@ function AutoLaunchSettings() {
     <>
       <div className="flex items-center justify-between py-1">
         <div className="flex-1 mr-4">
-          <div className="text-sm text-txt-primary">Start at boot</div>
+          <div className="text-sm text-txt-primary">{uiText("Start at boot")}</div>
           <div className="text-xs text-txt-tertiary mt-0.5">
-            Abrir o Lume automaticamente ao entrar no sistema
-          </div>
+            {uiText("Abrir o Lume automaticamente ao entrar no sistema")}</div>
         </div>
         <Toggle enabled={openAtLogin} onChange={handleOpenAtLoginChange} disabled={busy} />
       </div>
       <div className="flex items-center justify-between py-1">
         <div className="flex-1 mr-4">
-          <div className={`text-sm ${openAtLogin ? 'text-txt-primary' : 'text-txt-tertiary'}`}>Start minimized</div>
+          <div className={`text-sm ${openAtLogin ? 'text-txt-primary' : 'text-txt-tertiary'}`}>{uiText("Start minimized")}</div>
           <div className="text-xs text-txt-tertiary mt-0.5">
-            Start hidden in the system tray instead of showing the window
-          </div>
+            {uiText("Start hidden in the system tray instead of showing the window")}</div>
         </div>
         <Toggle enabled={startMinimized} onChange={handleStartMinimizedChange} disabled={busy || !openAtLogin} />
       </div>
@@ -88,18 +87,17 @@ function UpdateSettings() {
     <div className="flex items-center justify-between py-1">
       <div className="flex-1 mr-4">
         <div className="text-sm text-txt-primary">
-          {version ? `Versão ${version}` : 'Lume Desktop'}
+          {version ? uiText("Versão {0}", [version]) : uiText("Lume Desktop")}
         </div>
         <div className="text-xs text-txt-tertiary mt-0.5">
-          Check for new versions of the desktop app
-        </div>
+          {uiText("Check for new versions of the desktop app")}</div>
       </div>
       <button
         onClick={handleCheck}
         disabled={checking}
         className="px-3 py-1.5 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded-lg transition-colors disabled:opacity-50"
       >
-        {checking ? 'Checking...' : 'Check for Updates'}
+        {checking ? uiText("Checking...") : uiText("Check for Updates")}
       </button>
     </div>
   );
@@ -108,7 +106,7 @@ function UpdateSettings() {
 export function DesktopPanel() {
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">Desktop</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("Desktop")}</h2>
 
       <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
         <AutoLaunchSettings />
@@ -119,14 +117,13 @@ export function DesktopPanel() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-txt-primary font-medium">{window.location.origin}</div>
-            <div className="text-xs text-txt-tertiary mt-0.5">Currently connected instance</div>
+            <div className="text-xs text-txt-tertiary mt-0.5">{uiText("Currently connected instance")}</div>
           </div>
           <button
             onClick={() => window.backspace?.clearInstanceUrl()}
             className="px-3 py-1.5 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded-lg transition-colors"
           >
-            Change Instance
-          </button>
+            {uiText("Change Instance")}</button>
         </div>
       </div>
     </div>

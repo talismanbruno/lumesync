@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useTransferStore, type Transfer } from '../../stores/transferStore';
@@ -100,12 +101,12 @@ export function TransferIndicator() {
             ? 'text-txt-tertiary/60 hover:text-txt-tertiary hover:bg-interactive-hover'
             : 'text-txt-tertiary hover:text-txt-primary hover:bg-interactive-hover'
         }`}
-        title="Transfers"
-        aria-label="Transfers"
+        title={uiText("Transfers")}
+        aria-label={uiText("Transfers")}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
       >
-        <OrbitalIcon name="transfer" />
+        <OrbitalIcon name="download" />
         {active.length > 0 && (
           <span className={`absolute -top-0.5 -right-0.5 ${badgeColor} text-black text-[10px] font-medium rounded-full px-1.5 leading-4 min-w-[16px] text-center`}>
             {active.length}
@@ -117,13 +118,13 @@ export function TransferIndicator() {
           ref={panelRef}
           id={panelId}
           role="dialog"
-          aria-label="Transfers"
+          aria-label={uiText("Transfers")}
           style={position}
           className="fixed w-[min(300px,calc(100vw-16px))] bg-surface-elevated border border-border-soft shadow-2xl z-[1000] rounded-lg overflow-y-auto"
         >
           <div className="px-3 py-2 border-b border-border-soft text-xs flex justify-between items-center">
             <span className="text-txt-secondary">
-              {visible.length} transfer{visible.length === 1 ? '' : 's'}
+              {visible.length} {uiText(" transfer")}{visible.length === 1 ? '' : uiText("s")}
             </span>
             <button
               onClick={() =>
@@ -133,13 +134,11 @@ export function TransferIndicator() {
               }
               className="text-txt-tertiary hover:text-txt-primary transition-colors"
             >
-              Clear completed
-            </button>
+              {uiText("Clear completed")}</button>
           </div>
           {visible.length === 0 && (
             <div className="px-3 py-6 text-center text-txt-tertiary text-xs">
-              No active transfers.
-            </div>
+              {uiText("No active transfers.")}</div>
           )}
           <div className="max-h-[400px] overflow-y-auto">
             {visible.map((t) => (
@@ -196,37 +195,33 @@ function TransferRow({ transfer, onPause, onResume, onAbort, onDismiss }: Transf
       <div className="mt-1 flex justify-between items-center text-[10px] text-txt-tertiary gap-2">
         <span className="truncate">
           {transfer.state === 'completed'
-            ? 'Done'
+            ? uiText("Done")
             : transfer.state === 'failed'
-            ? `Failed: ${transfer.error?.message ?? 'unknown'}`
+            ? uiText("Failed: {0}", [transfer.error?.message ?? 'unknown'])
             : transfer.state === 'aborted'
-            ? 'Aborted'
+            ? uiText("Aborted")
             : `${fmt(transfer.progress.loaded)} / ${fmt(transfer.progress.total)}`}
         </span>
         <span className="flex gap-2 flex-shrink-0">
           {transfer.state === 'active' && (
             <button onClick={onPause} className="hover:text-txt-primary transition-colors">
-              Pause
-            </button>
+              {uiText("Pause")}</button>
           )}
           {transfer.state === 'paused' && (
             <button onClick={onResume} className="hover:text-txt-primary transition-colors">
-              Resume
-            </button>
+              {uiText("Resume")}</button>
           )}
           {(transfer.state === 'active' ||
             transfer.state === 'paused' ||
             transfer.state === 'queued') && (
             <button onClick={onAbort} className="hover:text-accent-rose transition-colors">
-              Abort
-            </button>
+              {uiText("Abort")}</button>
           )}
           {(transfer.state === 'completed' ||
             transfer.state === 'failed' ||
             transfer.state === 'aborted') && (
             <button onClick={onDismiss} className="hover:text-txt-primary transition-colors">
-              Dismiss
-            </button>
+              {uiText("Dismiss")}</button>
           )}
         </span>
       </div>

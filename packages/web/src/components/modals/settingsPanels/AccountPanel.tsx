@@ -1,3 +1,4 @@
+import { t as uiText } from '../../../i18n';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuthStore } from '../../../stores/authStore';
 import { useUIStore } from '../../../stores/uiStore';
@@ -119,9 +120,9 @@ export function AccountPanel() {
       // server; refetch the home DM list so the split conversation collapses
       // without a reload.
       try { await useSpaceStore.getState().reloadDmsForOrigin(''); } catch { /* non-fatal */ }
-      addToast(`Account re-linked with ${homeConnection.username}`, 'success', 3000);
+      addToast(uiText("Account re-linked with {0}", [homeConnection.username]), 'success', 3000);
     } catch (err) {
-      setReattachError(err instanceof Error ? err.message : 'Re-attach failed');
+      setReattachError(err instanceof Error ? err.message : uiText("Re-attach failed"));
     } finally {
       setReattaching(false);
       setReattachArmed(false);
@@ -182,7 +183,7 @@ export function AccountPanel() {
       const { filename } = await waitForTransferAttachment(tid);
       setAvatarFilename(filename);
     } catch {
-      setError('Failed to upload animated avatar');
+      setError(uiText("Failed to upload animated avatar"));
       setAvatarPreview(null);
       URL.revokeObjectURL(previewUrl);
     } finally {
@@ -202,7 +203,7 @@ export function AccountPanel() {
       const { filename } = await waitForTransferAttachment(tid);
       setBannerFilename(filename);
     } catch {
-      setError('Failed to upload animated banner');
+      setError(uiText("Failed to upload animated banner"));
       setBannerPreview(null);
       URL.revokeObjectURL(previewUrl);
     } finally {
@@ -251,7 +252,7 @@ export function AccountPanel() {
       const { filename } = await waitForTransferAttachment(tid);
       setAvatarFilename(filename);
     } catch {
-      setError('Failed to upload avatar');
+      setError(uiText("Failed to upload avatar"));
       setAvatarPreview(null);
       URL.revokeObjectURL(previewUrl);
     } finally {
@@ -271,7 +272,7 @@ export function AccountPanel() {
       const { filename } = await waitForTransferAttachment(tid);
       setBannerFilename(filename);
     } catch {
-      setError('Failed to upload banner');
+      setError(uiText("Failed to upload banner"));
       setBannerPreview(null);
       URL.revokeObjectURL(previewUrl);
     } finally {
@@ -306,9 +307,9 @@ export function AccountPanel() {
       if (bannerFilename !== null) updates.banner = bannerFilename;
 
       await updateProfile(updates as Parameters<typeof updateProfile>[0]);
-      addToast('Profile updated', 'success', 2000);
+      addToast(uiText("Profile updated"), 'success', 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      setError(err instanceof Error ? err.message : uiText("Failed to update profile"));
     } finally {
       setIsLoading(false);
     }
@@ -319,18 +320,18 @@ export function AccountPanel() {
     setPasswordResults(null);
 
     if (newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters');
+      setPasswordError(uiText("New password must be at least 8 characters"));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError(uiText("Passwords do not match"));
       return;
     }
 
     setPasswordLoading(true);
     try {
       const results = await changePassword(currentPassword, newPassword);
-      addToast('Password changed', 'success', 2000);
+      addToast(uiText("Password changed"), 'success', 2000);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
@@ -343,7 +344,7 @@ export function AccountPanel() {
         setPasswordResults(null);
       }, 5000);
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
+      setPasswordError(err instanceof Error ? err.message : uiText("Failed to change password"));
     } finally {
       setPasswordLoading(false);
     }
@@ -368,27 +369,24 @@ export function AccountPanel() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-txt-primary mb-6">My Account</h2>
+      <h2 className="text-lg font-semibold text-txt-primary mb-6">{uiText("My Account")}</h2>
       {user?.federationHomeOrphaned && user?.homeInstance && (
         <div className="rounded-lg bg-accent-amber/10 border border-accent-amber/25 px-3.5 py-3 text-xs text-txt-secondary leading-relaxed mb-4">
-          <span className="font-medium text-txt-primary">This account is detached from its home instance.</span>{' '}
-          {user.homeInstance} was reset or is no longer available, so this account now operates locally on
-          this instance — your profile and password are managed here.
-          {homeConnection && (
+          <span className="font-medium text-txt-primary">{uiText("This account is detached from its home instance.")}</span>{' '}
+          {user.homeInstance} {uiText(" was reset or is no longer available, so this account now operates locally on this instance — your profile and password are managed here.")}{homeConnection && (
             <>
-              {' '}As <span className="font-medium text-txt-primary">{homeConnection.username}</span> on{' '}
-              {user.homeInstance}, you can re-link this account — profile and presence will sync from there again.
-              <button
+              {' '}{uiText("As ")}<span className="font-medium text-txt-primary">{homeConnection.username}</span> {uiText(" on")}{' '}
+              {user.homeInstance}{uiText(", you can re-link this account — profile and presence will sync from there again.")}<button
                 type="button"
                 onClick={handleReattach}
                 disabled={reattaching}
                 className="mt-2 block rounded-md bg-accent-amber/20 hover:bg-accent-amber/30 disabled:opacity-50 text-txt-primary px-3 py-1.5 text-xs font-medium transition-colors"
               >
                 {reattaching
-                  ? 'Re-attaching…'
+                  ? uiText("Re-attaching…")
                   : reattachArmed
-                    ? `Confirm re-attach as ${homeConnection.username}`
-                    : `Re-attach to ${user.homeInstance}`}
+                    ? uiText("Confirm re-attach as {0}", [homeConnection.username])
+                    : uiText("Re-attach to {0}", [user.homeInstance])}
               </button>
               {reattachError && <div className="mt-1.5 text-accent-rose">{reattachError}</div>}
             </>
@@ -398,8 +396,7 @@ export function AccountPanel() {
       {/* ── Profile Customization ── */}
       <div>
         <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          Profile Customization
-        </div>
+          {uiText("Profile Customization")}</div>
 
         {/* Live Preview Card */}
         <div className="rounded-lg overflow-hidden border border-white/[0.06] mb-4 bg-surface-channel">
@@ -440,7 +437,7 @@ export function AccountPanel() {
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-4">
           {/* Avatar upload */}
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Avatar</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Avatar")}</label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -450,7 +447,7 @@ export function AccountPanel() {
               >
                 <div className="w-[64px] h-[64px] rounded-full overflow-hidden">
                   {displayAvatarSrc ? (
-                    <img src={displayAvatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={displayAvatarSrc} alt={uiText("Avatar")} className="w-full h-full object-cover" />
                   ) : (
                     <Avatar
                       src={null}
@@ -483,16 +480,14 @@ export function AccountPanel() {
                   disabled={uploadingAvatar}
                   className="text-xs text-accent-primary hover:underline text-left"
                 >
-                  Change Avatar
-                </button>
+                  {uiText("Change Avatar")}</button>
                 {(displayAvatarSrc || user.avatar) && avatarFilename !== '' && (
                   <button
                     type="button"
                     onClick={handleRemoveAvatar}
                     className="text-xs text-txt-danger hover:underline text-left"
                   >
-                    Remove
-                  </button>
+                    {uiText("Remove")}</button>
                 )}
               </div>
             </div>
@@ -504,13 +499,12 @@ export function AccountPanel() {
               className="hidden"
             />
             <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
-              PNG, JPG, WebP or animated GIF. GIF animation is preserved across Lume.
-            </p>
+              {uiText("PNG, JPG, WebP or animated GIF. GIF animation is preserved across Lume.")}</p>
           </div>
 
           {/* Banner upload */}
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Banner</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Banner")}</label>
             <button
               type="button"
               onClick={() => bannerInputRef.current?.click()}
@@ -550,16 +544,14 @@ export function AccountPanel() {
                 disabled={uploadingBanner}
                 className="text-xs text-accent-primary hover:underline"
               >
-                Change Banner
-              </button>
+                {uiText("Change Banner")}</button>
               {(displayBannerSrc || user.banner) && bannerFilename !== '' && (
                 <button
                   type="button"
                   onClick={handleRemoveBanner}
                   className="text-xs text-txt-danger hover:underline"
                 >
-                  Remove
-                </button>
+                  {uiText("Remove")}</button>
               )}
             </div>
             <input
@@ -570,13 +562,12 @@ export function AccountPanel() {
               className="hidden"
             />
             <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
-              Static images can be cropped. Animated GIF banners are displayed in motion.
-            </p>
+              {uiText("Static images can be cropped. Animated GIF banners are displayed in motion.")}</p>
           </div>
 
           {/* Avatar Color */}
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Avatar Color</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Avatar Color")}</label>
             <div className="flex gap-2">
               {AVATAR_COLORS.map((key) => {
                 const entry = AVATAR_GRADIENT_MAP[key];
@@ -600,7 +591,7 @@ export function AccountPanel() {
 
           {/* Banner Color */}
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Banner Color</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Banner Color")}</label>
             <div className="grid grid-cols-7 gap-1.5 mb-2">
               {[0, 1, 2].map((row) =>
                 BANNER_COLOR_PRESETS.map((family) => {
@@ -633,7 +624,7 @@ export function AccountPanel() {
                     setAccentColor(val);
                   }
                 }}
-                placeholder="#hex"
+                placeholder={uiText("#hex")}
                 className="input-standard w-24 px-2 py-1.5 text-xs font-mono"
                 maxLength={7}
               />
@@ -649,15 +640,14 @@ export function AccountPanel() {
                   onClick={() => { setAccentColor(null); setCustomHex(''); }}
                   className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
                 >
-                  Clear
-                </button>
+                  {uiText("Clear")}</button>
               )}
             </div>
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">About Me</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("About Me")}</label>
             <div className="relative">
               <textarea
                 value={bio}
@@ -665,7 +655,7 @@ export function AccountPanel() {
                   if (e.target.value.length <= 190) setBio(e.target.value);
                 }}
                 rows={3}
-                placeholder="Tell the world about yourself..."
+                placeholder={uiText("Tell the world about yourself...")}
                 className="input-standard w-full resize-none"
                 maxLength={190}
               />
@@ -679,24 +669,24 @@ export function AccountPanel() {
 
       {/* ── Account ── */}
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Account</div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Account")}</div>
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-4">
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Status</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Status")}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as UserStatus)}
               className="input-standard w-full appearance-none"
             >
-              <option value="online">Online</option>
-              {user.isAdmin && <option value="working">Trabalhando no Lume</option>}
-              <option value="idle">Idle</option>
-              <option value="dnd">Do Not Disturb</option>
+              <option value="online">{uiText("Online")}</option>
+              {user.isAdmin && <option value="working">{uiText("Trabalhando no Lume")}</option>}
+              <option value="idle">{uiText("Idle")}</option>
+              <option value="dnd">{uiText("Do Not Disturb")}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Display Name</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Display Name")}</label>
             <input
               type="text"
               value={displayName}
@@ -706,13 +696,13 @@ export function AccountPanel() {
           </div>
 
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Custom Status</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Custom Status")}</label>
             <input
               type="text"
               value={customStatus}
               onChange={(e) => setCustomStatus(e.target.value)}
               className="input-standard w-full"
-              placeholder="What are you up to?"
+              placeholder={uiText("What are you up to?")}
             />
           </div>
         </div>
@@ -720,18 +710,18 @@ export function AccountPanel() {
 
       {/* ── Password ── */}
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Password</div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Password")}</div>
         <form onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }} className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
           <input type="text" autoComplete="username" value={user.username} readOnly tabIndex={-1} className="sr-only" />
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Current Password</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Current Password")}</label>
             <div className="relative">
               <input
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 className="input-standard w-full pr-10"
-                placeholder="Enter current password"
+                placeholder={uiText("Enter current password")}
                 autoComplete="current-password"
               />
               <button
@@ -753,14 +743,14 @@ export function AccountPanel() {
             </div>
           </div>
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">New Password</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("New Password")}</label>
             <div className="relative">
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="input-standard w-full pr-10"
-                placeholder="Minimum 6 characters"
+                placeholder={uiText("Minimum 6 characters")}
                 autoComplete="new-password"
               />
               <button
@@ -782,13 +772,13 @@ export function AccountPanel() {
             </div>
           </div>
           <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">Confirm New Password</label>
+            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Confirm New Password")}</label>
             <input
               type="password"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
               className="input-standard w-full"
-              placeholder="Confirm new password"
+              placeholder={uiText("Confirm new password")}
               autoComplete="new-password"
             />
           </div>
@@ -802,9 +792,9 @@ export function AccountPanel() {
                 <div key={r.origin} className="flex items-center justify-between text-xs px-2 py-1 rounded bg-white/[0.02]">
                   <span className="text-txt-secondary">{r.origin}</span>
                   {r.success ? (
-                    <span className="text-status-online">Synced</span>
+                    <span className="text-status-online">{uiText("Synced")}</span>
                   ) : (
-                    <span className="text-txt-danger" title={r.error}>Failed — will sync on reconnect</span>
+                    <span className="text-txt-danger" title={r.error}>{uiText("Failed — will sync on reconnect")}</span>
                   )}
                 </div>
               ))}
@@ -816,44 +806,42 @@ export function AccountPanel() {
             disabled={passwordLoading || !currentPassword || !newPassword || !confirmNewPassword}
             className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {passwordLoading ? 'Changing...' : 'Change Password'}
+            {passwordLoading ? uiText("Changing...") : uiText("Change Password")}
           </button>
         </form>
       </div>
 
       {!user.homeInstance && <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
-        <div className="text-sm font-semibold text-txt-primary">Códigos de recuperação</div>
-        <p className="text-xs text-txt-secondary">Use um código se esquecer sua senha. Gerar novos códigos invalida os anteriores.</p>
-        <input type="password" value={recoveryPassword} onChange={e => setRecoveryPassword(e.target.value)} placeholder="Senha atual" autoComplete="current-password" className="input-standard w-full" />
+        <div className="text-sm font-semibold text-txt-primary">{uiText("Códigos de recuperação")}</div>
+        <p className="text-xs text-txt-secondary">{uiText("Use um código se esquecer sua senha. Gerar novos códigos invalida os anteriores.")}</p>
+        <input type="password" value={recoveryPassword} onChange={e => setRecoveryPassword(e.target.value)} placeholder={uiText("Senha atual")} autoComplete="current-password" className="input-standard w-full" />
         <button type="button" disabled={!recoveryPassword} className="px-4 py-2 bg-accent-primary text-white text-sm rounded-lg disabled:opacity-50" onClick={async () => {
           setRecoveryError('');
           try {
             const result = await api.auth.recoveryCodes(recoveryPassword);
             setRecoveryCodes(result.recoveryCodes);
             setRecoveryPassword('');
-          } catch (error) { setRecoveryError(error instanceof Error ? error.message : 'Não foi possível gerar códigos'); }
-        }}>Gerar novos códigos</button>
+          } catch (error) { setRecoveryError(error instanceof Error ? error.message : uiText("Não foi possível gerar códigos")); }
+        }}>{uiText("Gerar novos códigos")}</button>
         {recoveryError && <p className="text-xs text-txt-danger">{recoveryError}</p>}
         {recoveryCodes && <div>
-          <p className="text-xs text-txt-secondary">Guarde agora: estes códigos não serão exibidos novamente.</p>
+          <p className="text-xs text-txt-secondary">{uiText("Guarde agora: estes códigos não serão exibidos novamente.")}</p>
           <pre className="mt-2 p-3 rounded bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{recoveryCodes.join('\n')}</pre>
-          <button type="button" className="mt-2 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}>Copiar códigos</button>
+          <button type="button" className="mt-2 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}>{uiText("Copiar códigos")}</button>
         </div>}
       </div>}
 
       {/* ── Danger Zone ── */}
       <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">Danger Zone</div>
+        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">{uiText("Danger Zone")}</div>
         <div className="rounded-lg bg-accent-rose/5 border border-accent-rose/20 p-3.5">
           <p className="text-sm text-txt-secondary mb-3">
-            Once you delete your account, there is no going back. Your messages will remain but be attributed to "Deleted User".
-          </p>
+            {uiText("Once you delete your account, there is no going back. Your messages will remain but be attributed to \"Deleted User\".")}</p>
           <button
             onClick={() => setShowDeleteModal(true)}
             className="px-4 py-2 bg-accent-rose hover:bg-accent-rose/80 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            Delete Account
-          </button>
+            {uiText("Delete Account")}</button>
         </div>
       </div>
 
@@ -869,14 +857,13 @@ export function AccountPanel() {
                 onClick={handleReset}
                 className="px-3 py-1 text-sm text-txt-tertiary hover:text-txt-secondary transition-colors"
               >
-                Reset
-              </button>
+                {uiText("Reset")}</button>
               <button
                 onClick={handleSave}
                 disabled={isLoading || uploadingAvatar || uploadingBanner}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Saving...' : 'Save'}
+                {isLoading ? uiText("Saving...") : uiText("Save")}
               </button>
             </div>
           </div>
@@ -889,7 +876,7 @@ export function AccountPanel() {
         onClose={() => setAvatarCropSrc(null)}
         imageSrc={avatarCropSrc ?? ''}
         onCropComplete={handleAvatarCropComplete}
-        title="Crop Avatar"
+        title={uiText("Crop Avatar")}
         cropShape="round"
         aspectRatio={1}
         maxOutputDimension={256}
@@ -899,7 +886,7 @@ export function AccountPanel() {
         onClose={() => setBannerCropSrc(null)}
         imageSrc={bannerCropSrc ?? ''}
         onCropComplete={handleBannerCropComplete}
-        title="Crop Banner"
+        title={uiText("Crop Banner")}
         cropShape="rect"
         aspectRatio={3}
         maxOutputDimension={1280}

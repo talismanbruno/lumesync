@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import type { Activity } from '@backspace/shared';
 import { getPrimaryActivity } from '@backspace/shared/src/activities.js';
 
@@ -58,8 +59,7 @@ export function ActivityCard({ activities, fallbackCustomStatus }: ActivityCardP
       </div>
       {primary.timestamps?.start && (
         <div className="text-[10px] leading-[1.3] text-txt-tertiary">
-          {formatElapsed(primary.timestamps.start)} elapsed
-        </div>
+          {formatElapsed(primary.timestamps.start)} {uiText(" elapsed")}</div>
       )}
     </>
   );

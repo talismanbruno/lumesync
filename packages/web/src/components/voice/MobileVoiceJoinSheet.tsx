@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useVoiceStore } from '../../stores/voiceStore';
@@ -284,13 +285,13 @@ export function MobileVoiceJoinSheet({
           setPermState('denied');
           setPreviewActive(false);
         } else if (name === 'NotReadableError') {
-          setPreviewError('Camera is in use by another application.');
+          setPreviewError(uiText("Camera is in use by another application."));
         } else if (name === 'OverconstrainedError') {
-          setPreviewError('Selected camera is unavailable.');
+          setPreviewError(uiText("Selected camera is unavailable."));
         } else if (name === 'NotFoundError') {
-          setPreviewError('No camera detected.');
+          setPreviewError(uiText("No camera detected."));
         } else {
-          setPreviewError('Could not start camera preview.');
+          setPreviewError(uiText("Could not start camera preview."));
         }
       }
     };
@@ -364,13 +365,13 @@ export function MobileVoiceJoinSheet({
         setPermState('denied');
         setPreviewActive(false);
       } else if (name === 'NotReadableError') {
-        setPreviewError('Camera is in use by another application.');
+        setPreviewError(uiText("Camera is in use by another application."));
       } else if (name === 'OverconstrainedError') {
-        setPreviewError('Selected camera is unavailable.');
+        setPreviewError(uiText("Selected camera is unavailable."));
       } else if (name === 'NotFoundError') {
-        setPreviewError('No camera detected.');
+        setPreviewError(uiText("No camera detected."));
       } else {
-        setPreviewError('Could not start camera preview.');
+        setPreviewError(uiText("Could not start camera preview."));
       }
     }
   }, [cameraDeviceId, stopPreview]);
@@ -434,7 +435,7 @@ export function MobileVoiceJoinSheet({
         {/* Channel switch warning */}
         {isSwitching && (
           <div className="mx-5 mb-3 px-3 py-2 rounded-lg bg-accent-amber/10 text-accent-amber text-xs">
-            You'll leave <span className="font-semibold">{currentChannelName}</span> and join{' '}
+            {uiText("You'll leave ")}<span className="font-semibold">{currentChannelName}</span> {uiText(" and join")}{' '}
             <span className="font-semibold">{channelName}</span>
           </div>
         )}
@@ -457,13 +458,13 @@ export function MobileVoiceJoinSheet({
                 type="button"
                 onClick={startPreviewFromUser}
                 className="absolute inset-0 flex flex-col items-center justify-center text-txt-tertiary active:bg-white/[0.03] transition-colors"
-                aria-label="Enable camera preview"
+                aria-label={uiText("Enable camera preview")}
               >
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="mb-1.5">
                   <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z" />
                 </svg>
                 <span className="text-xs">
-                  {permState === 'unknown' ? 'Checking camera…' : 'Tap to preview camera'}
+                  {permState === 'unknown' ? uiText("Checking camera…") : uiText("Tap to preview camera")}
                 </span>
               </button>
             )}
@@ -471,14 +472,13 @@ export function MobileVoiceJoinSheet({
             {/* Denied state */}
             {!previewActive && !previewError && permState === 'denied' && (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-txt-tertiary px-6 text-center gap-2">
-                <span className="text-xs">Camera permission denied.</span>
+                <span className="text-xs">{uiText("Camera permission denied.")}</span>
                 <button
                   type="button"
                   onClick={startPreviewFromUser}
                   className="text-[11px] px-3 py-1.5 rounded-md bg-surface-elevated text-txt-secondary"
                 >
-                  Try again
-                </button>
+                  {uiText("Try again")}</button>
               </div>
             )}
 
@@ -491,8 +491,7 @@ export function MobileVoiceJoinSheet({
                   onClick={startPreviewFromUser}
                   className="text-[11px] px-3 py-1.5 rounded-md bg-surface-elevated text-txt-secondary"
                 >
-                  Try again
-                </button>
+                  {uiText("Try again")}</button>
               </div>
             )}
 
@@ -503,8 +502,7 @@ export function MobileVoiceJoinSheet({
                 onClick={stopPreviewFromUser}
                 className="absolute top-2 right-2 rounded-md bg-black/60 text-white/90 text-[11px] px-2.5 py-1.5"
               >
-                Stop preview
-              </button>
+                {uiText("Stop preview")}</button>
             )}
 
             {/* Camera picker — only when permission granted AND multiple cameras.
@@ -573,8 +571,8 @@ export function MobileVoiceJoinSheet({
         {/* Empty state */}
         {userCount === 0 && (
           <div className="px-5 mb-4 py-3 text-center">
-            <p className="text-sm text-txt-tertiary">No one is in this channel yet.</p>
-            <p className="text-xs text-txt-tertiary/60 mt-1">Be the first to join!</p>
+            <p className="text-sm text-txt-tertiary">{uiText("No one is in this channel yet.")}</p>
+            <p className="text-xs text-txt-tertiary/60 mt-1">{uiText("Be the first to join!")}</p>
           </div>
         )}
 
@@ -584,7 +582,7 @@ export function MobileVoiceJoinSheet({
           <button
             onClick={() => setPreMuted(!preMuted)}
             className="w-12 h-12 bg-surface-elevated rounded-full flex items-center justify-center text-txt-secondary active:scale-95 transition-transform"
-            aria-label={preMuted ? 'Unmute microphone' : 'Mute microphone'}
+            aria-label={preMuted ? uiText("Unmute microphone") : uiText("Mute microphone")}
           >
             {preMuted ? (
               /* Mic off icon */
@@ -607,14 +605,14 @@ export function MobileVoiceJoinSheet({
             onClick={handleJoin}
             className="bg-accent-mint text-black font-semibold rounded-full px-8 py-3 active:scale-95 transition-transform"
           >
-            {isSwitching ? 'Switch Channel' : 'Join Voice'}
+            {isSwitching ? uiText("Switch Channel") : uiText("Join Voice")}
           </button>
 
           {/* Close button */}
           <button
             onClick={onClose}
             className="w-12 h-12 bg-surface-elevated rounded-full flex items-center justify-center text-txt-secondary active:scale-95 transition-transform"
-            aria-label="Close"
+            aria-label={uiText("Close")}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 18L18 6M6 6l12 12" />
@@ -656,8 +654,7 @@ export function MobileVoiceJoinSheet({
               cameraDeviceId === null ? 'text-txt-primary' : 'text-txt-secondary'
             } active:bg-interactive-hover`}
           >
-            Auto (system default)
-          </button>
+            {uiText("Auto (system default)")}</button>
           {cameraDevices.map((d, i) => (
             <button
               key={d.deviceId}
@@ -670,7 +667,7 @@ export function MobileVoiceJoinSheet({
                 cameraDeviceId === d.deviceId ? 'text-txt-primary' : 'text-txt-secondary'
               } active:bg-interactive-hover`}
             >
-              {d.label || `Camera ${i + 1}`}
+              {d.label || uiText("Camera {0}", [i + 1])}
             </button>
           ))}
         </div>

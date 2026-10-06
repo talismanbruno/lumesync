@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
@@ -50,11 +51,11 @@ export function LoginPage() {
     setError('');
 
     if (!username.trim()) {
-      setError('Informe seu usuário');
+      setError(uiText("Informe seu usuário"));
       return;
     }
     if (!password) {
-      setError('Informe sua senha');
+      setError(uiText("Informe sua senha"));
       return;
     }
 
@@ -78,7 +79,7 @@ export function LoginPage() {
         setRetryAfter(err.retryAfter);
         setError('');
       } else {
-        setError(err instanceof Error ? err.message : 'Não foi possível entrar');
+        setError(err instanceof Error ? err.message : uiText("Não foi possível entrar"));
       }
     }
   };
@@ -91,34 +92,33 @@ export function LoginPage() {
       <div className="lume-auth-orbit lume-auth-orbit-b" />
       <div className="lume-auth-layout w-full max-w-[1040px] relative z-10 grid lg:grid-cols-[1.15fr_0.85fr] items-stretch">
         <section className="lume-auth-intro hidden lg:flex flex-col justify-between p-12 min-h-[600px]">
-          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto self-start object-contain" />
+          <img src="/icons/logo-wordmark.png" alt={uiText("Lume")} className="h-10 w-auto self-start object-contain" />
           <div>
-            <span className="lume-auth-kicker">COMUNICAÇÃO EM ÓRBITA</span>
+            <span className="lume-auth-kicker">{uiText("COMUNICAÇÃO EM ÓRBITA")}</span>
             <h2 className="mt-5 text-[44px] leading-[1.04] font-bold tracking-[-0.045em] text-white">
-              Sua galera,<br /><span className="text-accent-primary">no mesmo ritmo.</span>
+              {uiText("Sua galera,")}<br /><span className="text-accent-primary">{uiText("no mesmo ritmo.")}</span>
             </h2>
             <p className="mt-5 max-w-[430px] text-[15px] leading-7 text-txt-tertiary">
-              Converse, compartilhe e entre em chamada num espaço leve, direto e feito para pertencer a vocês.
-            </p>
+              {uiText("Converse, compartilhe e entre em chamada num espaço leve, direto e feito para pertencer a vocês.")}</p>
           </div>
           <div className="flex items-center gap-3 text-xs text-txt-tertiary">
             <span className="lume-live-dot" />
-            <span>Lume Orbital está online</span>
+            <span>{uiText("Lume Orbital está online")}</span>
           </div>
         </section>
 
       <div className="lume-auth-card w-full max-w-[440px] lg:max-w-none bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-8 shadow-elevation-high relative backdrop-blur-xl">
         <div className="text-center mb-6">
-          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto mx-auto mb-6 object-contain lg:hidden" />
-          <h1 className="text-2xl font-bold text-txt-primary">Bem-vindo de volta</h1>
-          <p className="text-txt-tertiary mt-1">Sua galera está te esperando.</p>
+          <img src="/icons/logo-wordmark.png" alt={uiText("Lume")} className="h-10 w-auto mx-auto mb-6 object-contain lg:hidden" />
+          <h1 className="text-2xl font-bold text-txt-primary">{uiText("Bem-vindo de volta")}</h1>
+          <p className="text-txt-tertiary mt-1">{uiText("Sua galera está te esperando.")}</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {retryAfter > 0 && (
             <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-sm">
-              <p className="font-medium text-accent-amber">Muitas tentativas de acesso</p>
-              <p className="text-txt-secondary mt-0.5">Tente novamente em {retryAfter}s</p>
+              <p className="font-medium text-accent-amber">{uiText("Muitas tentativas de acesso")}</p>
+              <p className="text-txt-secondary mt-0.5">{uiText("Tente novamente em ")}{retryAfter}{uiText("s")}</p>
             </div>
           )}
 
@@ -128,11 +128,11 @@ export function LoginPage() {
             </div>
           )}
 
-          {recoveryDone && <p className="mb-4 text-sm text-accent-primary">Senha alterada. Entre com a nova senha.</p>}
+          {recoveryDone && <p className="mb-4 text-sm text-accent-primary">{uiText("Senha alterada. Entre com a nova senha.")}</p>}
 
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              Usuário <span className="text-txt-danger">*</span>
+              {uiText("Usuário ")}<span className="text-txt-danger">*</span>
             </label>
             <input
               type="text"
@@ -146,7 +146,7 @@ export function LoginPage() {
 
           <div className="mb-5">
             <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              {recovering ? 'Nova senha' : 'Senha'} <span className="text-txt-danger">*</span>
+              {recovering ? uiText("Nova senha") : uiText("Senha")} <span className="text-txt-danger">*</span>
             </label>
             <input
               type="password"
@@ -158,7 +158,7 @@ export function LoginPage() {
           </div>
 
           {recovering && <div className="mb-5">
-            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">Código de recuperação</label>
+            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">{uiText("Código de recuperação")}</label>
             <input type="text" value={recoveryCode} onChange={e => setRecoveryCode(e.target.value)} className="input-standard w-full py-2.5" autoComplete="off" required />
           </div>}
 
@@ -168,21 +168,20 @@ export function LoginPage() {
             className="w-full py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {retryAfter > 0
-              ? `Tente novamente em ${retryAfter}s`
+              ? uiText("Tente novamente em {0}s", [retryAfter])
               : isLoading
-                ? 'Entrando...'
-                : recovering ? 'Trocar senha' : 'Entrar'}
+                ? uiText("Entrando...")
+                : recovering ? uiText("Trocar senha") : uiText("Entrar")}
           </button>
 
           <button type="button" className="mt-3 text-sm text-accent-primary hover:underline" onClick={() => { setRecovering(!recovering); setError(''); setRecoveryDone(false); }}>
-            {recovering ? 'Voltar para entrar' : 'Esqueci minha senha'}
+            {recovering ? uiText("Voltar para entrar") : uiText("Esqueci minha senha")}
           </button>
 
           <p className="mt-3 text-sm text-txt-tertiary">
-            Ainda não tem uma conta?{' '}
+            {uiText("Ainda não tem uma conta?")}{' '}
             <Link to={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">
-              Criar conta
-            </Link>
+              {uiText("Criar conta")}</Link>
           </p>
           <DesktopDownloadLink />
         </form>

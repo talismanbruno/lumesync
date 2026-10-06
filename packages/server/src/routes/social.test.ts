@@ -123,15 +123,15 @@ describe('GET /api/social/search — filter hygiene', () => {
     return JSON.parse(res.body) as Array<{ id: string; username: string }>;
   }
 
-  it('returns native, non-deleted, discoverable users that match the substring', async () => {
+  it('returns native, non-deleted users that match the full nickname', async () => {
     seedUser({ id: 'u1', username: 'alice', displayName: 'Alice' });
-    const out = await search('ali');
+    const out = await search('alice');
     expect(out.map(u => u.id)).toContain('u1');
   });
 
   it('hides tombstoned users (isDeleted=1)', async () => {
     seedUser({ id: 'u1', username: 'alice', displayName: 'Alice', isDeleted: 1 });
-    const out = await search('ali');
+    const out = await search('alice');
     expect(out.map(u => u.id)).not.toContain('u1');
   });
 
@@ -148,22 +148,40 @@ describe('GET /api/social/search — filter hygiene', () => {
     expect(out.map(u => u.id)).not.toContain('stub1');
   });
 
-  it('hides users with discoverable=0', async () => {
+  it('includes accounts regardless of the legacy discovery preference', async () => {
     seedUser({ id: 'u1', username: 'alice', discoverable: 0 });
-    const out = await search('ali');
-    expect(out.map(u => u.id)).not.toContain('u1');
+    const out = await search('alice');
+    expect(out.map(u => u.id)).toContain('u1');
   });
 
   it('excludes the caller from results', async () => {
     // Caller is seeded in beforeEach with username 'caller'.
-    const out = await search('call');
+    const out = await search('caller');
     expect(out.map(u => u.id)).not.toContain(CALLER_ID);
   });
 
-  it('matches displayName as well as username', async () => {
+  it('does not discover profiles by display name', async () => {
     seedUser({ id: 'u1', username: 'a1b2c3', displayName: 'Wonderland' });
-    const out = await search('wonder');
-    expect(out.map(u => u.id)).toContain('u1');
+    const out = await search('Wonderland');
+    expect(out).toEqual([]);
+  });
+  it('rejects partial nicknames and wildcard searches', async () => {
+    seedUser({ id: 'u1', username: 'alice' });
+    expect(await search('ali')).toEqual([]);
+    expect(await search('%')).toEqual([]);
+    expect(await search('')).toEqual([]);
+  });
+
+  it('accepts a complete nickname with different case and surrounding spaces', async () => {
+    seedUser({ id: 'u1', username: 'alice' });
+    expect((await search('  ALICE  ')).map(user => user.id)).toEqual(['u1']);
+  });
+
+  it('does not expose an account discovery endpoint', async () => {
+    seedUser({ id: 'u1', username: 'alice' });
+    const res = await app.inject({ method: 'GET', url: '/api/social/discover' });
+    expect(res.statusCode).toBe(404);
+    expect(res.body).not.toContain('alice');
   });
 });
 

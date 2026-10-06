@@ -28,7 +28,6 @@ import type {
   CreateDmMessageRequest,
   Friend,
   FriendRequest,
-  DiscoverUser,
   InstanceStreamingLimits,
   InstanceAdminSettings,
   InstanceInfoResponse,
@@ -247,7 +246,6 @@ export class BackspaceApiClient {
     removeFriend: (id: string) => Promise<{ success: boolean }>;
     cancelRequest: (id: string) => Promise<{ success: boolean }>;
     search: (q: string) => Promise<User[]>;
-    discover: (q?: string, limit?: number, offset?: number) => Promise<{ users: DiscoverUser[]; total: number }>;
   };
 
   readonly livekit: {
@@ -641,13 +639,6 @@ export class BackspaceApiClient {
       removeFriend: (id: string) => request<{ success: boolean }>('DELETE', `/social/friends/${id}`),
       cancelRequest: (id: string) => request<{ success: boolean }>('DELETE', `/social/requests/${id}`),
       search: (q: string) => request<User[]>('GET', `/social/search?q=${encodeURIComponent(q)}`),
-      discover: (q?: string, limit = 24, offset = 0) => {
-        const params = new URLSearchParams();
-        if (q) params.set('q', q);
-        params.set('limit', String(limit));
-        params.set('offset', String(offset));
-        return request<{ users: DiscoverUser[]; total: number }>('GET', `/social/discover?${params}`);
-      },
     };
 
     this.livekit = {

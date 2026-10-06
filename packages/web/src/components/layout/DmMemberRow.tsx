@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useRef } from 'react';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
@@ -105,7 +106,7 @@ export function DmMemberRow({
     items.push({
       key: 'profile',
       type: 'action',
-      label: 'View Profile',
+      label: uiText("View Profile"),
       onClick: () => {
         // Anchor the popout to this row's bounding rect — matches the
         // MemberSidebar pattern (see MemberSidebar.tsx:158-165). On mobile
@@ -132,7 +133,7 @@ export function DmMemberRow({
       items.push({
         key: 'transfer',
         type: 'action',
-        label: 'Transfer Ownership',
+        label: uiText("Transfer Ownership"),
         onClick: () => onMenuAction('transfer', canonical),
       });
     }
@@ -141,7 +142,7 @@ export function DmMemberRow({
       items.push({
         key: 'kick',
         type: 'action',
-        label: 'Remove from Group',
+        label: uiText("Remove from Group"),
         danger: true,
         onClick: () => onMenuAction('kick', canonical),
       });
@@ -155,7 +156,7 @@ export function DmMemberRow({
       items.push({
         key: 'remove-friend',
         type: 'action',
-        label: 'Remove Friend',
+        label: uiText("Remove Friend"),
         danger: true,
         onClick: () => onMenuAction('remove-friend', canonical),
       });
@@ -239,7 +240,7 @@ export function DmMemberRow({
       {showKebab && (
         <button
           type="button"
-          aria-label="Member actions"
+          aria-label={uiText("Member actions")}
           data-dm-member-kebab
           onClick={handleKebabClick}
           onContextMenu={(e) => {

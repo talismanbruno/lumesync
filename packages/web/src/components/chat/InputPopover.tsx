@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { EmojiPicker } from './EmojiPicker';
@@ -232,10 +233,10 @@ export function InputPopover(props: InputPopoverProps) {
   const isMobile = useUIStore((s) => s.isMobile);
 
   const availableTabs: { key: InputPopoverTab; label: string }[] = [
-    { key: 'emoji', label: 'Emoji' },
+    { key: 'emoji', label: uiText("Emoji") },
   ];
   if (props.gifEnabled) {
-    availableTabs.splice(0, 0, { key: 'gif', label: 'GIF' });
+    availableTabs.splice(0, 0, { key: 'gif', label: uiText("GIF") });
   }
 
   if (isMobile) {

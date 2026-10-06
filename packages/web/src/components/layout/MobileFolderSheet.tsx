@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useState } from 'react';
 import type { SpaceFolder } from '@backspace/shared';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -46,7 +47,7 @@ export function MobileFolderSheet({ folder, onClose, onSelectSpace, onUpdateFold
       {
         key: 'rename',
         type: 'action',
-        label: 'Rename Folder',
+        label: uiText("Rename Folder"),
         icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>,
         onClick: () => setIsRenaming(true),
       },
@@ -55,7 +56,7 @@ export function MobileFolderSheet({ folder, onClose, onSelectSpace, onUpdateFold
         type: 'custom',
         render: () => (
           <div className="px-5 py-3">
-            <p className="text-[11px] text-txt-tertiary mb-2">Folder Color</p>
+            <p className="text-[11px] text-txt-tertiary mb-2">{uiText("Folder Color")}</p>
             <div className="flex gap-2">
               <button
                 className={`w-6 h-6 rounded-full border-2 ${!folder.color ? 'border-white/40' : 'border-transparent'} bg-white/10`}
@@ -77,7 +78,7 @@ export function MobileFolderSheet({ folder, onClose, onSelectSpace, onUpdateFold
       {
         key: 'ungroup',
         type: 'action',
-        label: 'Ungroup',
+        label: uiText("Ungroup"),
         danger: true,
         icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
         onClick: () => { onUngroup(folder.id); onClose(); },
@@ -125,10 +126,10 @@ export function MobileFolderSheet({ folder, onClose, onSelectSpace, onUpdateFold
             />
           ) : (
             <h3 className="text-sm font-semibold text-txt-primary flex-1 truncate">
-              {folder.name || 'Unnamed Folder'}
+              {folder.name || uiText("Unnamed Folder")}
             </h3>
           )}
-          <span className="text-xs text-txt-tertiary">{folderSpaces.length} spaces</span>
+          <span className="text-xs text-txt-tertiary">{folderSpaces.length} {uiText(" spaces")}</span>
         </div>
         </div>
 

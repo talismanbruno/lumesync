@@ -1,3 +1,4 @@
+import { t as uiText } from '../i18n';
 import { create } from 'zustand';
 import type { User, InstanceInfoResponse, ReplicatedInstance, AuthResponse, FederationRegistryEntry } from '@backspace/shared';
 import { BackspaceApiClient, createApiClient, api } from '../api/client';
@@ -193,7 +194,7 @@ export async function maybeAutoReattach(instance: ConnectedInstance): Promise<vo
       remoteUserId: res.user.id,
     });
     useInstanceStore.setState({ registry, registryUpdatedAt: Date.now() });
-    useUIStore.getState().addToast(`Account re-linked with ${homeDomain}`, 'success');
+    useUIStore.getState().addToast(uiText("Account re-linked with {0}", [homeDomain]), 'success');
     useInstanceStore.getState().syncRegistry().catch(() => {});
     // Re-attach reconciled this connection's 1-on-1 DM federatedIds (merge/re-key
     // on the server); refetch the DM list so the split conversation collapses
@@ -466,14 +467,14 @@ export const useInstanceStore = create<InstanceState>((set, get) => ({
         if (peerResult.peeringStatus === 'rejected') {
           const { addToast } = useUIStore.getState();
           addToast(
-            `Cross-instance messaging unavailable — ${instance.label} requires manual peering approval`,
+            uiText("Cross-instance messaging unavailable — {0} requires manual peering approval", [instance.label]),
             'warning',
             10000,
           );
         } else if (peerResult.peeringStatus === 'pending') {
           const { addToast } = useUIStore.getState();
           addToast(
-            `Peering with ${instance.label} in progress — cross-instance messaging will be available shortly`,
+            uiText("Peering with {0} in progress — cross-instance messaging will be available shortly", [instance.label]),
             'info',
           );
         }

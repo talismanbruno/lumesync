@@ -1,3 +1,4 @@
+import { t as uiText } from '../../i18n';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
@@ -65,7 +66,7 @@ function InviteResultFriendRow({
         <div className="text-[11px] text-txt-tertiary truncate">@{canonical.username}</div>
       </div>
       {status?.kind === 'success' && (
-        <span className="text-[12px] text-accent-mint flex-shrink-0">✓ Sent</span>
+        <span className="text-[12px] text-accent-mint flex-shrink-0">{uiText("✓ Sent")}</span>
       )}
       {status?.kind === 'failure' && (
         <span className="text-[12px] text-txt-danger flex-shrink-0">✗ {status.reason}</span>
@@ -116,7 +117,7 @@ function InviteSelectFriendRow({
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium text-txt-primary truncate">{dn}</div>
         <div className="text-[11px] text-txt-tertiary truncate">
-          {alreadyMember ? 'Already in space' : `@${canonical.username}`}
+          {alreadyMember ? uiText("Already in space") : `@${canonical.username}`}
         </div>
       </div>
       {!alreadyMember && (
@@ -180,7 +181,7 @@ export function InviteModal() {
         setCodeLoading(false);
       },
       (err) => {
-        setCodeError((err as Error)?.message ?? 'Failed to generate invite link');
+        setCodeError((err as Error)?.message ?? uiText("Failed to generate invite link"));
         setCodeLoading(false);
       },
     );
@@ -334,27 +335,23 @@ export function InviteModal() {
     <Modal
       isOpen={isOpen}
       onClose={closeModal}
-      title="Invite Friends"
+      title={uiText("Invite Friends")}
       mobileStyle="sheet"
     >
       {isRequestOnly ? (
         <div className="space-y-3">
           <p className="text-[13px] text-txt-tertiary">
-            This space uses join requests — people join by requesting approval
-            from a manager, so it has no invite link to share.
-          </p>
+            {uiText("This space uses join requests — people join by requesting approval from a manager, so it has no invite link to share.")}</p>
           <button
             onClick={closeModal}
             className="w-full py-2 rounded-md text-[13px] font-semibold glass-pill text-txt-primary"
           >
-            Got it
-          </button>
+            {uiText("Got it")}</button>
         </div>
       ) : (
       <div className="space-y-3">
         <p className="text-[13px] text-txt-tertiary">
-          Send to friends, or share a link.
-        </p>
+          {uiText("Send to friends, or share a link.")}</p>
 
         {/* Selected chips — hidden in results view */}
         {!inResultsView && selectedFriends.length > 0 && (
@@ -368,10 +365,9 @@ export function InviteModal() {
                 <button
                   onClick={() => removeFriend(f.id)}
                   className="opacity-60 hover:opacity-100 transition-opacity text-[14px] leading-none"
-                  aria-label={`Remove ${f.displayName ?? f.username}`}
+                  aria-label={uiText("Remove {0}", [f.displayName ?? f.username])}
                 >
-                  &times;
-                </button>
+                  {uiText("&times;")}</button>
               </span>
             ))}
           </div>
@@ -384,7 +380,7 @@ export function InviteModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search friends..."
+            placeholder={uiText("Search friends...")}
             className="input-search w-full py-2 text-[14px]"
           />
         )}
@@ -404,8 +400,8 @@ export function InviteModal() {
               {filteredFriends.length === 0 && (
                 <div className="py-4 text-center text-txt-tertiary text-[14px]">
                   {query.trim()
-                    ? 'No friends match your search'
-                    : 'No friends yet'}
+                    ? uiText("No friends match your search")
+                    : uiText("No friends yet")}
                 </div>
               )}
               {filteredFriends.map((friend) => (
@@ -431,15 +427,13 @@ export function InviteModal() {
                 disabled={sending}
                 className="flex-1 py-2 rounded-md text-[13px] font-semibold transition-colors bg-accent-mint text-surface-base hover:bg-accent-mint/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Retry failed
-              </button>
+                {uiText("Retry failed")}</button>
             )}
             <button
               onClick={closeModal}
               className="flex-1 py-2 rounded-md text-[13px] font-semibold glass-pill text-txt-primary"
             >
-              Done
-            </button>
+              {uiText("Done")}</button>
           </div>
         ) : (
           <button
@@ -447,15 +441,14 @@ export function InviteModal() {
             disabled={selectedFriends.length === 0 || sending || codeLoading}
             className="w-full py-2 rounded-md text-[13px] font-semibold transition-colors bg-accent-mint text-surface-base hover:bg-accent-mint/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {sending ? 'Sending...' : submitLabel}
+            {sending ? uiText("Sending...") : submitLabel}
           </button>
         )}
 
         {/* Share-link footer */}
         <div className="pt-3 border-t border-white/[0.06]">
           <p className="text-[12px] text-txt-tertiary mb-2">
-            Or share a link
-          </p>
+            {uiText("Or share a link")}</p>
           {codeError && (
             <div className="mb-2 text-[12px] text-txt-danger">{codeError}</div>
           )}
@@ -473,7 +466,7 @@ export function InviteModal() {
                 linkCopied ? 'text-accent-mint' : 'text-txt-primary'
               }`}
             >
-              {linkCopied ? 'Copied!' : 'Copy'}
+              {linkCopied ? uiText("Copied!") : uiText("Copy")}
             </button>
           </div>
         </div>
