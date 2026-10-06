@@ -3,7 +3,7 @@
 # ============================================================
 
 # Stage 1: Install dependencies and build frontend
-FROM node:20-slim AS builder
+FROM node:25-slim AS builder
 
 # Tie the frontend build cache to the exact reviewed source revision. Source
 # COPY checks should already invalidate naturally, but this makes a stale web
@@ -40,7 +40,7 @@ RUN echo "Building Lume web at ${BACKSPACE_COMMIT}" && pnpm --filter @backspace/
 
 # ============================================================
 # Stage 2: Production runtime
-FROM node:20-slim AS runtime
+FROM node:25-slim AS runtime
 
 RUN corepack enable && corepack prepare pnpm@10.34.3 --activate
 
