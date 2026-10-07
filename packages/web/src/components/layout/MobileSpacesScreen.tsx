@@ -378,17 +378,7 @@ export function MobileSpacesScreen() {
         type: 'action',
         label: uiText("Invite People"),
         icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>,
-        onClick: async () => {
-          try {
-            const code = await useSpaceStore.getState().generateInvite(spaceId);
-            const origin = (space as TaggedSpace)._instanceOrigin || window.location.origin;
-            const url = `${origin}/invite/${code}`;
-            await navigator.clipboard.writeText(url);
-            addToast(uiText("Invite link copied to clipboard"), 'success', 3000);
-          } catch {
-            addToast(uiText("Failed to generate invite"), 'warning', 3000);
-          }
-        },
+        onClick: () => openModal('invite', { spaceId }),
       },
       {
         key: 'create-folder',

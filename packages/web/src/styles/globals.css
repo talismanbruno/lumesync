@@ -1298,6 +1298,16 @@
     rgb(7, 9, 11);
 }
 
+/* Settings already cover the backdrop: keep their glass tint without repeatedly
+   sampling the full chat or stacking blur surfaces inside the large window. */
+.lume-settings-modal,
+.lume-settings-modal :is(.glass-bubble, .glass-pill) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.lume-settings-modal { animation: lume-settings-enter 200ms ease-out; }
+@keyframes lume-settings-enter { from { opacity: 0; } to { opacity: 1; } }
+
 .lume-settings-nav {
   position: relative;
   border-right: 1px solid rgba(0, 209, 255, 0.09);
@@ -1538,12 +1548,11 @@ button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-tray { tr
 .lume-motion-community:is(:hover, :focus-visible)::after { animation: lume-motion-sheen 1976ms cubic-bezier(.4, 0, .2, 1); }
 @keyframes lume-motion-sheen { 0% { transform: translateX(-100%); opacity: 0; } 18% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
 .lume-friends-tab-track { position: relative; }
-.lume-friends-tab-marker { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 2px; background: rgb(0, 209, 255); pointer-events: none; transition: transform 520ms cubic-bezier(.4, 0, .2, 1), width 520ms cubic-bezier(.4, 0, .2, 1), opacity 250ms ease; }
-.lume-friends-panel { animation: lume-motion-panel 520ms cubic-bezier(.4, 0, .2, 1); }
-@keyframes lume-motion-panel { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.lume-friends-tab-marker { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 2px; background: rgb(0, 209, 255); pointer-events: none; transition: transform 240ms cubic-bezier(.2, .7, .2, 1), width 240ms cubic-bezier(.2, .7, .2, 1), opacity 160ms ease; }
+.lume-friends-panel { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
   button :is(.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-mic-capsule, .lume-motion-mic-support, .lume-motion-audio-echo, .lume-motion-echo-left, .lume-motion-echo-right, .lume-motion-download-arrow, .lume-motion-download-tray, .lume-motion-hangup),
-  .lume-motion-community::after, .lume-friends-panel {
+  .lume-motion-community::after, .lume-friends-panel, .lume-settings-modal {
     animation: none !important; transition: none !important; transform: none !important;
   }
   .lume-friends-tab-marker { transition: none !important; }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // Stub AudioManager to avoid AudioWorkletNode reference error in jsdom.
@@ -141,6 +141,37 @@ beforeEach(() => {
 });
 
 describe('InviteModal', () => {
+  it('generates for the community selected in the menu, even while a different community is open', async () => {
+    const { generateInvite } = setUpStore();
+    useSpaceStore.setState({ spaces: [makeSpace(), makeSpace({ id: 'space-2', _instanceOrigin: 'https://remote.example' })] });
+    useUIStore.setState({ modalData: { spaceId: 'space-2' } });
+    render(<InviteModal />);
+    await waitFor(() => expect(screen.getByLabelText('Link do convite')).toHaveValue('https://remote.example/join/test-code'));
+    expect(generateInvite).toHaveBeenCalledWith('space-2');
+  });
+  it('ignores late invite responses from a previously selected community', async () => {
+    let resolveFirst!: (code: string) => void;
+    const generateInvite = vi.fn().mockImplementationOnce(() => new Promise<string>(resolve => { resolveFirst = resolve; })).mockResolvedValue('second-code');
+    setUpStore({ generateInvite });
+    useSpaceStore.setState({ spaces: [makeSpace(), makeSpace({ id: 'space-2' })] });
+    render(<InviteModal />);
+    act(() => useUIStore.setState({ modalData: { spaceId: 'space-2' } }));
+    await waitFor(() => expect(screen.getByLabelText('Link do convite')).toHaveValue(`${window.location.origin}/join/second-code`));
+    await act(async () => resolveFirst('first-code'));
+    expect(screen.getByLabelText('Link do convite')).toHaveValue(`${window.location.origin}/join/second-code`);
+  });
+  it('keeps the generated link available when clipboard access is denied', async () => {
+    setUpStore();
+    render(<InviteModal />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled());
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('Clipboard denied'));
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
+    const input = screen.getByLabelText('Link do convite') as HTMLInputElement;
+    expect(input.value).toContain('/join/test-code');
+    expect(input.selectionEnd! - input.selectionStart!).toBe(input.value.length);
+    expect(useUIStore.getState().toasts.at(-1)?.message).toBe('O link está pronto. Copie o texto selecionado.');
+  });
   it('does not render when activeModal is not "invite"', () => {
     render(<InviteModal />);
     expect(screen.queryByText('Invite Friends')).not.toBeInTheDocument();

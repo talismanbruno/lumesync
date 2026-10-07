@@ -34,7 +34,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
   // Mobile fullscreen style
   if (isMobile && mobileStyle === 'fullscreen') {
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col bg-surface-base animate-fade-in">
+      <div className={`fixed inset-0 z-[200] flex flex-col bg-surface-base animate-fade-in ${size === 'settings' ? 'lume-settings-modal' : ''}`}>
         {(title || size === 'settings') && (
           <div className="flex items-center justify-between px-4 pt-4 flex-shrink-0" style={{ paddingTop: 'calc(16px + env(safe-area-inset-top))' }}>
             {title ? <h2 className="text-xl font-bold text-txt-primary">{title}</h2> : <div />}
@@ -94,11 +94,11 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
           className="absolute inset-0 bg-black/50"
           onClick={onClose}
         />
-        <div className="relative w-[90vw] max-w-6xl h-[85vh] flex flex-col glass-modal rounded-xl animate-slide-up overflow-hidden">
+        <div className="lume-settings-modal relative w-[90vw] max-w-6xl h-[85vh] flex flex-col glass-modal rounded-xl overflow-hidden">
           {/* Floating close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-surface-elevated/50 backdrop-blur-sm text-txt-tertiary hover:text-txt-primary transition-colors"
+            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-surface-elevated/50 text-txt-tertiary hover:text-txt-primary transition-colors"
             aria-label={uiText("Close settings")}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

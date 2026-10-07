@@ -1,6 +1,7 @@
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { t as uiText } from '../../i18n';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useNavigate } from 'react-router-dom';
 import type { User } from '@backspace/shared';
 import { useSocialStore, type TaggedFriend, type TaggedFriendRequest } from '../../stores/socialStore';
@@ -112,7 +113,8 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
     if (!track) return;
     const measure = () => {
       const selected = track.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
-      setTabMarker(selected ? { left: selected.offsetLeft + selected.offsetWidth * .28, width: selected.offsetWidth * .44, visible: true } : { left: 0, width: 0, visible: false });
+      const next = selected ? { left: selected.offsetLeft + selected.offsetWidth * .28, width: selected.offsetWidth * .44, visible: true } : { left: 0, width: 0, visible: false };
+      setTabMarker(previous => previous.left === next.left && previous.width === next.width && previous.visible === next.visible ? previous : next);
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -143,21 +145,21 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
     updateFriendRequest,
     cancelFriendRequest,
     removeFriend
-  } = useSocialStore();
+  } = useSocialStore(useShallow(s => ({ friends: s.friends, requests: s.requests, isLoading: s.isLoading, loadFriends: s.loadFriends, loadRequests: s.loadRequests, updateFriendRequest: s.updateFriendRequest, cancelFriendRequest: s.cancelFriendRequest, removeFriend: s.removeFriend })));
 
   useEffect(() => {
     loadFriends();
     loadRequests();
   }, [loadFriends, loadRequests]);
 
-  const userActivities = useActivityStore((s) => s.userActivities);
+  const userActivities = useActivityStore((s) => activeTab === 'activity' ? s.userActivities : null);
   const pushMobileScreen = useUIStore((s) => s.pushMobileScreen);
 
   const onlineFriends = friends.filter(f => f.status !== 'offline');
   const pendingIncoming = requests.filter(r => r.status === 'pending' && r.user?.id === r.fromId);
   const pendingOutgoing = requests.filter(r => r.status === 'pending' && r.user?.id === r.toId);
 
-  const handleOpenDm = async (friendId: string, homeUserId?: string, homeInstance?: string | null) => {
+  const handleOpenDm = useCallback(async (friendId: string, homeUserId?: string, homeInstance?: string | null) => {
     try {
       // Check if a DM already exists with this user (on any instance)
       const existing = useSpaceStore.getState().findExistingDmForUser({ id: friendId, homeUserId: homeUserId ?? undefined });
@@ -176,7 +178,8 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
     } catch (err) {
       console.error('Failed to open DM:', err);
     }
-  };
+  }, [addDmChannel, navigate]);
+  const handleRemoveFriend = useCallback((friend: TaggedFriend) => setPendingUnfriend({ id: friend.id, name: friend.displayName ?? parseFederatedUsername(friend.username).baseName }), []);
 
   const renderTabContent = () => {
     if (isLoading && friends.length === 0 && requests.length === 0) {
@@ -189,43 +192,27 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
 
     switch (activeTab) {
       case 'online':
+      case 'all': {
+        const availableOnly = activeTab === 'online';
+        const visibleCount = availableOnly ? onlineFriends.length : friends.length;
         return (
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
-              {uiText("Disponíveis — ")}{onlineFriends.length}
+              {availableOnly ? uiText("Disponíveis — ") : uiText("Todas as pessoas — ")}{visibleCount}
             </h2>
-            {onlineFriends.length === 0 ? (
+            {visibleCount === 0 && (
               <div className="flex flex-col items-center justify-center h-full opacity-80">
-                <p className="text-txt-tertiary text-sm">{uiText("Ninguém está disponível agora.")}</p>
+                <p className="text-txt-tertiary text-sm">{availableOnly ? uiText("Ninguém está disponível agora.") : uiText("Sua lista ainda está vazia — adicione alguém!")}</p>
               </div>
-            ) : (
-              <>
-                {onlineFriends.map(friend => (
-                  <FriendItem key={`${friend.id}:${friend._instanceOrigin}`} friend={friend} onRemove={() => setPendingUnfriend({ id: friend.id, name: friend.displayName ?? parseFederatedUsername(friend.username).baseName })} onDm={() => handleOpenDm(friend.id, friend.homeUserId ?? undefined, friend.homeInstance)} />
-                ))}
-              </>
             )}
+            {friends.map(friend => (
+              <div key={`${friend.id}:${friend._instanceOrigin}`} hidden={availableOnly && friend.status === 'offline'}>
+                <FriendItem friend={friend} onRemove={handleRemoveFriend} onDm={handleOpenDm} />
+              </div>
+            ))}
           </div>
         );
-      case 'all':
-        return (
-          <div className="flex-1 overflow-y-auto p-4">
-            <h2 className="text-xs font-bold text-txt-tertiary mb-4 tracking-wider px-2">
-              {uiText("Todas as pessoas — ")}{friends.length}
-            </h2>
-            {friends.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full opacity-80">
-                <p className="text-txt-tertiary text-sm">{uiText("Sua lista ainda está vazia — adicione alguém!")}</p>
-              </div>
-            ) : (
-              <>
-                {friends.map(friend => (
-                  <FriendItem key={`${friend.id}:${friend._instanceOrigin}`} friend={friend} onRemove={() => setPendingUnfriend({ id: friend.id, name: friend.displayName ?? parseFederatedUsername(friend.username).baseName })} onDm={() => handleOpenDm(friend.id, friend.homeUserId ?? undefined, friend.homeInstance)} />
-                ))}
-              </>
-            )}
-          </div>
-        );
+      }
       case 'pending':
         return (
           <div className="flex-1 overflow-y-auto p-4">
@@ -272,7 +259,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
             offlineActivityFriends.push(f);
             continue;
           }
-          const acts = userActivities.get(f.homeUserId ?? f.id) ?? [];
+          const acts = userActivities?.get(f.homeUserId ?? f.id) ?? [];
           const primary = getPrimaryActivity(acts);
           if (primary && primary.type !== 'custom') {
             activeFriends.push(f);
@@ -282,7 +269,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         }
 
         const renderActivityFriend = (friend: TaggedFriend, isOffline = false) => {
-          const activities = userActivities.get(friend.homeUserId ?? friend.id) ?? [];
+          const activities = userActivities?.get(friend.homeUserId ?? friend.id) ?? [];
           const isRichActivity = !isOffline && hasRichActivity(activities);
           const primary = getPrimaryActivity(activities);
           const accentClass = primary ? getActivityAccentClass(primary.type) : '';
@@ -417,7 +404,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
         </div>
       )}
 
-      <div key={activeTab} className="lume-friends-panel flex flex-col flex-1 min-h-0">{renderTabContent()}</div>
+      <div className="lume-friends-panel flex flex-col flex-1 min-h-0">{renderTabContent()}</div>
 
       <ConfirmDialog
         isOpen={pendingUnfriend !== null}
@@ -521,7 +508,7 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
   );
 }
 
-function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove: () => void, onDm: () => void }) {
+const FriendItem = memo(function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove: (friend: TaggedFriend) => void, onDm: (id: string, homeUserId?: string, homeInstance?: string | null) => void }) {
   const canonical = useCanonicalUserView(friend as unknown as User);
   const instanceLabel = friend._instanceOrigin ? (() => { try { return new URL(friend._instanceOrigin).host; } catch { return friend._instanceOrigin; } })() : '';
   const { baseName: friendBaseName } = parseFederatedUsername(canonical.username);
@@ -545,7 +532,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
       </div>
       <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity pr-2">
         <button
-          onClick={(e) => { e.stopPropagation(); onDm(); }}
+          onClick={(e) => { e.stopPropagation(); onDm(friend.id, friend.homeUserId ?? undefined, friend.homeInstance); }}
           className="w-9 h-9 flex items-center justify-center bg-surface-base rounded-full text-txt-tertiary hover:text-txt-primary transition-colors"
           title={uiText("Mensagem")}
         >
@@ -554,7 +541,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
           </svg>
         </button>
         <button
-          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          onClick={(e) => { e.stopPropagation(); onRemove(friend); }}
           className="w-9 h-9 flex items-center justify-center bg-surface-base rounded-full text-txt-tertiary hover:text-txt-danger transition-colors"
           title={uiText("Remover contato")}
         >
@@ -565,7 +552,7 @@ function FriendItem({ friend, onRemove, onDm }: { friend: TaggedFriend, onRemove
       </div>
     </div>
   );
-}
+});
 
 function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
   request: TaggedFriendRequest;

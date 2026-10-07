@@ -87,7 +87,7 @@ export function UserSettingsModal() {
   };
 
   const tabClass = (t: SettingsTab) =>
-    `lume-settings-nav-item w-full text-left px-3 py-2.5 text-sm transition-all ${
+    `lume-settings-nav-item w-full text-left px-3 py-2.5 text-sm transition-colors ${
       tab === t ? 'bg-interactive-selected text-txt-primary font-medium' : 'text-txt-tertiary hover:text-txt-secondary hover:bg-interactive-hover'
     }`;
 

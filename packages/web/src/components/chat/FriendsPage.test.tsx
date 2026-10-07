@@ -160,6 +160,18 @@ beforeEach(() => {
 });
 
 describe('FriendsPage', () => {
+  it('preserves available friend rows when switching between Available and All', async () => {
+    useSocialStore.setState({ friends: [makeFriend(), makeFriend({ id: 'offline', displayName: 'Offline Friend', status: 'offline' })] });
+    const user = userEvent.setup();
+    renderFriendsPage();
+    const row = screen.getByText('Test Friend').closest('.lume-friend-row');
+    await user.click(screen.getByRole('button', { name: 'Todos', exact: true }));
+    expect(screen.getByText('Test Friend').closest('.lume-friend-row')).toBe(row);
+    expect(screen.getByText('Offline Friend')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Disponíveis', exact: true }));
+    expect(screen.getByText('Test Friend').closest('.lume-friend-row')).toBe(row);
+    expect(screen.getByText('Offline Friend')).not.toBeVisible();
+  });
   describe('Add Friend tab', () => {
     it('renders the search input when Add Friend tab is clicked', async () => {
       const user = userEvent.setup();

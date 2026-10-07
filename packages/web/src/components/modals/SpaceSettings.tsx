@@ -258,18 +258,18 @@ function JoinRequestsSection({ spaceId }: { spaceId: string }) {
 
 export function SpaceSettingsModal() {
   const activeModal = useUIStore((s) => s.activeModal);
+  const selectedSpaceId = useUIStore((s) => s.modalData.spaceId);
   const closeModal = useUIStore((s) => s.closeModal);
   const isMobile = useUIStore((s) => s.isMobile);
-  const currentSpaceId = useSpaceStore((s) => s.currentSpaceId);
-  const spaces = useSpaceStore((s) => s.spaces);
-  const spacePermissions = useSpaceStore((s) => s.spacePermissions);
+  const openSpaceId = useSpaceStore((s) => s.currentSpaceId);
+  const currentSpaceId = typeof selectedSpaceId === 'string' ? selectedSpaceId : openSpaceId;
+  const space = useSpaceStore((s) => s.spaces.find(value => value.id === currentSpaceId));
+  const mySpacePerms = useSpaceStore((s) => currentSpaceId ? s.spacePermissions.get(currentSpaceId) : undefined);
 
   const [tab, setTab] = useState<'overview' | 'discovery' | 'members' | 'roles' | 'bans'>('overview');
   const [mobileView, setMobileView] = useState<'tabs' | 'content'>('tabs');
 
   const isOpen = activeModal === 'spaceSettings';
-  const space = spaces.find(s => s.id === currentSpaceId);
-  const mySpacePerms = currentSpaceId ? spacePermissions.get(currentSpaceId) : undefined;
   const canManageSpace = hasPermissionBit(mySpacePerms, PermissionBits.MANAGE_SPACE);
   const canManageRoles = hasPermissionBit(mySpacePerms, PermissionBits.MANAGE_ROLES);
   const canBanMembers = hasPermissionBit(mySpacePerms, PermissionBits.BAN_MEMBERS);

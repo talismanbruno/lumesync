@@ -13,8 +13,9 @@ import { getCanonicalUserView } from '../utils/userViewLookup';
 import { dmAccountKey, startDmCall } from '../utils/dmActions';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
-function MenuIcon({ name }: { name: 'pin' | 'call' | 'friend' | 'block' | 'mute' | 'leave' }) {
+function MenuIcon({ name }: { name: 'profile' | 'pin' | 'call' | 'friend' | 'block' | 'mute' | 'leave' }) {
   const paths = {
+    profile: 'M4 21v-2a8 8 0 0 1 16 0v2',
     pin: 'M8 3h8l-1 6 4 4v2H5v-2l4-4-1-6ZM12 15v6',
     call: 'M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 2a14 14 0 0 1-7-7l2-2-2-5Z',
     friend: 'M15 21H3v-2a6 6 0 0 1 12 0v2M18 8h6M21 5v6',
@@ -23,6 +24,7 @@ function MenuIcon({ name }: { name: 'pin' | 'call' | 'friend' | 'block' | 'mute'
     leave: 'M9 4H4v16h5M10 12h11M17 8l4 4-4 4',
   };
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {name === 'profile' && <circle cx="12" cy="7" r="4" />}
     {name === 'friend' && <circle cx="9" cy="7" r="3" />}
     {name === 'block' && <circle cx="12" cy="12" r="9" />}
     <path d={paths[name]} />
@@ -56,6 +58,7 @@ export function useDmContextMenu(onSelect: (id: string) => void, onLeave: (id: s
       { key: 'pin', type: 'action', label: prefs?.pinned.includes(key) ? 'Desafixar' : 'Fixar', icon: <MenuIcon name="pin" />, onClick: () => useDmPreferencesStore.getState().toggle(account, 'pinned', key) },
       { key: 'call', type: 'action', label: 'Iniciar chamada', icon: <MenuIcon name="call" />, disabled: blocked || !!partner?.isDeleted || !!voice.activeDmCall || !!voice.outgoingCall || !!voice.incomingCall, onClick: () => { void run(() => { startDmCall(dmId); onSelect(dmId); }); } },
     ];
+    if (!dm.ownerId && partner) items.unshift({ key: 'profile', type: 'action', label: 'Ver perfil', icon: <MenuIcon name="profile" />, onClick: () => useUIStore.getState().openModal('userProfile', { userId: partner.id, user: partner, origin: getChannelOrigin(dmId) }) });
     if (!dm.ownerId && partner && !partner.isDeleted) {
       items.push({ key: 'social-divider', type: 'separator' });
       if (friend) items.push({ key: 'unfriend', type: 'action', label: 'Desfazer amizade', icon: <MenuIcon name="friend" />, onClick: () => setRemoval({ id: friend.id, name: partner.displayName || partner.username }) });

@@ -20,7 +20,7 @@ export function OrbitalIcon({ name, size = 20, cut = false, className = '' }: { 
     screen: <><rect x="3" y="5" width="18" height="12" rx="3"/><path d="M8 21h8M12 17v4M9 11l3-3 3 3M12 8v6"/></>,
     quality: <><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 10V8h3M17 11v2h-3"/></>,
     image: <><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4-4 3 3 2-2 5 5"/></>,
-    clear: <><rect x="6.5" y="3" width="6" height="11" rx="3"/><path d="M3.5 11a6 6 0 0 0 12 0M9.5 17v4M6.5 21h6M19 3l.8 2.2L22 6l-2.2.8L19 9l-.8-2.2L16 6l2.2-.8L19 3Z"/></>,
+    clear: <><path d="M3 10v4M7.5 6.5v11M12 3v18M16.5 6.5v11M21 10v4"/></>,
     friends: <><circle cx="10" cy="9" r="3"/><path d="M4 19c.5-3.4 2.4-5 6-5s5.5 1.6 6 5"/><circle cx="18" cy="9" r="2" opacity=".5"/><path d="M17 14c2.2.1 3.4 1.4 3.8 3.5" opacity=".5"/></>,
     hangup: <path d="M4 15c4.7-4 11.3-4 16 0l-3 3-2.5-2v-2.1a9 9 0 0 0-5 0V16L7 18l-3-3Z"/>,
     transfer: <><path d="M5 8h11M13 5l3 3-3 3M19 16H8M11 13l-3 3 3 3"/><circle cx="12" cy="12" r="9" opacity=".22"/></>,

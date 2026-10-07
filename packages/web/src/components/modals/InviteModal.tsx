@@ -139,9 +139,11 @@ function InviteSelectFriendRow({
 
 export function InviteModal() {
   const activeModal = useUIStore((s) => s.activeModal);
+  const selectedSpaceId = useUIStore((s) => s.modalData.spaceId);
   const closeModal = useUIStore((s) => s.closeModal);
   const generateInvite = useSpaceStore((s) => s.generateInvite);
-  const currentSpaceId = useSpaceStore((s) => s.currentSpaceId);
+  const openSpaceId = useSpaceStore((s) => s.currentSpaceId);
+  const currentSpaceId = typeof selectedSpaceId === 'string' ? selectedSpaceId : openSpaceId;
   const spaces = useSpaceStore((s) => s.spaces);
   const spaceMembers = useSpaceStore((s) => s.members);
   const friends = useSocialStore((s) => s.friends);
@@ -159,6 +161,8 @@ export function InviteModal() {
   const [codeError, setCodeError] = useState('');
   const [codeLoading, setCodeLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteAttempt, setInviteAttempt] = useState(0);
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -172,20 +176,26 @@ export function InviteModal() {
 
   // Fetch / generate the per-space invite code on open.
   useEffect(() => {
-    if (!isOpen || !currentSpaceId || isRequestOnly) return;
+    if (!isOpen || !currentSpaceId || !currentSpace || isRequestOnly) return;
+    let cancelled = false;
+    setInviteCode('');
+    setLinkCopied(false);
     setCodeLoading(true);
     setCodeError('');
     generateInvite(currentSpaceId).then(
       (code) => {
+        if (cancelled) return;
         setInviteCode(code);
         setCodeLoading(false);
       },
       (err) => {
+        if (cancelled) return;
         setCodeError((err as Error)?.message ?? uiText("Failed to generate invite link"));
         setCodeLoading(false);
       },
     );
-  }, [isOpen, currentSpaceId, generateInvite, isRequestOnly]);
+    return () => { cancelled = true; };
+  }, [isOpen, currentSpaceId, currentSpace?.id, generateInvite, isRequestOnly, inviteAttempt]);
 
   // Reset modal state on open.
   useEffect(() => {
@@ -195,16 +205,17 @@ export function InviteModal() {
       setResults(new Map());
       setSending(false);
       setLinkCopied(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, currentSpaceId]);
 
   // Federated-identity match per CLAUDE.md rule. The currently-loaded space's
   // member list lives on the store as `members: MemberWithUser[]`. Read the
   // federated identity tuple (user.homeUserId / user.homeInstance) on each side,
   // falling back to the local id for non-federated users.
   const isFriendAlreadyMember = (friend: Friend): boolean => {
-    if (!currentSpace || spaceMembers.length === 0) return false;
+    if (!currentSpace || currentSpaceId !== openSpaceId || spaceMembers.length === 0) return false;
     const fId = friend.homeUserId ?? friend.id;
     const fHome = friend.homeInstance ?? '';
     return spaceMembers.some((m: MemberWithUser) => {
@@ -318,7 +329,9 @@ export function InviteModal() {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      /* clipboard denied — silent */
+      linkInputRef.current?.focus();
+      linkInputRef.current?.select();
+      useUIStore.getState().addToast('O link está pronto. Copie o texto selecionado.', 'info');
     }
   };
 
@@ -438,7 +451,7 @@ export function InviteModal() {
         ) : (
           <button
             onClick={onSubmit}
-            disabled={selectedFriends.length === 0 || sending || codeLoading}
+            disabled={selectedFriends.length === 0 || sending || codeLoading || !inviteCode}
             className="w-full py-2 rounded-md text-[13px] font-semibold transition-colors bg-accent-mint text-surface-base hover:bg-accent-mint/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? uiText("Sending...") : submitLabel}
@@ -450,10 +463,12 @@ export function InviteModal() {
           <p className="text-[12px] text-txt-tertiary mb-2">
             {uiText("Or share a link")}</p>
           {codeError && (
-            <div className="mb-2 text-[12px] text-txt-danger">{codeError}</div>
+            <div className="mb-2 flex items-center gap-2 text-[12px] text-txt-danger"><span>{codeError}</span><button onClick={() => setInviteAttempt(value => value + 1)} className="text-cyan-300 hover:underline">Tentar novamente</button></div>
           )}
           <div className="flex items-center gap-2">
             <input
+              ref={linkInputRef}
+              aria-label="Link do convite"
               type="text"
               value={codeLoading ? 'Generating...' : inviteUrl}
               readOnly

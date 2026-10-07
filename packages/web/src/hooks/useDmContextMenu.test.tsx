@@ -15,6 +15,7 @@ import { useDmPreferencesStore, pinnedConversations } from '../stores/dmPreferen
 import { useUserBlockStore } from '../stores/userBlockStore';
 import { dmAccountKey, dmAlertsSilenced } from '../utils/dmActions';
 import { api } from '../api/client';
+import { useUIStore } from '../stores/uiStore';
 import { wsSend } from './useWebSocket';
 
 const self = { id: 'self', username: 'self' } as User;
@@ -52,9 +53,16 @@ describe('DM contact menu', () => {
   it('opens for individual conversations and shows the requested conditional actions', () => {
     render(<Harness />);
     const labels = openMenu().filter(item => item.type === 'action').map(item => item.label);
-    expect(labels).toEqual(['Fixar', 'Iniciar chamada', 'Adicionar amigo', 'Bloquear', 'Silenciar']);
+    expect(labels).toEqual(['Ver perfil', 'Fixar', 'Iniciar chamada', 'Adicionar amigo', 'Bloquear', 'Silenciar']);
     expect(useContextMenuStore.getState().menu!.position).toEqual({ x: 50, y: 80 });
     expect(select).not.toHaveBeenCalled();
+  });
+  it('opens the contact profile without navigating to or starting a call', () => {
+    render(<Harness />); openMenu(); action('profile').onClick();
+    expect(useUIStore.getState().activeModal).toBe('userProfile');
+    expect(useUIStore.getState().modalData).toMatchObject({ userId: peer.id, user: peer, origin: '' });
+    expect(select).not.toHaveBeenCalled();
+    expect(wsSend).not.toHaveBeenCalled();
   });
   it('pins above newer and unread conversations, toggles back and isolates accounts', () => {
     render(<Harness />); openMenu(); action('pin').onClick();
