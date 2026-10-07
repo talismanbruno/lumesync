@@ -1,9 +1,7 @@
 import { t as uiText } from '../../i18n';
-import React, { useState, useRef } from 'react';
-import { Modal } from '../ui/Modal';
+import React, { useState, useRef, useEffect } from 'react';
 import { ImageCropModal } from '../ui/ImageCropModal';
 import { useSpaceStore } from '../../stores/spaceStore';
-import { useUIStore } from '../../stores/uiStore';
 import { useTransferStore } from '../../stores/transferStore';
 import { useNavigate } from 'react-router-dom';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
@@ -17,7 +15,7 @@ const visibilityOptions: { value: SpaceVisibility; label: string; desc: string }
   { value: 'public', label: uiText("Public"), desc: 'Visible in Explore — anyone can join instantly' },
 ];
 
-export function CreateSpaceModal() {
+export function CreateSpaceForm({ onClose, onBusyChange }: { onClose: () => void; onBusyChange: (busy: boolean) => void }) {
   const [name, setName] = useState('');
   const [visibility, setVisibility] = useState<SpaceVisibility>('private');
   const [description, setDescription] = useState('');
@@ -33,11 +31,16 @@ export function CreateSpaceModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createSpace = useSpaceStore((s) => s.createSpace);
-  const activeModal = useUIStore((s) => s.activeModal);
-  const closeModal = useUIStore((s) => s.closeModal);
   const navigate = useNavigate();
 
-  const isOpen = activeModal === 'createSpace';
+  useEffect(() => {
+    onBusyChange(isLoading || uploadingIcon || cropSrc !== null);
+    return () => onBusyChange(false);
+  }, [isLoading, uploadingIcon, cropSrc, onBusyChange]);
+
+  useEffect(() => () => {
+    if (iconPreview) URL.revokeObjectURL(iconPreview);
+  }, [iconPreview]);
 
   const handleIconSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,7 +56,6 @@ export function CreateSpaceModal() {
 
   const handleCropComplete = async (blob: Blob) => {
     // Show cropped preview
-    if (iconPreview) URL.revokeObjectURL(iconPreview);
     const previewUrl = URL.createObjectURL(blob);
     setIconPreview(previewUrl);
     setCropSrc(null);
@@ -68,29 +70,18 @@ export function CreateSpaceModal() {
     } catch {
       setError(uiText("Failed to upload icon"));
       setIconPreview(null);
-      URL.revokeObjectURL(previewUrl);
     } finally {
       setUploadingIcon(false);
     }
   };
 
   const handleRemoveIcon = () => {
-    if (iconPreview) URL.revokeObjectURL(iconPreview);
     setIconFilename(null);
     setIconPreview(null);
   };
 
   const handleClose = () => {
-    closeModal();
-    setName('');
-    setVisibility('private');
-    setDescription('');
-    setIconFilename(null);
-    if (iconPreview) URL.revokeObjectURL(iconPreview);
-    setIconPreview(null);
-    setCropSrc(null);
-    setAvatarColor(AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)] ?? 'mint');
-    setError('');
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +113,6 @@ export function CreateSpaceModal() {
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose} title={uiText("Create a Space")} mobileStyle="sheet">
       <form onSubmit={handleSubmit}>
         {error && (
           <div className="mb-3 p-2 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">
@@ -209,10 +199,11 @@ export function CreateSpaceModal() {
 
         {/* Space Name */}
         <div className="mb-4">
-          <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-            {uiText("Space Name")}</label>
+          <label htmlFor="create-space-name" className="block text-xs font-bold text-txt-secondary uppercase mb-2">
+            Nome do servidor</label>
           <input
             type="text"
+            id="create-space-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-standard w-full"
@@ -281,13 +272,12 @@ export function CreateSpaceModal() {
                 disabled={isLoading || uploadingIcon}
                 className="px-3 py-1.5 bg-accent-primary hover:bg-accent-primary/80 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
               >
-                {isLoading ? uiText("Creating...") : uiText("Create")}
+                {isLoading ? 'Criando...' : 'Criar servidor'}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </Modal>
 
     <ImageCropModal
       isOpen={cropSrc !== null}

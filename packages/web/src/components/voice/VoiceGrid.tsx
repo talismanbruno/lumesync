@@ -89,25 +89,7 @@ export function VoiceGrid({ participants }: VoiceGridProps) {
           title={uiText("Click to return to grid view")}
         >
           {renderTile(focusedTile, true)}
-          {/* Grid button — top-right */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setFocusedParticipant(null);
-            }}
-            className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-black/60 hover:bg-black/80 rounded-lg flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-            title={uiText("Back to grid view")}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z" />
-            </svg>
-            <span className="text-xs font-medium">{uiText("Grid")}</span>
-          </button>
+
         </div>
 
         {/* Centered Hide/Show Members button — divider between focused tile and strip */}

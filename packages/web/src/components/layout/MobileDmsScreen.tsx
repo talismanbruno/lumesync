@@ -5,7 +5,10 @@ import { useSpaceStore } from '../../stores/spaceStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useSocialStore } from '../../stores/socialStore';
-import { useContextMenuStore } from '../../stores/contextMenuStore';
+import { useDmContextMenu } from '../../hooks/useDmContextMenu';
+import { useDmPreferencesStore, EMPTY_DM_PREFERENCES, pinnedConversations } from '../../stores/dmPreferencesStore';
+import { dmAccountKey } from '../../utils/dmActions';
+import { DmPreferenceMarks } from '../ui/DmPreferenceMarks';
 import { Avatar } from '../ui/Avatar';
 import { AvatarStack } from '../ui/AvatarStack';
 import { resolveAssetUrl } from '../../utils/assetUrls';
@@ -146,6 +149,7 @@ function MobileDmRow({
             <span className={`text-sm truncate ${isUnread ? 'font-semibold text-txt-primary' : 'text-txt-primary'}`}>
               {name}
             </span>
+            <DmPreferenceMarks dm={dm} />
             {groupHasFederatedMember && (
               <svg
                 data-dm-row-globe
@@ -191,7 +195,6 @@ export function MobileDmsScreen() {
   const authUser = useAuthStore((s) => s.user);
   const friends = useSocialStore((s) => s.friends);
   const navigate = useNavigate();
-  const openContextMenu = useContextMenuStore((s) => s.open);
   const setCurrentChannel = useChatStore((s) => s.setCurrentChannel);
 
   // Online friends for the activity row
@@ -201,13 +204,15 @@ export function MobileDmsScreen() {
   );
 
   // Sort DMs by last message time (newest first)
+  const dmPreferences = useDmPreferencesStore(s => s.accounts[dmAccountKey()] || EMPTY_DM_PREFERENCES);
   const sortedDms = useMemo(() =>
+    pinnedConversations(
     [...dmChannels].sort((a, b) => {
       const aTime = a.lastMessage?.createdAt ?? a.createdAt;
       const bTime = b.lastMessage?.createdAt ?? b.createdAt;
       return bTime - aTime;
-    }),
-    [dmChannels]
+    }), dmPreferences.pinned),
+    [dmChannels, dmPreferences.pinned]
   );
 
   const handleDmTap = (dmId: string) => {
@@ -215,29 +220,12 @@ export function MobileDmsScreen() {
     pushMobileScreen('channel-chat', { channelId: dmId, spaceId: '@me' });
   };
 
-  const handleDmContextMenu = (e: React.MouseEvent, dmId: string, isGroup: boolean) => {
-    if (!isGroup) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    openContextMenu({ x: e.clientX, y: e.clientY }, [
-      {
-        key: 'leave-group',
-        type: 'action',
-        label: uiText("Leave Group"),
-        danger: true,
-        icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>,
-        onClick: () => {
-          const currentChId = useChatStore.getState().currentChannelId;
-          if (currentChId === dmId) {
-            navigate('/channels/@me');
-            setCurrentChannel(null);
-          }
-          useSpaceStore.getState().leaveDm(dmId);
-        },
-      },
-    ]);
-  };
+  const { handleDmContextMenu, dmMenuConfirmation } = useDmContextMenu(handleDmTap, id => {
+    if (useChatStore.getState().currentChannelId === id) {
+      navigate('/channels/@me'); setCurrentChannel(null);
+    }
+    void useSpaceStore.getState().leaveDm(id);
+  });
 
   const formatTimestamp = (ts: number): string => {
     const now = Date.now();
@@ -300,6 +288,7 @@ export function MobileDmsScreen() {
         )}
       </div>
 
+      {dmMenuConfirmation}
       {/* FAB — New DM */}
       <button
         onClick={() => openModal('newDm')}

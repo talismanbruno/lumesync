@@ -360,7 +360,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-surface-channel">
           <div className="relative">
-            <Avatar src={avatar} name={displayName} size={large ? 80 : 48} userId={avatarUserId} user={user ?? undefined} />
+            <Avatar src={avatar} name={displayName} size={large ? 80 : 48} userId={avatarUserId} user={user ?? undefined} onClick={() => {}} />
           </div>
           <div className="text-center px-4">
             <p className="text-txt-primary text-sm font-semibold">

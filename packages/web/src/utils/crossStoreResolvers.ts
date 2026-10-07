@@ -4,7 +4,7 @@
 // spaceStore and instanceStore. instanceStore runs top-level `setXResolver`
 // calls at module load; the backing `let` bindings used to live in spaceStore.
 // When the import graph is entered from instanceStore (e.g. via a component
-// like JoinSpaceModal that imports `useInstanceStore` directly) — or any chain
+// like JoinSpaceForm that imports `useInstanceStore` directly) — or any chain
 // that resolves in an order where spaceStore is mid-load when instanceStore's
 // top-level code runs — the `let _getApiForOrigin = null` declaration has not
 // been evaluated yet, so the setter crashes with

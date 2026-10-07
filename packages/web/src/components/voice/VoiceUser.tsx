@@ -2,12 +2,10 @@ import { t as uiText } from '../../i18n';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Avatar } from '../ui/Avatar';
 import { useVoiceStore } from '../../stores/voiceStore';
-import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
-import { buildVoiceModMenuItems, VolumeSliderItem } from './voiceMenuItems';
+import { useContextMenuStore } from '../../stores/contextMenuStore';
+import { buildVoiceParticipantMenuItems } from './voiceMenuItems';
 import { useSpaceStore } from '../../stores/spaceStore';
-import { useUIStore } from '../../stores/uiStore';
 import { useVoiceParticipantMeta } from '../../hooks/useVoiceParticipantMeta';
-import { getActiveRoom, setCameraSubscription } from '../../hooks/useLiveKit';
 import type { UserTile } from '../../hooks/useLiveKit';
 
 interface VoiceUserProps {
@@ -30,7 +28,6 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
   const spaceId = useSpaceStore((s) => currentVoiceChannelId ? s.channelToSpaceMap.get(currentVoiceChannelId) : null);
 
   const openContextMenu = useContextMenuStore((s) => s.open);
-  const openUserProfile = useUIStore((s) => s.openUserProfile);
 
   const [, forceUpdate] = useState(0);
 
@@ -68,78 +65,13 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
   // Context Menu
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
-      if (isLocal || !currentVoiceChannelId) return;
       e.preventDefault();
       e.stopPropagation();
-
-      const targetUserId = participant.userId;
-      const channelId = currentVoiceChannelId;
-
-      // Build moderation items
-      const modItems = buildVoiceModMenuItems(targetUserId, channelId);
-
-      const items: ContextMenuItem[] = [...modItems];
-
-      // Separator after mod items
-      if (modItems.length > 0) {
-        items.push({ key: 'mod-end-sep', type: 'separator' });
-      }
-
-      // Camera watch/unwatch
-      const targetParticipant = useVoiceStore.getState().participants.find((p) => p.userId === targetUserId);
-      const targetHasCamera = targetParticipant?.isCameraOn ?? false;
-      const isCameraUnwatched = useVoiceStore.getState().unwatchedCameras.has(targetUserId);
-
-      if (targetHasCamera) {
-        items.push({
-          key: 'camera-toggle',
-          type: 'action',
-          label: isCameraUnwatched ? uiText("Watch Camera") : uiText("Stop Watching Camera"),
-          icon: React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', className: 'flex-shrink-0' },
-            ...(isCameraUnwatched
-              ? [React.createElement('path', { key: 'cam', d: 'M17 10.5V7c0-.55-.45-1-1-1H2c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z' })]
-              : [
-                  React.createElement('path', { key: 'cam', d: 'M17 10.5V7c0-.55-.45-1-1-1H2c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z' }),
-                  React.createElement('line', { key: 'slash', x1: 1, y1: 1, x2: 23, y2: 23, stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' }),
-                ]),
-          ),
-          onClick: () => {
-            const room = getActiveRoom();
-            const identity = targetParticipant?.identity;
-            if (isCameraUnwatched) {
-              useVoiceStore.getState().rewatchCamera(targetUserId);
-              if (identity) setCameraSubscription(room, identity, true);
-            } else {
-              useVoiceStore.getState().unwatchCamera(targetUserId);
-              if (identity) setCameraSubscription(room, identity, false);
-            }
-          },
-        });
-        items.push({ key: 'camera-sep', type: 'separator' });
-      }
-
-      // Mute User checkbox
-      items.push({
-        key: 'mute-user',
-        type: 'checkbox',
-        label: uiText("Mute User"),
-        subscribe: useVoiceStore.subscribe,
-        getChecked: () => useVoiceStore.getState().participantMutes.get(targetUserId) ?? false,
-        onChange: (checked) => useVoiceStore.getState().setParticipantMute(targetUserId, checked),
-      });
-
-      items.push({ key: 'vol-sep', type: 'separator' });
-
-      // Volume slider (custom, needs store subscription via wrapper component)
-      items.push({
-        key: 'volume',
-        type: 'custom',
-        render: () => React.createElement(VolumeSliderItem, { userId: targetUserId }),
-      });
-
-      openContextMenu({ x: e.clientX, y: e.clientY }, items);
+      const position = { x: e.clientX, y: e.clientY };
+      const channelId = currentVoiceChannelId ?? useVoiceStore.getState().activeDmCall?.dmChannelId ?? null;
+      openContextMenu(position, buildVoiceParticipantMenuItems(participant.userId, channelId, position, user, isLocal));
     },
-    [isLocal, currentVoiceChannelId, participant.userId, openContextMenu],
+    [isLocal, currentVoiceChannelId, participant.userId, user, openContextMenu],
   );
 
   return (
@@ -150,18 +82,17 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
           ? 'ring-[3px] ring-status-online shadow-[0_0_12px_rgba(134,239,172,0.25)]'
           : 'ring-1 ring-white/[0.06] hover:ring-white/10'
       } h-full w-full`}
-      onClick={(event) => {
-        if (!user) return;
-        openUserProfile(user, { top: event.clientY, left: event.clientX + 12 });
-      }}
       onContextMenu={handleContextMenu}
-      role={user ? 'button' : undefined}
-      tabIndex={user ? 0 : undefined}
+      tabIndex={0}
+      aria-label={displayName}
       onKeyDown={(event) => {
-        if (!user || (event.key !== 'Enter' && event.key !== ' ')) return;
+        if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
         event.preventDefault();
+        event.stopPropagation();
         const rect = event.currentTarget.getBoundingClientRect();
-        openUserProfile(user, { top: rect.top, left: rect.right + 12 });
+        const position = { x: rect.left + 12, y: rect.top + 12 };
+        const channelId = currentVoiceChannelId ?? useVoiceStore.getState().activeDmCall?.dmChannelId ?? null;
+        openContextMenu(position, buildVoiceParticipantMenuItems(participant.userId, channelId, position, user, isLocal));
       }}
     >
       {hasVideo ? (
@@ -181,6 +112,7 @@ export function VoiceUser({ tile, large }: VoiceUserProps) {
               size={large ? 100 : 64}
               userId={avatarUserId}
               user={user ?? undefined}
+              onClick={() => {}}
               freezeAnimation={!isSpeaking}
             />
             {isSpeaking && (

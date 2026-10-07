@@ -239,6 +239,9 @@ export class BackspaceApiClient {
   };
 
   readonly social: {
+    blocks: () => Promise<User[]>;
+    block: (userId: string) => Promise<{ success: boolean }>;
+    unblock: (userId: string) => Promise<{ success: boolean }>;
     friends: () => Promise<Friend[]>;
     requests: () => Promise<FriendRequest[]>;
     sendRequest: (username: string) => Promise<{ success: boolean; requestId?: string }>;
@@ -631,6 +634,9 @@ export class BackspaceApiClient {
     };
 
     this.social = {
+      blocks: () => request<User[]>('GET', '/social/blocks'),
+      block: (userId: string) => request<{ success: boolean }>('PUT', `/social/blocks/${encodeURIComponent(userId)}`),
+      unblock: (userId: string) => request<{ success: boolean }>('DELETE', `/social/blocks/${encodeURIComponent(userId)}`),
       friends: () => request<Friend[]>('GET', '/social/friends'),
       requests: () => request<FriendRequest[]>('GET', '/social/requests'),
       sendRequest: (username: string) => request<{ success: boolean; requestId?: string }>('POST', '/social/requests', { username }),
@@ -894,4 +900,3 @@ export function createApiClient(origin: string, getToken: () => string | null, o
   const baseUrl = origin ? `${origin}/api` : '/api';
   return new BackspaceApiClient(baseUrl, getToken, onUnauthorized);
 }
-

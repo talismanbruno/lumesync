@@ -6,6 +6,7 @@ import { useSpaceStore } from '../stores/spaceStore';
 import { useSocialStore } from '../stores/socialStore';
 import { isElectron } from '../platform/platform';
 import { sendNotification, updateBadgeCount } from '../platform/notifications';
+import { dmAlertsSilenced } from '../utils/dmActions';
 
 /**
  * Headless component that bridges store events to native OS notifications and badge counts.
@@ -59,8 +60,8 @@ export function NotificationController() {
 
       if (state.realtimeMessageEvents.length > prevState.realtimeMessageEvents.length) {
         const newEvents = state.realtimeMessageEvents.slice(prevState.realtimeMessageEvents.length);
-        for (const { message } of newEvents) {
-          if (message.userId !== currentUser?.id) {
+        for (const { channelId, message } of newEvents) {
+          if (!dmAlertsSilenced(channelId) && message.userId !== currentUser?.id) {
             const displayName = message.user?.displayName || message.user?.username || 'Alguém';
             const body = message.content
               ? message.content.replace(/[*_~`>#\-\[\]]/g, '').slice(0, 100)
@@ -131,7 +132,7 @@ export function NotificationController() {
     let prevIncoming: { dmChannelId: string | null; callerId: string; callerName: string } | null = null;
 
     const unsubscribe = useVoiceStore.subscribe((state) => {
-      if (state.incomingCall && !prevIncoming && !windowFocused.current) {
+      if (state.incomingCall && !prevIncoming && !windowFocused.current && !dmAlertsSilenced(state.incomingCall.dmChannelId)) {
         sendNotification('Chamada recebida', `${state.incomingCall.callerName} está ligando para você`, {
           channelId: state.incomingCall.dmChannelId ?? undefined,
         });

@@ -9,6 +9,7 @@ import { hasPermissionBit, PermissionBits } from '../../utils/permissions';
 import { handleMuteAction, handleDeafenAction, handleCameraAction, handleScreenShareAction, handleDisconnectAction } from '../../utils/voiceActions';
 import { requestMicPermission } from '../../utils/voice';
 import { toggleVoiceFullscreen } from '../../utils/voiceFullscreen';
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 const btnBase = 'w-10 h-10 flex items-center justify-center rounded-full transition-colors';
 const btnDefault = `${btnBase} bg-surface-channel text-txt-secondary hover:bg-surface-elevated hover:text-txt-primary`;
@@ -98,11 +99,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
           }
           title={(isSpaceMuted || isSpaceDeafened) ? (isMuted ? uiText("Silenciado na comunidade e por você") : uiText("Silenciado na comunidade")) : isMuted ? uiText("Ativar microfone (M)") : uiText("Silenciar microfone (M)")}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-            {(isMuted || isDeafened || isSpaceMuted || isSpaceDeafened) && <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />}
-          </svg>
+          <OrbitalIcon name="mic" cut={isMuted || isDeafened || isSpaceMuted || isSpaceDeafened} />
         </button>
 
         {/* Deafen */}
@@ -116,10 +113,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
           }
           title={isSpaceDeafened ? uiText("Áudio bloqueado na comunidade") : isDeafened ? uiText("Ativar áudio (D)") : uiText("Desativar áudio (D)")}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h2v-7H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-2v7h2c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z" />
-            {(isDeafened || isSpaceDeafened) && <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />}
-          </svg>
+          <OrbitalIcon name="audio" cut={isDeafened || isSpaceDeafened} />
         </button>
 
         {/* Camera */}
@@ -164,12 +158,10 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
             ? `${btnBase} bg-surface-channel text-txt-primary`
             : btnDefault
           }
-          title={uiText("Qualidade do vídeo")}
+          title="Qualidade da transmissão"
+          aria-label="Qualidade da transmissão"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 5v14h18V5H3zm16 12H5V7h14v10z" />
-            <path d="M8 15l2.5-3.21L13 15l2-2.5L18 17H6z" />
-          </svg>
+          <OrbitalIcon name="quality" />
         </button>
         <ScreenShareSettingsPopover open={qualityOpen} onClose={() => setQualityOpen(false)} anchorRef={qualityBtnRef} />
 
@@ -222,9 +214,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
           className={`${btnBase} bg-accent-rose hover:bg-accent-rose/80 text-white`}
           title={uiText("Desconectar")}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 9C10.4 9 8.85 9.25 7.4 9.72V12.82C7.4 13.22 7.17 13.56 6.84 13.72C5.86 14.21 4.97 14.84 4.18 15.57C4 15.75 3.75 15.85 3.48 15.85C3.2 15.85 2.95 15.74 2.77 15.56L0.29 13.08C0.11 12.9 0 12.65 0 12.38C0 12.1 0.11 11.85 0.29 11.67C3.34 8.78 7.46 7 12 7S20.66 8.78 23.71 11.67C23.89 11.85 24 12.1 24 12.38C24 12.65 23.89 12.9 23.71 13.08L21.23 15.56C21.05 15.74 20.8 15.85 20.52 15.85C20.25 15.85 20 15.75 19.82 15.57C19.03 14.84 18.14 14.21 17.16 13.72C16.83 13.56 16.6 13.22 16.6 12.82V9.72C15.15 9.25 13.6 9 12 9Z" />
-          </svg>
+          <OrbitalIcon name="hangup" />
         </button>
       </div>
     </div>

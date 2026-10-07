@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, or, ne, sql, isNull } from 'drizzle-orm';
 import { getDb, getRawDb, schema } from '../db/index.js';
 import { authenticate } from '../utils/auth.js';
+import { hasUserBlock } from '../utils/userBlocks.js';
 import { generateSnowflake } from '../utils/snowflake.js';
 import { connectionManager } from '../ws/handler.js';
 import { appendMutationLog, queueOutboxEvent, buildFriendContextId, getFriendEventTargets } from '../utils/federationOutbox.js';
@@ -64,6 +65,9 @@ async function handleLocalFriendRequest(
   }
 
   // Check if already friends
+  if (hasUserBlock(request.userId, targetUser.id) || hasUserBlock(targetUser.id, request.userId)) {
+    return reply.code(403).send({ error: 'Não é possível adicionar esse contato.', statusCode: 403 });
+  }
   const existingFriend = db.select().from(schema.friends).where(or(
     and(eq(schema.friends.userId, request.userId), eq(schema.friends.friendId, targetUser.id)),
     and(eq(schema.friends.userId, targetUser.id), eq(schema.friends.friendId, request.userId))

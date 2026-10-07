@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from 'ws';
 import { verifyJwt } from '../utils/auth.js';
 import { getDb, schema } from '../db/index.js';
+import { suppressBlockedContactEvent } from '../utils/userBlocks.js';
 import { eq, and, or, inArray, isNull, desc, sql } from 'drizzle-orm';
 import { handleClientEvent } from './events.js';
 import { computePermissions, PermissionBits, permissionsToString } from '../utils/permissions.js';
@@ -876,6 +877,7 @@ class ConnectionManager {
   /** Send to a specific user (all their connections). */
   sendToUser(userId: string, event: ServerEvent): void {
     const connections = this.getUserConnections(userId);
+    if (connections.size === 0 || suppressBlockedContactEvent(userId, event)) return;
     const message = JSON.stringify(event);
     for (const ws of connections) {
       if (ws.readyState === 1) { // WebSocket.OPEN

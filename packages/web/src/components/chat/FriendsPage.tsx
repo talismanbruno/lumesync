@@ -1,5 +1,5 @@
 import { t as uiText } from '../../i18n';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { User } from '@backspace/shared';
 import { useSocialStore, type TaggedFriend, type TaggedFriendRequest } from '../../stores/socialStore';
@@ -104,6 +104,21 @@ interface FriendsPageProps {
 export function FriendsPage({ mobile }: FriendsPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('online');
   const [pendingUnfriend, setPendingUnfriend] = useState<{ id: string; name: string } | null>(null);
+  const tabTrackRef = useRef<HTMLDivElement>(null);
+  const [tabMarker, setTabMarker] = useState({ left: 0, width: 0, visible: false });
+  useLayoutEffect(() => {
+    const track = tabTrackRef.current;
+    if (!track) return;
+    const measure = () => {
+      const selected = track.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
+      setTabMarker(selected ? { left: selected.offsetLeft + selected.offsetWidth * .28, width: selected.offsetWidth * .44, visible: true } : { left: 0, width: 0, visible: false });
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [activeTab, mobile]);
   const navigate = useNavigate();
   const addDmChannel = useSpaceStore((s) => s.addDmChannel);
 
@@ -338,18 +353,18 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
           </button>
-          <span className="font-semibold text-sm text-txt-primary">{uiText("Pessoas")}</span>
+          <span className="font-semibold text-sm text-txt-primary">{uiText("Amigos")}</span>
         </div>
       ) : (
-        <div className="lume-friends-command h-16 px-5 flex items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
-          <div className="flex items-center gap-2 mr-4">
+        <div className="lume-friends-command min-h-16 px-5 py-3 flex flex-wrap gap-y-2 items-center border-b border-border-hard flex-shrink-0 z-10 bg-surface-chat">
+          <div className="flex items-center gap-2 mr-3 shrink-0">
             <span className="lume-friends-mark">
               <PeopleIcon size={20} />
             </span>
-            <span className="font-bold text-txt-primary">{uiText("Pessoas")}</span>
+            <span className="font-bold text-txt-primary">{uiText("Amigos")}</span>
           </div>
           <div className="w-[1px] h-6 bg-surface-elevated mx-2" />
-          <div className="flex items-center gap-4 ml-2">
+          <div ref={tabTrackRef} className="lume-friends-tab-track flex items-center gap-1 ml-2">
             <TabButton active={activeTab === 'online'} onClick={() => setActiveTab('online')}>{uiText("Disponíveis")}</TabButton>
             <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>{uiText("Todos")}</TabButton>
             <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')}>
@@ -359,15 +374,17 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
                 </span>
               )}
             </TabButton>
+            <span aria-hidden="true" className="lume-friends-tab-marker" style={{ transform: `translateX(${tabMarker.left}px)`, width: tabMarker.width, opacity: tabMarker.visible ? 1 : 0 }} />
+          </div>
+          <div className="ml-auto pl-3 flex items-center gap-3">
             <button
               onClick={() => setActiveTab('add')}
-              className={`px-2 py-0.5 rounded text-[14px] font-medium transition-all ${
-                activeTab === 'add' ? 'text-status-online bg-transparent' : 'bg-status-online text-[#13131a] hover:bg-status-online/90'
-              }`}
+              aria-pressed={activeTab === 'add'}
+              className={`lume-friends-add flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[13px] font-semibold transition-colors ${activeTab === 'add' ? 'is-active' : ''}`}
             >
-              {uiText("Adicionar")}</button>
-          </div>
-          <div className="ml-auto flex items-center gap-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><g className="lume-motion-plus"><path d="M12 5v14M5 12h14" /></g></svg>
+              {uiText("Adicionar")}
+            </button>
             <MemberListToggleButton />
           </div>
         </div>
@@ -375,14 +392,15 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
 
       {/* Mobile tab bar */}
       {mobile && (
-        <div className="flex border-b border-border-soft">
+        <div ref={tabTrackRef} className="lume-friends-tab-track flex border-b border-border-soft">
           {(['online', 'all', 'pending', 'add', 'activity'] as Tab[]).map((tab) => (
             <button
               key={tab}
+              aria-pressed={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2.5 text-sm font-medium text-center border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-accent-primary text-txt-primary'
+                  ? 'border-transparent text-txt-primary'
                   : 'border-transparent text-txt-secondary hover:text-txt-primary'
               }`}
             >
@@ -394,10 +412,11 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
               )}
             </button>
           ))}
+          <span aria-hidden="true" className="lume-friends-tab-marker" style={{ transform: `translateX(${tabMarker.left}px)`, width: tabMarker.width, opacity: tabMarker.visible ? 1 : 0 }} />
         </div>
       )}
 
-      {renderTabContent()}
+      <div key={activeTab} className="lume-friends-panel flex flex-col flex-1 min-h-0">{renderTabContent()}</div>
 
       <ConfirmDialog
         isOpen={pendingUnfriend !== null}
@@ -491,8 +510,9 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`lume-friends-tab px-3 py-2 text-[13px] font-semibold transition-all ${
-        active ? 'is-active text-cyan-100' : 'text-txt-tertiary hover:text-txt-secondary'
+        active ? 'is-active text-cyan-100' : 'text-txt-secondary hover:text-txt-primary'
       }`}
     >
       {children}

@@ -1,6 +1,7 @@
 import type { WebSocket } from 'ws';
 import { eq, inArray, and } from 'drizzle-orm';
 import { getDb, schema } from '../db/index.js';
+import { isBlockedDirectConversation } from '../utils/userBlocks.js';
 import { generateSnowflake } from '../utils/snowflake.js';
 import { connectionManager } from './handler.js';
 import type { VoiceRoom, DmRoomMeta, SpaceRoomMeta } from './handler.js';
@@ -909,6 +910,11 @@ function handleDmMessageCreate(event: Record<string, unknown>, userId: string): 
     return;
   }
 
+  if (isBlockedDirectConversation(dmChannelId, userId)) {
+    connectionManager.sendToUser(userId, { type: 'error', message: 'Não é possível contatar esse usuário.' });
+    return;
+  }
+
   const db = getDb();
 
   // Verify attachment ownership before linking
@@ -1462,6 +1468,12 @@ function handleDmCallStart(event: Record<string, unknown>, userId: string, usern
 
   if (!isDmMember(dmChannelId, userId)) {
     connectionManager.sendToUser(userId, { type: 'error', message: 'You are not a member of this DM channel' });
+    return;
+  }
+
+  if (isBlockedDirectConversation(dmChannelId, userId)) {
+    connectionManager.sendToUser(userId, { type: 'dm_call_ended', dmChannelId });
+    connectionManager.sendToUser(userId, { type: 'error', message: 'Não é possível contatar esse usuário.' });
     return;
   }
 

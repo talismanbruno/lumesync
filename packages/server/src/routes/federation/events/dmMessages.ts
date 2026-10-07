@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { getDb, schema } from '../../../db/index.js';
+import { isBlockedDirectConversation } from '../../../utils/userBlocks.js';
 import { computeFederatedId } from '../../../utils/federationOutbox.js';
 import { deleteAttachmentFiles } from '../../../utils/fileCleanup.js';
 import { sanitizeUser } from '../../../utils/sanitize.js';
@@ -124,6 +125,11 @@ export async function processCreateEvent(
 
   // Insert the message
   const localMessageId = generateSnowflake();
+  if (isBlockedDirectConversation(localDmChannelId, authorUser.id)) {
+    accepted.push(event.messageId);
+    return;
+  }
+
   db.insert(schema.dmMessages)
     .values({
       id: localMessageId,

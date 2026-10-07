@@ -5,6 +5,7 @@ import { useSpaceStore, getChannelOrigin, getMyUserIdForOrigin, setMyUserIdForOr
 import { useChatStore } from '../stores/chatStore';
 import { useVoiceStore } from '../stores/voiceStore';
 import { useSocialStore } from '../stores/socialStore';
+import { useUserBlockStore } from '../stores/userBlockStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import type { ServerEvent, ClientEvent, ActiveCallInfo, Activity, User } from '@backspace/shared';
 import { resolveAssetUrl, normalizeUserAssets, normalizeMessageAssets } from '../utils/assetUrls';
@@ -198,6 +199,9 @@ function handleEvent(origin: string, event: ServerEvent): void {
         useSettingsStore.getState().fetchStreamingLimits();
         useSettingsStore.getState().fetchGifEnabled();
       }
+
+      const blockAccount = useAuthStore.getState().user;
+      if (blockAccount) void useUserBlockStore.getState().load(`${window.location.host}:${blockAccount.id}`, origin).catch(() => {});
 
       // Normalize asset URLs for remote origins before dispatching to stores
       if (!isHome) {

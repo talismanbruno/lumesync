@@ -29,6 +29,9 @@ import { BetaContributorBadge } from '../ui/BetaContributorBadge';
 import { isPioneer } from '../../utils/pioneer';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { PeopleIcon } from '../ui/PeopleIcon';
+import { useDmContextMenu } from '../../hooks/useDmContextMenu';
+import { useDmPreferencesStore, EMPTY_DM_PREFERENCES, pinnedConversations } from '../../stores/dmPreferencesStore';
+import { dmAccountKey } from '../../utils/dmActions';
 
 export function ChannelSidebar() {
   const spaces = useSpaceStore((s) => s.spaces);
@@ -41,6 +44,8 @@ export function ChannelSidebar() {
   const unreadChannels = useChatStore((s) => s.unreadChannels);
   const openModal = useUIStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
+  const dmPreferences = useDmPreferencesStore(s => s.accounts[dmAccountKey()] || EMPTY_DM_PREFERENCES);
+  const orderedDms = pinnedConversations(dmChannels, dmPreferences.pinned);
   const members = useSpaceStore((s) => s.members);
   const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const activeDmCall = useVoiceStore((s) => s.activeDmCall);
@@ -371,26 +376,7 @@ export function ChannelSidebar() {
     openContextMenu({ x: e.clientX, y: e.clientY }, items);
   }, [canManageChannels, canCreateInvite, openModal, openContextMenu]);
 
-  const handleDmContextMenu = useCallback((e: React.MouseEvent, dmId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openContextMenu({ x: e.clientX, y: e.clientY }, [
-      {
-        key: 'leave-group',
-        type: 'action',
-        label: uiText("Leave Group"),
-        danger: true,
-        icon: (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5a2 2 0 00-2 2v4h2V5h14v14H5v-4H3v4a2 2 0 002 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
-          </svg>
-        ),
-        onClick: () => {
-          setLeaveGroupDmId(dmId);
-        },
-      },
-    ]);
-  }, [openContextMenu]);
+  const { handleDmContextMenu, dmMenuConfirmation } = useDmContextMenu(id => handleChannelClick(id), setLeaveGroupDmId);
 
   const handleChannelClick = (channelId: string) => {
     setCurrentChannel(channelId);
@@ -454,7 +440,7 @@ export function ChannelSidebar() {
             }`}
           >
             <PeopleIcon className={`flex-shrink-0 ${!currentChannelId ? 'text-cyan-200' : 'opacity-70 group-hover:opacity-100'}`} />
-            <span className="font-medium text-[16px]">{uiText("Pessoas")}</span>
+            <span className="font-medium text-[16px]">{uiText("Amigos")}</span>
           </div>
 
           <div className="mt-[18px] px-2 mb-1 flex items-center justify-between group">
@@ -471,7 +457,7 @@ export function ChannelSidebar() {
           </div>
 
           <div className="space-y-[2px]">
-            {dmChannels.map((dm) => (
+            {orderedDms.map((dm) => (
               <DmListItem
                 key={dm.id}
                 dm={dm}
@@ -500,6 +486,7 @@ export function ChannelSidebar() {
 
       </div>
       {floatingPanel}
+      {dmMenuConfirmation}
       <ConfirmDialog
         isOpen={leaveGroupDmId !== null}
         onClose={() => setLeaveGroupDmId(null)}

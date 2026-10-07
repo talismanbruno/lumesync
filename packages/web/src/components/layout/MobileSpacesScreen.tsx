@@ -1,4 +1,5 @@
 import { t as uiText } from '../../i18n';
+import { CompassIcon } from '../ui/CompassIcon';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useSpaceStore, getMyUserIdForOrigin } from '../../stores/spaceStore';
@@ -18,7 +19,7 @@ import { MobileFolderSheet } from './MobileFolderSheet';
 import { useInstanceStore } from '../../stores/instanceStore';
 import { VoiceUserRow } from '../voice/VoiceUserRow';
 import { MobileVoiceJoinSheet } from '../voice/MobileVoiceJoinSheet';
-import { buildVoiceModMenuItems, VolumeSliderItem } from '../voice/voiceMenuItems';
+import { buildVoiceParticipantMenuItems } from '../voice/voiceMenuItems';
 import { joinVoiceChannel } from '../../utils/voice';
 import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 
@@ -545,37 +546,12 @@ export function MobileSpacesScreen() {
 
   const handleVoiceUserContextMenu = useCallback(
     (e: React.MouseEvent, userId: string, channelId: string) => {
-      if (userId === user?.id) return;
       e.preventDefault();
       e.stopPropagation();
-
-      const modItems = buildVoiceModMenuItems(userId, channelId);
-      const items: ContextMenuItem[] = [...modItems];
-
-      if (modItems.length > 0) {
-        items.push({ key: 'mod-end-sep', type: 'separator' });
-      }
-
-      items.push({
-        key: 'mute-user',
-        type: 'checkbox',
-        label: uiText("Mute User"),
-        subscribe: useVoiceStore.subscribe,
-        getChecked: () => useVoiceStore.getState().participantMutes.get(userId) ?? false,
-        onChange: (checked) => useVoiceStore.getState().setParticipantMute(userId, checked),
-      });
-
-      items.push({ key: 'vol-sep', type: 'separator' });
-
-      items.push({
-        key: 'volume',
-        type: 'custom',
-        render: () => React.createElement(VolumeSliderItem, { userId }),
-      });
-
-      openContextMenu({ x: e.clientX, y: e.clientY }, items);
+      const position = { x: e.clientX, y: e.clientY };
+      openContextMenu(position, buildVoiceParticipantMenuItems(userId, channelId, position));
     },
-    [user?.id, openContextMenu],
+    [openContextMenu],
   );
 
   const renderChannelItem = (channel: Channel) => {
@@ -775,8 +751,9 @@ export function MobileSpacesScreen() {
 
         {/* Add space button */}
         <button
+          aria-label="Criar ou entrar em servidor"
           onClick={() => setShowAddSheet(true)}
-          className="w-10 h-10 rounded-2xl bg-surface-elevated flex items-center justify-center text-accent-mint hover:bg-accent-mint/10 transition-colors"
+          className="w-10 h-10 rounded-2xl bg-surface-elevated flex items-center justify-center text-accent-primary hover:bg-accent-primary/10 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -924,27 +901,16 @@ export function MobileSpacesScreen() {
                 onClick={() => { setShowAddSheet(false); openModal('createSpace'); }}
                 className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-interactive-hover"
               >
-                <svg className="w-5 h-5 text-accent-mint" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-5 h-5 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                <span className="text-sm text-txt-primary">{uiText("Create Space")}</span>
-              </button>
-              <button
-                onClick={() => { setShowAddSheet(false); openModal('joinSpace'); }}
-                className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-interactive-hover"
-              >
-                <svg className="w-5 h-5 text-accent-sky" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                </svg>
-                <span className="text-sm text-txt-primary">{uiText("Join Space")}</span>
+                <span className="text-sm text-txt-primary">Criar ou entrar em servidor</span>
               </button>
               <button
                 onClick={() => { setShowAddSheet(false); pushMobileScreen('explore'); }}
                 className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-interactive-hover"
               >
-                <svg className="w-5 h-5 text-accent-lavender" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
+                <CompassIcon size={20} className="text-accent-primary" />
                 <span className="text-sm text-txt-primary">{uiText("Explore Spaces")}</span>
               </button>
             </div>

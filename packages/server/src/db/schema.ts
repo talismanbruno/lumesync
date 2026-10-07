@@ -1,6 +1,13 @@
 import { sqliteTable, text, integer, primaryKey, foreignKey, real, unique, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
+export const userBlocks = sqliteTable('user_blocks', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  targetKey: text('target_key').notNull(),
+  targetUserId: text('target_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at').notNull(),
+}, table => [primaryKey({ columns: [table.userId, table.targetKey] })]);
+
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   username: text('username').unique().notNull(),

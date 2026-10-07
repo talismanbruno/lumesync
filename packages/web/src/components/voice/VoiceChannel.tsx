@@ -4,8 +4,8 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
-import { buildVoiceModMenuItems, VolumeSliderItem } from './voiceMenuItems';
+import { useContextMenuStore } from '../../stores/contextMenuStore';
+import { buildVoiceParticipantMenuItems } from './voiceMenuItems';
 import { VoiceUserRow } from './VoiceUserRow';
 
 const EMPTY_VOICE_USERS: string[] = [];
@@ -71,42 +71,12 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, userId: string) => {
-      if (userId === myUser?.id) return;
       e.preventDefault();
       e.stopPropagation();
-
-      // Build moderation items
-      const modItems = buildVoiceModMenuItems(userId, channelId);
-
-      const items: ContextMenuItem[] = [...modItems];
-
-      // Separator after mod items
-      if (modItems.length > 0) {
-        items.push({ key: 'mod-end-sep', type: 'separator' });
-      }
-
-      // Mute User checkbox
-      items.push({
-        key: 'mute-user',
-        type: 'checkbox',
-        label: uiText("Mute User"),
-        subscribe: useVoiceStore.subscribe,
-        getChecked: () => useVoiceStore.getState().participantMutes.get(userId) ?? false,
-        onChange: (checked) => useVoiceStore.getState().setParticipantMute(userId, checked),
-      });
-
-      items.push({ key: 'vol-sep', type: 'separator' });
-
-      // Volume slider
-      items.push({
-        key: 'volume',
-        type: 'custom',
-        render: () => React.createElement(VolumeSliderItem, { userId }),
-      });
-
-      openContextMenu({ x: e.clientX, y: e.clientY }, items);
+      const position = { x: e.clientX, y: e.clientY };
+      openContextMenu(position, buildVoiceParticipantMenuItems(userId, channelId, position));
     },
-    [myUser?.id, channelId, openContextMenu],
+    [channelId, openContextMenu],
   );
 
   return (
@@ -182,6 +152,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
             return (
               <div
                 key={userId}
+                data-context-menu
                 className={`px-[10px] py-1 rounded-[6px] hover:bg-interactive-hover transition-colors ${
                   isDraggable ? 'cursor-grab active:cursor-grabbing' : profileUser ? 'cursor-pointer' : ''
                 } ${isBeingDragged ? 'opacity-50' : ''}`}

@@ -1,3 +1,4 @@
+import { startDmCall } from '../../utils/dmActions';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -133,8 +134,8 @@ export function MainContent() {
 
     const handleStartVoiceCall = () => {
       if (!currentChannelId) return;
-      useVoiceStore.getState().setOutgoingCall({ dmChannelId: currentChannelId });
-      wsSend({ type: 'dm_call_start', dmChannelId: currentChannelId }, getChannelOrigin(currentChannelId));
+      try { startDmCall(currentChannelId); }
+      catch (error) { useUIStore.getState().addToast(error instanceof Error ? error.message : 'Não foi possível iniciar a chamada.', 'warning'); }
     };
 
     const handleCancelCall = () => {

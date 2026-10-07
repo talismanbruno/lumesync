@@ -1,3 +1,6 @@
+import { dmAlertsSilenced } from '../../utils/dmActions';
+import { useDmPreferencesStore } from '../../stores/dmPreferencesStore';
+import { useUserBlockStore } from '../../stores/userBlockStore';
 import { useEffect, useRef } from 'react';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useChatStore } from '../../stores/chatStore';
@@ -191,19 +194,19 @@ export function SoundController() {
       }
 
       // -------- Incoming Call (Ringing) --------
-      if (state.incomingCall && !incomingCallLoop.current && !incomingCallLoading.current) {
+      if (state.incomingCall && !dmAlertsSilenced(state.incomingCall.dmChannelId) && !incomingCallLoop.current && !incomingCallLoading.current) {
         incomingCallLoading.current = true;
         audioManager
           .playSound('call_ringing', { loop: true, volume: getSfxVolume() })
           .then((source) => {
-            if (!useVoiceStore.getState().incomingCall) {
+            if (!useVoiceStore.getState().incomingCall || dmAlertsSilenced(useVoiceStore.getState().incomingCall?.dmChannelId)) {
               source?.stop();
             } else {
               incomingCallLoop.current = source;
             }
             incomingCallLoading.current = false;
           });
-      } else if (!state.incomingCall) {
+      } else if (!state.incomingCall || dmAlertsSilenced(state.incomingCall.dmChannelId)) {
         if (incomingCallLoop.current) {
           incomingCallLoop.current.stop();
           incomingCallLoop.current = null;
@@ -245,7 +248,7 @@ export function SoundController() {
         // space and DM messages. Avoids reaching into the heterogeneous Message
         // shape (where DM messages may carry dmChannelId at runtime).
         for (const { channelId, message } of newEvents) {
-          if (!channelId) continue;
+          if (!channelId || dmAlertsSilenced(channelId)) continue;
           const isDm = isDmChannel(channelId);
           if (
             shouldPlayMessageSound({
@@ -263,8 +266,19 @@ export function SoundController() {
       }
     });
 
+    const stopSilencedIncomingCall = () => {
+      if (dmAlertsSilenced(useVoiceStore.getState().incomingCall?.dmChannelId)) {
+        incomingCallLoop.current?.stop();
+        incomingCallLoop.current = null;
+      }
+    };
+    const unsubscribePreferences = useDmPreferencesStore.subscribe(stopSilencedIncomingCall);
+    const unsubscribeBlocks = useUserBlockStore.subscribe(stopSilencedIncomingCall);
+
     return () => {
       clearTimeout(timer);
+      unsubscribePreferences();
+      unsubscribeBlocks();
       unsubscribeVoice();
       unsubscribeChat();
       if (incomingCallLoop.current) incomingCallLoop.current.stop();

@@ -187,9 +187,10 @@ export function VoiceControls() {
               ? 'bg-surface-base text-accent-primary hover:bg-surface-channel'
               : btnDefaultStyle
           }`}
-          title={uiText("Video Quality")}
+          title="Qualidade da transmissão"
+          aria-label="Qualidade da transmissão"
         >
-          <OrbitalIcon name="image" />
+          <OrbitalIcon name="quality" />
         </button>
 
         {/* AI Noise Suppression (RNNoise) */}

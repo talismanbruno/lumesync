@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, and, or, desc, lt, inArray, isNull, sql } from 'drizzle-orm';
 import { getDb, schema } from '../db/index.js';
+import { isBlockedDirectConversation } from '../utils/userBlocks.js';
 import { authenticate } from '../utils/auth.js';
 import { generateSnowflake } from '../utils/snowflake.js';
 import { isDmMember, isDeadOneOnOne } from '../utils/permissions.js';
@@ -2504,6 +2505,10 @@ export async function dmRoutes(app: FastifyInstance): Promise<void> {
 
     if (isDeadOneOnOne(id, request.userId)) {
       return reply.code(403).send({ error: "This user's account was deleted", code: 'recipient_deleted', statusCode: 403 });
+    }
+
+    if (isBlockedDirectConversation(id, request.userId)) {
+      return reply.code(403).send({ error: 'Não é possível enviar mensagens para esse contato.', code: 'contact_blocked', statusCode: 403 });
     }
 
     const hasContent = content && typeof content === 'string' && content.trim().length > 0;

@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCommunityHistory } from '../../hooks/useCommunityHistory';
 import { ImagePreview } from '../chat/ImagePreview';
-import { CreateSpaceModal } from '../modals/CreateSpace';
-import { JoinSpaceModal } from '../modals/JoinSpace';
+import { SpaceAccessModal } from '../modals/SpaceAccessModal';
 import { CreateChannelModal } from '../modals/CreateChannel';
 import { CreateCategoryModal } from '../modals/CreateCategory';
 import { InviteModal } from '../modals/InviteModal';
@@ -386,8 +385,7 @@ export function AppLayout() {
           <MobileShell />
         </React.Suspense>
         {/* Modals still render globally for both mobile and desktop */}
-        <CreateSpaceModal />
-        <JoinSpaceModal />
+        <SpaceAccessModal />
         <CreateChannelModal />
         <CreateCategoryModal />
         <InviteModal />
@@ -439,8 +437,7 @@ export function AppLayout() {
       </div>
 
       {/* Modals */}
-      <CreateSpaceModal />
-      <JoinSpaceModal />
+      <SpaceAccessModal />
       <CreateChannelModal />
       <CreateCategoryModal />
       <InviteModal />

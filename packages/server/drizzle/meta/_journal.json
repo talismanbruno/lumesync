@@ -141,6 +141,13 @@
       "when": 1790078400001,
       "tag": "0019_recovery_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1791327600000,
+      "tag": "0020_user_blocks",
+      "breakpoints": true
     }
   ]
 }

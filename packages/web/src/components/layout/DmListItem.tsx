@@ -1,6 +1,7 @@
 import { t as uiText } from '../../i18n';
 import type { DmChannel, User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
+import { DmPreferenceMarks } from '../ui/DmPreferenceMarks';
 import { AvatarStack } from '../ui/AvatarStack';
 import { Tooltip } from '../ui/Tooltip';
 import { parseFederatedUsername, isSelf, isFederationGlobeApplicable } from '../../utils/identity';
@@ -124,6 +125,8 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
   const itemJsx = (
     <div
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
+      data-context-menu
       className={containerClass}
     >
       {/* Selected accent bar */}
@@ -152,6 +155,7 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
           <span className={nameClass}>
             {displayName}
           </span>
+          <DmPreferenceMarks dm={dm} />
           {showGroupGlobe && (
             <Tooltip content={groupFederatedMembers.map(m => m.username).join(', ')} position="top">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className={fedBadgeClass}>
@@ -205,11 +209,6 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
       </button>
     </div>
   );
-
-  // Group DMs get a context menu wrapper
-  if (isGroup && handleContextMenu) {
-    return <div onContextMenu={handleContextMenu}>{itemJsx}</div>;
-  }
 
   return itemJsx;
 }

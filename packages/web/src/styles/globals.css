@@ -1020,18 +1020,20 @@
 .lume-home-button:is(:hover, :focus-visible) .lume-home-light,
 .lume-home-button:is(:hover, :focus-visible) .lume-home-reflection {
   opacity: 1;
+  transition-duration: 0ms;
 }
 
 .lume-home-button:is(:hover, :focus-visible) .lume-home-light > span {
   animation: callRippleLiquid 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation-delay: -0.8s;
 }
 
 .lume-home-button:is(:hover, :focus-visible) .lume-home-light > span:nth-child(2) {
-  animation-delay: 1.3s;
+  animation-delay: -2.1s;
 }
 
 .lume-home-button:is(:hover, :focus-visible) .lume-home-light > span:nth-child(3) {
-  animation-delay: 2.6s;
+  animation-delay: -3.4s;
 }
 
 .lume-home-button:is(:hover, :focus-visible) .lume-home-reflection::after {
@@ -1245,6 +1247,12 @@
   background: rgb(var(--bg-chat));
 }
 
+.lume-content-stage .lume-friends-command {
+  height: auto;
+  min-height: 64px;
+  background: rgb(var(--bg-chat));
+}
+
 .lume-friends-mark {
   display: inline-flex;
   width: 34px;
@@ -1267,20 +1275,22 @@
 }
 
 .lume-friends-tab.is-active {
-  background: rgba(0, 209, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(0, 209, 255, 0.18);
+  color: rgb(120, 232, 255);
 }
 
-.lume-friends-tab.is-active::after {
-  content: '';
-  position: absolute;
-  left: 28%;
-  right: 28%;
-  bottom: -5px;
-  height: 2px;
-  border-radius: 2px;
-  background: rgb(0, 209, 255);
+.lume-friends-add {
+  color: rgb(120, 232, 255);
+  border-color: rgba(0, 209, 255, 0.45);
+  background: rgba(0, 209, 255, 0.08);
 }
+
+.lume-friends-add:hover,
+.lume-friends-add.is-active {
+  border-color: rgba(0, 209, 255, 0.7);
+  background: rgba(0, 209, 255, 0.14);
+}
+
+
 
 .lume-settings-shell {
   background:
@@ -1495,4 +1505,59 @@
   .lume-rail button:hover,
   .lume-composer:focus-within,
   .lume-auth-intro::after { transform: none; animation: none; }
+}
+
+
+/* Functional motion: one pass on hover/focus, with no delay to actions. */
+.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-hangup {
+  transform-origin: 12px 12px;
+  transition: transform 600ms ease-in-out;
+}
+button:is(:hover, :focus-visible):not(:disabled) :is(.lume-motion-tune, .lume-motion-plus) {
+  transform: rotate(90deg);
+  animation: lume-motion-turn 780ms cubic-bezier(.4, 0, .2, 1) both;
+}
+@keyframes lume-motion-turn { 0% { transform: rotate(0); } 80% { transform: rotate(96deg); } 100% { transform: rotate(90deg); } }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-needle { animation: lume-motion-compass 1664ms cubic-bezier(.4, 0, .2, 1) both; }
+@keyframes lume-motion-compass { 0%, 100% { transform: rotate(0); } 45% { transform: rotate(-65deg); } }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-mic:not(.is-cut) .lume-motion-mic-capsule { animation: lume-motion-mic 1040ms ease-in-out; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-mic:not(.is-cut) .lume-motion-mic-support { animation: lume-motion-support 1040ms ease-in-out; }
+@keyframes lume-motion-mic { 0%, 100% { transform: translateY(0); fill: transparent; } 40% { transform: translateY(-.7px); fill: rgba(0, 209, 255, .18); } }
+@keyframes lume-motion-support { 0%, 100% { opacity: 1; } 38% { opacity: .45; } }
+.lume-motion-audio-echo { opacity: 0; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-audio:not(.is-cut) .lume-motion-audio-echo { animation: lume-motion-echo 1248ms ease-in-out; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-echo-left { animation: lume-motion-echo-left 1248ms ease-in-out; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-echo-right { animation: lume-motion-echo-right 1248ms ease-in-out; }
+@keyframes lume-motion-echo { 0%, 100% { opacity: 0; } 35% { opacity: .65; } }
+@keyframes lume-motion-echo-left { 0% { transform: translateX(0); } 35% { transform: translateX(-.6px); } 100% { transform: translateX(-1.8px); } }
+@keyframes lume-motion-echo-right { 0% { transform: translateX(0); } 35% { transform: translateX(.6px); } 100% { transform: translateX(1.8px); } }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-arrow { animation: lume-motion-download 1040ms ease-in-out; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-tray { transform-origin: center; animation: lume-motion-tray 1040ms ease-in-out; }
+@keyframes lume-motion-download { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-3px); } 60% { transform: translateY(4px); } 80% { transform: translateY(1px); } }
+@keyframes lume-motion-tray { 0%, 60%, 100% { transform: none; } 76% { transform: translateY(1px) scaleY(.92); } }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-hangup { transform: translateY(2.5px); animation: lume-motion-hangup 1400ms cubic-bezier(.4, 0, .2, 1) both; }
+@keyframes lume-motion-hangup {
+  0% { transform: translateY(0) rotate(0); }
+  28% { transform: translateY(-2px) rotate(-8deg); animation-timing-function: cubic-bezier(.35, 0, .2, 1); }
+  86% { transform: translateY(3px) rotate(0); animation-timing-function: ease-out; }
+  100% { transform: translateY(2.5px) rotate(0); }
+}
+.lume-motion-community { position: relative; isolation: isolate; }
+.lume-motion-community::after {
+  content: ''; position: absolute; inset: -40%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 36%, rgba(0, 209, 255, .06) 43%, rgba(125, 239, 255, .34) 49%, rgba(0, 209, 255, .08) 55%, transparent 62%);
+  transform: translateX(-100%); opacity: 0;
+}
+.lume-motion-community:is(:hover, :focus-visible)::after { animation: lume-motion-sheen 1976ms cubic-bezier(.4, 0, .2, 1); }
+@keyframes lume-motion-sheen { 0% { transform: translateX(-100%); opacity: 0; } 18% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
+.lume-friends-tab-track { position: relative; }
+.lume-friends-tab-marker { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 2px; background: rgb(0, 209, 255); pointer-events: none; transition: transform 520ms cubic-bezier(.4, 0, .2, 1), width 520ms cubic-bezier(.4, 0, .2, 1), opacity 250ms ease; }
+.lume-friends-panel { animation: lume-motion-panel 520ms cubic-bezier(.4, 0, .2, 1); }
+@keyframes lume-motion-panel { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  button :is(.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-mic-capsule, .lume-motion-mic-support, .lume-motion-audio-echo, .lume-motion-echo-left, .lume-motion-echo-right, .lume-motion-download-arrow, .lume-motion-download-tray, .lume-motion-hangup),
+  .lume-motion-community::after, .lume-friends-panel {
+    animation: none !important; transition: none !important; transform: none !important;
+  }
+  .lume-friends-tab-marker { transition: none !important; }
 }

@@ -9,6 +9,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useInstanceStore } from '../../stores/instanceStore';
 import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
 import { Tooltip } from '../ui/Tooltip';
+import { CompassIcon } from '../ui/CompassIcon';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { TransferOwnershipModal } from '../modals/TransferOwnershipModal';
 import type { SpaceLayoutItem, SpaceFolder } from '@backspace/shared';
@@ -50,7 +51,7 @@ interface SidebarItemProps {
   onClick: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   type?: 'space' | 'dm' | 'action';
-  actionType?: 'add' | 'join' | 'explore' | 'download';
+  actionType?: 'add' | 'explore' | 'download';
   hasUnread?: boolean;
   dimmed?: boolean;
   federationBadge?: boolean;
@@ -79,7 +80,7 @@ function SidebarItem({ id, name, icon, active, onClick, onContextMenu, type = 's
   const backgroundStyle = useMemo((): React.CSSProperties | undefined => {
     if (type === 'action') {
       return {
-        background: isHovered ? 'rgba(134, 239, 172, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+        background: isHovered ? 'rgba(0, 209, 255, 0.10)' : 'rgba(255, 255, 255, 0.04)',
       };
     }
 
@@ -87,7 +88,7 @@ function SidebarItem({ id, name, icon, active, onClick, onContextMenu, type = 's
   }, [type, isHovered]);
 
   const getButtonClasses = () => {
-    const base = `lume-rail-node ${type === 'action' ? 'lume-rail-action' : ''} ${active && type !== 'dm' ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 ${type === 'dm' ? 'overflow-visible' : 'overflow-hidden'}`;
+    const base = `${type === 'space' ? 'lume-motion-community' : ''} lume-rail-node ${type === 'action' ? 'lume-rail-action' : ''} ${active && type !== 'dm' ? 'lume-rail-node-active' : ''} w-11 h-11 flex items-center justify-center duration-200 ${type === 'dm' ? 'overflow-visible' : 'overflow-hidden'}`;
 
     if (type === 'dm') {
       return `${base} lume-home-button text-white`;
@@ -117,32 +118,15 @@ function SidebarItem({ id, name, icon, active, onClick, onContextMenu, type = 's
       ) : type === 'action' ? (
         actionType === 'add' ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M9 12h6M12 9v6" />
+            <g className="lume-motion-plus"><path d="M12 5v14M5 12h14" /></g>
           </svg>
         ) : actionType === 'explore' ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
+          <CompassIcon />
         ) : actionType === 'download' ? (
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 4v10" /><path d="m8 10 4 4 4-4" /><path d="M5 19h14" />
+            <g className="lume-motion-download-arrow"><path d="M12 4v10" /><path d="m8 10 4 4 4-4" /></g><path className="lume-motion-download-tray" d="M5 19h14" />
           </svg>
-        ) : (
-          <span className="relative flex h-5 w-5 items-center justify-center" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 21a8 8 0 0 0-16 0" />
-              <circle cx="10" cy="8" r="5" />
-              <path d="M22 20c0-4-2-6-4-7M16 3a5 5 0 0 1 0 10" />
-            </svg>
-            <span className="absolute -right-px -bottom-px flex h-[10px] w-[10px] items-center justify-center rounded-[2px] bg-surface-base">
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 17V7h10M7 7l10 10" />
-              </svg>
-            </span>
-          </span>
-        )
+        ) : null
       ) : icon ? (
         <img
           src={icon.startsWith('http') || icon.startsWith('/') ? icon : `/api/uploads/${icon}`}
@@ -1109,7 +1093,7 @@ export function SpaceSidebar() {
     <nav data-pip-obstacle="left" className="lume-rail w-[72px] bg-surface-base flex flex-col items-center py-3 overflow-y-auto flex-shrink-0 no-scrollbar select-none md:fixed md:inset-y-0 md:left-0 md:z-[100] md:glass-strip" style={{ paddingBottom: floatingPanelHeight + 24, ...(isElectron() ? { top: '33px' } : {}) }} onDragOver={(e) => { if (dragState) e.preventDefault(); }} onDrop={handleDrop}>
       <SidebarItem
         id="@me"
-        name="Mensagens diretas"
+        name="Início"
         active={showDms}
         onClick={handleDmClick}
         type="dm"
@@ -1242,20 +1226,11 @@ export function SpaceSidebar() {
 
       <SidebarItem
         id="add-space"
-        name="Criar comunidade"
+        name="Criar ou entrar em servidor"
         active={false}
         onClick={() => openModal('createSpace')}
         type="action"
         actionType="add"
-      />
-
-      <SidebarItem
-        id="join-space"
-        name="Entrar por convite"
-        active={false}
-        onClick={() => openModal('joinSpace')}
-        type="action"
-        actionType="join"
       />
 
       <SidebarItem

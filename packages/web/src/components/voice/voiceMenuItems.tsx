@@ -1,9 +1,18 @@
 import { t as uiText } from '../../i18n';
 import { VolumeControl } from '../ui/VolumeControl';
 import React from 'react';
+import type { User } from '@backspace/shared';
 import type { ContextMenuItem } from '../../stores/contextMenuStore';
 import { useVoiceStore } from '../../stores/voiceStore';
-import { useSpaceStore, getChannelOrigin } from '../../stores/spaceStore';
+import { useSpaceStore, getChannelOrigin, getMyUserIdForOrigin } from '../../stores/spaceStore';
+import { useAuthStore } from '../../stores/authStore';
+import { useUIStore } from '../../stores/uiStore';
+import { useChatStore } from '../../stores/chatStore';
+import { useComposerStore } from '../../stores/composerStore';
+import { getCanonicalUserView } from '../../utils/userViewLookup';
+import { isSelf } from '../../utils/identity';
+import { getActiveRoom, setCameraSubscription } from '../../hooks/useLiveKit';
+import { handleMuteAction, handleDeafenAction } from '../../utils/voiceActions';
 import { wsSend } from '../../hooks/useWebSocket';
 import { hasPermissionBit, PermissionBits } from '../../utils/permissions';
 
@@ -13,7 +22,6 @@ import { hasPermissionBit, PermissionBits } from '../../utils/permissions';
  */
 export function buildVoiceModMenuItems(targetUserId: string, channelId: string): ContextMenuItem[] {
   const { spacePermissions, channels, channelToSpaceMap } = useSpaceStore.getState();
-  const { spaceMutedUserIds, spaceDeafenedUserIds } = useVoiceStore.getState();
 
   // Derive spaceId from the voice channel, NOT from UI navigation state.
   // On mobile, the user can navigate away from the space while still in voice.
@@ -28,40 +36,29 @@ export function buildVoiceModMenuItems(targetUserId: string, channelId: string):
 
   const voiceOrigin = getChannelOrigin(channelId);
   const spaceId = derivedSpaceId;
-  const isSpaceMuted = spaceMutedUserIds.has(`${spaceId}:${targetUserId}`);
-  const isSpaceDeafened = spaceDeafenedUserIds.has(`${spaceId}:${targetUserId}`);
-  const otherVoiceChannels = channels.filter(c => c.type === 'voice' && c.id !== channelId);
+  const otherVoiceChannels = channels.filter(c => c.type === 'voice' && c.id !== channelId && channelToSpaceMap.get(c.id) === spaceId);
 
   const items: ContextMenuItem[] = [];
 
   if (canMuteMembers) {
     items.push({
       key: 'space-mute',
-      type: 'action',
-      label: isSpaceMuted ? uiText("Space Unmute") : uiText("Space Mute"),
-      icon: React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', className: 'flex-shrink-0' },
-        React.createElement('path', { d: 'M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z' }),
-        React.createElement('path', { d: 'M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z' }),
-        ...(isSpaceMuted
-          ? [React.createElement('line', { key: 'slash', x1: 3, y1: 3, x2: 21, y2: 21, stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round' })]
-          : []),
-      ),
-      onClick: () => wsSend({ type: 'voice_space_mute', userId: targetUserId, muted: !isSpaceMuted }, voiceOrigin),
+      type: 'checkbox',
+      label: "Silenciar voz no servidor",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => useVoiceStore.getState().spaceMutedUserIds.has(`${spaceId}:${targetUserId}`),
+      onChange: checked => wsSend({ type: 'voice_space_mute', userId: targetUserId, muted: checked }, voiceOrigin),
     });
   }
 
   if (canDeafenMembers) {
     items.push({
       key: 'space-deafen',
-      type: 'action',
-      label: isSpaceDeafened ? uiText("Space Undeafen") : uiText("Space Deafen"),
-      icon: React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', className: 'flex-shrink-0' },
-        React.createElement('path', { d: 'M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h2v-7H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-2v7h2c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z' }),
-        ...(isSpaceDeafened
-          ? [React.createElement('line', { key: 'slash', x1: 3, y1: 3, x2: 21, y2: 21, stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round' })]
-          : []),
-      ),
-      onClick: () => wsSend({ type: 'voice_space_deafen', userId: targetUserId, deafened: !isSpaceDeafened }, voiceOrigin),
+      type: 'checkbox',
+      label: "Desativar áudio no servidor",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => useVoiceStore.getState().spaceDeafenedUserIds.has(`${spaceId}:${targetUserId}`),
+      onChange: checked => wsSend({ type: 'voice_space_deafen', userId: targetUserId, deafened: checked }, voiceOrigin),
     });
   }
 
@@ -70,7 +67,7 @@ export function buildVoiceModMenuItems(targetUserId: string, channelId: string):
     items.push({
       key: 'disconnect',
       type: 'action',
-      label: uiText("Disconnect"),
+      label: "Desconectar da chamada",
       danger: true,
       icon: React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', className: 'flex-shrink-0' },
         React.createElement('path', { d: 'M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.36 8.68 7.42 7 12 7s8.64 1.68 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 00-2.67-1.85.996.996 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z' }),
@@ -84,7 +81,7 @@ export function buildVoiceModMenuItems(targetUserId: string, channelId: string):
     items.push({
       key: 'move-to',
       type: 'submenu',
-      label: uiText("Move to"),
+      label: "Mover para",
       icon: React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', className: 'flex-shrink-0' },
         React.createElement('path', { d: 'M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4h-6zM10 4H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.3L10 4z' }),
       ),
@@ -100,6 +97,124 @@ export function buildVoiceModMenuItems(targetUserId: string, channelId: string):
     });
   }
 
+  return items;
+}
+
+/** One menu for participant tiles and voice-channel rows, including self and DM calls. */
+export function buildVoiceParticipantMenuItems(
+  userId: string,
+  channelId: string | null,
+  position: { x: number; y: number },
+  knownUser?: User | null,
+  local?: boolean,
+): ContextMenuItem[] {
+  const spaces = useSpaceStore.getState();
+  const voice = useVoiceStore.getState();
+  const participant = voice.participants.find(p => p.userId === userId);
+  const candidate = knownUser
+    ?? spaces.members.find(m => m.userId === userId)?.user
+    ?? spaces.dmChannels.find(dm => dm.id === channelId)?.members.find(member => member.id === userId)
+    ?? participant?.cachedUser;
+  const user = candidate ? getCanonicalUserView(candidate) : null;
+  const self = local ?? (
+    userId === (channelId ? getMyUserIdForOrigin(getChannelOrigin(channelId)) : useAuthStore.getState().user?.id)
+    || (user ? isSelf(user, useAuthStore.getState().user) : false)
+  );
+  const items: ContextMenuItem[] = [{
+    key: 'participant-heading', type: 'custom', render: () => (
+      <div className="px-3 py-2 border-b border-accent-mint/15 mb-1">
+        <div className="text-[13px] font-semibold text-accent-mint truncate max-w-[230px]">
+          {user?.displayName ?? user?.username ?? participant?.username ?? userId}
+        </div>
+        <div className="text-[11px] text-txt-tertiary">{self ? "Você na chamada" : "Participante da chamada"}</div>
+      </div>
+    ),
+  }, {
+    key: 'profile', type: 'action', label: "Ver perfil",
+    onClick: () => {
+      if (user) useUIStore.getState().openUserProfile(user, { top: position.y, left: position.x + 12 });
+      else useUIStore.getState().openModal('userProfile', { userId });
+    },
+  }];
+
+  const chatChannelId = useChatStore.getState().currentChannelId;
+  const spaceId = channelId ? spaces.channelToSpaceMap.get(channelId) : undefined;
+  const canMention = !self && chatChannelId && (
+    chatChannelId === channelId || (spaceId && spaces.channelToSpaceMap.get(chatChannelId) === spaceId)
+  );
+  if (canMention) items.push({
+    key: 'mention', type: 'action', label: "Mencionar",
+    onClick: () => {
+      const composer = useComposerStore.getState();
+      const draft = composer.get(chatChannelId).draftText;
+      composer.setDraft(chatChannelId, `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}<@${userId}> `);
+      if (spaces.voiceChannelIds.has(chatChannelId)) useUIStore.setState({ voiceChatOpen: true });
+    },
+  });
+
+  items.push({ key: 'audio-sep', type: 'separator' });
+  if (self) {
+    const enforced = () => {
+      const current = useVoiceStore.getState();
+      const key = `${spaceId}:${userId}`;
+      return {
+        muted: current.spaceMutedUserIds.has(key) || current.permissionMutedUserIds.has(key),
+        deafened: current.spaceDeafenedUserIds.has(key),
+      };
+    };
+    items.push({
+      key: 'self-mute', type: 'checkbox', label: "Silenciar meu microfone",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => useVoiceStore.getState().isMuted || useVoiceStore.getState().isDeafened || enforced().muted || enforced().deafened,
+      onChange: checked => {
+        const restrictions = enforced();
+        if (restrictions.muted || restrictions.deafened) return;
+        if (checked !== (useVoiceStore.getState().isMuted || useVoiceStore.getState().isDeafened)) handleMuteAction(false, false);
+      },
+    }, {
+      key: 'self-deafen', type: 'checkbox', label: "Desativar meu áudio",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => useVoiceStore.getState().isDeafened || enforced().deafened,
+      onChange: checked => { if (checked !== useVoiceStore.getState().isDeafened) handleDeafenAction(enforced().deafened); },
+    }, {
+      key: 'edit-profile', type: 'action', label: "Editar meu perfil",
+      onClick: () => useUIStore.getState().openModal('userSettings', { tab: 'account' }),
+    });
+  } else {
+    items.push({
+      key: 'mute-user', type: 'checkbox', label: "Silenciar para mim",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => useVoiceStore.getState().participantMutes.get(userId) ?? false,
+      onChange: checked => useVoiceStore.getState().setParticipantMute(userId, checked),
+    }, {
+      key: 'volume', type: 'custom', render: () => <VolumeSliderItem userId={userId} />,
+    });
+    if (participant?.isCameraOn) items.push({
+      key: 'camera-toggle', type: 'checkbox', label: "Mostrar câmera",
+      subscribe: useVoiceStore.subscribe,
+      getChecked: () => !useVoiceStore.getState().unwatchedCameras.has(userId),
+      onChange: checked => {
+        if (checked) useVoiceStore.getState().rewatchCamera(userId);
+        else useVoiceStore.getState().unwatchCamera(userId);
+        setCameraSubscription(getActiveRoom(), participant.identity, checked);
+      },
+    });
+    if (channelId) {
+      const modItems = buildVoiceModMenuItems(userId, channelId);
+      if (modItems.length) items.push({ key: 'moderation-sep', type: 'separator' }, ...modItems);
+    }
+  }
+  items.push({ key: 'id-sep', type: 'separator' }, {
+    key: 'copy-id', type: 'action', label: "Copiar ID do usuário",
+    onClick: async () => {
+      try {
+        await navigator.clipboard.writeText(userId);
+        useUIStore.getState().addToast("ID copiado", 'success');
+      } catch {
+        useUIStore.getState().addToast("Não foi possível copiar o ID", 'warning');
+      }
+    },
+  });
   return items;
 }
 
