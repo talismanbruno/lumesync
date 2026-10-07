@@ -1,3 +1,4 @@
+import { sanitizeImageSource } from '../../utils/safeUrls';
 import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -70,6 +71,7 @@ export function UserProfileModal() {
   const cancelFriendRequest = useSocialStore((s) => s.cancelFriendRequest);
   const currentUser = useAuthStore((s) => s.user);
 
+  const [avatarExpanded, setAvatarExpanded] = useState(false);
   const [profileUser, setUser] = useState<User | null>(null);
   // Keep open profiles in sync with admin recognition updates.
   const user = useSpaceStore((state) => profileUser
@@ -135,6 +137,7 @@ export function UserProfileModal() {
   // Reset on close
   useEffect(() => {
     if (!isOpen) {
+      setAvatarExpanded(false);
       setUser(null);
       setUserOrigin('');
       setMutualFriends([]);
@@ -146,11 +149,11 @@ export function UserProfileModal() {
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') { if (avatarExpanded) setAvatarExpanded(false); else closeModal(); }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, closeModal]);
+  }, [isOpen, closeModal, avatarExpanded]);
 
   if (!isOpen || !user) return null;
 
@@ -159,6 +162,9 @@ export function UserProfileModal() {
 
   // Banner — use correct API client for remote users
   const profileApi = getApiForOrigin(userOrigin);
+  const avatarSrc = sanitizeImageSource(user.avatar
+    ? (user.avatar.startsWith('http') || user.avatar.startsWith('/') ? user.avatar : profileApi.uploads.url(user.avatar))
+    : null);
   const bannerSrc = user.banner
     ? (user.banner.startsWith('http') ? user.banner : profileApi.uploads.url(user.banner))
     : null;
@@ -285,7 +291,10 @@ export function UserProfileModal() {
 
         {/* Header (avatar + name) */}
         <div className="px-5 flex-shrink-0 relative">
+          <button type="button" aria-label="Ampliar foto de perfil" disabled={!avatarSrc}
+            onClick={() => setAvatarExpanded(true)} className="block rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 disabled:cursor-default">
           <Avatar
+            onClick={() => {}}
             src={user.avatar}
             name={displayName}
             size={96}
@@ -295,6 +304,7 @@ export function UserProfileModal() {
             ring={{ width: 4, color: 'rgba(20,20,26,0.82)' }}
             className="mt-[-52px] mb-2"
           />
+          </button>
 
           <div className="mb-3">
             <div className="flex items-center gap-1.5">
@@ -545,6 +555,16 @@ export function UserProfileModal() {
         </div>
       </div>
 
+      {avatarExpanded && avatarSrc && (
+        <div role="dialog" aria-modal="true" aria-label="Foto de perfil ampliada" className="fixed inset-0 z-[230] flex items-center justify-center bg-black/90 p-6 animate-fade-in"
+          onClick={(event) => { event.stopPropagation(); setAvatarExpanded(false); }}>
+          <button type="button" autoFocus aria-label="Fechar foto ampliada" onClick={() => setAvatarExpanded(false)}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white focus-visible:outline focus-visible:outline-cyan-300">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+          <img src={avatarSrc} alt={displayName} className="max-h-[80dvh] max-w-[min(80vw,640px)] rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
