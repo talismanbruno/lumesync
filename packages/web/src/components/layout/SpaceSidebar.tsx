@@ -1,3 +1,4 @@
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
@@ -117,9 +118,7 @@ function SidebarItem({ id, name, icon, active, onClick, onContextMenu, type = 's
         </>
       ) : type === 'action' ? (
         actionType === 'add' ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <g className="lume-motion-plus"><path d="M12 5v14M5 12h14" /></g>
-          </svg>
+          <OrbitalIcon name="plus" size={18} />
         ) : actionType === 'explore' ? (
           <CompassIcon />
         ) : actionType === 'download' ? (

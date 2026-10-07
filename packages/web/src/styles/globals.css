@@ -1511,13 +1511,7 @@
 /* Functional motion: one pass on hover/focus, with no delay to actions. */
 .lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-hangup {
   transform-origin: 12px 12px;
-  transition: transform 600ms ease-in-out;
 }
-button:is(:hover, :focus-visible):not(:disabled) :is(.lume-motion-tune, .lume-motion-plus) {
-  transform: rotate(90deg);
-  animation: lume-motion-turn 780ms cubic-bezier(.4, 0, .2, 1) both;
-}
-@keyframes lume-motion-turn { 0% { transform: rotate(0); } 80% { transform: rotate(96deg); } 100% { transform: rotate(90deg); } }
 button:is(:hover, :focus-visible):not(:disabled) .lume-motion-needle { animation: lume-motion-compass 1664ms cubic-bezier(.4, 0, .2, 1) both; }
 @keyframes lume-motion-compass { 0%, 100% { transform: rotate(0); } 45% { transform: rotate(-65deg); } }
 button:is(:hover, :focus-visible):not(:disabled) .lume-motion-mic:not(.is-cut) .lume-motion-mic-capsule { animation: lume-motion-mic 1040ms ease-in-out; }
@@ -1535,13 +1529,6 @@ button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-arrow { a
 button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-tray { transform-origin: center; animation: lume-motion-tray 1040ms ease-in-out; }
 @keyframes lume-motion-download { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-3px); } 60% { transform: translateY(4px); } 80% { transform: translateY(1px); } }
 @keyframes lume-motion-tray { 0%, 60%, 100% { transform: none; } 76% { transform: translateY(1px) scaleY(.92); } }
-button:is(:hover, :focus-visible):not(:disabled) .lume-motion-hangup { transform: translateY(2.5px); animation: lume-motion-hangup 1400ms cubic-bezier(.4, 0, .2, 1) both; }
-@keyframes lume-motion-hangup {
-  0% { transform: translateY(0) rotate(0); }
-  28% { transform: translateY(-2px) rotate(-8deg); animation-timing-function: cubic-bezier(.35, 0, .2, 1); }
-  86% { transform: translateY(3px) rotate(0); animation-timing-function: ease-out; }
-  100% { transform: translateY(2.5px) rotate(0); }
-}
 .lume-motion-community { position: relative; isolation: isolate; }
 .lume-motion-community::after {
   content: ''; position: absolute; inset: -40%; pointer-events: none;

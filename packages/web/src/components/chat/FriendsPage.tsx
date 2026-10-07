@@ -1,3 +1,4 @@
+import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -382,7 +383,7 @@ export function FriendsPage({ mobile }: FriendsPageProps) {
               aria-pressed={activeTab === 'add'}
               className={`lume-friends-add flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[13px] font-semibold transition-colors ${activeTab === 'add' ? 'is-active' : ''}`}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><g className="lume-motion-plus"><path d="M12 5v14M5 12h14" /></g></svg>
+              <OrbitalIcon name="plus" size={16} />
               {uiText("Adicionar")}
             </button>
             <MemberListToggleButton />

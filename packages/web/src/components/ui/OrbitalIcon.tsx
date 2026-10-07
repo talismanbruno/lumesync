@@ -1,10 +1,14 @@
+import { useIconMotion } from '../../hooks/useIconMotion';
+
 type OrbitalIconName =
-  | 'mic' | 'audio' | 'tune' | 'call' | 'video' | 'personAdd' | 'search'
+  | 'plus' | 'mic' | 'audio' | 'tune' | 'call' | 'video' | 'personAdd' | 'search'
   | 'camera' | 'screen' | 'quality' | 'image' | 'clear' | 'friends' | 'hangup' | 'transfer' | 'download' | 'chat';
 
 export function OrbitalIcon({ name, size = 20, cut = false, className = '' }: { name: OrbitalIconName; size?: number; cut?: boolean; className?: string }) {
+  const motionRef = useIconMotion(name);
   const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   const glyph = {
+    plus: <path d="M12 5v14M5 12h14" />,
     mic: <><path className="lume-motion-mic-capsule" d="M9 7.5v4.2a3 3 0 0 0 6 0V7.5a3 3 0 0 0-6 0Z"/><path className="lume-motion-mic-support" d="M6.5 12a5.5 5.5 0 0 0 11 0M12 17.5V21M9.5 21h5"/></>,
     audio: <>{!cut && <g className="lume-motion-audio-echo"><path className="lume-motion-echo-left" d="M2 11c-1.3 2-1.3 4 0 6"/><path className="lume-motion-echo-right" d="M22 11c1.3 2 1.3 4 0 6"/></g>}<path d="M5 13a7 7 0 0 1 14 0"/><path d="M5 13v5a2 2 0 0 0 2 2h1v-7H5ZM19 13v5a2 2 0 0 1-2 2h-1v-7h3Z"/><path d="M8 7.3c2.5-1.7 5.5-1.7 8 0" opacity=".45"/></>,
     tune: <><path d="m9.5 3-.6 2.4-1.6.9-2.4-.7-2.5 4.3 1.8 1.7v1.8l-1.8 1.7 2.5 4.3 2.4-.7 1.6.9.6 2.4h5l.6-2.4 1.6-.9 2.4.7 2.5-4.3-1.8-1.7v-1.8l1.8-1.7-2.5-4.3-2.4.7-1.6-.9-.6-2.4h-5Z"/><circle cx="12" cy="12" r="3"/></>,
@@ -24,5 +28,5 @@ export function OrbitalIcon({ name, size = 20, cut = false, className = '' }: { 
     chat: <><path d="M6 4h12a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H9l-6 3V7a3 3 0 0 1 3-3Z"/><path d="M8 9h8M8 13h5"/></>,
   }[name];
 
-  return <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true" {...common}><g className={`lume-motion-${name}${cut ? ' is-cut' : ''}`}>{glyph}</g>{cut && <path d="M3 3 21 21" strokeWidth="2.2" />}</svg>;
+  return <svg ref={motionRef} width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true" {...common}><g className={`lume-motion-${name}${cut ? ' is-cut' : ''}`}>{glyph}</g>{cut && <path d="M3 3 21 21" strokeWidth="2.2" />}</svg>;
 }
