@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -895,7 +896,7 @@ function WelcomeHeader({ channelId }: { channelId: string }) {
         <div className="mb-2">
           <Avatar src={otherUser?.avatar} name={displayName} size={80} user={otherUser ?? undefined} />
         </div>
-        <h3 className="text-[32px] leading-10 font-bold text-txt-primary">{displayName}</h3>
+        <h3 className="text-[32px] leading-10 font-bold text-txt-primary"><ProfileName user={otherUser}>{displayName}</ProfileName></h3>
         <p className="text-txt-secondary text-[14px] mt-1">
           {uiText("This is the beginning of your direct message history with ")}<strong>@{mentionName}</strong>.
         </p>

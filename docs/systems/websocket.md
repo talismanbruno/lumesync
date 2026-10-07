@@ -12,7 +12,7 @@ Source: `packages/server/src/ws/handler.ts`, `packages/server/src/ws/events.ts`
 2. Client sends `{ type: 'auth', token: '<jwt>' }` within 10 seconds
 3. Server validates token (rejects deleted users, tokens issued before `passwordChangedAt`)
 4. Server responds with `ready` event containing full client state
-5. Server updates user status to `online`, broadcasts `presence_update` to friends + DM co-members + space co-members (via `collectProfileBroadcastTargetIds`); for native users, also queues a S2S `presence_update` relay to all active peers
+5. Server restores visible presence from the saved `preferred_status` (including Invisible), broadcasts `presence_update` to friends + DM co-members + space co-members (via `collectProfileBroadcastTargetIds`); for native users, also queues a S2S `presence_update` relay with the restored status. The ready self-view user includes `preferredStatus`.
 6. Heartbeat: server pings every 30s (RFC 6455 ping frames), dead connections detected after ~65s
 
 ---
@@ -50,7 +50,7 @@ Source: `packages/server/src/ws/handler.ts`, `packages/server/src/ws/events.ts`
 ### Presence & Activity
 | type | fields | notes |
 |------|--------|-------|
-| `presence_update` | status: online/idle/dnd | persisted to DB |
+| `presence_update` | status: online/working/idle/dnd/offline | persists visible presence and manual preference; working is admin-only; offline is Invisible |
 | `activity_update` | activities: Activity[] | rate-limited 3s, respects showActivity |
 
 ### Voice (Space Channels)

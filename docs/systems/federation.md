@@ -1795,3 +1795,7 @@ If the `federation_mutation_log` table exists but is empty, populates it with `c
 See `docs/federation-production-roadmap.md` for open items (FED-001 through FED-013).
 
 - **Accept/reject/end relay failures now surfaced.** All three federated call-state transitions emit `dm_call_undeliverable { phase, terminal, failures }` to the originator on relay failure — accept rolls back optimistic state (terminal: true), reject/end keep the optimistic clear and emit an informational toast (terminal: false). See `docs/systems/voice.md` "Call relay failure surface" for the full contract. The host-side ring timeout also fans `dm_call_end` out to peers so stranded Path-A/B ringees exit the ring. One remaining edge documented in voice.md: non-host end-relay failure leaves the host's local `activeDmCall` marker until manual cleanup.
+
+### Profile name color
+
+`nameColor` is an optional additive field on User views, profile snapshots, user lookup profiles, and home-authoritative `profile_update`. Hex values and the `gold` token are normalized before persistence. Gold selection is authorized by the home instance; replicas do not gain local administrator permissions. Legacy payloads without the field retain the existing selection. Local edits of attached replicas remain forbidden; detached accounts can edit locally.

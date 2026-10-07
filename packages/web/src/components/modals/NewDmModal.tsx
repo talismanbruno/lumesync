@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +62,7 @@ function NewDmUserRow({
       <Avatar src={canonical.avatar} name={displayName} size={36} status={canonical.status as any} userId={canonical.homeUserId ?? canonical.id} avatarColor={canonical.avatarColor} />
       <div className="flex-1 min-w-0">
         <div className="text-[14px] font-medium text-txt-primary truncate">
-          {displayName}
+          <ProfileName user={canonical}>{displayName}</ProfileName>
         </div>
         <div className="text-[12px] text-txt-tertiary truncate">@{canonical.username}</div>
       </div>

@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -65,7 +66,7 @@ function DmSearchUserRow({ user, isSelected, selectedRef, onClick }: {
       />
       <div className="flex-1 min-w-0 flex items-center gap-1.5">
         <span className="text-[14px] text-txt-primary truncate">
-          {displayName}
+          <ProfileName user={canonical}>{displayName}</ProfileName>
         </span>
         {canonical.displayName && (
           <span className="text-[12px] text-txt-tertiary truncate">

@@ -1,3 +1,4 @@
+import { ProfileName } from '../../ui/ProfileName';
 import { t as uiText } from '../../../i18n';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Avatar } from '../../ui/Avatar';
@@ -92,7 +93,7 @@ export function BansPanel({ spaceId }: BansPanelProps) {
                         userId={ban.userId}
                       />
                       <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{displayName}</div>
+                        <div className="text-sm font-medium truncate"><ProfileName user={ban.user}>{displayName}</ProfileName></div>
                         <div className="text-[11px] text-txt-tertiary truncate">
                           {uiText("Banned by ")}{moderatorName} {uiText(" on ")}{bannedDate}
                           {ban.reason && ` — ${ban.reason}`}

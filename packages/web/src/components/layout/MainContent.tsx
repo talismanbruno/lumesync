@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { startDmCall } from '../../utils/dmActions';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef, useState } from 'react';
@@ -182,10 +183,10 @@ export function MainContent() {
                 onClick={() => openModal('groupDmSettings', { dmChannelId: currentChannelId, initialTab: 'overview' })}
                 className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate cursor-pointer"
               >
-                {dmName}
+                <ProfileName user={isGroupDm ? undefined : firstOther}>{dmName}</ProfileName>
               </span>
             ) : (
-              <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate">{dmName}</span>
+              <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary truncate"><ProfileName user={isGroupDm ? undefined : firstOther}>{dmName}</ProfileName></span>
             )}
             {!isGroupDm && firstOther && isFederationGlobeApplicable(firstOther) && (
               <Tooltip content={firstOther.username} position="bottom">

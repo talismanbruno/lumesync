@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect } from 'react';
 import { useUIStore } from '../../stores/uiStore';
@@ -89,7 +90,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-semibold text-txt-primary truncate">
-            {isDm ? channelName : `# ${channelName}`}
+            <ProfileName user={isDm && !isGroup ? canonicalMainOther : undefined}>{isDm ? channelName : `# ${channelName}`}</ProfileName>
           </h1>
         </div>
         <TransferIndicator />

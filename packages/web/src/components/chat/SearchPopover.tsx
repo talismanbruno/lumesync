@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -72,7 +73,7 @@ function SearchResultRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1.5">
           <span className="text-[13px] font-semibold text-txt-primary truncate">
-            {displayName}
+            <ProfileName user={canonical}>{displayName}</ProfileName>
           </span>
           <span className="text-[10px] text-txt-tertiary flex-shrink-0">
             {formatTime(msg.createdAt)}

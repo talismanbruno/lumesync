@@ -99,6 +99,8 @@ Dev-mode caveat: if a developer runs Electron pointed at the Vite dev server (`h
 
 ---
 
+The default session permission policy grants `clipboard-sanitized-write` only to the configured first-party app origin. Clipboard reads remain denied. For previously installed builds whose policy denies the asynchronous clipboard API, invite copying uses a synchronous selected-text copy during the user's click before trying the modern API. The shared web helper returns success only when a copy operation succeeds.
+
 ## Instance Picker
 
 When no instance URL is configured, the app loads `resources/instance-picker.html` — a self-contained HTML page where the user enters their Backspace instance URL. The renderer communicates the chosen URL back via the `set-instance-url` IPC handler.

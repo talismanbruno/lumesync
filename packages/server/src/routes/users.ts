@@ -195,7 +195,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.patch<{ Body: UpdateUserRequest }>('/api/users/@me', { preHandler: authenticate }, async (request, reply) => {
-    const { displayName, avatar, banner, accentColor, avatarColor, bio, customStatus, status, replicatedInstances, homeUserId, profileUpdatedAt, discoverable, showActivity } = request.body;
+    const { displayName, avatar, banner, accentColor, nameColor, avatarColor, bio, customStatus, status, replicatedInstances, homeUserId, profileUpdatedAt, discoverable, showActivity } = request.body;
     const db = getDb();
 
     const updateData: Record<string, string | null | undefined> = {};
@@ -203,7 +203,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // Fetch the current user row upfront — used for:
     // 1. Write-protection guard (replicated users can't update durable fields)
     // 2. Change detection (only relay if values actually differ)
-    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'avatarColor', 'bio'] as const;
+    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'avatarColor', 'bio'] as const;
     const preUpdateUser = db.select().from(schema.users).where(eq(schema.users.id, request.userId)).get();
     if (!preUpdateUser) {
       return reply.code(404).send({ error: 'User not found', statusCode: 404 });
@@ -268,6 +268,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
+    if (nameColor !== undefined) {
+      if (nameColor !== '' && (typeof nameColor !== 'string' || (nameColor !== 'gold' && !/^#[0-9a-f]{6}$/i.test(nameColor)))) {
+        return reply.code(400).send({ error: 'Name color must be a six-digit hex color or gold', statusCode: 400 });
+      }
+      if (nameColor === 'gold' && preUpdateUser.isAdmin !== 1) {
+        return reply.code(403).send({ error: 'Gold name style is reserved for instance administrators', statusCode: 403 });
+      }
+      updateData.nameColor = nameColor ? nameColor.toLowerCase() : null;
+    }
+
     if (accentColor !== undefined) {
       if (accentColor && typeof accentColor === 'string' && accentColor.trim().length > 0) {
         const hex = accentColor.trim();
@@ -324,6 +334,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(403).send({ error: 'Working status is reserved for instance administrators', statusCode: 403 });
       }
       updateData.status = status;
+      updateData.preferredStatus = status;
     }
 
     if (replicatedInstances !== undefined) {
@@ -390,6 +401,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
               ? `${origin}/api/uploads/${preUpdateUser.banner}`
               : preUpdateUser.banner,
             accentColor: preUpdateUser.accentColor,
+            nameColor: preUpdateUser.nameColor,
             avatarColor: preUpdateUser.avatarColor,
             bio: preUpdateUser.bio,
           };
@@ -442,7 +454,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Detect profile changes and stamp timestamp
-    const hasProfileChange = ['displayName', 'avatar', 'banner', 'accentColor', 'avatarColor', 'bio', 'customStatus'].some(f => f in updateData);
+    const hasProfileChange = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'avatarColor', 'bio', 'customStatus'].some(f => f in updateData);
     const hasDurableChange = DURABLE_PROFILE_FIELDS.some(f => f in updateData);
     if (hasDurableChange) {
       (updateData as Record<string, unknown>).profileUpdatedAt = Date.now();
@@ -568,6 +580,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
             ? `${origin}/api/uploads/${updatedUser!.banner}`
             : updatedUser!.banner,
           accentColor: updatedUser!.accentColor,
+          nameColor: updatedUser!.nameColor,
           avatarColor: updatedUser!.avatarColor,
           bio: updatedUser!.bio,
         };

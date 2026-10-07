@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -297,7 +298,7 @@ export function UserProfileModal() {
 
           <div className="mb-3">
             <div className="flex items-center gap-1.5">
-              <Username username={displayName} className="text-[20px] font-bold leading-tight" />
+              <Username user={user} username={displayName} className="text-[20px] font-bold leading-tight" />
               {user.isAdmin && <VerifiedBadge size={17} />}
               {isPioneer(user) && <PioneerBadge size={18} />}
               {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={18} />}
@@ -411,7 +412,7 @@ export function UserProfileModal() {
                         />
                         <div className="min-w-0">
                           <div className="text-[13px] font-medium text-txt-primary truncate">
-                            {fname}
+                            <ProfileName user={friend}>{fname}</ProfileName>
                           </div>
                           <div className="text-[11px] text-txt-tertiary capitalize">
                             {friend.status}

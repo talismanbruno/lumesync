@@ -179,3 +179,32 @@ describe('AccountPanel re-attach fallback action', () => {
     expect(attachProof).toHaveBeenCalled();
   });
 });
+
+
+describe('profile name color selection', () => {
+  it('saves a selected color and allows returning to white', async () => {
+    currentUser = makeUser();
+    noop.mockClear();
+    render(<AccountPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ciano' }));
+    fireEvent.click(screen.getByRole('button', { name: /^save$|^salvar$/i }));
+    await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '#22d3ee' }));
+    cleanup();
+    currentUser = makeUser({ nameColor: '#22d3ee' });
+    noop.mockClear();
+    render(<AccountPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Branco' }));
+    fireEvent.click(screen.getByRole('button', { name: /^save$|^salvar$/i }));
+    await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '' }));
+  });
+  it('shows the gold selection only for an admin', () => {
+    currentUser = makeUser();
+    render(<AccountPanel />);
+    expect(screen.queryByRole('button', { name: 'Dourado luminoso' })).not.toBeInTheDocument();
+    cleanup();
+    currentUser = makeUser({ isAdmin: true });
+    render(<AccountPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Dourado luminoso' }));
+    expect(screen.getByRole('button', { name: 'Dourado luminoso' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});

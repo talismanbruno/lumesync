@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
@@ -32,7 +33,7 @@ function TransferMemberRow({
       />
       <div className="flex flex-col items-start min-w-0">
         <span className="text-sm text-txt-primary truncate max-w-full">
-          {displayName}
+          <ProfileName user={canonical}>{displayName}</ProfileName>
         </span>
         {canonical.displayName && (
           <span className="text-[11px] text-txt-tertiary truncate max-w-full">

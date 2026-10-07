@@ -148,6 +148,20 @@
       "when": 1791327600000,
       "tag": "0020_user_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1791378000000,
+      "tag": "0021_preferred_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1791378001000,
+      "tag": "0022_name_color",
+      "breakpoints": true
     }
   ]
 }

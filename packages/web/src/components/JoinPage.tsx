@@ -1,3 +1,4 @@
+import { ProfileName } from './ui/ProfileName';
 import { t as uiText } from '../i18n';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -298,7 +299,7 @@ export function JoinPage() {
                     avatarColor={user.avatarColor}
                   />
                   <div className="min-w-0">
-                    <p className="text-txt-primary font-medium text-sm truncate">{user.displayName || user.username}</p>
+                    <p className="text-txt-primary font-medium text-sm truncate"><ProfileName user={user}>{user.displayName || user.username}</ProfileName></p>
                     <p className="text-txt-tertiary text-xs truncate">@{user.username}</p>
                   </div>
                 </div>
@@ -410,7 +411,7 @@ export function JoinPage() {
                 avatarColor={user?.avatarColor}
               />
               <div className="min-w-0">
-                <p className="text-txt-primary font-medium text-sm truncate">{user?.displayName || user?.username}</p>
+                <p className="text-txt-primary font-medium text-sm truncate"><ProfileName user={user}>{user?.displayName || user?.username}</ProfileName></p>
                 <p className="text-txt-tertiary text-xs truncate">@{user?.username}</p>
               </div>
             </div>

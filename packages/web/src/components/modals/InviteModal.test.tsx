@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -121,6 +121,7 @@ function setUpStore({
 }
 
 beforeEach(() => {
+  Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn().mockReturnValue(false) });
   mockSpaceInvite.mockReset();
 
   useUIStore.setState({ activeModal: null, modalData: {} });
@@ -140,7 +141,26 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => { delete window.backspace; });
+
 describe('InviteModal', () => {
+  it('copies from an installed desktop build whose async clipboard API is denied', async () => {
+    setUpStore();
+    window.backspace = {} as BackspaceElectronAPI;
+    render(<InviteModal />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled());
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('Clipboard denied'));
+    const execCopy = vi.fn().mockImplementation(() => {
+      expect((document.activeElement as HTMLTextAreaElement).value).toBe(`${window.location.origin}/join/test-code`);
+      return true;
+    });
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: execCopy });
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(await screen.findByRole('button', { name: 'Copied!' })).toBeInTheDocument();
+    expect(execCopy).toHaveBeenCalledWith('copy');
+    expect(writeText).not.toHaveBeenCalled();
+  });
   it('generates for the community selected in the menu, even while a different community is open', async () => {
     const { generateInvite } = setUpStore();
     useSpaceStore.setState({ spaces: [makeSpace(), makeSpace({ id: 'space-2', _instanceOrigin: 'https://remote.example' })] });

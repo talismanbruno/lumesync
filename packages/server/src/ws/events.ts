@@ -495,7 +495,7 @@ function validateActivities(raw: unknown): Activity[] | null {
 function handlePresenceUpdate(event: Record<string, unknown>, userId: string): void {
   const status = event.status as string;
 
-  if (!status || !['online', 'working', 'idle', 'dnd'].includes(status)) {
+  if (!status || !['online', 'working', 'idle', 'dnd', 'offline'].includes(status)) {
     connectionManager.sendToUser(userId, { type: 'error', message: 'Invalid presence status' });
     return;
   }
@@ -508,7 +508,7 @@ function handlePresenceUpdate(event: Record<string, unknown>, userId: string): v
       return;
     }
   }
-  db.update(schema.users).set({ status }).where(eq(schema.users.id, userId)).run();
+  db.update(schema.users).set({ status, preferredStatus: status }).where(eq(schema.users.id, userId)).run();
 
   connectionManager.setUserStatus(userId, status);
   const activities = connectionManager.getUserActivities(userId);
@@ -528,7 +528,7 @@ function handlePresenceUpdate(event: Record<string, unknown>, userId: string): v
 
   // S2S: project to all active peers
   void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
-    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(manual) failed', e); }
+    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd' | 'offline', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(manual) failed', e); }
   });
 }
 

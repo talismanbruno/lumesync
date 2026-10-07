@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import { VolumeControl } from '../ui/VolumeControl';
 import React from 'react';
@@ -124,7 +125,7 @@ export function buildVoiceParticipantMenuItems(
     key: 'participant-heading', type: 'custom', render: () => (
       <div className="px-3 py-2 border-b border-accent-mint/15 mb-1">
         <div className="text-[13px] font-semibold text-accent-mint truncate max-w-[230px]">
-          {user?.displayName ?? user?.username ?? participant?.username ?? userId}
+          <ProfileName user={user}>{user?.displayName ?? user?.username ?? participant?.username ?? userId}</ProfileName>
         </div>
         <div className="text-[11px] text-txt-tertiary">{self ? "Você na chamada" : "Participante da chamada"}</div>
       </div>

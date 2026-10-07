@@ -1037,7 +1037,13 @@
 }
 
 .lume-home-button:is(:hover, :focus-visible) .lume-home-reflection::after {
-  animation: callRefraction 3s ease-in-out infinite;
+  animation: lumeHomeRefraction 3s linear infinite;
+}
+
+/* Begin with the light already touching the icon, without an offscreen lead-in. */
+@keyframes lumeHomeRefraction {
+  from { transform: translateX(-40%); }
+  to { transform: translateX(100%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

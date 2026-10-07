@@ -18,7 +18,7 @@ vi.mock('../../stores/uiStore', () => ({
 describe('avatar presence tooltip', () => {
   it.each<[UserStatus, string, string | undefined]>([
     ['online', 'Disponível', undefined],
-    ['working', 'Trabalhando', undefined],
+    ['working', 'Trabalhando no Lume', undefined],
     ['idle', 'Ausente', undefined],
     ['dnd', 'Não perturbe', undefined],
     ['offline', 'Offline', undefined],

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { normalizeNameColor } from '../../utils/nameColor.js';
 import path from 'node:path';
 import { config } from '../../config.js';
 import { getDb, schema } from '../../db/index.js';
@@ -61,6 +62,7 @@ export async function hydrateReplicatedUserProfile(
   // (which carries a monotonic version). In particular, locally-downloaded
   // bare filenames produced by that path must not be clobbered back to URLs.
   if (profile.avatar && !user.avatar) updates.avatar = await resolveAsset(profile.avatar);
+  if (profile.nameColor && !user.nameColor) updates.nameColor = normalizeNameColor(profile.nameColor);
   if (profile.avatarColor) updates.avatarColor = profile.avatarColor;
   if (profile.banner && !user.banner) updates.banner = await resolveAsset(profile.banner);
   if (profile.bio && !user.bio) updates.bio = profile.bio;
@@ -257,6 +259,7 @@ export async function processProfileUpdateEvent(
       avatar: resolvedAvatar,
       banner: resolvedBanner,
       accentColor: payload.accentColor,
+      ...(payload.nameColor !== undefined ? { nameColor: normalizeNameColor(payload.nameColor) } : {}),
       avatarColor: payload.avatarColor,
       bio: payload.bio,
       profileUpdatedAt: payload.profileUpdatedAt,

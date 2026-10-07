@@ -1,3 +1,4 @@
+import { ProfileName } from './ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -510,7 +511,7 @@ export function PermissionsEditor({
                       onClick={() => handleAddMember(member.userId)}
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm text-txt-secondary hover:text-txt-primary hover:bg-interactive-hover rounded transition-colors"
                     >
-                      <span className="truncate">{member.user.displayName ?? member.user.username}</span>
+                      <span className="truncate"><ProfileName user={member.user}>{member.user.displayName ?? member.user.username}</ProfileName></span>
                       {member.user.displayName && (
                         <span className="text-txt-muted text-xs truncate">@{member.user.username}</span>
                       )}

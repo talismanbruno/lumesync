@@ -68,6 +68,14 @@ beforeEach(() => {
 });
 
 describe('resetStalePresenceOnBoot', () => {
+  it('preserves the saved manual choice while resetting visible presence', async () => {
+    const userId = insertUser({ username: 'saved', status: 'dnd', preferredStatus: 'dnd' });
+    const { resetStalePresenceOnBoot } = await import('./presenceBoot.js');
+    resetStalePresenceOnBoot();
+    const user = testDb.select().from(schema.users).where(eq(schema.users.id, userId)).get()!;
+    expect(user.status).toBe('offline');
+    expect(user.preferredStatus).toBe('dnd');
+  });
   it('resets locally-homed online users to offline', async () => {
     const aliceId = insertUser({ username: 'alice', status: 'online' });
     const { resetStalePresenceOnBoot } = await import('./presenceBoot.js');

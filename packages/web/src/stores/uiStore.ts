@@ -17,6 +17,7 @@ type ModalType =
   | 'addDmMember'
   | 'groupDmSettings'
   | 'userProfile'
+  | 'whatsNew'
   | 'bugReport'
   | null;
 

@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import { VolumeControl } from '../ui/VolumeControl';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
@@ -403,7 +404,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
           <span
             className={`font-semibold text-white truncate ${large ? 'text-base' : 'text-[13px]'}`}
           >
-            {displayName}
+            <ProfileName user={user}>{displayName}</ProfileName>
           </span>
           {isLocal && (
             <span className="text-[10px] text-white/40 font-medium">{uiText("(you)")}</span>

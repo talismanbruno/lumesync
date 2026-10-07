@@ -17,7 +17,8 @@ IDs: Snowflake text, permissions: bigint decimal strings
 | displayName | text | | |
 | passwordHash | text NOT NULL | | bcrypt; `'!federation-replicated'` for stubs |
 | avatar | text | | Upload filename |
-| status | text | `'offline'` | online/idle/dnd/offline |
+| status | text | `'offline'` | Current visible presence: online/working/idle/dnd/offline |
+| preferredStatus | text NOT NULL | `'online'` | Last manual choice; survives disconnect, logout and server restart. `offline` means Invisible. |
 | customStatus | text | | |
 | isAdmin | integer | 0 | First registered user = 1 |
 | homeInstance | text | | Federation origin URL (null = local) |
@@ -25,6 +26,7 @@ IDs: Snowflake text, permissions: bigint decimal strings
 | replicatedInstances | text | `'[]'` | JSON array of instance URLs |
 | banner | text | | Upload filename |
 | accentColor | text | | Hex color |
+| nameColor | text | null | Profile name color: six-digit hex, or `gold` (home-admin-only selection); null renders white. |
 | avatarColor | text | | Hex color |
 | bio | text | | |
 | isDeleted | integer | 0 | Soft-delete flag |

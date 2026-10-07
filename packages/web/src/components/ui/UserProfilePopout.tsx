@@ -127,7 +127,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
         {/* Name & info */}
         <div>
           <div className="flex items-center gap-1.5">
-            <Username username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
+            <Username user={user} username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
             {user.isAdmin && <VerifiedBadge size={15} />}
             {isPioneer(user) && <PioneerBadge size={16} />}
             {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={16} />}

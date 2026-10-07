@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -462,7 +463,7 @@ export function PictureInPicture() {
       {/* Bottom overlay with name */}
       <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent">
         <div className="flex items-center gap-1.5">
-          <span className="text-white text-xs font-semibold truncate">{displayName}</span>
+          <span className="text-white text-xs font-semibold truncate"><ProfileName user={resolvedUser}>{displayName}</ProfileName></span>
           {displayParticipant && speakingParticipantIds.has(displayParticipant.identity) && (
             <div className="w-2 h-2 rounded-full bg-status-online flex-shrink-0 animate-pulse" />
           )}

@@ -1,3 +1,4 @@
+import { ProfileName } from '../../ui/ProfileName';
 import { t as uiText } from '../../../i18n';
 import React, { useState } from 'react';
 import { Avatar } from '../../ui/Avatar';
@@ -68,7 +69,7 @@ function MembersPanelRow({
           />
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">
-              {displayName}
+              <ProfileName user={canonical}>{displayName}</ProfileName>
               {isFederationGlobeApplicable(canonical) && (
                 <span className="ml-1 text-[10px] text-txt-tertiary opacity-60">@{parseFederatedUsername(canonical.username).domain}</span>
               )}

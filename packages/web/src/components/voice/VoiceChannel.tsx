@@ -174,6 +174,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
                 }}
               >
                 <VoiceUserRow
+                      user={profileUser}
                   userId={member?.user.homeUserId ?? userId}
                   displayName={displayName}
                   avatar={avatar}

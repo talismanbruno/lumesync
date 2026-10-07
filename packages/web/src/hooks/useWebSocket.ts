@@ -564,6 +564,11 @@ function handleEvent(origin: string, event: ServerEvent): void {
     }
 
     case 'presence_update':
+      if (isHome && event.userId === useAuthStore.getState().user?.id
+        && ['online', 'working', 'idle', 'dnd', 'offline'].includes(event.status)) {
+        const self = useAuthStore.getState().user;
+        if (self) setUser({ ...self, status: event.status as User['status'], preferredStatus: event.status as User['status'] });
+      }
       updateMemberPresence(event.userId, event.status);
       useSocialStore.getState().updateFriendPresence(event.userId, event.status);
       if (event.activities) {

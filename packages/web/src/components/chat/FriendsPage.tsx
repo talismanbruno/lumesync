@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { t as uiText } from '../../i18n';
 import React, { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -78,7 +79,7 @@ function ActivityFriendItem({
       />
       <div className="flex-1 min-w-0">
         <div className="flex min-w-0 items-center gap-1">
-          <Username username={friendDisplayName} className={`text-sm leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`} />
+          <Username user={canonical} username={friendDisplayName} className={`text-sm leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`} />
           {canonical.isAdmin && <VerifiedBadge size={13} />}
           {isPioneer(canonical) && <PioneerBadge size={14} />}
           {canonical.isBetaContributor && !canonical.isDeleted && <BetaContributorBadge size={14} />}
@@ -519,7 +520,7 @@ const FriendItem = memo(function FriendItem({ friend, onRemove, onDm }: { friend
         <Avatar src={canonical.avatar} name={friendDisplayName} size={32} status={canonical.status} userId={canonical.homeUserId ?? canonical.id} avatarColor={canonical.avatarColor} />
         <div className="flex flex-col leading-tight">
           <div className="flex items-center gap-1.5">
-            <span className="text-txt-primary font-semibold text-[15px]">{friendDisplayName}</span>
+            <span className="text-txt-primary font-semibold text-[15px]"><ProfileName user={canonical}>{friendDisplayName}</ProfileName></span>
             <span className="text-txt-tertiary text-[13px] opacity-60 group-hover:opacity-100 transition-opacity font-medium">@{friend.username}</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -576,7 +577,7 @@ function RequestItem({ request, type, onAccept, onDecline, onCancel }: {
         <Avatar src={user.avatar} name={reqDisplayName} size={32} status={user.status as any} userId={user.homeUserId ?? user.id} avatarColor={user.avatarColor} />
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5">
-            <span className="text-txt-primary font-bold text-sm">{reqDisplayName}</span>
+            <span className="text-txt-primary font-bold text-sm"><ProfileName user={user}>{reqDisplayName}</ProfileName></span>
             <span className="text-txt-tertiary text-xs">@{user.username}</span>
           </div>
           <div className="flex items-center gap-1.5">

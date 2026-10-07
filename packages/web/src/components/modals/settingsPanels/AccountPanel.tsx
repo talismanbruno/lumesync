@@ -15,6 +15,7 @@ import { getAvatarGradient, adjustColor, mutedGradient, AVATAR_GRADIENT_MAP, BAN
 import { AVATAR_COLORS } from '@backspace/shared';
 import type { User, UserStatus, AvatarColor } from '@backspace/shared';
 import type { FederationOpResult } from '../../../utils/federationOps';
+import { getNameStyle, NAME_COLOR_PRESETS } from '../../../utils/nameAppearance';
 export function AccountPanel() {
   const user = useAuthStore((s) => s.user);
   const updateProfile = useAuthStore((s) => s.updateProfile);
@@ -23,6 +24,7 @@ export function AccountPanel() {
   const [customStatus, setCustomStatus] = useState(user?.customStatus ?? '');
   const [status, setStatus] = useState<UserStatus>(user?.status ?? 'online');
   const [bio, setBio] = useState(user?.bio ?? '');
+  const [nameColor, setNameColor] = useState<string | null>(user?.nameColor ?? null);
   const [accentColor, setAccentColor] = useState<string | null>(user?.accentColor ?? null);
   const [avatarColorState, setAvatarColorState] = useState<AvatarColor | null>(user?.avatarColor ?? null);
   const [customHex, setCustomHex] = useState(user?.accentColor ?? '');
@@ -52,6 +54,7 @@ export function AccountPanel() {
       setStatus(user.status ?? 'online');
       setBio(user.bio ?? '');
       setAccentColor(user.accentColor ?? null);
+      setNameColor(user.nameColor ?? null);
       setAvatarColorState(user.avatarColor ?? null);
       setCustomHex(user.accentColor ?? '');
       // Reset upload state
@@ -62,7 +65,7 @@ export function AccountPanel() {
       setBannerPreview(null);
       setBannerFilename(null);
     }
-  }, [user?.displayName, user?.customStatus, user?.status, user?.bio, user?.accentColor, user?.avatarColor, user?.avatar, user?.banner]);
+  }, [user?.displayName, user?.customStatus, user?.status, user?.bio, user?.nameColor, user?.accentColor, user?.avatarColor, user?.avatar, user?.banner]);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -141,6 +144,7 @@ export function AccountPanel() {
     customStatus !== (user.customStatus ?? '') ||
     status !== (user.status ?? 'online') ||
     bio !== (user.bio ?? '') ||
+    nameColor !== (user.nameColor ?? null) ||
     accentColor !== (user.accentColor ?? null) ||
     avatarColorState !== (user.avatarColor ?? null) ||
     avatarFilename !== null ||
@@ -301,6 +305,7 @@ export function AccountPanel() {
       if (customStatus !== (user.customStatus ?? '')) updates.customStatus = customStatus.trim();
       if (status !== (user.status ?? 'online')) updates.status = status;
       if (bio !== (user.bio ?? '')) updates.bio = bio.trim();
+      if (nameColor !== (user.nameColor ?? null)) updates.nameColor = nameColor ?? '';
       if (accentColor !== (user.accentColor ?? null)) updates.accentColor = accentColor ?? '';
       if (avatarColorState !== (user.avatarColor ?? null)) updates.avatarColor = avatarColorState ?? '';
       if (avatarFilename !== null) updates.avatar = avatarFilename;
@@ -356,6 +361,7 @@ export function AccountPanel() {
     setStatus(user.status ?? 'online');
     setBio(user.bio ?? '');
     setAccentColor(user.accentColor ?? null);
+    setNameColor(user.nameColor ?? null);
     setAvatarColorState(user.avatarColor ?? null);
     setCustomHex(user.accentColor ?? '');
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
@@ -421,6 +427,7 @@ export function AccountPanel() {
             />
             <div
               className="font-semibold text-[15px] leading-tight text-txt-primary"
+              style={getNameStyle({ nameColor })}
             >
               {effectiveDisplayName}
             </div>
@@ -564,6 +571,25 @@ export function AccountPanel() {
             <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
               {uiText("Static images can be cropped. Animated GIF banners are displayed in motion.")}</p>
           </div>
+
+          <fieldset>
+            <legend className="text-xs text-txt-secondary mb-2">Cor do nome</legend>
+            <div className="flex flex-wrap gap-2">
+              {NAME_COLOR_PRESETS.map(({ label, value }) => (
+                <button key={label} type="button" aria-label={label} aria-pressed={nameColor === value}
+                  onClick={() => setNameColor(value)} title={label}
+                  className="h-8 w-8 rounded-full border-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary"
+                  style={{ backgroundColor: value ?? '#ffffff', borderColor: nameColor === value ? '#22d3ee' : 'transparent' }} />
+              ))}
+              {user.isAdmin && (
+                <button type="button" aria-pressed={nameColor === 'gold'} onClick={() => setNameColor('gold')}
+                  className={`rounded-lg border px-3 py-1 text-xs font-semibold ${nameColor === 'gold' ? 'border-amber-300/80' : 'border-amber-300/20'}`}>
+                  <span style={getNameStyle({ nameColor: 'gold' })}>Dourado luminoso</span>
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-[11px] text-txt-tertiary">Veja a cor na prévia do perfil e salve para aplicar.</p>
+          </fieldset>
 
           {/* Avatar Color */}
           <div>

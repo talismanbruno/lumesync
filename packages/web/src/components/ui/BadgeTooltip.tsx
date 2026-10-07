@@ -45,7 +45,7 @@ export function BadgeTooltip({ name, label = name, className = '', children }: {
   return (
     <span ref={anchor} role="img" aria-label={label} aria-describedby={open ? id : undefined}
       tabIndex={0}
-      className={`inline-flex shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-chat ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center align-middle leading-none rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-chat ${className}`}
       onMouseEnter={show} onMouseLeave={hide}
       onFocus={() => { focused.current = true; clearTimer(); setOpen(true); }}
       onBlur={() => { focused.current = false; hide(); }}

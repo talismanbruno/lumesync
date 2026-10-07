@@ -1,4 +1,5 @@
 const APP_PERMISSIONS = new Set([
+  'clipboard-sanitized-write',
   'display-capture',
   'fullscreen',
   'media',

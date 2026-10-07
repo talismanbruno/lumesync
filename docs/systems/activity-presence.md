@@ -115,16 +115,17 @@ function getPrimaryActivity(activities: Activity[]): Activity | null {
 | Status | Meaning |
 |--------|---------|
 | `online` | Active connection |
+| `working` | User-set working (instance admins only) |
 | `idle` | User-set idle |
 | `dnd` | Do not disturb |
-| `offline` | No active connections |
+| `offline` | No active connections, or manually selected Invisible |
 
 ### DB Persistence
 
-The `users.status` column (see database.md) stores the current presence status. Default: `'offline'`.
+The `users.status` column (see database.md) stores current visible presence. Default: `'offline'`. The independent `users.preferred_status` column stores the last manual choice, defaulting to `'online'`. Only a manual REST/WS status change writes this preference; disconnect and boot cleanup never overwrite it. Migration `0021_preferred_status` preserves existing idle/dnd and valid admin working states. An existing offline row cannot distinguish a previously disconnected user from Invisible and therefore starts with the default until the user selects a status.
 
-- **On connect:** Server sets `status = 'online'` in DB at WebSocket auth (`ws/handler.ts`, the line after `authenticated = true`). The REST `/api/auth/login` route does **not** set status — login alone does not imply a live socket; the WS handshake is the single source of truth.
-- **On manual change:** Client sends `presence_update` with `status` field; server persists to DB (`ws/events.ts`)
+- **On connect:** WebSocket auth restores `status` from `preferred_status`, including Invisible, using `getPreferredStatus()`. Working remains admin-only. The ready payload and local/S2S broadcasts use this restored status. REST login does not change visible presence.
+- **On manual change:** REST `PATCH /api/users/@me` or WS `presence_update` writes both columns. The selected preference is included as `preferredStatus` only in self-view User responses, so the account menu can retain the selection before a socket connects. Home-origin self presence events update authStore for other-tab synchronization.
 - **On disconnect:** After 5s grace period, server sets `status = 'offline'` in DB (`ws/handler.ts:finalizeDisconnect`)
 - **On boot:** Server resets stale rows for locally-homed, non-deleted users (see "Boot Reset" below).
 

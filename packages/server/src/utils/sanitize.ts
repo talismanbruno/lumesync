@@ -1,5 +1,7 @@
 import type { User, ReplicatedInstance } from '@backspace/shared';
 import { schema } from '../db/index.js';
+import { normalizeNameColor } from './nameColor.js';
+import { getPreferredStatus } from './preferredStatus.js';
 
 export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = false): User {
   // Tombstoned (deleted) users — return anonymized profile
@@ -11,6 +13,7 @@ export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = fal
       avatar: null,
       banner: null,
       accentColor: null,
+      nameColor: null,
       avatarColor: null,
       bio: null,
       status: 'offline',
@@ -45,6 +48,7 @@ export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = fal
     avatar: row.avatar,
     banner: row.banner ?? null,
     accentColor: row.accentColor ?? null,
+    nameColor: row.nameColor === 'gold' && !row.homeInstance && row.isAdmin !== 1 ? null : normalizeNameColor(row.nameColor),
     avatarColor: (row.avatarColor as User['avatarColor']) ?? null,
     bio: row.bio ?? null,
     status: (row.status ?? 'offline') as User['status'],
@@ -61,6 +65,7 @@ export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = fal
     ...(isSelf
       ? {
           showActivity: row.showActivity !== 0,
+          preferredStatus: getPreferredStatus(row),
           federationHomeOrphaned: row.federationHomeOrphaned === 1,
         }
       : {}),

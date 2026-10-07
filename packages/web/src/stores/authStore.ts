@@ -14,13 +14,14 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isLoading: boolean;
+  hasAuthenticatedSession: boolean;
   error: string | null;
   initSession: (token: string, user: User) => void;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string, displayName?: string, avatarColor?: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
-  updateProfile: (data: { displayName?: string; avatar?: string; banner?: string; accentColor?: string; avatarColor?: string; bio?: string; customStatus?: string; status?: UserStatus }) => Promise<void>;
+  updateProfile: (data: { displayName?: string; avatar?: string; banner?: string; accentColor?: string; nameColor?: string; avatarColor?: string; bio?: string; customStatus?: string; status?: UserStatus }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<FederationOpResult[]>;
   deleteAccount: (password: string, username: string) => Promise<void>;
   setUser: (user: User) => void;
@@ -58,12 +59,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem('backspace_token'),
   user: null,
   isLoading: false,
+  hasAuthenticatedSession: false,
   error: null,
 
   initSession: (token: string, user: User) => {
     resetUserStores();
     localStorage.setItem('backspace_token', token);
-    set({ token, user, isLoading: false });
+    set({ token, user, isLoading: false, hasAuthenticatedSession: true });
     restoreHomeConversations(token);
     useInstanceStore.getState().autoConnectAll().catch(() => {});
   },
@@ -94,7 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     void api.auth.logout().catch(() => {});
     localStorage.removeItem('backspace_token');
     resetUserStores();
-    set({ token: null, user: null });
+    set({ token: null, user: null, hasAuthenticatedSession: false });
   },
 
   loadUser: async () => {
@@ -104,13 +106,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const user = await api.users.me();
-      set({ user, isLoading: false });
+      set({ user, isLoading: false, hasAuthenticatedSession: true });
       restoreHomeConversations(token);
       // Auto-connect to remote instances (fire-and-forget)
       useInstanceStore.getState().autoConnectAll().catch(() => {});
     } catch {
       localStorage.removeItem('backspace_token');
-      set({ token: null, user: null, isLoading: false });
+      set({ token: null, user: null, isLoading: false, hasAuthenticatedSession: false });
     }
   },
 
@@ -147,7 +149,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Clear all state
     localStorage.removeItem('backspace_token');
     resetUserStores();
-    set({ token: null, user: null });
+    set({ token: null, user: null, hasAuthenticatedSession: false });
   },
 
   setUser: (user: User) => set({ user }),

@@ -1,3 +1,4 @@
+import { ProfileName } from '../../ui/ProfileName';
 import { t as uiText } from '../../../i18n';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AdminInsights, BugReportStatus } from '@backspace/shared';
@@ -86,7 +87,7 @@ export function InsightsPanel() {
           <div className="mt-2 max-h-64 overflow-y-auto">
             {data.recentRegistrations.map((user) => (
               <div key={user.id} className="flex items-center justify-between border-t border-border-subtle/60 py-2">
-                <div className="min-w-0"><div className="truncate text-xs font-semibold text-txt-primary">{user.displayName || user.username}</div><div className="text-[11px] text-txt-tertiary">@{user.username}</div></div>
+                <div className="min-w-0"><div className="truncate text-xs font-semibold text-txt-primary"><ProfileName user={user}>{user.displayName || user.username}</ProfileName></div><div className="text-[11px] text-txt-tertiary">@{user.username}</div></div>
                 <div className="text-right text-[11px] text-txt-tertiary"><div>{user.countryCode ? regionNames?.of(user.countryCode) ?? user.countryCode : uiText("Região pendente")}</div><div>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</div></div>
               </div>
             ))}

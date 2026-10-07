@@ -298,3 +298,38 @@ describe('sanitizeUser — federationHomeOrphaned is self-view only', () => {
     expect('federationHomeOrphaned' in self).toBe(false);
   });
 });
+
+
+describe('profile name color', () => {
+  async function patch(nameColor: unknown, token = detachedToken()) {
+    return app.inject({ method: 'PATCH', url: '/api/users/@me', headers: { Authorization: `Bearer ${token}` }, payload: { nameColor } });
+  }
+
+  it('saves a color and returns it on a fresh profile request', async () => {
+    const saved = await patch('#22D3EE');
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().nameColor).toBe('#22d3ee');
+    const fresh = await app.inject({ method: 'GET', url: '/api/users/@me', headers: { Authorization: `Bearer ${detachedToken()}` } });
+    expect(fresh.json().nameColor).toBe('#22d3ee');
+    expect(sanitizeUser(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()!, false).nameColor).toBe('#22d3ee');
+    expect((await patch('')).json().nameColor).toBeNull();
+  });
+
+  it.each(['red', '#fff', 'url(https://example.org)', null, 1])('rejects malformed color %s', async (color) => {
+    expect((await patch(color)).statusCode).toBe(400);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()!.nameColor).toBeNull();
+  });
+
+  it('reserves metallic gold for admins and removes the effect on demotion', async () => {
+    expect((await patch('gold')).statusCode).toBe(403);
+    testDb.update(schema.users).set({ isAdmin: 1 }).where(eq(schema.users.id, DETACHED_ID)).run();
+    expect((await patch('gold')).json().nameColor).toBe('gold');
+    testDb.update(schema.users).set({ isAdmin: 0, homeInstance: null }).where(eq(schema.users.id, DETACHED_ID)).run();
+    const fresh = await app.inject({ method: 'GET', url: '/api/users/@me', headers: { Authorization: `Bearer ${detachedToken()}` } });
+    expect(fresh.json().nameColor).toBeNull();
+  });
+
+  it('does not allow a replica to override its home profile color', async () => {
+    expect((await patch('#22d3ee', federatedToken())).statusCode).toBe(403);
+  });
+});

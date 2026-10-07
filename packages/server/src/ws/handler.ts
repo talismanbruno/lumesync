@@ -22,6 +22,7 @@ import type {
   Activity,
 } from '@backspace/shared';
 import { sanitizeUser } from '../utils/sanitize.js';
+import { getPreferredStatus } from '../utils/preferredStatus.js';
 import { collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
 import { clearVoiceCapacityReservation } from '../utils/voiceCapacity.js';
 import { allowWsConnection, MAX_WS_PAYLOAD_BYTES, wsPayloadBytes } from './limits.js';
@@ -1793,8 +1794,9 @@ export async function registerWebSocket(app: FastifyInstance): Promise<void> {
           isFederated = !!userRow.homeInstance;
           clearTimeout(authTimeout);
 
-          // Update user status to online
-          db.update(schema.users).set({ status: 'online' }).where(eq(schema.users.id, userId)).run();
+          // Restore the user's choice without changing it when a socket attaches.
+          const restoredStatus = getPreferredStatus(userRow);
+          db.update(schema.users).set({ status: restoredStatus }).where(eq(schema.users.id, userId)).run();
 
           // Add connection
           connectionManager.addConnection(userId, ws);
@@ -1810,15 +1812,15 @@ export async function registerWebSocket(app: FastifyInstance): Promise<void> {
             ...readyData,
           }));
 
-          // Broadcast online to friends + DM co-members + space co-members.
-          const onlinePayload = { type: 'presence_update' as const, userId, status: 'online' as const };
+          // Broadcast restored presence to friends + DM co-members + space co-members.
+          const onlinePayload = { type: 'presence_update' as const, userId, status: restoredStatus };
           const onlineTargets = collectProfileBroadcastTargetIds(userId);
           for (const uid of onlineTargets) connectionManager.sendToUser(uid, onlinePayload);
 
-          // S2S: project online to all active peers (mirrors profile_update fanout).
+          // S2S: project restored presence to active peers (mirrors profile_update fanout).
           const _uid = userId;
           void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
-            try { queuePresenceRelay(_uid, 'online', []); } catch (e) { console.warn('[ws] queuePresenceRelay(online) failed', e); }
+            try { queuePresenceRelay(_uid, restoredStatus, connectionManager.getUserActivities(_uid)); } catch (e) { console.warn('[ws] queuePresenceRelay(connect) failed', e); }
           });
         } catch {
           ws.send(JSON.stringify({ type: 'error', message: 'Invalid token' }));

@@ -606,6 +606,7 @@ export function MobileSpacesScreen() {
                   onContextMenu={(e) => handleVoiceUserContextMenu(e, userId, channel.id)}
                 >
                   <VoiceUserRow
+                      user={member?.user}
                     userId={member?.user.homeUserId ?? userId}
                     displayName={displayName}
                     avatar={avatar}

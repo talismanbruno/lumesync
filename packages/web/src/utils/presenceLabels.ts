@@ -2,7 +2,7 @@ import type { UserStatus } from '@backspace/shared';
 
 const presenceLabels: Record<UserStatus, string> = {
   online: 'Disponível',
-  working: 'Trabalhando',
+  working: 'Trabalhando no Lume',
   idle: 'Ausente',
   dnd: 'Não perturbe',
   offline: 'Offline',

@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal } from '../ui/Modal';
@@ -9,6 +10,7 @@ import { useSocialStore } from '../../stores/socialStore';
 import { api } from '../../api/client';
 import { isSelf, parseFederatedUsername } from '../../utils/identity';
 import { useCanonicalUserView } from '../../utils/userViewLookup';
+import { copyText } from '../../utils/clipboard';
 import type { Friend, MemberWithUser, SpaceInviteRequest, User } from '@backspace/shared';
 
 type SendStatus =
@@ -62,7 +64,7 @@ function InviteResultFriendRow({
         avatarColor={canonical.avatarColor}
       />
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium text-txt-primary truncate">{dn}</div>
+        <div className="text-[13px] font-medium text-txt-primary truncate"><ProfileName user={canonical}>{dn}</ProfileName></div>
         <div className="text-[11px] text-txt-tertiary truncate">@{canonical.username}</div>
       </div>
       {status?.kind === 'success' && (
@@ -115,7 +117,7 @@ function InviteSelectFriendRow({
         avatarColor={canonical.avatarColor}
       />
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium text-txt-primary truncate">{dn}</div>
+        <div className="text-[13px] font-medium text-txt-primary truncate"><ProfileName user={canonical}>{dn}</ProfileName></div>
         <div className="text-[11px] text-txt-tertiary truncate">
           {alreadyMember ? uiText("Already in space") : `@${canonical.username}`}
         </div>
@@ -324,11 +326,10 @@ export function InviteModal() {
 
   const handleCopy = async () => {
     if (!inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
+    if (await copyText(inviteUrl)) {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
+    } else {
       linkInputRef.current?.focus();
       linkInputRef.current?.select();
       useUIStore.getState().addToast('O link está pronto. Copie o texto selecionado.', 'info');
@@ -374,7 +375,7 @@ export function InviteModal() {
                 key={f.id}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] bg-accent-mint/15 text-accent-mint"
               >
-                {f.displayName ?? parseFederatedUsername(f.username).baseName}
+                <ProfileName user={f}>{f.displayName ?? parseFederatedUsername(f.username).baseName}</ProfileName>
                 <button
                   onClick={() => removeFriend(f.id)}
                   className="opacity-60 hover:opacity-100 transition-opacity text-[14px] leading-none"

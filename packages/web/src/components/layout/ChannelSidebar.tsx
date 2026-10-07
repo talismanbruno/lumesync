@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -946,7 +947,7 @@ function UserAreaPanel({
               <Avatar src={user.avatar} name={user.displayName ?? user.username} size={42} status={user.status as UserStatus} statusLabel={user.status === 'offline' ? 'Invisível' : undefined} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="truncate text-[14px] font-bold text-txt-primary">{user.displayName ?? user.username}</span>
+                  <span className="truncate text-[14px] font-bold text-txt-primary"><ProfileName user={user}>{user.displayName ?? user.username}</ProfileName></span>
                   {user.isAdmin && <VerifiedBadge size={15} />}
                   {isPioneer(user) && <PioneerBadge size={16} />}
                   {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={16} />}
@@ -962,13 +963,13 @@ function UserAreaPanel({
             <div className="grid grid-cols-2 gap-1.5">
               {([
                 ['online', 'Disponível', 'Aberto para conversar', 'bg-status-online'],
-                ...(user.isAdmin ? [['working', 'Trabalhando', 'Melhorando o Lume', 'bg-status-working shadow-[0_0_8px_rgba(56,189,248,0.7)]'] as const] : []),
+                ...(user.isAdmin ? [['working', 'Trabalhando no Lume', 'Melhorando o Lume', 'bg-status-working shadow-[0_0_8px_rgba(56,189,248,0.7)]'] as const] : []),
                 ['idle', 'Ausente', 'Por perto', 'bg-status-idle'],
                 ['dnd', 'Não perturbe', 'Silenciar alertas', 'bg-status-dnd'],
                 ['offline', 'Invisível', 'Aparecer offline', 'bg-status-offline'],
               ] as ReadonlyArray<readonly [UserStatus, string, string, string]>).map(([status, label, detail, color]) => (
-                <button key={status} type="button" disabled={isSavingPresence} onClick={() => setPresence(status)} className={`group flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${user.status === status ? 'border-cyan-400/35 bg-cyan-400/[0.09]' : 'border-white/[0.05] bg-white/[0.025] hover:border-white/10 hover:bg-white/[0.055]'}`}>
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color} ${user.status === status ? 'ring-4 ring-cyan-300/10' : ''}`} />
+                <button key={status} type="button" disabled={isSavingPresence} onClick={() => setPresence(status)} className={`group flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all ${(user.preferredStatus ?? user.status) === status ? 'border-cyan-400/35 bg-cyan-400/[0.09]' : 'border-white/[0.05] bg-white/[0.025] hover:border-white/10 hover:bg-white/[0.055]'}`}>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color} ${(user.preferredStatus ?? user.status) === status ? 'ring-4 ring-cyan-300/10' : ''}`} />
                   <span className="min-w-0">
                     <span className="block truncate text-[11px] font-semibold text-txt-primary">{label}</span>
                     <span className="block truncate text-[9px] text-txt-tertiary">{detail}</span>
@@ -1012,7 +1013,7 @@ function UserAreaPanel({
           <Avatar src={user.avatar} name={user.displayName ?? user.username} size={34} status={user.status as any} statusLabel={user.status === 'offline' ? 'Invisível' : undefined} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 min-w-0">
-              <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight">{user.displayName ?? user.username}</span>
+              <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight"><ProfileName user={user}>{user.displayName ?? user.username}</ProfileName></span>
               {user.isAdmin && <VerifiedBadge size={13} />}
               {isPioneer(user) && <PioneerBadge size={14} />}
               {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={14} />}

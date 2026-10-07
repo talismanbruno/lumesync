@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
 import { useUIStore } from '../../stores/uiStore';
@@ -66,7 +67,7 @@ function MobileFriendBubble({
         }`} />
       </div>
       <span className="text-[10px] text-txt-secondary truncate w-full text-center">
-        {displayName}
+        <ProfileName user={canonical}>{displayName}</ProfileName>
       </span>
     </button>
   );
@@ -147,7 +148,7 @@ function MobileDmRow({
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1 min-w-0">
             <span className={`text-sm truncate ${isUnread ? 'font-semibold text-txt-primary' : 'text-txt-primary'}`}>
-              {name}
+              <ProfileName user={isGroup ? undefined : mainUser}>{name}</ProfileName>
             </span>
             <DmPreferenceMarks dm={dm} />
             {groupHasFederatedMember && (

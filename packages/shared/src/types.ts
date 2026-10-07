@@ -14,9 +14,12 @@ export interface User {
   avatar: string | null;
   banner: string | null;
   accentColor: string | null;
+  nameColor?: string | null;
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
+  /** Self-view only: last manually selected status, independent of connectivity. */
+  preferredStatus?: UserStatus;
   customStatus: string | null;
   isAdmin: boolean;
   /** Permanent recognition for accounts created during Lume's pioneer phase. */
@@ -405,7 +408,7 @@ export type ClientEvent =
   | { type: 'message_edit'; messageId: string; content: string }
   | { type: 'message_delete'; messageId: string }
   | { type: 'typing_start'; channelId: string }
-  | { type: 'presence_update'; status: 'online' | 'working' | 'idle' | 'dnd' }
+  | { type: 'presence_update'; status: UserStatus }
   | { type: 'voice_join'; channelId: string }
   | { type: 'voice_leave' }
   | { type: 'dm_message_create'; dmChannelId: string; content?: string; attachments?: string[]; replyToId?: string }
@@ -578,6 +581,7 @@ export interface UpdateUserRequest {
   avatar?: string;
   banner?: string;
   accentColor?: string;
+  nameColor?: string;
   avatarColor?: string;
   bio?: string;
   customStatus?: string;
@@ -719,6 +723,7 @@ export interface Friend {
   avatar: string | null;
   banner: string | null;
   accentColor: string | null;
+  nameColor?: string | null;
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
@@ -1184,6 +1189,7 @@ export interface FederationRelayProfileSnapshot {
   displayName?: string | null;
   avatar?: string | null;
   avatarColor?: string | null;
+  nameColor?: string | null;
   banner?: string | null;
   bio?: string | null;
   // Current presence at the moment the snapshot was built. Optional for
@@ -1217,6 +1223,7 @@ export interface FederationProfileUpdatePayload {
   avatar: string | null;
   banner: string | null;
   accentColor: string | null;
+  nameColor?: string | null;
   avatarColor: string | null;
   bio: string | null;
 }
@@ -1335,6 +1342,7 @@ export interface FederationUserLookupRequest {
 }
 
 export interface FederationUserLookupProfile {
+  nameColor?: string | null;
   displayName: string | null;
   avatar: string | null;
   avatarColor: AvatarColor | null;

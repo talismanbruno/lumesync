@@ -50,7 +50,7 @@ function ActivityFriendRow({
       />
       <div className="flex-1 min-w-0">
         <Username
-          username={friendDisplayName}
+          user={canonical} username={friendDisplayName}
           className={`text-[13.5px] leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`}
         />
         {!isOffline && isFederationGlobeApplicable(canonical) && (

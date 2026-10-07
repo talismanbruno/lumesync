@@ -1,8 +1,11 @@
 import { t as uiText } from '../../i18n';
+import type { User } from '@backspace/shared';
+import { ProfileName } from '../ui/ProfileName';
 import { Avatar } from '../ui/Avatar';
 
 export interface VoiceUserRowProps {
   userId: string;
+  user?: Partial<User> | null;
   displayName: string;
   avatar: string | null;
   avatarColor?: string;
@@ -22,6 +25,7 @@ export interface VoiceUserRowProps {
 
 export function VoiceUserRow({
   userId,
+  user,
   displayName,
   avatar,
   avatarColor,
@@ -60,7 +64,7 @@ export function VoiceUserRow({
         className={isSpeaking ? 'rounded-full ring-2 ring-status-online' : ''}
       />
       <span className="text-[13px] text-txt-secondary truncate flex-1 min-w-0">
-        {displayName}
+        <ProfileName user={user}>{displayName}</ProfileName>
       </span>
       {/* Status badges */}
       <div className="flex items-center gap-1 flex-shrink-0">

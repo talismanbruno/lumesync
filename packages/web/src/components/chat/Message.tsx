@@ -134,7 +134,6 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
   const currentUser = useAuthStore((s) => s.user);
   const editMessage = useChatStore((s) => s.editMessage);
   const deleteMessage = useChatStore((s) => s.deleteMessage);
-  const members = useSpaceStore((s) => s.members);
   const openUserProfile = useUIStore((s) => s.openUserProfile);
 
   const pending = isPendingMessage(message) ? message.__pending : null;
@@ -374,25 +373,6 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
     : _resolvedIdentity;
   const displayName = displayIdentity.displayName ?? displayIdentity.username;
 
-  const spaces = useSpaceStore((s) => s.spaces);
-  const currentSpaceId = useSpaceStore((s) => s.currentSpaceId);
-  const ownerId = spaces.find(s => s.id === currentSpaceId)?.ownerId;
-
-  const getMemberDisplayColor = (userId: string) => {
-    if (isDmMessage) return { color: '#d8d8de' };
-    const member = members.find(m => m.userId === userId);
-    if (member?.roles && member.roles.length > 0) {
-      const sorted = [...member.roles].sort((a, b) => b.position - a.position);
-      return { color: sorted[0]!.color };
-    }
-    if (ownerId && userId === ownerId) return { color: '#fda4af' };
-    return { color: '#d8d8de' };
-  };
-
-  const roleColor = getMemberDisplayColor(message.userId);
-
-  const replyRoleColor = (msg: { userId: string }) => getMemberDisplayColor(msg.userId);
-
   // Self-mention highlighting
   const isMentioned = currentUser && message.content?.includes('<@' + currentUser.id + '>');
 
@@ -449,9 +429,8 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
             <div className="flex items-center gap-1 mb-1 ml-[-4px] opacity-80 hover:opacity-100 cursor-pointer group/reply">
               <Avatar src={replyIdentity.avatar} name={replyDisplayName} size={16} user={replyIdentity} />
               <Username
-                username={replyDisplayName}
+                user={replyIdentity} username={replyDisplayName}
                 className="text-[14px] font-bold text-txt-primary hover:underline"
-                style={replyRoleColor(message.replyTo)}
               />
               <span className="text-[14px] text-txt-message truncate max-w-[400px] hover:text-txt-primary">
                 {message.replyTo.content ? renderInlineWithMentions(message.replyTo.content) : ''}
@@ -461,12 +440,11 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
         })()}
 
         {(isFirstInGroup || message.replyTo) && (
-          <div className="flex items-baseline gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-0.5">
             <span onClick={handleUsernameClick}>
               <Username
-                username={displayName}
+                user={displayIdentity} username={displayName}
                 className="font-semibold cursor-pointer hover:underline text-[15px] leading-tight"
-                style={roleColor}
               />
             </span>
             {displayIdentity.isAdmin && <VerifiedBadge size={14} />}

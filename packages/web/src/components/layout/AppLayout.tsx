@@ -6,6 +6,7 @@ import { ImagePreview } from '../chat/ImagePreview';
 import { SpaceAccessModal } from '../modals/SpaceAccessModal';
 import { CreateChannelModal } from '../modals/CreateChannel';
 import { CreateCategoryModal } from '../modals/CreateCategory';
+import { WhatsNew } from '../modals/WhatsNew';
 import { InviteModal } from '../modals/InviteModal';
 import { SpaceSettingsModal } from '../modals/SpaceSettings';
 import { ChannelSettingsModal } from '../modals/ChannelSettingsModal';
@@ -389,6 +390,7 @@ export function AppLayout() {
         <CreateChannelModal />
         <CreateCategoryModal />
         <InviteModal />
+      <WhatsNew />
         {/* UserSettings is a pushed screen on mobile (MobileSettingsScreen), not a modal */}
         <SpaceSettingsModal />
         <ChannelSettingsModal />
@@ -441,6 +443,7 @@ export function AppLayout() {
       <CreateChannelModal />
       <CreateCategoryModal />
       <InviteModal />
+      <WhatsNew />
       <UserSettingsModal />
       <SpaceSettingsModal />
       <ChannelSettingsModal />

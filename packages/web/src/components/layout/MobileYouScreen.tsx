@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState } from 'react';
 import { useUIStore } from '../../stores/uiStore';
@@ -99,7 +100,7 @@ export function MobileYouScreen() {
         {/* User info */}
         <div className="px-4 pb-4 pt-2">
           <h2 className="text-lg font-bold text-txt-primary">
-            {user.displayName ?? user.username}
+            <ProfileName user={user}>{user.displayName ?? user.username}</ProfileName>
           </h2>
           <p className="text-sm text-txt-secondary">@{user.username}</p>
           {(() => {

@@ -1,3 +1,4 @@
+import { ProfileName } from '../../ui/ProfileName';
 import { t as uiText } from '../../../i18n';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ImageCropModal } from '../../ui/ImageCropModal';
@@ -519,7 +520,7 @@ export function OverviewPanel({ spaceId }: OverviewPanelProps) {
                                 </div>
                                 <div className="flex flex-col items-start min-w-0">
                                   <span className="text-sm text-txt-primary truncate max-w-full">
-                                    {member.user.displayName || member.user.username}
+                                    <ProfileName user={member.user}>{member.user.displayName || member.user.username}</ProfileName>
                                   </span>
                                   {member.user.displayName && (
                                     <span className="text-[11px] text-txt-tertiary truncate max-w-full">

@@ -200,7 +200,7 @@ export function DmMemberRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <Username
-            username={displayName}
+            user={canonical} username={displayName}
             className={`text-[13.5px] leading-[1.2] font-medium truncate ${
               isOffline ? 'text-txt-tertiary' : 'text-txt-primary'
             }`}

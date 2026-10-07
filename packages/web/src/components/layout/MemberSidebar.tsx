@@ -1,3 +1,4 @@
+import { getNameStyle } from '../../utils/nameAppearance';
 import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
 import type { MemberWithUser, Activity } from '@backspace/shared';
@@ -88,9 +89,9 @@ function MemberSidebarRow({
       />
       <div className="flex-1 min-w-0">
         <Username
-          username={displayName}
+          user={canonical} username={displayName}
           className={`text-[13.5px] leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : (!colorStyle ? 'text-txt-primary' : '')}`}
-          style={colorStyle}
+          style={getNameStyle(canonical)}
         />
         {!isOffline && isFederationGlobeApplicable(canonical) && (
           <div className="text-[10px] leading-[1.3] text-txt-tertiary truncate opacity-60">@{parseFederatedUsername(canonical.username).domain}</div>
@@ -145,16 +146,7 @@ export function MemberSidebar() {
 
   if (!memberListOpen) return null;
 
-  const getMemberColor = (member: MemberWithUser): React.CSSProperties | undefined => {
-    if (member.roles && member.roles.length > 0) {
-      const sorted = [...member.roles].sort((a, b) => b.position - a.position);
-      return { color: sorted[0]!.color };
-    }
-    if (ownerId && member.userId === ownerId) {
-      return { color: 'rgb(var(--accent-rose))' };
-    }
-    return undefined;
-  };
+  const getMemberColor = (member: MemberWithUser): React.CSSProperties => getNameStyle(member.user);
 
   const handleMemberClick = (e: React.MouseEvent, user: MemberWithUser['user']) => {
     e.stopPropagation();
@@ -166,7 +158,7 @@ export function MemberSidebar() {
   };
 
   const renderMember = (member: MemberWithUser, isOffline = false) => {
-    const colorStyle = isOffline ? undefined : getMemberColor(member);
+    const colorStyle = getMemberColor(member);
     const activities = userActivities.get(member.userId) ?? [];
     const isRichActivity = !isOffline && hasRichActivity(activities);
     const primary = getPrimaryActivity(activities);

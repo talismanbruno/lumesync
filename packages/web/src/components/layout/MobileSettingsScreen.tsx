@@ -102,6 +102,7 @@ export function MobileSettingsScreen({ initialPanel }: MobileSettingsScreenProps
     <div className="flex flex-col h-full bg-surface-base">
       <MobileScreenHeader title={uiText("Settings")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto">
+        <button type="button" onClick={() => useUIStore.getState().openModal('whatsNew')} className="w-full px-4 py-3.5 text-left text-sm text-cyan-200 hover:bg-interactive-hover">O que há de novo</button>
         {sections.map((section) => (
           <button
             key={section.id}

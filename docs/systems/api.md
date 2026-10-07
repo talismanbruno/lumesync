@@ -37,7 +37,7 @@ type CheckInviteResponse =
 ## Users (`routes/users.ts`) — auth required
 ```
 GET    /users/@me                                        → { user }
-PATCH  /users/@me             { displayName?, avatar?, banner?, accentColor?, avatarColor?,
+PATCH  /users/@me             { displayName?, avatar?, banner?, accentColor?, nameColor?, avatarColor?,
                                 bio?, customStatus?, status?, replicatedInstances?, homeUserId?,
                                 profileUpdatedAt?, discoverable?, showActivity? } → { user }
 POST   /users/@me/verify-password  { password }          → { valid }
@@ -50,9 +50,11 @@ GET    /users/:id                                        → { user }
 GET    /users/:id/mutuals     ?homeUserId=               → { mutualFriends[], mutualSpaces[] }
 ```
 
-**Write protection:** If the authenticated user is a replicated user (`homeInstance` is set **and** `federationHomeOrphaned !== 1`), the following fields are rejected with 403: `displayName`, `avatar`, `banner`, `accentColor`, `avatarColor`, `bio`. These fields are managed by the home instance via S2S relay. **Exception — detached accounts** (`federationHomeOrphaned === 1`): a federated account whose home instance was reset/lost is a sovereign local account with no home managing its profile, so it edits these durable fields locally like a native user (detach design §4.4). Detached edits are NOT relayed (the S2S profile-relay path stays gated on `!homeInstance`).
+**Write protection:** If the authenticated user is a replicated user (`homeInstance` is set **and** `federationHomeOrphaned !== 1`), the following fields are rejected with 403: `displayName`, `avatar`, `banner`, `accentColor`, `nameColor`, `avatarColor`, `bio`. These fields are managed by the home instance via S2S relay. **Exception — detached accounts** (`federationHomeOrphaned === 1`): a federated account whose home instance was reset/lost is a sovereign local account with no home managing its profile, so it edits these durable fields locally like a native user (detach design §4.4). Detached edits are NOT relayed (the S2S profile-relay path stays gated on `!homeInstance`).
 
 **Self-view flag:** `GET /users/@me`, the login response, and the WS `ready` payload all sanitize the row with `isSelf=true` and include `federationHomeOrphaned: boolean` (detach design §4.7) — self-view only; it is never exposed to other users and never on the deleted/tombstone branch.
+
+Self-view User responses (register/login, GET/PATCH `/users/@me`, WS ready) also include `preferredStatus`, the last manual presence choice. PATCH `status` saves this preference alongside current visible presence; it is never included in other-user profile responses. See `activity-presence.md`.
 
 ## Spaces (`routes/spaces.ts`) — auth required
 ```
@@ -482,3 +484,5 @@ type PeeringNotificationSummary = {
 GET /utils/metadata  ?url= → { title?, description?, image?, siteName? }
 GET /health          (public) → { status: 'ok', timestamp }
 ```
+
+`PATCH /users/@me` accepts `nameColor` as `#RRGGBB`, `gold`, or an empty string to reset to white. Invalid values return 400; selecting `gold` requires instance-admin status (403 otherwise). This is a durable profile field, broadcast via `user_updated` and home-authoritative federation profile updates.

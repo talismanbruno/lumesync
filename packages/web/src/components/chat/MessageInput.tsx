@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useChatStore } from '../../stores/chatStore';
@@ -796,7 +797,7 @@ export function MessageInput({ channelId, channelName, placeholder }: MessageInp
           <div className="flex items-center gap-1 text-[14px] text-txt-message truncate">
             <span className="opacity-60">{uiText("Replying to")}</span>
             <span className="font-bold">
-              {chatReplyTo.user.displayName ?? chatReplyTo.user.username}
+              <ProfileName user={chatReplyTo.user}>{chatReplyTo.user.displayName ?? chatReplyTo.user.username}</ProfileName>
             </span>
           </div>
           <button
@@ -977,9 +978,7 @@ export function MessageInput({ channelId, channelName, placeholder }: MessageInp
               title={uiText("GIF")}
               aria-label={uiText("GIF picker")}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3h15A2.5 2.5 0 0 1 22 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18.5v-13ZM5.1 14V10h3.2v1.2H6.5v.6h1.6v1.1H6.5V14H5.1Zm4.5 0V10h1.4v4H9.6Zm2.5 0V10h3.2v1.2h-1.8v.5h1.6v1h-1.6V14h-1.4Z" />
-              </svg>
+              <span aria-hidden="true" className="rounded-[4px] border border-current/50 px-1 py-0.5 text-[10px] font-extrabold leading-none tracking-[0.04em]">GIF</span>
             </button>
           )}
 

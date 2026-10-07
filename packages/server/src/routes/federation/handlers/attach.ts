@@ -275,6 +275,7 @@ export function registerAttachRoutes(app: FastifyInstance): void {
         avatar,
         banner,
         avatarColor: home.profile.avatarColor ?? detached.avatarColor,
+        nameColor: home.profile.nameColor ?? null,
         bio: home.profile.bio,
       }).where(eq(schema.users.id, detached.id)).run();
     }

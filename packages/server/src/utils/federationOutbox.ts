@@ -364,6 +364,7 @@ export function getDmParticipants(dmChannelId: string): FederationRelayParticipa
       displayName: schema.users.displayName,
       avatar: schema.users.avatar,
       avatarColor: schema.users.avatarColor,
+      nameColor: schema.users.nameColor,
       status: schema.users.status,
       isDeleted: schema.users.isDeleted,
     })
@@ -392,6 +393,7 @@ export function getDmParticipants(dmChannelId: string): FederationRelayParticipa
         displayName: m.displayName ?? null,
         avatar: m.avatar ?? null,
         avatarColor: m.avatarColor ?? null,
+      nameColor: m.nameColor ?? null,
         // Only carry presence for native participants — replicated stubs hold
         // stale status owned by their home; emitting it would flap remote UIs.
         status: !m.homeInstance ? (m.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,
@@ -929,6 +931,7 @@ export function queueGroupMetadataRelay(
       displayName: schema.users.displayName,
       avatar: schema.users.avatar,
       avatarColor: schema.users.avatarColor,
+      nameColor: schema.users.nameColor,
       status: schema.users.status,
     })
     .from(schema.users)
@@ -948,6 +951,7 @@ export function queueGroupMetadataRelay(
       displayName: actorRow.displayName ?? null,
       avatar: actorRow.avatar ?? null,
       avatarColor: actorRow.avatarColor ?? null,
+      nameColor: actorRow.nameColor ?? null,
       // Only carry presence for native participants — replicated stubs hold
       // stale status owned by their home; emitting it would flap remote UIs.
       status: !actorRow.homeInstance ? (actorRow.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,

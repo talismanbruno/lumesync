@@ -122,3 +122,24 @@ describe('processProfileUpdateEvent — displayName fallback', () => {
     expect(row!.displayName).toBe('Peter B.');
   });
 });
+
+
+describe('profile name color federation', () => {
+  it('applies home-approved gold, preserves it for older peers, and supports resetting to white', async () => {
+    const { processProfileUpdateEvent } = await import('./federation.js');
+    const event: FederationRelayEvent = {
+      eventType: 'profile_update', contextType: 'profile', messageId: 'color', encryptionVersion: 0, timestamp: Date.now(),
+      profileUpdate: { homeUserId: 'home-1', homeInstance: 'orbit.ddns.net', profileUpdatedAt: 2000, username: 'pbtest3', displayName: null, avatar: null, banner: null, accentColor: null, avatarColor: null, bio: null, nameColor: 'gold' },
+    };
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, 'stub-1')).get()!.nameColor).toBe('gold');
+    delete event.profileUpdate!.nameColor;
+    event.profileUpdate!.profileUpdatedAt++;
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, 'stub-1')).get()!.nameColor).toBe('gold');
+    event.profileUpdate!.nameColor = null;
+    event.profileUpdate!.profileUpdatedAt++;
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, 'stub-1')).get()!.nameColor).toBeNull();
+  });
+});

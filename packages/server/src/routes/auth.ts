@@ -550,13 +550,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    // Note: status='online' is set exclusively by the WebSocket auth path
+    // Visible presence is restored exclusively by the WebSocket auth path
     // (ws/handler.ts). A successful REST /login does not by itself imply a
     // live connection — the client may never establish a WS (transient
     // network failure, mobile background, error path), which would otherwise
     // produce a permanently stuck-online row that no disconnect timer can
     // clean up. The user's reported status remains whatever it was; the WS
-    // handshake will flip it to 'online' once a real socket attaches.
+    // handshake will restore the saved manual preference when a socket attaches.
     const token = signJwt({ userId: user.id, username: user.username });
     setMediaAuthCookie(reply, token);
 

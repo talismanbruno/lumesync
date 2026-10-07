@@ -213,3 +213,9 @@ interface AvatarStackProps {
 | `GroupDmSettings.tsx` (modal hero + member-row previews) | varies | `modal` | Modal Overview tab |
 | `MobileGroupDmInfo.tsx` (pushed-screen hero) | 80 | `modal` | Mobile info screen hero |
 | `MobileDmsScreen.tsx` (DM list rows) | 40 | `channel` | Mobile sidebar parity with desktop `DmListItem` |
+
+### Profile name appearance
+
+`ProfileName` and identity-aware `Username` share the profile-owned `nameColor` across chat, calls, member lists, friends, DMs and profile surfaces, with white as the default. They subscribe narrowly to canonical user-view and self color changes. Role/group labels keep their role colors but no longer implicitly tint names. Admin gold uses a static metallic text gradient with a restrained glow; it runs no continuous animation. AccountPanel shows unsaved choices in its profile preview.
+
+`WhatsNew` presents curated release highlights once per canonical account/release after authentication, remembers explicit dismissal locally with a session fallback, and can be reopened from desktop/mobile settings. The dialog uses the fullscreen-aware portal, keyboard focus containment, viewport scrolling and no continuous background animation.

@@ -4,6 +4,13 @@ import { normalizeOrigin, shouldGrantAppPermission } from './permissionPolicy';
 const trusted = new Set(['https://lumesocial.online']);
 
 describe('desktop permission policy', () => {
+  it('allows copying for the trusted app without allowing clipboard reads or other origins', () => {
+    expect(shouldGrantAppPermission('clipboard-sanitized-write', 'https://lumesocial.online/channels/@me', trusted)).toBe(true);
+    expect(shouldGrantAppPermission('clipboard-sanitized-write', 'https://evil.example/', trusted)).toBe(false);
+    expect(shouldGrantAppPermission('clipboard-read', 'https://lumesocial.online/', trusted)).toBe(false);
+    expect(shouldGrantAppPermission('deprecated-sync-clipboard-read', 'https://lumesocial.online/', trusted)).toBe(false);
+  });
+
   it('allows call permissions only for the trusted Lume origin', () => {
     expect(shouldGrantAppPermission('media', 'https://lumesocial.online/channels/@me', trusted)).toBe(true);
     expect(shouldGrantAppPermission('display-capture', 'https://lumesocial.online/', trusted)).toBe(true);

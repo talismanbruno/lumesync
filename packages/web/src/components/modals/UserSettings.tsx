@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
@@ -52,6 +53,7 @@ function SettingsScrollContainer({ children }: { children: React.ReactNode }) {
 export function UserSettingsModal() {
   const activeModal = useUIStore((s) => s.activeModal);
   const modalData = useUIStore((s) => s.modalData);
+  const openModal = useUIStore((s) => s.openModal);
   const closeModal = useUIStore((s) => s.closeModal);
   const isMobile = useUIStore((s) => s.isMobile);
   const isAdmin = useAuthStore((s) => s.user?.isAdmin);
@@ -112,7 +114,7 @@ export function UserSettingsModal() {
               avatarColor={user?.avatarColor}
             />
             <div className="min-w-0">
-              <div className="text-sm font-medium text-txt-primary truncate">{user?.displayName || user?.username}</div>
+              <div className="text-sm font-medium text-txt-primary truncate"><ProfileName user={user}>{user?.displayName || user?.username}</ProfileName></div>
               <div className="text-xs text-txt-tertiary truncate">@{user?.username}</div>
             </div>
           </div>
@@ -127,6 +129,7 @@ export function UserSettingsModal() {
             <div className="border-t border-white/[0.04] my-2 mx-2" />
             <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
             <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
+            <button onClick={() => openModal('whatsNew')} className="w-full text-left px-3 py-2 rounded-md text-sm text-cyan-200 hover:bg-cyan-300/5 transition-colors">O que há de novo</button>
             <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
             {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 
@@ -163,7 +166,7 @@ export function UserSettingsModal() {
                 avatarColor={user?.avatarColor}
               />
               <div className="min-w-0">
-                <div className="text-sm font-medium text-txt-primary truncate">{user?.displayName || user?.username}</div>
+                <div className="text-sm font-medium text-txt-primary truncate"><ProfileName user={user}>{user?.displayName || user?.username}</ProfileName></div>
                 <div className="text-xs text-txt-tertiary truncate">@{user?.username}</div>
               </div>
             </div>
@@ -177,6 +180,7 @@ export function UserSettingsModal() {
               <div className="border-t border-white/[0.04] my-2 mx-2" />
               <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
               <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
+            <button onClick={() => openModal('whatsNew')} className="w-full text-left px-3 py-2 rounded-md text-sm text-cyan-200 hover:bg-cyan-300/5 transition-colors">O que há de novo</button>
               <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
               {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 

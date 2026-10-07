@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import type { DmChannel, User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
@@ -153,7 +154,7 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1 min-w-0">
           <span className={nameClass}>
-            {displayName}
+            <ProfileName user={isGroup ? undefined : firstOther}>{displayName}</ProfileName>
           </span>
           <DmPreferenceMarks dm={dm} />
           {showGroupGlobe && (

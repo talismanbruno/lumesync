@@ -1,3 +1,5 @@
+import { ProfileName } from '../ui/ProfileName';
+import { getNameStyle } from '../../utils/nameAppearance';
 import { t as uiText } from '../../i18n';
 import React, { useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -49,9 +51,9 @@ function MentionMemberRow({
       />
       <span
         className={`${mobile ? 'text-[15px]' : 'text-[14px]'} font-medium truncate`}
-        style={roleColor ? { color: roleColor } : undefined}
+        style={getNameStyle(canonical)}
       >
-        {displayName}
+        <ProfileName user={canonical}>{displayName}</ProfileName>
       </span>
       {canonical.displayName && (
         <span className="text-[12px] text-txt-tertiary truncate">
@@ -203,11 +205,8 @@ function MobileMention({
 
 export function MentionPopover({ query, selectedIndex, onSelect, anchorRef }: MentionPopoverProps) {
   const members = useSpaceStore((s) => s.members);
-  const spaces = useSpaceStore((s) => s.spaces);
-  const currentSpaceId = useSpaceStore((s) => s.currentSpaceId);
   const isMobile = useUIStore((s) => s.isMobile);
 
-  const ownerId = spaces.find((s) => s.id === currentSpaceId)?.ownerId;
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -222,14 +221,7 @@ export function MentionPopover({ query, selectedIndex, onSelect, anchorRef }: Me
 
   if (filtered.length === 0) return null;
 
-  const getMemberColor = (member: MemberWithUser): string | undefined => {
-    if (member.roles && member.roles.length > 0) {
-      const sorted = [...member.roles].sort((a, b) => b.position - a.position);
-      return sorted[0]!.color;
-    }
-    if (ownerId && member.userId === ownerId) return '#fda4af';
-    return undefined;
-  };
+  const getMemberColor = (member: MemberWithUser): string | undefined => getNameStyle(member.user).color;
 
   if (isMobile) {
     return (

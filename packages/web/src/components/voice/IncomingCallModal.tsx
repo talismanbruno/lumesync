@@ -1,3 +1,4 @@
+import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useRef } from 'react';
 import { useVoiceStore } from '../../stores/voiceStore';
@@ -112,7 +113,7 @@ export function IncomingCallModal() {
 
           {/* Caller info */}
           <div className="text-center">
-            <h3 className="text-[20px] font-bold text-txt-primary">{callerBaseName}</h3>
+            <h3 className="text-[20px] font-bold text-txt-primary"><ProfileName user={callerMember}>{callerBaseName}</ProfileName></h3>
             <p className="text-[14px] text-txt-tertiary mt-1">{uiText("Chamada de voz recebida...")}</p>
           </div>
 
