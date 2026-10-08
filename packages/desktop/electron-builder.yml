@@ -45,6 +45,7 @@ win:
   target:
     - nsis
 linux:
+  executableName: lume
   icon: build/icons/
   target:
     - AppImage

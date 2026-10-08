@@ -46,6 +46,8 @@ function main() {
   const version = checkVersions(JSON.parse(readFileSync('package.json')).version,
     JSON.parse(readFileSync('packages/desktop/package.json')).version,
     readFileSync('android/app/build.gradle.kts', 'utf8'), process.env.GITHUB_REF);
+  const advertised = readFileSync('packages/web/src/config/desktopDownloads.ts', 'utf8').match(/LUME_DESKTOP_VERSION\s*=\s*'([^']+)'/)?.[1];
+  if (advertised !== version) throw new Error('Website download version differs from release');
   const [mode, directory] = process.argv.slice(2);
   if (mode === 'version') {
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);

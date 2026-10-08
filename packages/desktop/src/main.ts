@@ -852,7 +852,7 @@ function initAutoUpdater(): void {
       if (updateConfirmed || startupUpdateGateActive) {
         mainWindow?.webContents.send('update-error', {
           message,
-          releaseUrl: 'https://github.com/talismanbruno/lumesync/releases/latest',
+          releaseUrl: 'https://github.com/talismanbruno/lumesync/releases',
         });
       }
       if (startupUpdateGateActive) {

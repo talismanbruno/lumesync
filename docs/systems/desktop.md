@@ -242,7 +242,7 @@ Powered by `electron-updater`. Loaded via `require()` (not import) for graceful 
 ```
 autoDownload: true
 autoInstallOnAppQuit: true
-Publish: GitHub (TheZwiss/backspace)
+Publish: GitHub (talismanbruno/lumesync)
 ```
 
 **Signing status (as of v1.0.0):** all builds are unsigned. Consequences:

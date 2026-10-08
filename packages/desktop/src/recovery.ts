@@ -437,7 +437,7 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       return;
     }
     case 'open-releases': {
-      shell.openExternal('https://github.com/talismanbruno/lumesync/releases/latest');
+      shell.openExternal('https://github.com/talismanbruno/lumesync/releases');
       return;
     }
     case 'quit': {
