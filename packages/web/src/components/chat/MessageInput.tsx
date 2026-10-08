@@ -978,7 +978,7 @@ export function MessageInput({ channelId, channelName, placeholder }: MessageInp
               title={uiText("GIF")}
               aria-label={uiText("GIF picker")}
             >
-              <span aria-hidden="true" className="rounded-[4px] border border-current/50 px-1 py-0.5 text-[10px] font-extrabold leading-none tracking-[0.04em]">GIF</span>
+              <span aria-hidden="true" className="rounded-[4px] px-1 py-0.5 text-[10px] font-extrabold leading-none tracking-[0.04em]">GIF</span>
             </button>
           )}
 

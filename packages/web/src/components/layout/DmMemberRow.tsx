@@ -2,10 +2,7 @@ import { t as uiText } from '../../i18n';
 import React, { useRef } from 'react';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
-import { VerifiedBadge } from '../ui/VerifiedBadge';
-import { PioneerBadge } from '../ui/PioneerBadge';
-import { BetaContributorBadge } from '../ui/BetaContributorBadge';
-import { isPioneer } from '../../utils/pioneer';
+import { UserBadges } from '../ui/UserBadges';
 import { Username } from '../ui/Username';
 import { Tooltip } from '../ui/Tooltip';
 import { parseFederatedUsername, isFederationGlobeApplicable } from '../../utils/identity';
@@ -205,9 +202,7 @@ export function DmMemberRow({
               isOffline ? 'text-txt-tertiary' : 'text-txt-primary'
             }`}
           />
-          {canonical.isAdmin && <VerifiedBadge size={13} />}
-          {isPioneer(canonical) && <PioneerBadge size={14} />}
-          {canonical.isBetaContributor && !canonical.isDeleted && <BetaContributorBadge size={14} />}
+          <UserBadges user={canonical} size={14} />
           {showGlobe && (
             <Tooltip content={canonical.username} position="top">
               <span data-federation-globe className="inline-flex">

@@ -944,11 +944,15 @@ See `scripts/gen-icons.README.md` for the regeneration workflow and version-bump
 ```yaml
 publish:
   - provider: github
-    owner: TheZwiss
-    repo: backspace
+    owner: talismanbruno
+    repo: lumesync
 ```
 
 GitHub releases are the update source. The `electron-updater` library handles checking, downloading, and applying updates.
+
+The unified `Lume Release` workflow (`.github/workflows/release.yml`) runs on `v*` tags or manual dispatch. Root, desktop and Android versions must match; tagged runs also check the tag. Desktop packages are built with `--publish never` on native OS runners, keeping the `afterPack` native module cleanup. Both Mac architectures are built together to preserve one update manifest. Update manifests and their referenced sizes and SHA-512 hashes are verified before upload.
+
+The workflow checks the version inside each packaged `app.asar`, verifies DMG integrity, and requires Windows, both Mac DMGs and the Android APK before creating a draft. Release notes live in `docs/releases/v<version>.md`; `SHA256SUMS.txt` covers downloaded assets. Maintainers publish the complete draft after checking CI and the matching server deployment. Unsigned Mac builds use manual downloads; Android beta APKs retain development signing and are not Play Store builds. Never rename a stale binary to match a new tag.
 
 ---
 

@@ -1,6 +1,6 @@
 # Lume Mobile Beta (Android)
 
-Cliente nativo do Lume para Android, desenvolvido e validado por módulos.
+Aplicativo Android do Lume com a interface web e integração nativa para chamadas e compartilhamento de tela.
 
 O sistema visual móvel segue o aplicativo web autenticado do Lume: navegação raiz por Servidores, Conversas e Você, telas empilhadas para canais e chats, superfícies quase pretas e seleção em ciano.
 
@@ -28,6 +28,8 @@ Abra a pasta `android` no Android Studio e execute o módulo `app`. Para gerar u
 
 ## Gerar no GitHub
 
-Uma tag no formato `android-v*` dispara a automação `Lume Android APK`. Ela executa os testes, compila o APK de teste e o publica em uma versão do GitHub.
+A automação `Lume Release` gera o APK junto dos instaladores desktop para tags `v*` ou execução manual. As versões do Android, desktop e release devem coincidir. Ela executa os testes Android, verifica a versão e assinatura do APK e reúne os arquivos em um rascunho completo antes da publicação. A automação `Lume Android APK` permanece disponível para testes Android isolados.
 
 O APK inicial é assinado com a chave de desenvolvimento do Android. Ele é adequado para instalação direta e testes; uma publicação na Play Store deverá usar uma chave de produção guardada como segredo.
+
+Cada runner pode usar uma chave de desenvolvimento diferente. Se o Android rejeitar a atualização por incompatibilidade de assinatura, é necessário remover a versão de teste anterior e instalar a nova, entrando na conta novamente. Nunca publicar a chave privada como artefato. `versionCode` deve aumentar em cada atualização; a beta 20 usa `20`.

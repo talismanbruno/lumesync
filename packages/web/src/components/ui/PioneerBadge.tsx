@@ -18,7 +18,7 @@ export function PioneerBadge({
       label={title}
       className={`inline-flex shrink-0 items-center justify-center drop-shadow-[0_1px_2px_rgba(161,104,0,0.35)] ${className}`}
     >
-      <svg width={size} height={size} viewBox="0 -1.7 24 24" fill="none" aria-hidden="true">
+      <svg width={size} height={size} viewBox="2 0.3 20 20" fill="none" aria-hidden="true">
         <defs>
           <linearGradient id="lume-pioneer-gold" x1="5" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
             <stop stopColor="#FFE477" />

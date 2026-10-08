@@ -13,10 +13,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useFederationStore } from '../../stores/federationStore';
 import { Avatar } from '../ui/Avatar';
 import { PeopleIcon } from '../ui/PeopleIcon';
-import { VerifiedBadge } from '../ui/VerifiedBadge';
-import { PioneerBadge } from '../ui/PioneerBadge';
-import { BetaContributorBadge } from '../ui/BetaContributorBadge';
-import { isPioneer } from '../../utils/pioneer';
+import { UserBadges } from '../ui/UserBadges';
 import { MemberListToggleButton } from '../layout/MemberListToggleButton';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { api } from '../../api/client';
@@ -80,9 +77,7 @@ function ActivityFriendItem({
       <div className="flex-1 min-w-0">
         <div className="flex min-w-0 items-center gap-1">
           <Username user={canonical} username={friendDisplayName} className={`text-sm leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`} />
-          {canonical.isAdmin && <VerifiedBadge size={13} />}
-          {isPioneer(canonical) && <PioneerBadge size={14} />}
-          {canonical.isBetaContributor && !canonical.isDeleted && <BetaContributorBadge size={14} />}
+          <UserBadges user={canonical} size={14} />
         </div>
         {!isOffline && isFederationGlobeApplicable(canonical) && (
           <div className="text-[10px] leading-[1.3] text-txt-tertiary truncate opacity-60">@{parseFederatedUsername(canonical.username).domain}</div>

@@ -24,10 +24,7 @@ import { useDragManager, type DropTarget, type LayoutItem } from '../../hooks/us
 import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 import { useAudioDevices } from '../../hooks/useAudioDevices';
 import { AudioDevicePanel } from '../voice/AudioDevicePanel';
-import { VerifiedBadge } from '../ui/VerifiedBadge';
-import { PioneerBadge } from '../ui/PioneerBadge';
-import { BetaContributorBadge } from '../ui/BetaContributorBadge';
-import { isPioneer } from '../../utils/pioneer';
+import { UserBadges } from '../ui/UserBadges';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { PeopleIcon } from '../ui/PeopleIcon';
 import { useDmContextMenu } from '../../hooks/useDmContextMenu';
@@ -948,9 +945,7 @@ function UserAreaPanel({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="truncate text-[14px] font-bold text-txt-primary"><ProfileName user={user}>{user.displayName ?? user.username}</ProfileName></span>
-                  {user.isAdmin && <VerifiedBadge size={15} />}
-                  {isPioneer(user) && <PioneerBadge size={16} />}
-                  {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={16} />}
+                  <UserBadges user={user} size={16} />
                 </div>
                 <div className="truncate text-[11px] text-txt-tertiary">@{user.username}</div>
               </div>
@@ -1014,9 +1009,7 @@ function UserAreaPanel({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 min-w-0">
               <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight"><ProfileName user={user}>{user.displayName ?? user.username}</ProfileName></span>
-              {user.isAdmin && <VerifiedBadge size={13} />}
-              {isPioneer(user) && <PioneerBadge size={14} />}
-              {user.isBetaContributor && !user.isDeleted && <BetaContributorBadge size={14} />}
+              <UserBadges user={user} size={14} />
             </div>
             <div className="text-[11px] text-txt-tertiary truncate leading-tight group-hover:text-txt-secondary">@{user.username}</div>
           </div>

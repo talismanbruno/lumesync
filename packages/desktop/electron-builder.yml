@@ -17,6 +17,7 @@ files:
 asarUnpack:
   - "**/*.node"
 npmRebuild: false
+generateUpdatesFilesForAllChannels: true
 afterPack: ./scripts/afterPack.js
 # Releases are published in the official Lume repository. Windows uses the
 # generated latest.yml feed; unsigned macOS builds retain manual downloads.

@@ -7,7 +7,7 @@ export function BetaContributorBadge({ size = 16, className = '' }: { size?: num
   const label = 'Colaborador Beta — ajudou a melhorar o Lume';
   return (
     <BadgeTooltip name="Colaborador Beta" label={label} className={className}>
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width={size} height={size} viewBox="-0.3 -0.35 24.6 24.6" fill="none" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="5" y1="2" x2="20" y2="23" gradientUnits="userSpaceOnUse">
             <stop stopColor="#7BE6FF" />
