@@ -46,6 +46,7 @@ win:
     - nsis
 linux:
   executableName: lume
+  maintainer: Lume contributors
   icon: build/icons/
   target:
     - AppImage
