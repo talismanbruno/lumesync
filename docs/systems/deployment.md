@@ -2,6 +2,8 @@
 
 ## Unified Lume releases
 
+`Finalize Lume Release` is reusable from the build workflow and can recover a failed aggregation/upload through manual dispatch with the original run ID and full source SHA. It verifies the run belongs to `release.yml`, its commit matches, and all six validation/native jobs succeeded. It checks out that exact source and verifies downloaded files and manifests before creating or updating a draft. It never replaces a published release or relabels binaries from a different commit.
+
 `.github/workflows/release.yml` assembles desktop installers, Android APK and update feeds from one commit into a complete draft release. `scripts/verify-release.mjs` rejects mismatched versions, missing downloads or update manifests referencing corrupt assets. Notes are maintained manually in `docs/releases/`. Publish the draft after CI and the matching Oracle deployment pass. A tag created by the workflow's `GITHUB_TOKEN` does not trigger other workflows: for manual releases, explicitly run `docker-publish.yml` with the matching version tag, retain its security gates, and promote that exact commit using the existing backup and rollback procedure.
 
 Operator- and contributor-facing reference for hosting Backspace: the Docker build pipeline, admin bootstrap, database backup/restore, image pinning, and the relevant environment variables.

@@ -1,0 +1,80 @@
+name: Finalize Lume Release
+
+on:
+  workflow_call:
+    inputs:
+      build_run_id:
+        required: true
+        type: string
+      source_sha:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Lume Release run containing all successful native builds'
+        required: true
+        type: string
+      source_sha:
+        description: 'Exact full commit SHA of those builds'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Verify artifact source and successful native builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID" > /tmp/build-run.json
+          test "$(jq -r .head_sha /tmp/build-run.json)" = "$SOURCE_SHA"
+          test "$(jq -r .path /tmp/build-run.json)" = '.github/workflows/release.yml'
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID/jobs?filter=latest&per_page=100" > /tmp/build-jobs.json
+          jq -e '[.jobs[] | select(.name == "validate" or .name == "android" or (.name | startswith("desktop (")))] | length == 6 and all(.conclusion == "success")' /tmp/build-jobs.json
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ inputs.source_sha }}
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          version: 10.34.3
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 20
+      - name: Check version at the build commit
+        id: version
+        run: node scripts/verify-release.mjs version
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.build_run_id }}
+          pattern: release-*
+          merge-multiple: true
+          path: release-assets
+      - name: Verify downloads and write checksums
+        run: node scripts/verify-release.mjs assets release-assets
+      - name: Create complete release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          tag="v$RELEASE_VERSION"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            test "$(gh release view "$tag" --json isDraft --jq .isDraft)" = true
+            test "$(gh release view "$tag" --json targetCommitish --jq .targetCommitish)" = "$SOURCE_SHA"
+          else
+            gh release create "$tag" --target "$SOURCE_SHA" --draft --prerelease --title "Lume $RELEASE_VERSION" --notes-file "docs/releases/$tag.md"
+          fi
+          gh release upload "$tag" release-assets/* --clobber
