@@ -32,4 +32,4 @@ A automação `Lume Release` gera o APK junto dos instaladores desktop para tags
 
 O APK inicial é assinado com a chave de desenvolvimento do Android. Ele é adequado para instalação direta e testes; uma publicação na Play Store deverá usar uma chave de produção guardada como segredo.
 
-Cada runner pode usar uma chave de desenvolvimento diferente. Se o Android rejeitar a atualização por incompatibilidade de assinatura, é necessário remover a versão de teste anterior e instalar a nova, entrando na conta novamente. Nunca publicar a chave privada como artefato. `versionCode` deve aumentar em cada atualização; a beta 20 usa `20`.
+Cada runner pode usar uma chave de desenvolvimento diferente. Se o Android rejeitar a atualização por incompatibilidade de assinatura, é necessário remover a versão de teste anterior e instalar a nova, entrando na conta novamente. Nunca publicar a chave privada como artefato. `versionCode` deve aumentar em cada atualização; a beta 21 usa `21`.

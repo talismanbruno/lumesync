@@ -1,3 +1,4 @@
+import { parseProfileCustomization } from '@backspace/shared';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, or, ne, sql, isNull } from 'drizzle-orm';
 import { getDb, getRawDb, schema } from '../db/index.js';
@@ -35,7 +36,8 @@ export function buildProfileSnapshot(user: typeof schema.users.$inferSelect): Fe
     displayName: user.displayName ?? null,
     avatar: user.avatar ?? null,
     avatarColor: user.avatarColor ?? null,
-      nameColor: user.nameColor ?? null,
+    nameColor: user.nameColor ?? null,
+    customization: parseProfileCustomization(user.customization),
     banner: user.banner ?? null,
     bio: user.bio ?? null,
     status,
@@ -357,7 +359,8 @@ async function handleFederatedFriendRequest(
         displayName: lookup.profile.displayName,
         avatar: lookup.profile.avatar,
         avatarColor: lookup.profile.avatarColor,
-      nameColor: lookup.profile.nameColor,
+        nameColor: lookup.profile.nameColor,
+        customization: lookup.profile.customization ?? null,
         banner: lookup.profile.banner,
         bio: lookup.profile.bio,
         status: lookup.profile.status ?? null,

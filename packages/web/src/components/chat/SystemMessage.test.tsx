@@ -4,6 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { SystemMessage } from './SystemMessage';
 import type { DmChannel, MessageWithUser, User } from '@backspace/shared';
 
+vi.mock('../../stores/authStore', () => ({
+  useAuthStore: (selector: (state: { user: null }) => unknown) => selector({ user: null }),
+}));
+
 // SpaceInviteCard is unrelated to the cases under test but is imported by
 // SystemMessage; stub its store hooks so the import graph resolves cleanly.
 vi.mock('../../stores/spaceStore', () => ({

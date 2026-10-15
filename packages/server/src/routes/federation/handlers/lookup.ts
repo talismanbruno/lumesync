@@ -1,3 +1,4 @@
+import { parseProfileCustomization } from '@backspace/shared';
 import { getDb, schema } from '../../../db/index.js';
 import { and, eq, isNull, or } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
@@ -64,7 +65,8 @@ export function registerLookupRoutes(app: FastifyInstance): void {
             displayName: user.displayName,
             avatar: user.avatar,
             avatarColor: user.avatarColor,
-      nameColor: user.nameColor,
+            nameColor: user.nameColor,
+            customization: parseProfileCustomization(user.customization),
             banner: user.banner,
             bio: user.bio,
             status: user.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null,
@@ -129,7 +131,8 @@ export function registerLookupRoutes(app: FastifyInstance): void {
             displayName: user.displayName,
             avatar: user.avatar,
             avatarColor: user.avatarColor,
-      nameColor: user.nameColor,
+            nameColor: user.nameColor,
+            customization: parseProfileCustomization(user.customization),
             status: user.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null,
             banner: user.banner,
             bio: user.bio,

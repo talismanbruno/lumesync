@@ -10,5 +10,7 @@ export function ProfileName({ user, children }: { user?: Partial<User> | null; c
   const key = user?.id ? canonicalUserKey({ ...user, id: user.id }) : null;
   const cachedColor = useSpaceStore((state) => key ? state.userViews?.get(key)?.user.nameColor : undefined);
   const selfColor = useAuthStore((state) => user?.id && isSelf({ ...user, id: user.id, username: user.username ?? '' }, state.user) ? state.user?.nameColor : undefined);
-  return <span style={getNameStyle({ nameColor: selfColor !== undefined ? selfColor : cachedColor !== undefined ? cachedColor : user?.nameColor })}>{children}</span>;
+  const cachedCustomization = useSpaceStore((state) => key ? state.userViews?.get(key)?.user.customization : undefined);
+  const selfCustomization = useAuthStore((state) => user?.id && isSelf({ ...user, id: user.id, username: user.username ?? '' }, state.user) ? state.user?.customization : undefined);
+  return <span className="lume-profile-name" style={getNameStyle({ nameColor: selfColor !== undefined ? selfColor : cachedColor !== undefined ? cachedColor : user?.nameColor, customization: selfCustomization !== undefined ? selfCustomization : cachedCustomization !== undefined ? cachedCustomization : user?.customization })}>{children}</span>;
 }

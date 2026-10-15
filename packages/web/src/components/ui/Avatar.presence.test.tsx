@@ -14,6 +14,12 @@ afterAll(() => vi.unstubAllGlobals());
 vi.mock('../../stores/uiStore', () => ({
   useUIStore: (selector: (state: any) => any) => selector({ isMobile: false, openUserProfile: vi.fn() }),
 }));
+vi.mock('../../stores/authStore', () => ({
+  useAuthStore: (selector: (state: { user: null }) => unknown) => selector({ user: null }),
+}));
+vi.mock('../../stores/spaceStore', () => ({
+  useSpaceStore: (selector: (state: { userViews: Map<string, never> }) => unknown) => selector({ userViews: new Map() }),
+}));
 
 describe('avatar presence tooltip', () => {
   it.each<[UserStatus, string, string | undefined]>([

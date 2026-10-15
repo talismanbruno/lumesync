@@ -179,7 +179,7 @@ export function buildVoiceParticipantMenuItems(
       onChange: checked => { if (checked !== useVoiceStore.getState().isDeafened) handleDeafenAction(enforced().deafened); },
     }, {
       key: 'edit-profile', type: 'action', label: "Editar meu perfil",
-      onClick: () => useUIStore.getState().openModal('userSettings', { tab: 'account' }),
+      onClick: () => useUIStore.getState().openModal('userSettings', { tab: 'profile' }),
     });
   } else {
     items.push({

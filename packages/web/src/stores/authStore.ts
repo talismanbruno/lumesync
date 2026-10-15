@@ -21,7 +21,7 @@ interface AuthState {
   register: (username: string, password: string, displayName?: string, avatarColor?: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
-  updateProfile: (data: { displayName?: string; avatar?: string; banner?: string; accentColor?: string; nameColor?: string; avatarColor?: string; bio?: string; customStatus?: string; status?: UserStatus }) => Promise<void>;
+  updateProfile: (data: { displayName?: string; avatar?: string; banner?: string; accentColor?: string; nameColor?: string; customization?: User['customization']; avatarColor?: string; bio?: string; customStatus?: string; status?: UserStatus }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<FederationOpResult[]>;
   deleteAccount: (password: string, username: string) => Promise<void>;
   setUser: (user: User) => void;

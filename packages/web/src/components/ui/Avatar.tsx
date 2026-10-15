@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { User, UserStatus } from '@backspace/shared';
+import type { User, UserStatus, ProfileCustomization } from '@backspace/shared';
+import { cosmeticAvatarUrl } from '../../stores/customizationStore';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useAuthStore } from '../../stores/authStore';
+import { useSpaceStore } from '../../stores/spaceStore';
+import { canonicalUserKey, isSelf } from '../../utils/identity';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient } from '../../utils/gradients';
 import { resolveAvatarSource } from '../../utils/safeUrls';
@@ -19,6 +24,7 @@ interface AvatarProps {
   ring?: { width: number; color: string };
   avatarColor?: string | null;
   freezeAnimation?: boolean;
+  customization?: ProfileCustomization | null;
 }
 
 const frozenAvatarCache = new Map<string, string>();
@@ -99,15 +105,22 @@ function getDotMetrics(avatarSize: number, ringWidth: number = 0) {
   return { dot, gap, inset: avatarInset + ringWidth };
 }
 
-export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false }: AvatarProps) {
+export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false, customization }: AvatarProps) {
   const openUserProfile = useUIStore((s) => s.openUserProfile);
+  const identityKey = user ? canonicalUserKey(user) : userId ?? null;
+  const cachedCustomization = useSpaceStore(state => identityKey ? state.userViews?.get(identityKey)?.user.customization : undefined);
+  const selfCustomization = useAuthStore(state => user ? (isSelf(user, state.user) ? state.user?.customization : undefined) : userId === state.user?.id ? state.user?.customization : undefined);
+  const appearance = customization !== undefined ? customization : selfCustomization !== undefined ? selfCustomization : cachedCustomization !== undefined ? cachedCustomization : user?.customization;
+  const reducedMotion = useReducedMotion();
+  const freeze = freezeAnimation || reducedMotion;
+  const decoration = cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze);
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
   const resolvedSrc = useMemo(() => {
     return resolveAvatarSource(src);
   }, [src]);
-  const displaySrc = useFrozenAvatar(resolvedSrc, freezeAnimation);
+  const displaySrc = useFrozenAvatar(resolvedSrc, freeze);
 
   const ringWidth = ring?.width ?? 0;
   const outerSize = size + ringWidth * 2;
@@ -172,6 +185,7 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
           {initials}
         </div>
       </div>
+      {decoration && <img key={decoration} src={decoration} alt="" aria-hidden="true" className="lume-avatar-decoration" style={{ position: 'absolute', pointerEvents: 'none', width: '120%', height: '120%', maxWidth: 'none', left: '-10%', top: '-10%' }} loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />}
       {/* Status dot — outside the masked div so it isn't clipped */}
       {status && (
         <div

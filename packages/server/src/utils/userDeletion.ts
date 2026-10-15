@@ -264,6 +264,7 @@ export function tombstoneUser(uid: string, options?: TombstoneOptions): string[]
       customStatus: null,
       accentColor: null,
       nameColor: null,
+      customization: null,
       avatarColor: null,
       replicatedInstances: '[]',
       isDeleted: 1,

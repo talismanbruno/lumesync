@@ -2,6 +2,7 @@ import { t as uiText } from '../../i18n';
 import React, { useRef } from 'react';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
+import { Nameplate } from '../ui/ProfileCosmetics';
 import { UserBadges } from '../ui/UserBadges';
 import { Username } from '../ui/Username';
 import { Tooltip } from '../ui/Tooltip';
@@ -182,8 +183,9 @@ export function DmMemberRow({
       data-dm-member-row
       data-user-id={canonical.id}
       onContextMenu={handleContextMenu}
-      className="group flex items-center gap-2.5 px-2 py-1.5 rounded-[6px] hover:bg-interactive-hover transition-colors select-none"
+      className="lume-nameplate-host group flex items-center gap-2.5 px-2 py-1.5 rounded-[6px] hover:bg-interactive-hover transition-colors select-none"
     >
+      <Nameplate flag={canonical.customization?.nameplateFlag} id={canonical.customization?.nameplateId} />
       <div className="flex-shrink-0">
         <Avatar
           src={canonical.avatar}

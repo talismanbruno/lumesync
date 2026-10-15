@@ -1,5 +1,8 @@
 // ─── Constants ──────────────────────────────────────────────────────────────
 
+import type { ProfileCustomization } from './customization.js';
+export * from './customization.js';
+
 export const MAX_MESSAGE_LENGTH = 4000;
 
 // ─── User Types ─────────────────────────────────────────────────────────────
@@ -15,6 +18,7 @@ export interface User {
   banner: string | null;
   accentColor: string | null;
   nameColor?: string | null;
+  customization?: ProfileCustomization | null;
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
@@ -582,6 +586,7 @@ export interface UpdateUserRequest {
   banner?: string;
   accentColor?: string;
   nameColor?: string;
+  customization?: ProfileCustomization | null;
   avatarColor?: string;
   bio?: string;
   customStatus?: string;
@@ -724,6 +729,7 @@ export interface Friend {
   banner: string | null;
   accentColor: string | null;
   nameColor?: string | null;
+  customization?: ProfileCustomization | null;
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
@@ -1190,6 +1196,7 @@ export interface FederationRelayProfileSnapshot {
   avatar?: string | null;
   avatarColor?: string | null;
   nameColor?: string | null;
+  customization?: ProfileCustomization | null;
   banner?: string | null;
   bio?: string | null;
   // Current presence at the moment the snapshot was built. Optional for
@@ -1224,6 +1231,7 @@ export interface FederationProfileUpdatePayload {
   banner: string | null;
   accentColor: string | null;
   nameColor?: string | null;
+  customization?: ProfileCustomization | null;
   avatarColor: string | null;
   bio: string | null;
 }
@@ -1343,6 +1351,7 @@ export interface FederationUserLookupRequest {
 
 export interface FederationUserLookupProfile {
   nameColor?: string | null;
+  customization?: ProfileCustomization | null;
   displayName: string | null;
   avatar: string | null;
   avatarColor: AvatarColor | null;

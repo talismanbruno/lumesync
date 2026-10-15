@@ -15,7 +15,7 @@ import { KeybindsPanel } from './settingsPanels/KeybindsPanel';
 import { isElectron } from '../../platform/platform';
 import { SettingsSectionsProvider, useSettingsSectionsContext } from './SettingsSectionsContext';
 
-type SettingsTab = 'account' | 'voice' | 'privacy' | 'connections' | 'keybinds' | 'desktop' | 'instance';
+type SettingsTab = 'account' | 'profile' | 'voice' | 'privacy' | 'connections' | 'keybinds' | 'desktop' | 'instance';
 
 function SidebarSubLinks() {
   const ctx = useSettingsSectionsContext();
@@ -68,7 +68,7 @@ export function UserSettingsModal() {
   useEffect(() => {
     if (isOpen) {
       const requested = modalData.tab as SettingsTab | undefined;
-      if (requested && ['account', 'voice', 'privacy', 'connections', 'keybinds', 'instance'].includes(requested)) {
+      if (requested && ['account', 'profile', 'voice', 'privacy', 'connections', 'keybinds', 'instance'].includes(requested)) {
         // Only allow instance tab for admins
         if (requested === 'instance' && !isAdmin) {
           setTab('account');
@@ -105,7 +105,7 @@ export function UserSettingsModal() {
         {/* Desktop Sidebar */}
         <div className="lume-settings-nav hidden md:flex w-64 flex-shrink-0 flex-col p-4 gap-3">
           {/* User card */}
-          <div className="lume-settings-identity p-3 flex items-center gap-3">
+          <button type="button" aria-label="Personalizar perfil" onClick={() => handleTabClick('profile')} className="lume-settings-identity p-3 flex items-center gap-3 text-left">
             <Avatar
               src={user?.avatar}
               name={user?.displayName || user?.username || ''}
@@ -117,19 +117,19 @@ export function UserSettingsModal() {
               <div className="text-sm font-medium text-txt-primary truncate"><ProfileName user={user}>{user?.displayName || user?.username}</ProfileName></div>
               <div className="text-xs text-txt-tertiary truncate">@{user?.username}</div>
             </div>
-          </div>
+          </button>
 
           {/* Nav list */}
           <div className="lume-settings-orbit-map p-2 flex-1 flex flex-col">
             <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">{uiText("Minha órbita")}</div>
             <button onClick={() => handleTabClick('account')} className={tabClass('account')}>{uiText("Identidade")}</button>
+            <button onClick={() => handleTabClick('profile')} className={tabClass('profile')}>Personalização</button>
             <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>{uiText("Voz, vídeo e som")}</button>
             <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>{uiText("Privacidade")}</button>
 
             <div className="border-t border-white/[0.04] my-2 mx-2" />
             <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
             <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
-            <button onClick={() => openModal('whatsNew')} className="w-full text-left px-3 py-2 rounded-md text-sm text-cyan-200 hover:bg-cyan-300/5 transition-colors">O que há de novo</button>
             <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
             {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 
@@ -150,6 +150,7 @@ export function UserSettingsModal() {
               className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
             >
               {uiText("Sair")}</button>
+            <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
           </div>
         </div>
 
@@ -174,13 +175,13 @@ export function UserSettingsModal() {
             <div className="lume-settings-orbit-map p-2 space-y-0.5">
               <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">{uiText("Minha órbita")}</div>
               <button onClick={() => handleTabClick('account')} className={tabClass('account')}>{uiText("Identidade")}</button>
+              <button onClick={() => handleTabClick('profile')} className={tabClass('profile')}>Personalização</button>
               <button onClick={() => handleTabClick('voice')} className={tabClass('voice')}>{uiText("Voz, vídeo e som")}</button>
               <button onClick={() => handleTabClick('privacy')} className={tabClass('privacy')}>{uiText("Privacidade")}</button>
 
               <div className="border-t border-white/[0.04] my-2 mx-2" />
               <div className="text-[9px] font-bold text-txt-tertiary uppercase tracking-[0.2em] px-3 py-2">{uiText("Sistema Lume")}</div>
               <button onClick={() => handleTabClick('connections')} className={tabClass('connections')}>{uiText("Conexões")}</button>
-            <button onClick={() => openModal('whatsNew')} className="w-full text-left px-3 py-2 rounded-md text-sm text-cyan-200 hover:bg-cyan-300/5 transition-colors">O que há de novo</button>
               <button onClick={() => handleTabClick('keybinds')} className={tabClass('keybinds')}>{uiText("Atalhos")}</button>
               {isElectron() && <button onClick={() => handleTabClick('desktop')} className={tabClass('desktop')}>{uiText("Desktop")}</button>}
 
@@ -198,6 +199,7 @@ export function UserSettingsModal() {
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
               >
                 {uiText("Sair")}</button>
+            <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
             </div>
           </div>
         )}
@@ -205,7 +207,7 @@ export function UserSettingsModal() {
         {/* Content area (desktop always, mobile only when viewing content) */}
         {(!isMobile || mobileView === 'content') && (
           <SettingsScrollContainer>
-            <div className="px-6 max-w-[640px] mx-auto">
+            <div className={`px-6 mx-auto ${tab === 'profile' ? 'max-w-[900px]' : 'max-w-[640px]'}`}>
               {/* Mobile back button */}
               {isMobile && (
                 <button
@@ -219,6 +221,7 @@ export function UserSettingsModal() {
                   {uiText("Settings")}</button>
               )}
               {tab === 'account' && <AccountPanel />}
+              {tab === 'profile' && <AccountPanel profileOnly />}
               {tab === 'voice' && <VoicePanel />}
               {tab === 'privacy' && <PrivacyPanel />}
               {tab === 'connections' && <ConnectionsPanel />}

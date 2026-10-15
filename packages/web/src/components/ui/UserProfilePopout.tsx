@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import type { User } from '@backspace/shared';
 import { Avatar } from '../ui/Avatar';
+import { ProfileBanner } from './FlagCanvas';
+import { Nameplate, ProfileCosmetics } from './ProfileCosmetics';
 import { Username } from '../ui/Username';
 import { UserBadges } from './UserBadges';
 import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/spaceStore';
@@ -93,19 +95,14 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
 
   return (
     <div
-      className="fixed z-[200] w-[340px] rounded-[12px] overflow-hidden animate-fade-in select-none glass-modal"
+      className="lume-profile-cosmetic-surface fixed z-[200] w-[340px] rounded-[12px] animate-fade-in select-none glass-modal"
       style={position
-        ? { top, left }
-        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+        ? { top, left, backgroundColor: user.customization?.themeColor || undefined }
+        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: user.customization?.themeColor || undefined }}
     >
       {/* Banner */}
-      <div
-        className="h-[80px] rounded-t-[12px]"
-        style={bannerSrc
-          ? { backgroundImage: `url(${bannerSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { background: bannerFallback }
-        }
-      />
+      <ProfileCosmetics customization={user.customization} />
+      <ProfileBanner className="h-[80px] rounded-t-[12px]" customization={user.customization} src={bannerSrc} fallback={bannerFallback} />
 
       {/* Body */}
       <div className="px-4 pb-4 relative">
@@ -123,7 +120,8 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
 
         {/* Name & info */}
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="lume-nameplate-host flex items-center gap-1.5 rounded-md">
+            <Nameplate flag={user.customization?.nameplateFlag} id={user.customization?.nameplateId} />
             <Username user={user} username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
             <UserBadges user={user} size={16} />
           </div>

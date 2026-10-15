@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bandeiras — Lume</title>
+  <link rel="stylesheet" href="./bandeiras.css">
+</head>
+<body>
+  <main class="flag-selector" aria-labelledby="selector-title">
+    <header class="selector-header">
+      <div><span class="eyebrow">PERSONALIZAÇÃO LUME</span><h1 id="selector-title">Bandeiras</h1></div>
+      <a class="close-button" href="/channels/@me" aria-label="Fechar prévia">×</a>
+    </header>
+    <nav class="format-tabs" aria-label="Formato da bandeira">
+      <button type="button" aria-pressed="true" data-format="banner">Banner de perfil</button>
+      <button type="button" aria-pressed="false" data-format="plate">Placa de identificação</button>
+    </nav>
+    <div class="selector-body">
+      <section class="collection" aria-label="Biblioteca de bandeiras">
+        <div class="collection-toolbar">
+          <label class="search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Buscar país ou território" aria-label="Buscar país ou território" autocomplete="off"></label>
+          <span id="total" class="result-count" aria-live="polite">253 opções</span>
+        </div>
+        <div id="country-list" class="country-grid" role="group" aria-label="Escolher bandeira"></div>
+        <div class="pagination" aria-label="Páginas de bandeiras">
+          <span id="item-range" aria-live="polite"></span>
+          <div><button id="previous" type="button" aria-label="Página anterior">‹</button><span id="page-number"></span><button id="next" type="button" aria-label="Próxima página">›</button></div>
+        </div>
+      </section>
+      <aside class="selected-preview" aria-label="Prévia da bandeira selecionada">
+        <div class="preview-heading"><span>PRÉVIA AO VIVO</span><button id="pause" type="button" aria-pressed="false" aria-label="Pausar movimento">Ⅱ</button></div>
+        <section id="banner-preview" aria-label="Prévia do banner">
+          <article class="profile">
+            <div class="banner-art"><canvas id="banner-canvas" aria-label="Banner com bandeira ondulando"></canvas><div class="banner-shade"></div></div>
+            <div class="profile-body">
+              <div class="avatar"><span>L</span><i></i></div>
+              <div class="display-name">Lume Studio <span class="badge" aria-label="Verificado">✓</span><span class="pioneer" aria-label="Pioneiro">✹</span></div>
+              <div class="handle">@lume_studio</div>
+              <p>Na minha órbita.</p>
+              <div class="profile-meta"><span>MEMBRO DESDE</span><strong>15 de outubro de 2026</strong></div>
+            </div>
+          </article>
+        </section>
+        <section id="plate-preview" aria-label="Prévia da placa de identificação" hidden>
+          <div class="members-card">
+            <div class="members-caption">DISPONÍVEIS — 3</div>
+            <div class="member muted"><div class="tiny-avatar purple">A</div><div><strong>Aurora</strong><small>Disponível</small></div></div>
+            <div class="member flag-member"><canvas id="plate-canvas" aria-label="Placa com bandeira ondulando"></canvas><div class="plate-shade"></div><div class="tiny-avatar blue">L<i></i></div><div class="member-name"><strong>Lume Studio <span>✓</span></strong><small>Na minha órbita.</small></div><span class="plate-star">✹</span></div>
+            <div class="member muted"><div class="tiny-avatar blue">N</div><div><strong>Nova</strong><small>Ouvindo música</small></div></div>
+          </div>
+        </section>
+        <div class="selection-info"><h2 id="selected-name">Brasil</h2><span id="selected-format">Banner de perfil</span><p id="selected-description">Bandeira do Brasil em tecido animado.</p></div>
+        <p id="error" class="error" role="alert" hidden></p>
+      </aside>
+    </div>
+    <footer class="selector-footer"><span>Selecione um card para ver como fica.</span><a href="/channels/@me">Fechar prévia</a></footer>
+  </main>
+  <script type="module" src="./bandeiras.js"></script>
+</body>
+</html>

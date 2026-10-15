@@ -7,6 +7,7 @@ const stores = vi.hoisted(() => ({ auth: null as unknown, ui: null as unknown })
 vi.mock('../../stores/authStore', () => ({ useAuthStore: (...args: unknown[]) => (stores.auth as (...args: unknown[]) => unknown)(...args) }));
 vi.mock('../../stores/uiStore', () => ({ useUIStore: (...args: unknown[]) => (stores.ui as (...args: unknown[]) => unknown)(...args) }));
 vi.mock('../../hooks/usePortalContainer', () => ({ usePortalContainer: () => document.body }));
+vi.mock('./ReleaseHighlights', () => ({ ReleaseHighlights: () => <p>Personalizações do Lume</p> }));
 import { WhatsNew, WHATS_NEW_RELEASE } from './WhatsNew';
 
 const user = { id: 'release-reader', username: 'reader', homeInstance: null } as User;
@@ -30,7 +31,7 @@ describe('release highlights', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     act(() => auth.setState({ hasAuthenticatedSession: true }));
     expect(screen.getByRole('dialog', { name: 'O que há de novo' })).toHaveFocus();
-    fireEvent.click(screen.getByRole('button', { name: 'Bora usar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Agora não' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(localStorage.getItem(`lume:whats-new::release-reader:${WHATS_NEW_RELEASE}`)).toBe('seen');
     act(() => auth.setState({ hasAuthenticatedSession: false }));
@@ -51,5 +52,15 @@ describe('release highlights', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar novidades' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+  it('offers the new announcement even when an older release was seen, then opens personalization', () => {
+    const thirdUser = { ...user, id: 'third-reader' };
+    localStorage.setItem('lume:whats-new::third-reader:2026-10-lume-personalidade', 'seen');
+    auth.setState({ user: thirdUser, hasAuthenticatedSession: true });
+    render(<WhatsNew />);
+    expect(screen.getByRole('dialog', { name: 'O que há de novo' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Explorar personalização' }));
+    expect(ui.getState().activeModal).toBe('userSettings');
+    expect(localStorage.getItem(`lume:whats-new::third-reader:${WHATS_NEW_RELEASE}`)).toBe('seen');
   });
 });

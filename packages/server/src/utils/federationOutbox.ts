@@ -1,3 +1,4 @@
+import { parseProfileCustomization } from '@backspace/shared';
 import { getDb } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { eq, and, inArray } from 'drizzle-orm';
@@ -365,6 +366,7 @@ export function getDmParticipants(dmChannelId: string): FederationRelayParticipa
       avatar: schema.users.avatar,
       avatarColor: schema.users.avatarColor,
       nameColor: schema.users.nameColor,
+      customization: schema.users.customization,
       status: schema.users.status,
       isDeleted: schema.users.isDeleted,
     })
@@ -393,7 +395,8 @@ export function getDmParticipants(dmChannelId: string): FederationRelayParticipa
         displayName: m.displayName ?? null,
         avatar: m.avatar ?? null,
         avatarColor: m.avatarColor ?? null,
-      nameColor: m.nameColor ?? null,
+        nameColor: m.nameColor ?? null,
+        customization: parseProfileCustomization(m.customization),
         // Only carry presence for native participants — replicated stubs hold
         // stale status owned by their home; emitting it would flap remote UIs.
         status: !m.homeInstance ? (m.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,
@@ -932,6 +935,7 @@ export function queueGroupMetadataRelay(
       avatar: schema.users.avatar,
       avatarColor: schema.users.avatarColor,
       nameColor: schema.users.nameColor,
+      customization: schema.users.customization,
       status: schema.users.status,
     })
     .from(schema.users)
@@ -952,6 +956,7 @@ export function queueGroupMetadataRelay(
       avatar: actorRow.avatar ?? null,
       avatarColor: actorRow.avatarColor ?? null,
       nameColor: actorRow.nameColor ?? null,
+      customization: parseProfileCustomization(actorRow.customization),
       // Only carry presence for native participants — replicated stubs hold
       // stale status owned by their home; emitting it would flap remote UIs.
       status: !actorRow.homeInstance ? (actorRow.status as 'online' | 'working' | 'idle' | 'dnd' | 'offline' | null) : null,

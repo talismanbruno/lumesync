@@ -1,5 +1,5 @@
 import { t as uiText } from '../i18n';
-export const LUME_DESKTOP_VERSION = '1.0.0-beta.20';
+export const LUME_DESKTOP_VERSION = '1.0.0-beta.21';
 export const LUME_DESKTOP_RELEASE_URL =
   `https://github.com/talismanbruno/lumesync/releases/tag/v${LUME_DESKTOP_VERSION}`;
 

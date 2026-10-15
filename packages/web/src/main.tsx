@@ -7,6 +7,8 @@ import { SwAutoUpdate } from './components/ui/SwUpdatePrompt';
 import { startPendingMessageOrchestrator } from './stores/pendingMessageRehydrate';
 import { installStaleChunkRecovery, recoverFromStaleChunk } from './utils/staleChunkRecovery';
 import './styles/globals.css';
+import './styles/customization.css';
+import './styles/self-profile-menu.css';
 
 initializeLanguage();
 installStaleChunkRecovery();

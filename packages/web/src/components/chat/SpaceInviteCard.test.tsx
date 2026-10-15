@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SpaceInviteCard } from './SpaceInviteCard';
 
+vi.mock('../../stores/authStore', () => ({
+  useAuthStore: (selector: (state: { user: null }) => unknown) => selector({ user: null }),
+}));
+
 const { mockJoinByCode, mockGetApiForOrigin, mockNavigate } = vi.hoisted(() => ({
   mockJoinByCode: vi.fn(),
   mockGetApiForOrigin: vi.fn(() => ({

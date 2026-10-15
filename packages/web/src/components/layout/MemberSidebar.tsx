@@ -6,6 +6,7 @@ import { useSpaceStore } from '../../stores/spaceStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useActivityStore } from '../../stores/activityStore';
 import { Avatar } from '../ui/Avatar';
+import { Nameplate } from '../ui/ProfileCosmetics';
 import { Username } from '../ui/Username';
 import { ActivityCard, hasRichActivity, getActivityAccentClass } from '../ui/ActivityCard';
 import { getPrimaryActivity } from '@backspace/shared/src/activities.js';
@@ -77,8 +78,9 @@ function MemberSidebarRow({
     <div
       key={member.userId}
       onClick={(e) => onClickMember(e, canonical)}
-      className={rowClass}
+      className={`lume-nameplate-host ${rowClass}`}
     >
+      <Nameplate flag={canonical.customization?.nameplateFlag} id={canonical.customization?.nameplateId} />
       <Avatar
         src={canonical.avatar}
         name={displayName}

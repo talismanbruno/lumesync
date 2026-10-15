@@ -27,6 +27,7 @@ IDs: Snowflake text, permissions: bigint decimal strings
 | banner | text | | Upload filename |
 | accentColor | text | | Hex color |
 | nameColor | text | null | Profile name color: six-digit hex, or `gold` (home-admin-only selection); null renders white. |
+| customization | text | null | Validated JSON `ProfileCustomization`: catalog IDs, name font/effect/colors and profile theme. Added by `0023_profile_customization.sql`; exposed as a parsed object in `User`. |
 | avatarColor | text | | Hex color |
 | bio | text | | |
 | isDeleted | integer | 0 | Soft-delete flag |

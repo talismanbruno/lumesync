@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as schema from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import type { FederationRelayEvent } from '@backspace/shared';
+import { parseProfileCustomization } from '@backspace/shared';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 type TestDb = ReturnType<typeof drizzle<typeof schema>>;
@@ -125,6 +126,25 @@ describe('processProfileUpdateEvent — displayName fallback', () => {
 
 
 describe('profile name color federation', () => {
+  it('replicates cosmetics, preserves selections for older peers, and accepts an explicit reset', async () => {
+    const { processProfileUpdateEvent } = await import('./federation.js');
+    const customization = { bannerFlag: 'br' as const, nameplateFlag: 'pt' as const, avatarDecorationId: '1466980253741092936', nameFont: 'Tempo' as const, nameEffect: 'gradient' as const, nameColors: ['#8ee7d1', '#b4a8ff'] };
+    const event: FederationRelayEvent = {
+      eventType: 'profile_update', contextType: 'profile', messageId: 'style', encryptionVersion: 0, timestamp: Date.now(),
+      profileUpdate: { homeUserId: 'home-1', homeInstance: 'orbit.ddns.net', profileUpdatedAt: 2000, username: 'pbtest3', displayName: null, avatar: null, banner: null, accentColor: null, avatarColor: null, bio: null, customization },
+    };
+    const read = () => parseProfileCustomization(testDb.select().from(schema.users).where(eq(schema.users.id, 'stub-1')).get()!.customization);
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(read()).toEqual(customization);
+    delete event.profileUpdate!.customization;
+    event.profileUpdate!.profileUpdatedAt++;
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(read()).toEqual(customization);
+    event.profileUpdate!.customization = null;
+    event.profileUpdate!.profileUpdatedAt++;
+    await processProfileUpdateEvent(event, 'orbit.ddns.net', testDb, [], []);
+    expect(read()).toBeNull();
+  });
   it('applies home-approved gold, preserves it for older peers, and supports resetting to white', async () => {
     const { processProfileUpdateEvent } = await import('./federation.js');
     const event: FederationRelayEvent = {

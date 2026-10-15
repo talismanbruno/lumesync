@@ -1,6 +1,6 @@
 {
   "name": "lume",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.21",
   "private": true,
   "description": "Lume — comunicação em tempo real, voz, vídeo e comunidades",
   "license": "AGPL-3.0-only",
@@ -23,7 +23,8 @@
     "test": "pnpm -r test",
     "dev:desktop": "pnpm --filter @backspace/desktop dev",
     "build:desktop": "pnpm --filter @backspace/desktop build",
-    "gen-icons": "node scripts/gen-icons.mjs"
+    "gen-icons": "node scripts/gen-icons.mjs",
+    "import:customization": "node scripts/import-customization-library.mjs"
   },
   "devDependencies": {
     "sharp": "^0.35.5",

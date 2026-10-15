@@ -4,7 +4,8 @@ import { getDb, schema } from '../db/index.js';
 import { authenticate, verifyPassword, hashPassword, signJwt, setMediaAuthCookie, clearMediaAuthCookie, getRequestAuthToken } from '../utils/auth.js';
 import { connectionManager } from '../ws/handler.js';
 import type { UpdateUserRequest, VerifyPasswordRequest, VerifyPasswordResponse, ChangePasswordRequest, ChangePasswordResponse, DeleteAccountRequest, ReplicatedInstance, SpaceLayoutItem, SpaceFolder, Activity, FederationIdentityDeleteRequest, FederationIdentityDeleteResponse, FederationIdentityDeleteResult, FederationProfileUpdatePayload } from '@backspace/shared';
-import { AVATAR_COLORS } from '@backspace/shared';
+import { AVATAR_COLORS, isProfileCustomization, parseProfileCustomization } from '@backspace/shared';
+import { hasValidCosmeticSelections } from '../utils/customizationCatalog.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { deleteUploadFile, deleteAttachmentByFilename } from '../utils/fileCleanup.js';
 import { tombstoneUser, collectDeletionBroadcastTargets, collectProfileBroadcastTargetIds } from '../utils/userDeletion.js';
@@ -195,7 +196,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.patch<{ Body: UpdateUserRequest }>('/api/users/@me', { preHandler: authenticate }, async (request, reply) => {
-    const { displayName, avatar, banner, accentColor, nameColor, avatarColor, bio, customStatus, status, replicatedInstances, homeUserId, profileUpdatedAt, discoverable, showActivity } = request.body;
+    const { displayName, avatar, banner, accentColor, nameColor, customization, avatarColor, bio, customStatus, status, replicatedInstances, homeUserId, profileUpdatedAt, discoverable, showActivity } = request.body;
     const db = getDb();
 
     const updateData: Record<string, string | null | undefined> = {};
@@ -203,7 +204,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // Fetch the current user row upfront — used for:
     // 1. Write-protection guard (replicated users can't update durable fields)
     // 2. Change detection (only relay if values actually differ)
-    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'avatarColor', 'bio'] as const;
+    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'customization', 'avatarColor', 'bio'] as const;
     const preUpdateUser = db.select().from(schema.users).where(eq(schema.users.id, request.userId)).get();
     if (!preUpdateUser) {
       return reply.code(404).send({ error: 'User not found', statusCode: 404 });
@@ -266,6 +267,13 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       } else {
         updateData.banner = null;
       }
+    }
+
+    if (customization !== undefined) {
+      if (!isProfileCustomization(customization) || !hasValidCosmeticSelections(customization)) {
+        return reply.code(400).send({ error: 'Invalid profile customization or unavailable cosmetic selection', statusCode: 400 });
+      }
+      updateData.customization = customization === null ? null : JSON.stringify(customization);
     }
 
     if (nameColor !== undefined) {
@@ -402,6 +410,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
               : preUpdateUser.banner,
             accentColor: preUpdateUser.accentColor,
             nameColor: preUpdateUser.nameColor,
+            customization: parseProfileCustomization(preUpdateUser.customization),
             avatarColor: preUpdateUser.avatarColor,
             bio: preUpdateUser.bio,
           };
@@ -454,7 +463,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Detect profile changes and stamp timestamp
-    const hasProfileChange = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'avatarColor', 'bio', 'customStatus'].some(f => f in updateData);
+    const hasProfileChange = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'customization', 'avatarColor', 'bio', 'customStatus'].some(f => f in updateData);
     const hasDurableChange = DURABLE_PROFILE_FIELDS.some(f => f in updateData);
     if (hasDurableChange) {
       (updateData as Record<string, unknown>).profileUpdatedAt = Date.now();
@@ -581,6 +590,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
             : updatedUser!.banner,
           accentColor: updatedUser!.accentColor,
           nameColor: updatedUser!.nameColor,
+          customization: parseProfileCustomization(updatedUser!.customization),
           avatarColor: updatedUser!.avatarColor,
           bio: updatedUser!.bio,
         };

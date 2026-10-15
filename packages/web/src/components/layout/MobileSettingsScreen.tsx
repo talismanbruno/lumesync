@@ -18,6 +18,7 @@ interface MobileSettingsScreenProps {
 
 const panelConfig: Record<string, { title: string; component: React.ReactNode }> = {
   account: { title: uiText("Account"), component: <AccountPanel /> },
+  profile: { title: 'Personalização', component: <AccountPanel profileOnly /> },
   voice: { title: uiText("Voice & Video"), component: <VoicePanel /> },
   privacy: { title: uiText("Privacy"), component: <PrivacyPanel /> },
   connections: { title: uiText("Connections"), component: <ConnectionsPanel /> },
@@ -91,6 +92,7 @@ export function MobileSettingsScreen({ initialPanel }: MobileSettingsScreenProps
   // mobile feature (no global hooks, no recording flow on touch keyboards).
   const sections = [
     { id: 'account', label: uiText("Account") },
+    { id: 'profile', label: 'Personalização' },
     { id: 'voice', label: uiText("Voice & Video") },
     { id: 'privacy', label: uiText("Privacy") },
     { id: 'connections', label: uiText("Connections") },
@@ -102,7 +104,6 @@ export function MobileSettingsScreen({ initialPanel }: MobileSettingsScreenProps
     <div className="flex flex-col h-full bg-surface-base">
       <MobileScreenHeader title={uiText("Settings")} rightActions={<TransferIndicator />} />
       <div className="flex-1 overflow-y-auto">
-        <button type="button" onClick={() => useUIStore.getState().openModal('whatsNew')} className="w-full px-4 py-3.5 text-left text-sm text-cyan-200 hover:bg-interactive-hover">O que há de novo</button>
         {sections.map((section) => (
           <button
             key={section.id}
@@ -116,6 +117,7 @@ export function MobileSettingsScreen({ initialPanel }: MobileSettingsScreenProps
             </svg>
           </button>
         ))}
+        <div className="p-4 pt-0"><button type="button" onClick={() => useUIStore.getState().openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button></div>
       </div>
     </div>
   );

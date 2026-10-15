@@ -1,5 +1,7 @@
 import { sanitizeImageSource } from '../../utils/safeUrls';
 import { ProfileName } from '../ui/ProfileName';
+import { Nameplate, ProfileCosmetics } from '../ui/ProfileCosmetics';
+import { ProfileBanner } from '../ui/FlagCanvas';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -266,15 +268,10 @@ export function UserProfileModal() {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
-      <div className="lume-profile-card relative max-w-lg w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-[24px] animate-slide-up overflow-hidden">
+      <div className="lume-profile-card lume-profile-cosmetic-surface relative max-w-lg w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-[24px] animate-slide-up" style={{ backgroundColor: user.customization?.themeColor || undefined }}>
+        <ProfileCosmetics customization={user.customization} />
         {/* Banner */}
-        <div
-          className="h-[100px] flex-shrink-0 relative"
-          style={bannerSrc
-            ? { backgroundImage: `url(${bannerSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : { background: bannerFallback }
-          }
-        >
+        <ProfileBanner className="h-[100px] flex-shrink-0 relative" customization={user.customization} src={bannerSrc} fallback={bannerFallback}>
           {/* Close button */}
           <button
             onClick={closeModal}
@@ -284,7 +281,7 @@ export function UserProfileModal() {
               <path d="M18.4 4L12 10.4L5.6 4L4 5.6L10.4 12L4 18.4L5.6 20L12 13.6L18.4 20L20 18.4L13.6 12L20 5.6L18.4 4Z" />
             </svg>
           </button>
-        </div>
+        </ProfileBanner>
 
         {/* Header (avatar + name) */}
         <div className="px-5 flex-shrink-0 relative">
@@ -304,7 +301,8 @@ export function UserProfileModal() {
           </button>
 
           <div className="mb-3">
-            <div className="flex items-center gap-1.5">
+            <div className="lume-nameplate-host flex items-center gap-1.5 rounded-md">
+              <Nameplate flag={user.customization?.nameplateFlag} id={user.customization?.nameplateId} />
               <Username user={user} username={displayName} className="text-[20px] font-bold leading-tight" />
               <UserBadges user={user} size={18} />
             </div>

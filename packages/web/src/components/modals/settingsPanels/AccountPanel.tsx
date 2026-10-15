@@ -4,19 +4,18 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useUIStore } from '../../../stores/uiStore';
 import { useInstanceStore } from '../../../stores/instanceStore';
 import { useSpaceStore } from '../../../stores/spaceStore';
-import { Avatar } from '../../ui/Avatar';
 import { ImageCropModal } from '../../ui/ImageCropModal';
 import { DeleteAccountModal } from '../DeleteAccountModal';
 import { api } from '../../../api/client';
 import { useTransferStore } from '../../../stores/transferStore';
 import { waitForTransferAttachment } from '../../../utils/waitForTransfer';
 import { sanitizeImageSource } from '../../../utils/safeUrls';
-import { getAvatarGradient, adjustColor, mutedGradient, AVATAR_GRADIENT_MAP, BANNER_COLOR_PRESETS } from '../../../utils/gradients';
-import { AVATAR_COLORS } from '@backspace/shared';
+import { getAvatarGradient, adjustColor, mutedGradient } from '../../../utils/gradients';
 import type { User, UserStatus, AvatarColor } from '@backspace/shared';
 import type { FederationOpResult } from '../../../utils/federationOps';
-import { getNameStyle, NAME_COLOR_PRESETS } from '../../../utils/nameAppearance';
-export function AccountPanel() {
+import { ProfileCustomizationEditor } from './ProfileCustomizationEditor';
+import type { ProfileCustomization } from '@backspace/shared';
+export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const updateProfile = useAuthStore((s) => s.updateProfile);
 
@@ -25,9 +24,9 @@ export function AccountPanel() {
   const [status, setStatus] = useState<UserStatus>(user?.status ?? 'online');
   const [bio, setBio] = useState(user?.bio ?? '');
   const [nameColor, setNameColor] = useState<string | null>(user?.nameColor ?? null);
+  const [customization, setCustomization] = useState<ProfileCustomization>(user?.customization ?? {});
   const [accentColor, setAccentColor] = useState<string | null>(user?.accentColor ?? null);
   const [avatarColorState, setAvatarColorState] = useState<AvatarColor | null>(user?.avatarColor ?? null);
-  const [customHex, setCustomHex] = useState(user?.accentColor ?? '');
 
   // Avatar upload state
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -55,8 +54,8 @@ export function AccountPanel() {
       setBio(user.bio ?? '');
       setAccentColor(user.accentColor ?? null);
       setNameColor(user.nameColor ?? null);
+      setCustomization(user.customization ?? {});
       setAvatarColorState(user.avatarColor ?? null);
-      setCustomHex(user.accentColor ?? '');
       // Reset upload state
       if (avatarPreview) URL.revokeObjectURL(avatarPreview);
       if (bannerPreview) URL.revokeObjectURL(bannerPreview);
@@ -65,7 +64,7 @@ export function AccountPanel() {
       setBannerPreview(null);
       setBannerFilename(null);
     }
-  }, [user?.displayName, user?.customStatus, user?.status, user?.bio, user?.nameColor, user?.accentColor, user?.avatarColor, user?.avatar, user?.banner]);
+  }, [user?.displayName, user?.customStatus, user?.status, user?.bio, user?.nameColor, user?.customization, user?.accentColor, user?.avatarColor, user?.avatar, user?.banner]);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -145,6 +144,7 @@ export function AccountPanel() {
     status !== (user.status ?? 'online') ||
     bio !== (user.bio ?? '') ||
     nameColor !== (user.nameColor ?? null) ||
+    JSON.stringify(customization) !== JSON.stringify(user.customization ?? {}) ||
     accentColor !== (user.accentColor ?? null) ||
     avatarColorState !== (user.avatarColor ?? null) ||
     avatarFilename !== null ||
@@ -300,12 +300,13 @@ export function AccountPanel() {
     setError('');
     setIsLoading(true);
     try {
-      const updates: Record<string, string | undefined> = {};
+      const updates: Parameters<typeof updateProfile>[0] = {};
       if (displayName !== (user.displayName ?? '')) updates.displayName = displayName.trim();
       if (customStatus !== (user.customStatus ?? '')) updates.customStatus = customStatus.trim();
       if (status !== (user.status ?? 'online')) updates.status = status;
       if (bio !== (user.bio ?? '')) updates.bio = bio.trim();
       if (nameColor !== (user.nameColor ?? null)) updates.nameColor = nameColor ?? '';
+      if (JSON.stringify(customization) !== JSON.stringify(user.customization ?? {})) updates.customization = customization;
       if (accentColor !== (user.accentColor ?? null)) updates.accentColor = accentColor ?? '';
       if (avatarColorState !== (user.avatarColor ?? null)) updates.avatarColor = avatarColorState ?? '';
       if (avatarFilename !== null) updates.avatar = avatarFilename;
@@ -362,8 +363,8 @@ export function AccountPanel() {
     setBio(user.bio ?? '');
     setAccentColor(user.accentColor ?? null);
     setNameColor(user.nameColor ?? null);
+    setCustomization(user.customization ?? {});
     setAvatarColorState(user.avatarColor ?? null);
-    setCustomHex(user.accentColor ?? '');
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     if (bannerPreview) URL.revokeObjectURL(bannerPreview);
     setAvatarPreview(null);
@@ -372,6 +373,21 @@ export function AccountPanel() {
     setBannerFilename(null);
     setError('');
   };
+
+  if (profileOnly) {
+    const draftUser: User = { ...user, displayName, bio, customStatus, nameColor, accentColor, avatarColor: avatarColorState, customization, avatar: avatarFilename === '' ? null : user.avatar, banner: bannerFilename === '' ? null : user.banner };
+    return <div>
+      <ProfileCustomizationEditor user={draftUser} avatarSrc={displayAvatarSrc} bannerSrc={displayBannerSrc} bannerFallback={bannerFallback}
+        onCustomization={setCustomization} onNameColor={setNameColor} onAccentColor={setAccentColor} onAvatarColor={setAvatarColorState}
+        onDisplayName={setDisplayName} onBio={setBio} onCustomStatus={setCustomStatus}
+        avatarInputRef={avatarInputRef} bannerInputRef={bannerInputRef} onAvatarSelect={handleAvatarSelect} onBannerSelect={handleBannerSelect}
+        onRemoveAvatar={handleRemoveAvatar} onRemoveBanner={handleRemoveBanner} uploading={uploadingAvatar || uploadingBanner} />
+      {error && <div role="alert" className="lume-customization-error">{error}</div>}
+      {hasChanges && <div className="lume-customization-savebar" role="region" aria-label="Alterações do perfil"><span>Você tem alterações não salvas.</span><div><button type="button" className="lume-customization-secondary" onClick={handleReset} disabled={isLoading}>Redefinir</button><button type="button" className="lume-customization-primary" onClick={() => void handleSave()} disabled={isLoading || uploadingAvatar || uploadingBanner}>{isLoading ? 'Salvando…' : 'Salvar alterações'}</button></div></div>}
+      <ImageCropModal isOpen={avatarCropSrc !== null} onClose={() => setAvatarCropSrc(null)} imageSrc={avatarCropSrc ?? ''} onCropComplete={handleAvatarCropComplete} title={uiText('Crop Avatar')} cropShape="round" aspectRatio={1} maxOutputDimension={256} />
+      <ImageCropModal isOpen={bannerCropSrc !== null} onClose={() => setBannerCropSrc(null)} imageSrc={bannerCropSrc ?? ''} onCropComplete={handleBannerCropComplete} title={uiText('Crop Banner')} cropShape="rect" aspectRatio={3} maxOutputDimension={1280} />
+    </div>;
+  }
 
   return (
     <div className="space-y-5">
@@ -399,299 +415,10 @@ export function AccountPanel() {
           )}
         </div>
       )}
-      {/* ── Profile Customization ── */}
-      <div>
-        <div className="text-[11px] font-semibold text-txt-tertiary uppercase tracking-wider mb-1.5">
-          {uiText("Profile Customization")}</div>
-
-        {/* Live Preview Card */}
-        <div className="rounded-lg overflow-hidden border border-white/[0.06] mb-4 bg-surface-channel">
-          {/* Banner area */}
-          <div
-            className="h-[80px]"
-            style={displayBannerSrc
-              ? { backgroundImage: `url(${displayBannerSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-              : { background: bannerFallback }
-            }
-          />
-          {/* Avatar + info */}
-          <div className="px-4 pb-3">
-            <Avatar
-              src={avatarPreview ?? (avatarFilename === '' ? null : user.avatar)}
-              name={effectiveDisplayName}
-              size={56}
-              userId={user.homeUserId ?? user.id}
-              user={{ ...user, avatarColor: effectiveAvatarColor } as User}
-              ring={{ width: 4, color: 'var(--color-surface-channel, #1e1e2a)' }}
-              className="mt-[-32px] mb-2"
-            />
-            <div
-              className="font-semibold text-[15px] leading-tight text-txt-primary"
-              style={getNameStyle({ nameColor })}
-            >
-              {effectiveDisplayName}
-            </div>
-            <div className="text-[12px] text-txt-tertiary">@{user.username}</div>
-            {bio.trim() && (
-              <div className="text-[12px] text-txt-secondary mt-1.5 whitespace-pre-wrap break-words line-clamp-3">
-                {bio.trim()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Upload controls */}
-        <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-4">
-          {/* Avatar upload */}
-          <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Avatar")}</label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={uploadingAvatar}
-                className="relative group"
-              >
-                <div className="w-[64px] h-[64px] rounded-full overflow-hidden">
-                  {displayAvatarSrc ? (
-                    <img src={displayAvatarSrc} alt={uiText("Avatar")} className="w-full h-full object-cover" />
-                  ) : (
-                    <Avatar
-                      src={null}
-                      name={effectiveDisplayName}
-                      size={64}
-                      userId={user.homeUserId ?? user.id}
-                      user={{ ...user, avatarColor: effectiveAvatarColor } as User}
-                    />
-                  )}
-                </div>
-                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                {uploadingAvatar && (
-                  <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
-                    <svg className="animate-spin w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  className="text-xs text-accent-primary hover:underline text-left"
-                >
-                  {uiText("Change Avatar")}</button>
-                {(displayAvatarSrc || user.avatar) && avatarFilename !== '' && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveAvatar}
-                    className="text-xs text-txt-danger hover:underline text-left"
-                  >
-                    {uiText("Remove")}</button>
-                )}
-              </div>
-            </div>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={handleAvatarSelect}
-              className="hidden"
-            />
-            <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
-              {uiText("PNG, JPG, WebP or animated GIF. GIF animation is preserved across Lume.")}</p>
-          </div>
-
-          {/* Banner upload */}
-          <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Banner")}</label>
-            <button
-              type="button"
-              onClick={() => bannerInputRef.current?.click()}
-              disabled={uploadingBanner}
-              className="relative group w-full h-[72px] rounded-lg overflow-hidden border border-white/[0.06]"
-            >
-              <div
-                className="w-full h-full"
-                style={displayBannerSrc
-                  ? { backgroundImage: `url(${displayBannerSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                  : { background: mutedGradient(
-                      effectiveAccent ?? getAvatarGradient(user.homeUserId ?? user.id, effectiveDisplayName, effectiveAvatarColor).from,
-                      effectiveAccent ? adjustColor(effectiveAccent, -40) : getAvatarGradient(user.homeUserId ?? user.id, effectiveDisplayName, effectiveAvatarColor).to,
-                      0.5
-                    ) }
-                }
-              />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              {uploadingBanner && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <svg className="animate-spin w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                </div>
-              )}
-            </button>
-            <div className="flex gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={uploadingBanner}
-                className="text-xs text-accent-primary hover:underline"
-              >
-                {uiText("Change Banner")}</button>
-              {(displayBannerSrc || user.banner) && bannerFilename !== '' && (
-                <button
-                  type="button"
-                  onClick={handleRemoveBanner}
-                  className="text-xs text-txt-danger hover:underline"
-                >
-                  {uiText("Remove")}</button>
-              )}
-            </div>
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={handleBannerSelect}
-              className="hidden"
-            />
-            <p className="mt-1.5 text-[10px] leading-relaxed text-txt-tertiary">
-              {uiText("Static images can be cropped. Animated GIF banners are displayed in motion.")}</p>
-          </div>
-
-          <fieldset>
-            <legend className="text-xs text-txt-secondary mb-2">Cor do nome</legend>
-            <div className="flex flex-wrap gap-2">
-              {NAME_COLOR_PRESETS.map(({ label, value }) => (
-                <button key={label} type="button" aria-label={label} aria-pressed={nameColor === value}
-                  onClick={() => setNameColor(value)} title={label}
-                  className="h-8 w-8 rounded-full border-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-primary"
-                  style={{ backgroundColor: value ?? '#ffffff', borderColor: nameColor === value ? '#22d3ee' : 'transparent' }} />
-              ))}
-              {user.isAdmin && (
-                <button type="button" aria-pressed={nameColor === 'gold'} onClick={() => setNameColor('gold')}
-                  className={`rounded-lg border px-3 py-1 text-xs font-semibold ${nameColor === 'gold' ? 'border-amber-300/80' : 'border-amber-300/20'}`}>
-                  <span style={getNameStyle({ nameColor: 'gold' })}>Dourado luminoso</span>
-                </button>
-              )}
-            </div>
-            <p className="mt-2 text-[11px] text-txt-tertiary">Veja a cor na prévia do perfil e salve para aplicar.</p>
-          </fieldset>
-
-          {/* Avatar Color */}
-          <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Avatar Color")}</label>
-            <div className="flex gap-2">
-              {AVATAR_COLORS.map((key) => {
-                const entry = AVATAR_GRADIENT_MAP[key];
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setAvatarColorState(key)}
-                    className="w-7 h-7 rounded-full border-2 transition-all hover:scale-110"
-                    style={{
-                      background: entry.gradient,
-                      borderColor: avatarColorState === key ? 'white' : 'transparent',
-                      boxShadow: avatarColorState === key ? `0 0 0 2px ${entry.glow}40` : 'none',
-                    }}
-                    title={key.charAt(0).toUpperCase() + key.slice(1)}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Banner Color */}
-          <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("Banner Color")}</label>
-            <div className="grid grid-cols-7 gap-1.5 mb-2">
-              {[0, 1, 2].map((row) =>
-                BANNER_COLOR_PRESETS.map((family) => {
-                  const color = family[row]!;
-                  return (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => { setAccentColor(color); setCustomHex(color); }}
-                      className="w-7 h-7 rounded-full border-2 transition-all hover:scale-110"
-                      style={{
-                        backgroundColor: color,
-                        borderColor: accentColor === color ? 'white' : 'transparent',
-                        boxShadow: accentColor === color ? `0 0 0 2px ${color}40` : 'none',
-                      }}
-                      title={color}
-                    />
-                  );
-                })
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={customHex}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setCustomHex(val);
-                  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-                    setAccentColor(val);
-                  }
-                }}
-                placeholder={uiText("#hex")}
-                className="input-standard w-24 px-2 py-1.5 text-xs font-mono"
-                maxLength={7}
-              />
-              {accentColor && (
-                <div
-                  className="w-6 h-6 rounded-full border border-white/10 flex-shrink-0"
-                  style={{ backgroundColor: accentColor }}
-                />
-              )}
-              {accentColor && (
-                <button
-                  type="button"
-                  onClick={() => { setAccentColor(null); setCustomHex(''); }}
-                  className="text-xs text-txt-tertiary hover:text-txt-secondary transition-colors"
-                >
-                  {uiText("Clear")}</button>
-              )}
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div>
-            <label className="block text-xs text-txt-secondary mb-1.5">{uiText("About Me")}</label>
-            <div className="relative">
-              <textarea
-                value={bio}
-                onChange={(e) => {
-                  if (e.target.value.length <= 190) setBio(e.target.value);
-                }}
-                rows={3}
-                placeholder={uiText("Tell the world about yourself...")}
-                className="input-standard w-full resize-none"
-                maxLength={190}
-              />
-              <span className="absolute bottom-2 right-2 text-[10px] text-txt-tertiary">
-                {bio.length}/190
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <button type="button" className="w-full rounded-xl border border-white/10 bg-white/[0.025] p-4 text-left hover:bg-white/[0.05] transition-colors" onClick={() => { const ui = useUIStore.getState(); if (ui.isMobile) ui.pushMobileScreen('settings-profile'); else ui.openModal('userSettings', { tab: 'profile' }); }}>
+        <span className="block text-sm font-medium text-txt-primary">Personalizar perfil</span>
+        <span className="mt-1 block text-xs text-txt-tertiary">Avatar, banner, decorações, estilo do nome e efeitos.</span>
+      </button>
 
       {/* ── Account ── */}
       <div>

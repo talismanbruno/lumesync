@@ -37,7 +37,7 @@ type CheckInviteResponse =
 ## Users (`routes/users.ts`) — auth required
 ```
 GET    /users/@me                                        → { user }
-PATCH  /users/@me             { displayName?, avatar?, banner?, accentColor?, nameColor?, avatarColor?,
+PATCH  /users/@me             { displayName?, avatar?, banner?, accentColor?, nameColor?, customization?, avatarColor?,
                                 bio?, customStatus?, status?, replicatedInstances?, homeUserId?,
                                 profileUpdatedAt?, discoverable?, showActivity? } → { user }
 POST   /users/@me/verify-password  { password }          → { valid }
@@ -50,7 +50,7 @@ GET    /users/:id                                        → { user }
 GET    /users/:id/mutuals     ?homeUserId=               → { mutualFriends[], mutualSpaces[] }
 ```
 
-**Write protection:** If the authenticated user is a replicated user (`homeInstance` is set **and** `federationHomeOrphaned !== 1`), the following fields are rejected with 403: `displayName`, `avatar`, `banner`, `accentColor`, `nameColor`, `avatarColor`, `bio`. These fields are managed by the home instance via S2S relay. **Exception — detached accounts** (`federationHomeOrphaned === 1`): a federated account whose home instance was reset/lost is a sovereign local account with no home managing its profile, so it edits these durable fields locally like a native user (detach design §4.4). Detached edits are NOT relayed (the S2S profile-relay path stays gated on `!homeInstance`).
+**Write protection:** If the authenticated user is a replicated user (`homeInstance` is set **and** `federationHomeOrphaned !== 1`), the following fields are rejected with 403: `displayName`, `avatar`, `banner`, `accentColor`, `nameColor`, `customization`, `avatarColor`, `bio`. These fields are managed by the home instance via S2S relay. **Exception — detached accounts** (`federationHomeOrphaned === 1`): a federated account whose home instance was reset/lost is a sovereign local account with no home managing its profile, so it edits these durable fields locally like a native user (detach design §4.4). Detached edits are NOT relayed (the S2S profile-relay path stays gated on `!homeInstance`).
 
 **Self-view flag:** `GET /users/@me`, the login response, and the WS `ready` payload all sanitize the row with `isSelf=true` and include `federationHomeOrphaned: boolean` (detach design §4.7) — self-view only; it is never exposed to other users and never on the deleted/tombstone branch.
 
@@ -486,3 +486,18 @@ GET /health          (public) → { status: 'ok', timestamp }
 ```
 
 `PATCH /users/@me` accepts `nameColor` as `#RRGGBB`, `gold`, or an empty string to reset to white. Invalid values return 400; selecting `gold` requires instance-admin status (403 otherwise). This is a durable profile field, broadcast via `user_updated` and home-authoritative federation profile updates.
+
+## Profile customization (`routes/customization.ts`)
+
+`PATCH /users/@me` also accepts `customization: ProfileCustomization | null`. This replaces the complete customization object; omission preserves it and `null` clears it. Valid fields are `avatarDecorationId`, `profileEffectId`, `nameplateId`, `profileFrameId`, `nameFont`, `nameEffect`, `nameColors` (at most five `#RRGGBB` values), `themeColor`, `bannerFlag`, and `nameplateFlag`. The flag fields accept a code from the shared 253-country/territory allowlist or `null`. Unknown fields, unsupported styles, unavailable IDs and IDs of the wrong item type return 400. Existing GIF uploads, `nameColor`, avatar and banner colors remain independent. Returned users contain a parsed object, never a JSON string.
+
+Public media endpoints:
+
+```
+GET /customization/catalog                 → { items: CosmeticItem[] }
+GET /customization/items/:id/static        → 302 local asset, or 404
+GET /customization/items/:id/animated      → 302 animated asset (static fallback), or 404
+GET /customization/assets/*                → immutable content-addressed binary
+```
+
+See [customization.md](customization.md) for library import and deployment.

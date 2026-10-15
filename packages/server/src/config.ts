@@ -86,6 +86,7 @@ export const config = {
   tusExpirationMs: envInt('TUS_EXPIRATION_HOURS', 24) * 60 * 60 * 1000,
   tusStragglerSweepMs: envInt('TUS_STRAGGLER_SWEEP_HOURS', 48) * 60 * 60 * 1000,
   dbPath: env('DB_PATH', resolve(__dirname, '../../../data/backspace.db')),
+  customizationDir: env('CUSTOMIZATION_DIR', resolve(dirname(env('DB_PATH', resolve(__dirname, '../../../data/backspace.db'))), 'customization')),
   maxUploadSize: envInt('MAX_UPLOAD_SIZE', 104857600),
   registrationOpen: envBool('REGISTRATION_OPEN', true),
   backup: {

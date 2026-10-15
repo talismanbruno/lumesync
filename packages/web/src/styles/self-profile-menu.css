@@ -1,0 +1,53 @@
+.lume-self-profile-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 2px;
+  z-index: 160;
+  width: min(340px, calc(100vw - 24px));
+  max-height: calc(100dvh - 94px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 12px;
+  border: 1px solid #67d9f228;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #10171bee, #090d12fa);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 24px 70px #0009, 0 0 28px #00d1ff09;
+  outline: none;
+}
+.lume-self-profile-card { position: relative; isolation: isolate; border-radius: 13px; background: #10141b; border: 1px solid #ffffff0c; }
+.lume-self-profile-banner { height: 86px; border-radius: 12px 12px 0 0; background-size: cover; background-position: center; }
+.lume-self-profile-body { position: relative; z-index: 1; padding: 0 16px 23px; }
+.lume-self-profile-avatar-row { display: flex; align-items: flex-end; gap: 16px; margin-top: -28px; margin-bottom: 17px; }
+.lume-self-profile-avatar-row > button:first-child { border-radius: 50%; box-shadow: 0 0 0 5px #10141b; flex-shrink: 0; }
+.lume-self-status-bubble { min-width: 0; max-width: 170px; margin-bottom: 2px; padding: 9px 11px; border-radius: 12px 12px 12px 3px; border: 1px solid #ffffff14; background: #1b222b; font-size: 10px; text-align: left; color: #a9b5c3; line-height: 1.45; overflow-wrap: anywhere; }
+.lume-self-status-bubble:hover { border-color: #67d9f24a; color: #dbf8ff; }
+.lume-self-profile-name { border-radius: 6px; padding: 3px 6px; margin-inline: -6px; font-size: 21px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; }
+.lume-self-profile-handle { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 4px; font-size: 11px; color: #8f9bac; overflow-wrap: anywhere; }
+.lume-self-profile-handle > span:first-child { min-width: 0; }
+.lume-self-profile-bio { margin-top: 16px; color: #bbc6d3; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.lume-self-profile-activity { margin-top: 15px; padding: 11px 12px; background: #ffffff07; border: 1px solid #ffffff0a; border-radius: 9px; }
+.lume-self-profile-actions { margin-top: 10px; border: 1px solid #ffffff07; background: #ffffff03; border-radius: 12px; padding: 5px; }
+.lume-self-profile-actions > button, .lume-self-profile-secondary > button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 10px; border-radius: 7px; text-align: left; font-size: 12px; color: #b8c6d3; transition: background .15s, color .15s; }
+.lume-self-profile-actions > button:hover, .lume-self-profile-secondary > button:hover { background: #67d9f20b; color: #e3faff; }
+.lume-self-action-arrow { margin-left: auto; color: #6e8397; }
+.lume-self-profile-actions > button + button { border-top: 1px solid #ffffff06; }
+.lume-presence-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #6c7584; }
+.lume-presence-online { background: #40b47a; }
+.lume-presence-working { background: #38bdf8; box-shadow: 0 0 8px #38bdf870; }
+.lume-presence-idle { background: #e1ac4e; }
+.lume-presence-dnd { background: #e85a67; }
+.lume-self-presences { padding: 4px; background: #0003; border: 1px solid #ffffff08; border-radius: 8px; }
+.lume-self-presences button { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; padding: 9px 8px; border-radius: 5px; }
+.lume-self-presences button:hover, .lume-self-presences button[aria-pressed=true] { background: #67d9f20c; }
+.lume-self-presences strong { display: block; color: #d6e3ee; font-size: 11px; font-weight: 500; }
+.lume-self-presences small { display: block; color: #7b8b9d; font-size: 10px; margin-top: 2px; }
+.lume-self-custom-status { padding: 9px; }
+.lume-self-custom-status label { display: block; font-size: 10px; color: #96a8b9; }
+.lume-self-custom-status input { display: block; width: 100%; padding: 9px; border: 1px solid #ffffff12; border-radius: 7px; margin-top: 7px; background: #0003; color: #e2edf4; font-size: 11px; }
+.lume-self-custom-status > div { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; font-size: 11px; color: #8fa4b7; }
+.lume-self-profile-secondary { border-top: 1px solid #ffffff08; margin-top: 10px; padding-top: 5px; }
+.lume-self-profile-secondary > button { font-size: 11px; color: #7c8e9f; }
+.lume-self-profile-secondary > button > span { margin-left: auto; }
+.lume-self-profile-menu button:focus-visible, .lume-self-profile-menu input:focus-visible { outline: 2px solid #67d9f2; outline-offset: 2px; }

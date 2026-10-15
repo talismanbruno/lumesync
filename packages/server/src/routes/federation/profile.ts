@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { normalizeNameColor } from '../../utils/nameColor.js';
+import { parseProfileCustomization } from '@backspace/shared';
 import path from 'node:path';
 import { config } from '../../config.js';
 import { getDb, schema } from '../../db/index.js';
@@ -63,6 +64,7 @@ export async function hydrateReplicatedUserProfile(
   // bare filenames produced by that path must not be clobbered back to URLs.
   if (profile.avatar && !user.avatar) updates.avatar = await resolveAsset(profile.avatar);
   if (profile.nameColor && !user.nameColor) updates.nameColor = normalizeNameColor(profile.nameColor);
+  if (profile.customization && !user.customization) updates.customization = JSON.stringify(parseProfileCustomization(profile.customization));
   if (profile.avatarColor) updates.avatarColor = profile.avatarColor;
   if (profile.banner && !user.banner) updates.banner = await resolveAsset(profile.banner);
   if (profile.bio && !user.bio) updates.bio = profile.bio;
@@ -260,6 +262,7 @@ export async function processProfileUpdateEvent(
       banner: resolvedBanner,
       accentColor: payload.accentColor,
       ...(payload.nameColor !== undefined ? { nameColor: normalizeNameColor(payload.nameColor) } : {}),
+      ...(payload.customization !== undefined ? { customization: payload.customization === null ? null : JSON.stringify(parseProfileCustomization(payload.customization)) } : {}),
       avatarColor: payload.avatarColor,
       bio: payload.bio,
       profileUpdatedAt: payload.profileUpdatedAt,

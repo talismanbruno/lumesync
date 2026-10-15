@@ -1799,3 +1799,7 @@ See `docs/federation-production-roadmap.md` for open items (FED-001 through FED-
 ### Profile name color
 
 `nameColor` is an optional additive field on User views, profile snapshots, user lookup profiles, and home-authoritative `profile_update`. Hex values and the `gold` token are normalized before persistence. Gold selection is authorized by the home instance; replicas do not gain local administrator permissions. Legacy payloads without the field retain the existing selection. Local edits of attached replicas remain forbidden; detached accounts can edit locally.
+
+### Profile customization
+
+`customization?: ProfileCustomization | null` is additive on the same profile snapshots, lookup, attach and `profile_update` paths. Values are parsed and validated before persistence; arbitrary URLs and CSS are not accepted. Authoritative events retain source-domain attribution and monotonic `profileUpdatedAt` checks. Omitted fields from older peers preserve the existing value; explicit `null` resets it. Fill-empty hydration only populates a missing value and retains native/detached guards. IDs refer to each instance's local personalization catalog; peers must import the same assets to display them. Missing media does not block profile delivery. See [customization.md](customization.md).

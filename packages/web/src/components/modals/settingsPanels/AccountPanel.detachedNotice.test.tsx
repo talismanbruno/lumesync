@@ -79,6 +79,11 @@ vi.mock('../../ui/ImageCropModal', () => ({ ImageCropModal: () => null }));
 vi.mock('../DeleteAccountModal', () => ({ DeleteAccountModal: () => null }));
 
 import { AccountPanel } from './AccountPanel';
+import { useCustomizationStore } from '../../../stores/customizationStore';
+vi.mock('../../../utils/flagRenderer', () => ({
+  attachFlagSurface: vi.fn(() => () => {}),
+  loadFlagRenderer: vi.fn(async () => ({ renderFlagThumbnail: async (code: string) => `/previews/flags/${code}.svg` })),
+}));
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 function makeUser(overrides: Partial<User> = {}): User {
@@ -125,6 +130,7 @@ beforeEach(() => {
   currentInstances = [];
   setUserMock.mockReset();
   mockReattach.mockReset();
+  useCustomizationStore.setState({ loaded: true, loading: false, error: null, items: [], byId: new Map() });
 });
 
 describe('AccountPanel detached-account notice', () => {
@@ -182,29 +188,73 @@ describe('AccountPanel re-attach fallback action', () => {
 
 
 describe('profile name color selection', () => {
+  it('previews flags before applying, cancels drafts, and saves banner and plate together', async () => {
+    currentUser = makeUser({ customization: { nameplateId: '103' } });
+    noop.mockClear();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [{ code: 'br', name: 'Brasil' }, { code: 'pt', name: 'Portugal' }] });
+    try {
+      render(<AccountPanel profileOnly />);
+      fireEvent.click(screen.getByRole('button', { name: 'Bandeiras para banner' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Brasil', exact: true }));
+      fireEvent.click(screen.getByRole('button', { name: 'Cancelar', exact: true }));
+      expect(noop).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: 'Salvar alterações' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Bandeiras para banner' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Brasil', exact: true }));
+      fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Bandeiras para placa' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Portugal', exact: true }));
+      fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+      expect(noop).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+      await waitFor(() => expect(noop).toHaveBeenCalledWith({ customization: { nameplateId: null, bannerFlag: 'br', nameplateFlag: 'pt' } }));
+    } finally { globalThis.fetch = originalFetch; }
+  }, 15000);
   it('saves a selected color and allows returning to white', async () => {
     currentUser = makeUser();
     noop.mockClear();
-    render(<AccountPanel />);
+    render(<AccountPanel profileOnly />);
+    fireEvent.click(screen.getByRole('button', { name: 'Estilo do nome exibido' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ciano' }));
-    fireEvent.click(screen.getByRole('button', { name: /^save$|^salvar$/i }));
-    await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '#22d3ee' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() => expect(noop).toHaveBeenCalledWith({ customization: { nameColors: ['#22d3ee', '#8ee7d1'] } }));
     cleanup();
     currentUser = makeUser({ nameColor: '#22d3ee' });
     noop.mockClear();
-    render(<AccountPanel />);
-    fireEvent.click(screen.getByRole('button', { name: 'Branco' }));
-    fireEvent.click(screen.getByRole('button', { name: /^save$|^salvar$/i }));
-    await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '' }));
+    render(<AccountPanel profileOnly />);
+    fireEvent.click(screen.getByRole('button', { name: 'Estilo do nome exibido' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restaurar estilo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '', customization: { nameFont: null, nameEffect: null, nameColors: [] } }));
   });
   it('shows the gold selection only for an admin', () => {
     currentUser = makeUser();
-    render(<AccountPanel />);
+    render(<AccountPanel profileOnly />);
     expect(screen.queryByRole('button', { name: 'Dourado luminoso' })).not.toBeInTheDocument();
     cleanup();
     currentUser = makeUser({ isAdmin: true });
-    render(<AccountPanel />);
+    render(<AccountPanel profileOnly />);
     fireEvent.click(screen.getByRole('button', { name: 'Dourado luminoso' }));
     expect(screen.getByRole('button', { name: 'Dourado luminoso' })).toHaveAttribute('aria-pressed', 'true');
+  });
+  it('keeps a picker selection local until applied, supports cancel, and saves the applied decoration', async () => {
+    currentUser = makeUser();
+    noop.mockClear();
+    const item = { id: '101', type: 0 as const, name: 'Lua azul', category: 'Cosmos', categoryId: '1', description: '', staticSrc: '/test.png' };
+    useCustomizationStore.setState({ items: [item], byId: new Map([[item.id, item]]) });
+    render(<AccountPanel profileOnly />);
+    fireEvent.click(screen.getByRole('button', { name: 'Decoração de avatar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lua azul' }));
+    expect(noop).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('button', { name: 'Salvar alterações' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Decoração de avatar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lua azul' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(noop).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() => expect(noop).toHaveBeenCalledWith({ customization: { avatarDecorationId: '101' } }));
   });
 });

@@ -219,3 +219,9 @@ interface AvatarStackProps {
 `ProfileName` and identity-aware `Username` share the profile-owned `nameColor` across chat, calls, member lists, friends, DMs and profile surfaces, with white as the default. They subscribe narrowly to canonical user-view and self color changes. Role/group labels keep their role colors but no longer implicitly tint names. Admin gold uses a static metallic text gradient with a restrained glow; it runs no continuous animation. AccountPanel shows unsaved choices in its profile preview.
 
 `WhatsNew` presents curated release highlights once per canonical account/release after authentication, remembers explicit dismissal locally with a session fallback, and can be reopened from desktop/mobile settings. The dialog uses the fullscreen-aware portal, keyboard focus containment, viewport scrolling and no continuous background animation.
+
+### Profile customization editor
+
+`ProfileCustomizationEditor` uses the reference editor's style groups with Lume's dark surfaces, subtle borders and cyan actions. The desktop view places style controls beside an editable profile preview; mobile stacks the preview above the controls. Selectors provide search, collection filters, a live preview, Cancel/Apply and paginated media. Saving is explicit and separate from preview selection. Focus stays inside selectors and Escape closes the active selector first. `ProfileFrameSpace` reserves each frame's painted overflow before adjacent labels. `SelfProfileMenu` uses the same personalized identity with status controls in the bottom account menu.
+
+`Avatar`, `ProfileName`, `Nameplate` and `ProfileCosmetics` render selected catalog assets across profile and identity surfaces. Decorative layers never receive pointer events. Reduced-motion preferences stop name animations, use static decorations/plates and disable profile-effect playback. See [customization.md](customization.md).
