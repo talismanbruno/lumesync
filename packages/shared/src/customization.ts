@@ -14,6 +14,7 @@ export interface ProfileCustomization {
   nameEffect?: ProfileNameEffect | null;
   nameColors?: string[];
   themeColor?: string | null;
+  themeSecondaryColor?: string | null;
 }
 export interface CosmeticLayer {
   src: string;
@@ -55,7 +56,7 @@ export function isProfileCustomization(value: unknown): value is ProfileCustomiz
   if (value === null) return true;
   if (typeof value !== 'object' || Array.isArray(value)) return false;
   const obj = value as Record<string, unknown>;
-  const keys = new Set(['avatarDecorationId', 'nameplateId', 'profileEffectId', 'profileFrameId', 'nameFont', 'nameEffect', 'nameColors', 'themeColor', 'bannerFlag', 'nameplateFlag']);
+  const keys = new Set(['avatarDecorationId', 'nameplateId', 'profileEffectId', 'profileFrameId', 'nameFont', 'nameEffect', 'nameColors', 'themeColor', 'themeSecondaryColor', 'bannerFlag', 'nameplateFlag']);
   if (Object.keys(obj).some(key => !keys.has(key))) return false;
   if (obj.bannerFlag != null && !isProfileFlagCountry(obj.bannerFlag)) return false;
   if (obj.nameplateFlag != null && !isProfileFlagCountry(obj.nameplateFlag)) return false;
@@ -66,6 +67,7 @@ export function isProfileCustomization(value: unknown): value is ProfileCustomiz
   if (obj.nameEffect != null && !(PROFILE_NAME_EFFECTS as readonly unknown[]).includes(obj.nameEffect)) return false;
   const hex = (color: unknown) => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color);
   if (obj.themeColor != null && !hex(obj.themeColor)) return false;
+  if (obj.themeSecondaryColor != null && !hex(obj.themeSecondaryColor)) return false;
   if (obj.nameColors !== undefined && (!Array.isArray(obj.nameColors) || obj.nameColors.length > 5 || !obj.nameColors.every(hex))) return false;
   return true;
 }

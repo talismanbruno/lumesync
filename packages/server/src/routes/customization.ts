@@ -5,6 +5,12 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { getCustomizationCatalog } from '../utils/customizationCatalog.js';
 
+/** Public immutable media must not consume the write/API rate budget. */
+export function isCustomizationMediaRequest(method: string, route: string): boolean {
+  return (method === 'GET' || method === 'HEAD') &&
+    (route === '/api/customization/assets/*' || route === '/api/customization/items/:id/:format');
+}
+
 export async function customizationRoutes(app: FastifyInstance): Promise<void> {
   const root = path.join(config.customizationDir, 'assets');
   if (fs.existsSync(root)) {

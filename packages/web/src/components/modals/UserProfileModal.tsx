@@ -17,6 +17,7 @@ import { useSocialStore, type TaggedFriend, type TaggedFriendRequest } from '../
 import { mapServerErrorToMessage } from '../../utils/friendErrors';
 import { useAuthStore } from '../../stores/authStore';
 import { getAvatarGradient, getSpaceGradient, adjustColor, mutedGradient } from '../../utils/gradients';
+import { getProfileThemeStyle } from '../../utils/profileTheme';
 import { parseFederatedUsername, isSelf, canonicalUserMatch, canonicalUserKey } from '../../utils/identity';
 import { loadFederatedMutuals, type TaggedMutualFriend, type MutualSpace } from '../../utils/mutuals';
 
@@ -268,7 +269,7 @@ export function UserProfileModal() {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
-      <div className="lume-profile-card lume-profile-cosmetic-surface relative max-w-lg w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-[24px] animate-slide-up" style={{ backgroundColor: user.customization?.themeColor || undefined }}>
+      <div className="lume-profile-card lume-profile-cosmetic-surface relative max-w-lg w-full mx-4 max-h-[calc(100vh-2rem)] flex flex-col glass-modal rounded-[24px] animate-slide-up" style={getProfileThemeStyle(user)}>
         <ProfileCosmetics customization={user.customization} />
         {/* Banner */}
         <ProfileBanner className="h-[100px] flex-shrink-0 relative" customization={user.customization} src={bannerSrc} fallback={bannerFallback}>

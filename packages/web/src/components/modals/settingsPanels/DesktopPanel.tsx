@@ -1,6 +1,7 @@
 import { t as uiText } from '../../../i18n';
 import { useState, useEffect } from 'react';
 import { Toggle } from '../../ui/Toggle';
+import { getMacDownloads } from '../../../config/desktopDownloads';
 
 function AutoLaunchSettings() {
   const [openAtLogin, setOpenAtLogin] = useState(false);
@@ -71,9 +72,11 @@ function AutoLaunchSettings() {
 function UpdateSettings() {
   const [version, setVersion] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [runtime, setRuntime] = useState<{ platform: string; arch: string; translated: boolean } | null>(null);
 
   useEffect(() => {
     window.backspace?.getVersion().then(setVersion).catch(() => {});
+    void window.backspace?.getRuntimeInfo?.().then(setRuntime).catch(() => {});
   }, []);
 
   const handleCheck = () => {
@@ -91,6 +94,8 @@ function UpdateSettings() {
         </div>
         <div className="text-xs text-txt-tertiary mt-0.5">
           {uiText("Check for new versions of the desktop app")}</div>
+        {runtime?.platform === 'darwin' && <p className="text-xs text-txt-secondary mt-2">{runtime.translated ? 'Versão Intel via Rosetta. Seu Mac pode usar a versão nativa.' : runtime.arch === 'arm64' ? 'Apple Silicon · versão nativa' : 'Mac Intel · versão nativa'}</p>}
+        {runtime?.translated && <a href={getMacDownloads()[0]!.url} className="inline-block text-xs text-accent-primary mt-2">Baixar versão Apple Silicon →</a>}
       </div>
       <button
         onClick={handleCheck}

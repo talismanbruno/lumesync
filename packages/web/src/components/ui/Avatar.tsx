@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User, UserStatus, ProfileCustomization } from '@backspace/shared';
-import { cosmeticAvatarUrl } from '../../stores/customizationStore';
+import { cosmeticAvatarUrl, useCosmeticItem } from '../../stores/customizationStore';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useAuthStore } from '../../stores/authStore';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -113,7 +113,9 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
   const appearance = customization !== undefined ? customization : selfCustomization !== undefined ? selfCustomization : cachedCustomization !== undefined ? cachedCustomization : user?.customization;
   const reducedMotion = useReducedMotion();
   const freeze = freezeAnimation || reducedMotion;
-  const decoration = cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze);
+  const decorationItem = useCosmeticItem(appearance?.avatarDecorationId);
+  const decoration = (freeze ? decorationItem?.staticSrc : decorationItem?.animatedSrc ?? decorationItem?.staticSrc)
+    ?? cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze);
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
@@ -180,7 +182,7 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
         ) : null}
         <div
           className={`avatar-fallback w-full h-full rounded-full flex items-center justify-center font-bold text-white ${displaySrc ? 'hidden' : 'flex'}`}
-          style={{ background: gradient.gradient, fontSize: fontPx, ...(displaySrc ? { display: 'none' } : {}) }}
+          style={{ background: gradient.gradient, color: gradient.foreground, fontSize: fontPx, ...(displaySrc ? { display: 'none' } : {}) }}
         >
           {initials}
         </div>

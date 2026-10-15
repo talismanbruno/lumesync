@@ -61,7 +61,12 @@ export function ProfileCosmetics({ customization, effects = true }: { customizat
     {frame?.frameLayers?.map(layer => {
       const horizontal = (frame.overflowHorizontal || 0) * scale;
       const style: CSSProperties = { left: -horizontal, width: `calc(100% + ${horizontal * 2}px)`, zIndex: layer.order === 'front' ? 4 : 0 };
-      if (layer.anchor === 'top') style.top = -(frame.overflowTop || 0) * scale;
+      if (layer.responsive && layer.type === 'rail') {
+        const top = (frame.overflowTop || 0) * scale;
+        const bottom = (frame.overflowBottom || 0) * scale;
+        style.top = -top;
+        style.height = `calc(100% + ${top + bottom}px)`;
+      } else if (layer.anchor === 'top') style.top = -(frame.overflowTop || 0) * scale;
       else if (layer.anchor === 'bottom') style.bottom = -(frame.overflowBottom || 0) * scale;
       else { style.top = 0; style.height = '100%'; }
       return <img key={layer.id} src={layer.src} alt="" className={`lume-profile-frame-layer lume-profile-frame-${layer.type}`} style={style} />;

@@ -76,6 +76,7 @@ jobs:
           pnpm exec tsc
           pnpm test
       - name: Package desktop without publishing partial releases
+        # macOS's renderer is also exercised on the native Apple Silicon runner.
         working-directory: packages/desktop
         run: pnpm exec electron-builder ${{ matrix.args }} --publish never
         env:
@@ -87,6 +88,12 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           for dmg in packages/desktop/dist-electron/*.dmg; do hdiutil verify "$dmg"; done
+          lipo -verify_arch arm64 packages/desktop/dist-electron/mac-arm64/Lume.app/Contents/MacOS/Lume
+          lipo -verify_arch x86_64 packages/desktop/dist-electron/mac/Lume.app/Contents/MacOS/Lume
+      - name: Check native Mac rendering responsiveness
+        if: runner.os == 'macOS'
+        working-directory: packages/desktop
+        run: pnpm exec electron scripts/mac-render-smoke.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-desktop-${{ matrix.os }}

@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('backspace', {
   // Platform info
   platform: process.platform,
+  getRuntimeInfo: () => ipcRenderer.invoke('get-runtime-info'),
   preferredLanguages: ipcRenderer.sendSync('get-preferred-languages'),
 
   // Window controls

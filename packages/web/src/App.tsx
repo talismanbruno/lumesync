@@ -7,6 +7,7 @@ import { JoinPage } from './components/JoinPage';
 import { ScreenSharePicker } from './components/voice/ScreenSharePicker';
 import { useAuthStore } from './stores/authStore';
 import { isElectron } from './platform/platform';
+import { MacDownloads } from './components/auth/MacDownloads';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -55,6 +56,7 @@ export function App() {
       <div className={showTitleBar ? 'flex-1 min-h-0' : 'contents'}>
         <ScreenSharePicker />
         <Routes>
+          <Route path="/download/mac" element={<MacDownloads />} />
           <Route
             path="/login"
             element={

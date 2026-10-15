@@ -8,7 +8,12 @@ export const MAX_MESSAGE_LENGTH = 4000;
 // ─── User Types ─────────────────────────────────────────────────────────────
 
 export const AVATAR_COLORS = ['mint', 'sky', 'lavender', 'coral', 'rose', 'teal', 'amber'] as const;
-export type AvatarColor = (typeof AVATAR_COLORS)[number];
+export type AvatarColorPreset = (typeof AVATAR_COLORS)[number];
+export type AvatarColor = AvatarColorPreset | `#${string}`;
+
+export function isAvatarColor(value: unknown): value is AvatarColor {
+  return typeof value === 'string' && ((AVATAR_COLORS as readonly string[]).includes(value) || /^#[0-9a-fA-F]{6}$/.test(value));
+}
 
 export interface User {
   id: string;

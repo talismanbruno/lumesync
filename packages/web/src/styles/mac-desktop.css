@@ -1,0 +1,7 @@
+/* Large and nested backdrop filters make the native Retina compositor repeatedly
+   sample the entire window. Keep the same surfaces, borders and motion with a
+   solid backing in the macOS app. This also works with older desktop clients. */
+html[data-lume-runtime="mac-desktop"] :is(.glass,.glass-strip,.glass-bubble,.glass-modal,.glass-pill,.lume-self-profile-menu,.lume-customization-savebar,.lume-cosmetic-dialog-backdrop) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

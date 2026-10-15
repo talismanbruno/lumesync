@@ -3,13 +3,14 @@
  * Deterministic color assignment based on entity ID (snowflake) or name.
  */
 
-import type { AvatarColor } from '@backspace/shared';
+import { isAvatarColor, type AvatarColorPreset } from '@backspace/shared';
 
 export interface GradientEntry {
   from: string;      // hex start color
   to: string;        // hex end color
   gradient: string;  // CSS linear-gradient (derived from from/to)
   glow: string;      // hex glow color (hand-curated most prominent color)
+  foreground?: string;
 }
 
 function grad(from: string, to: string, glow: string): GradientEntry {
@@ -27,7 +28,7 @@ const AVATAR_GRADIENTS: GradientEntry[] = [
   grad('#f59e0b', '#eab308', '#f59e0b'),   // amber
 ];
 
-export const AVATAR_GRADIENT_MAP: Record<AvatarColor, GradientEntry> = {
+export const AVATAR_GRADIENT_MAP: Record<AvatarColorPreset, GradientEntry> = {
   mint:     AVATAR_GRADIENTS[0]!,
   sky:      AVATAR_GRADIENTS[1]!,
   lavender: AVATAR_GRADIENTS[2]!,
@@ -48,7 +49,7 @@ export const SPACE_GRADIENTS: GradientEntry[] = [
   grad('#059669', '#10b981', '#10b981'),   // mint
 ];
 
-export const SPACE_GRADIENT_MAP: Record<AvatarColor, GradientEntry> = {
+export const SPACE_GRADIENT_MAP: Record<AvatarColorPreset, GradientEntry> = {
   coral:    SPACE_GRADIENTS[0]!,   // red-orange
   rose:     SPACE_GRADIENTS[1]!,   // pink
   teal:     SPACE_GRADIENTS[2]!,   // teal-cyan
@@ -72,8 +73,16 @@ function hashString(str: string): number {
 
 /** Deterministic gradient for a user avatar. Uses stored avatarColor if available; falls back to hash. */
 export function getAvatarGradient(id?: string | null, name?: string, avatarColor?: string | null): GradientEntry {
-  if (avatarColor && avatarColor in AVATAR_GRADIENT_MAP) {
-    return AVATAR_GRADIENT_MAP[avatarColor as AvatarColor];
+  if (isAvatarColor(avatarColor)) {
+    if (avatarColor.startsWith('#')) {
+      const channels = [1, 3, 5].map(offset => {
+        const channel = parseInt(avatarColor.slice(offset, offset + 2), 16) / 255;
+        return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+      });
+      const luminance = .2126 * channels[0]! + .7152 * channels[1]! + .0722 * channels[2]!;
+      return { ...grad(avatarColor, avatarColor, avatarColor), foreground: luminance > .179 ? '#000000' : '#ffffff' };
+    }
+    return AVATAR_GRADIENT_MAP[avatarColor as AvatarColorPreset];
   }
   const key = id || name || 'unknown';
   return AVATAR_GRADIENTS[hashString(key) % AVATAR_GRADIENTS.length]!;
@@ -82,7 +91,7 @@ export function getAvatarGradient(id?: string | null, name?: string, avatarColor
 /** Deterministic gradient for a space icon. Uses stored avatarColor if available; falls back to hash. */
 export function getSpaceGradient(id?: string | null, name?: string, avatarColor?: string | null): GradientEntry {
   if (avatarColor && avatarColor in SPACE_GRADIENT_MAP) {
-    return SPACE_GRADIENT_MAP[avatarColor as AvatarColor];
+    return SPACE_GRADIENT_MAP[avatarColor as AvatarColorPreset];
   }
   const key = id || name || 'unknown';
   return SPACE_GRADIENTS[hashString(key) % SPACE_GRADIENTS.length]!;

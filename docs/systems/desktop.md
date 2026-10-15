@@ -17,6 +17,14 @@ Source files:
 
 ## Architecture Overview
 
+### macOS rendering and architecture (beta 22)
+
+The renderer marks native macOS windows with `data-lume-runtime="mac-desktop"`. `mac-desktop.css` removes overlapping backdrop sampling from large glass surfaces and cosmetic dialogs; colors, borders, profile gradients and animations remain available. Browser clients and Windows/Linux keep the existing material. Chromium hardware acceleration and foreground scheduling keep their default settings; calls continue using the existing background-throttling policy.
+
+`getRuntimeInfo()` is an asynchronous preload/IPC query returning platform, executable architecture, Electron's `runningUnderARM64Translation` flag and GPU feature status. Desktop settings distinguish native Apple Silicon, native Intel and Rosetta; translated clients get a direct ARM64 download. `/download/mac` offers separate ARM64 and x64 DMGs without inferring architecture from the ambiguous `MacIntel` browser platform.
+
+The release workflow checks both packaged Mach-O architectures with `lipo`, verifies DMGs and exercises the installed native Electron renderer with an isolated, offline profile. `mac-render-smoke.cjs` reports frame cadence before/after the backdrop policy and rejects a stalled renderer. This synthetic runner measurement does not establish frame rate on a user's physical Mac; verify the correct native build on the affected device if symptoms persist.
+
 The desktop app wraps the Backspace web client in Electron with:
 - **Main process** (`main.ts`): Window lifecycle, tray icon, IPC handler registry, auto-update, deep linking, activity detection, keybind manager
 - **Preload bridge** (`preload.ts`): Exposes `window.backspace` API via `contextBridge` with full sandbox isolation (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`)

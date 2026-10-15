@@ -8,6 +8,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { Avatar } from '../ui/Avatar';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { parseFederatedUsername } from '../../utils/identity';
+import { getProfileThemeStyle } from '../../utils/profileTheme';
 
 export function MobileYouScreen() {
   const pushMobileScreen = useUIStore((s) => s.pushMobileScreen);
@@ -76,7 +77,7 @@ export function MobileYouScreen() {
       </header>
 
       {/* Profile card */}
-      <div className="mx-4 rounded-xl bg-surface-channel relative isolate">
+      <div className="lume-mobile-profile-card mx-4 rounded-xl bg-surface-channel relative isolate" style={getProfileThemeStyle(user)}>
         {/* Banner or accent background */}
         <ProfileBanner className="h-24 relative rounded-t-xl" customization={user.customization} src={bannerUrl} fallback={user.accentColor || 'linear-gradient(135deg, rgb(var(--accent-primary)), rgb(var(--accent-lavender)))'} />
 

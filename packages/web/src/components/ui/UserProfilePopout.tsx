@@ -12,6 +12,7 @@ import { useSpaceStore, getApiForOrigin, resolveUserOrigin } from '../../stores/
 import { api } from '../../api/client';
 import { useUIStore } from '../../stores/uiStore';
 import { getAvatarGradient, adjustColor, mutedGradient } from '../../utils/gradients';
+import { getProfileThemeStyle } from '../../utils/profileTheme';
 import { parseFederatedUsername } from '../../utils/identity';
 import { useCanonicalUserView } from '../../utils/userViewLookup';
 import { loadFederatedMutuals } from '../../utils/mutuals';
@@ -97,8 +98,8 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
     <div
       className="lume-profile-cosmetic-surface fixed z-[200] w-[340px] rounded-[12px] animate-fade-in select-none glass-modal"
       style={position
-        ? { top, left, backgroundColor: user.customization?.themeColor || undefined }
-        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: user.customization?.themeColor || undefined }}
+        ? { top, left, ...getProfileThemeStyle(user) }
+        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', ...getProfileThemeStyle(user) }}
     >
       {/* Banner */}
       <ProfileCosmetics customization={user.customization} />

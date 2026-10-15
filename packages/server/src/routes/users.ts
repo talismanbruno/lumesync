@@ -4,7 +4,7 @@ import { getDb, schema } from '../db/index.js';
 import { authenticate, verifyPassword, hashPassword, signJwt, setMediaAuthCookie, clearMediaAuthCookie, getRequestAuthToken } from '../utils/auth.js';
 import { connectionManager } from '../ws/handler.js';
 import type { UpdateUserRequest, VerifyPasswordRequest, VerifyPasswordResponse, ChangePasswordRequest, ChangePasswordResponse, DeleteAccountRequest, ReplicatedInstance, SpaceLayoutItem, SpaceFolder, Activity, FederationIdentityDeleteRequest, FederationIdentityDeleteResponse, FederationIdentityDeleteResult, FederationProfileUpdatePayload } from '@backspace/shared';
-import { AVATAR_COLORS, isProfileCustomization, parseProfileCustomization } from '@backspace/shared';
+import { isAvatarColor, isProfileCustomization, parseProfileCustomization } from '@backspace/shared';
 import { hasValidCosmeticSelections } from '../utils/customizationCatalog.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { deleteUploadFile, deleteAttachmentByFilename } from '../utils/fileCleanup.js';
@@ -301,8 +301,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (avatarColor !== undefined) {
       if (avatarColor && typeof avatarColor === 'string' && avatarColor.trim().length > 0) {
         const trimmed = avatarColor.trim();
-        if (!(AVATAR_COLORS as readonly string[]).includes(trimmed)) {
-          return reply.code(400).send({ error: `Invalid avatar color. Must be one of: ${AVATAR_COLORS.join(', ')}`, statusCode: 400 });
+        if (!isAvatarColor(trimmed)) {
+          return reply.code(400).send({ error: 'Avatar color must be a preset or a six-digit hex color (e.g. #67d9f2)', statusCode: 400 });
         }
         updateData.avatarColor = trimmed;
       } else {

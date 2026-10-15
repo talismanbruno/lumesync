@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getDesktopDownload,
+  getMacDownloads,
   LUME_DESKTOP_RELEASE_URL,
   LUME_DESKTOP_VERSION,
 } from './desktopDownloads';
@@ -32,9 +33,10 @@ describe('desktop downloads', () => {
     expect(download.label).toContain('Android');
   });
 
-  it('lets Mac users choose the matching architecture on the release page', () => {
+  it('lets Mac users choose the matching architecture without guessing from MacIntel user agents', () => {
     vi.stubGlobal('navigator', { platform: 'MacIntel', userAgent: 'Mozilla/5.0 (Macintosh)' });
-    expect(getDesktopDownload().url).toBe(LUME_DESKTOP_RELEASE_URL);
+    expect(getDesktopDownload().url).toBe('/download/mac');
     expect(getDesktopDownload().detail).toContain('Apple Silicon');
+    expect(getMacDownloads().map(download => download.filename)).toEqual([`Lume-${LUME_DESKTOP_VERSION}-arm64.dmg`, `Lume-${LUME_DESKTOP_VERSION}-x64.dmg`]);
   });
 });

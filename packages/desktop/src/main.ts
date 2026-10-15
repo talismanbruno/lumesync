@@ -565,6 +565,13 @@ function registerIpcHandlers(): void {
     });
   });
 
+  ipcMain.handle('get-runtime-info', () => ({
+    platform: process.platform,
+    arch: process.arch,
+    translated: process.platform === 'darwin' && app.runningUnderARM64Translation,
+    gpu: app.getGPUFeatureStatus(),
+  }));
+
   ipcMain.on('set-badge-count', (_event, count: number) => {
     if (app.setBadgeCount) {
       app.setBadgeCount(count);

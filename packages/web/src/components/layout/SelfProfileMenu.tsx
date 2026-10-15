@@ -6,6 +6,7 @@ import { useActivityStore } from '../../stores/activityStore';
 import { copyText } from '../../utils/clipboard';
 import { getPresenceLabel } from '../../utils/presenceLabels';
 import { getAvatarGradient, adjustColor, mutedGradient } from '../../utils/gradients';
+import { getProfileThemeStyle } from '../../utils/profileTheme';
 import { resolveAvatarSource } from '../../utils/safeUrls';
 import { Avatar } from '../ui/Avatar';
 import { ProfileBanner } from '../ui/FlagCanvas';
@@ -64,7 +65,7 @@ export function SelfProfileMenu({ user, onClose, onEdit }: { user: User; onClose
 
   return <div ref={root} tabIndex={-1} role="dialog" aria-label="Meu perfil e presença" className="lume-self-profile-menu">
     <ProfileFrameSpace customization={user.customization}>
-      <section className="lume-self-profile-card" aria-label="Prévia do meu perfil" style={{ backgroundColor: user.customization?.themeColor || undefined }}>
+      <section className="lume-self-profile-card" aria-label="Prévia do meu perfil" style={getProfileThemeStyle(user)}>
         <ProfileBanner className="lume-self-profile-banner" customization={user.customization} src={banner} fallback={fallback} />
         <div className="lume-self-profile-body">
           <div className="lume-self-profile-avatar-row">

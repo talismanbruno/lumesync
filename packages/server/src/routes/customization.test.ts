@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { eq } from 'drizzle-orm';
@@ -26,7 +27,7 @@ vi.mock('../ws/handler.js', () => ({ connectionManager: {
   clearUserActivities: vi.fn(), getUserStatus: () => 'online',
 } }));
 
-const customization = { bannerFlag: 'br', nameplateFlag: 'pt', avatarDecorationId: '101', profileEffectId: '102', nameplateId: '103', profileFrameId: '104', nameFont: 'Tempo', nameEffect: 'gradient', nameColors: ['#8ee7d1', '#b4a8ff'], themeColor: '#181b24' };
+const customization = { bannerFlag: 'br', nameplateFlag: 'pt', avatarDecorationId: '101', profileEffectId: '102', nameplateId: '103', profileFrameId: '104', nameFont: 'Tempo', nameEffect: 'gradient', nameColors: ['#8ee7d1', '#b4a8ff'], themeColor: '#181b24', themeSecondaryColor: '#285eb8' };
 const authorization = () => ({ authorization: `Bearer ${signJwt({ userId: 'local-style-user', username: 'style_test' })}` });
 
 beforeEach(async () => {
@@ -57,6 +58,36 @@ afterEach(async () => {
 });
 
 describe('profile customization', () => {
+  it.each(['#23b7a4', '#FFFFFF', '#000000', 'sky'])('persists an avatar color through profile reload: %s', async avatarColor => {
+    const response = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers: authorization(), payload: { avatarColor } });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().avatarColor).toBe(avatarColor);
+    const reloaded = await app.inject({ method: 'GET', url: '/api/users/@me', headers: authorization() });
+    expect(reloaded.json().avatarColor).toBe(avatarColor);
+  });
+  it.each(['#fff', '#12345678', 'url(https://example.com)', 'red', '#xxxxxx'])('rejects invalid custom avatar colors: %s', async avatarColor => {
+    const response = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers: authorization(), payload: { avatarColor } });
+    expect(response.statusCode).toBe(400);
+    expect(db.select().from(schema.users).get()?.avatarColor).toBeNull();
+  });
+  it('keeps browsing media outside the API budget while still limiting profile writes', async () => {
+    const { customizationRoutes, isCustomizationMediaRequest } = await import('./customization.js');
+    const limited = Fastify();
+    try {
+      await limited.register(rateLimit, { max: 3, timeWindow: '1 minute', allowList: request => isCustomizationMediaRequest(request.method, request.routeOptions.url ?? '') });
+      await limited.register(customizationRoutes);
+      limited.patch('/profile', async () => ({ saved: true }));
+      for (let index = 0; index < 12; index++) {
+        expect((await limited.inject({ method: index % 2 ? 'GET' : 'HEAD', url: '/api/customization/assets/sample.png' })).statusCode).toBe(200);
+        expect((await limited.inject({ method: 'GET', url: '/api/customization/items/101/static' })).statusCode).toBe(302);
+      }
+      for (let index = 0; index < 3; index++) expect((await limited.inject({ method: 'PATCH', url: '/profile' })).statusCode).toBe(200);
+      expect((await limited.inject({ method: 'PATCH', url: '/profile' })).statusCode).toBe(429);
+      expect((await limited.inject({ method: 'GET', url: '/api/customization/catalog' })).statusCode).toBe(429);
+      expect(isCustomizationMediaRequest('POST', '/api/customization/assets/*')).toBe(false);
+      expect(isCustomizationMediaRequest('GET', '/api/customization/assets-pretend/*')).toBe(false);
+    } finally { await limited.close(); }
+  });
   it('persists all four selections and name styling, returns parsed data, and preserves existing GIFs and name color', async () => {
     const response = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers: authorization(), payload: { customization } });
     expect(response.statusCode).toBe(200);
@@ -76,7 +107,7 @@ describe('profile customization', () => {
     { avatarDecorationId: '102' }, { avatarDecorationId: '999' },
     { avatarDecorationId: '../asset' }, { nameFont: 'unknown' },
     { nameEffect: 'url(javascript:alert(1))' }, { nameColors: ['red'] },
-    { themeColor: '#fff' }, { injectedCss: 'position:fixed' },
+    { themeColor: '#fff' }, { themeSecondaryColor: '#fff' }, { themeSecondaryColor: 'url(https://example.com)' }, { injectedCss: 'position:fixed' },
     { bannerFlag: '../secret' }, { nameplateFlag: 'https://example.com/image.svg' },
     { bannerFlag: 'zz' }, { nameplateFlag: 'BR' },
   ])('rejects unavailable, mismatched, and unsafe selections: %j', async value => {

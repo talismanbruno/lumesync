@@ -1,5 +1,5 @@
 import { t as uiText } from '../i18n';
-export const LUME_DESKTOP_VERSION = '1.0.0-beta.21';
+export const LUME_DESKTOP_VERSION = '1.0.0-beta.22';
 export const LUME_DESKTOP_RELEASE_URL =
   `https://github.com/talismanbruno/lumesync/releases/tag/v${LUME_DESKTOP_VERSION}`;
 
@@ -13,6 +13,13 @@ export interface DesktopDownload {
   filename?: string;
 }
 
+export function getMacDownloads(): DesktopDownload[] {
+  return [
+    { label: 'Mac Apple Silicon', detail: 'M1, M2, M3, M4 e posteriores · versão nativa', filename: `Lume-${LUME_DESKTOP_VERSION}-arm64.dmg`, url: `https://github.com/talismanbruno/lumesync/releases/download/v${LUME_DESKTOP_VERSION}/Lume-${LUME_DESKTOP_VERSION}-arm64.dmg` },
+    { label: 'Mac Intel', detail: 'Mac com processador Intel', filename: `Lume-${LUME_DESKTOP_VERSION}-x64.dmg`, url: `https://github.com/talismanbruno/lumesync/releases/download/v${LUME_DESKTOP_VERSION}/Lume-${LUME_DESKTOP_VERSION}-x64.dmg` },
+  ];
+}
+
 export function getDesktopDownload(): DesktopDownload {
   if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)) {
     return {
@@ -24,7 +31,7 @@ export function getDesktopDownload(): DesktopDownload {
   }
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform)) {
     return {
-      url: LUME_DESKTOP_RELEASE_URL,
+      url: '/download/mac',
       label: uiText("Baixar Lume para macOS"),
       detail: 'Intel ou Apple Silicon',
     };

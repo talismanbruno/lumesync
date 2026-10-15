@@ -36,6 +36,7 @@ interface BackspaceElectronAPI {
   preferredLanguages?: string[];
   // Platform info
   platform: NodeJS.Platform;
+  getRuntimeInfo?: () => Promise<{ platform: string; arch: string; translated: boolean; gpu: Record<string, string> }>;
 
   // Window controls
   minimize: () => void;

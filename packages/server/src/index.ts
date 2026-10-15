@@ -8,7 +8,7 @@ import { getDb, getRawDb, closeDatabase } from './db/index.js';
 import { checkFfmpeg } from './utils/thumbnail.js';
 import { authRoutes } from './routes/auth.js';
 import { userRoutes } from './routes/users.js';
-import { customizationRoutes } from './routes/customization.js';
+import { customizationRoutes, isCustomizationMediaRequest } from './routes/customization.js';
 import { spaceRoutes } from './routes/spaces.js';
 import { channelRoutes } from './routes/channels.js';
 import { messageRoutes } from './routes/messages.js';
@@ -103,8 +103,10 @@ async function main(): Promise<void> {
     timeWindow: '1 minute',
     keyGenerator: (request) => (request as any).userId || request.ip,
     // Test harnesses set DISABLE_RATE_LIMITS=1 to bypass per-IP exhaustion when
-    // many tests share the loopback IP. Default unset; production unchanged.
-    allowList: () => process.env.DISABLE_RATE_LIMITS === '1' || process.env.DISABLE_RATE_LIMITS === 'true',
+    // many tests share the loopback IP. Immutable cosmetic reads are exempt below;
+    // catalog and API writes keep the normal production limit.
+    allowList: request => process.env.DISABLE_RATE_LIMITS === '1' || process.env.DISABLE_RATE_LIMITS === 'true' ||
+      isCustomizationMediaRequest(request.method, request.routeOptions.url ?? ''),
     errorResponseBuilder: (_request, context) => ({
       statusCode: 429,
       error: 'Too Many Requests',

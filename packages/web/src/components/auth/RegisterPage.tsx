@@ -6,7 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { ImageCropModal } from '../ui/ImageCropModal';
 import { AVATAR_GRADIENT_MAP } from '../../utils/gradients';
 import { AVATAR_COLORS } from '@backspace/shared';
-import type { AvatarColor, CheckInviteResponse, InstanceInfoResponse, User } from '@backspace/shared';
+import type { AvatarColorPreset, CheckInviteResponse, InstanceInfoResponse, User } from '@backspace/shared';
 import { api, RateLimitError } from '../../api/client';
 import { useTransferStore } from '../../stores/transferStore';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
@@ -50,7 +50,7 @@ export function RegisterPage() {
 
   // Step 2 fields
   const [displayName, setDisplayName] = useState('');
-  const [avatarColor, setAvatarColor] = useState<AvatarColor>(
+  const [avatarColor, setAvatarColor] = useState<AvatarColorPreset>(
     () => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)] ?? 'mint'
   );
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
