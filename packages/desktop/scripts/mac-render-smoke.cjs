@@ -23,6 +23,7 @@ app.whenReady().then(async () => {
   </style></head><body><div class="light"></div><main>${cards}</main></body></html>`;
   const source = path.join(temporary, 'render.html'); fs.writeFileSync(source, html);
   await window.loadFile(source);
+  app.focus({ steal: true }); window.show(); window.focus();
   const measure = async native => window.webContents.executeJavaScript(`(async()=>{
     document.documentElement.dataset.lumeRuntime=${JSON.stringify(native ? 'mac-desktop' : '')};
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));

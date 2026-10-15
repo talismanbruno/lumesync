@@ -88,8 +88,8 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           for dmg in packages/desktop/dist-electron/*.dmg; do hdiutil verify "$dmg"; done
-          lipo -verify_arch arm64 packages/desktop/dist-electron/mac-arm64/Lume.app/Contents/MacOS/Lume
-          lipo -verify_arch x86_64 packages/desktop/dist-electron/mac/Lume.app/Contents/MacOS/Lume
+          lipo packages/desktop/dist-electron/mac-arm64/Lume.app/Contents/MacOS/Lume -verify_arch arm64
+          lipo packages/desktop/dist-electron/mac/Lume.app/Contents/MacOS/Lume -verify_arch x86_64
       - name: Check native Mac rendering responsiveness
         if: runner.os == 'macOS'
         working-directory: packages/desktop
