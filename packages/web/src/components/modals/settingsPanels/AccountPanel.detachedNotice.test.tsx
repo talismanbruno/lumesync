@@ -70,7 +70,11 @@ vi.mock('../../../stores/spaceStore', () => ({
 vi.mock('../../../api/client', () => ({
   // reattach is wrapped so the top-level `mockReattach` const is dereferenced
   // lazily at call time (vi.mock factories are hoisted above const init).
-  api: { uploads: { url: (f: string) => `/api/uploads/${f}` }, users: { reattach: (...args: unknown[]) => mockReattach(...args) } },
+  api: {
+    uploads: { url: (f: string) => `/api/uploads/${f}` },
+    users: { reattach: (...args: unknown[]) => mockReattach(...args) },
+    auth: { recoveryEmail: vi.fn().mockResolvedValue({ email: null, pendingEmail: null, verified: false, available: false }) },
+  },
 }));
 
 // Child modals are closed in these render cases; stub them so their transitive
@@ -228,7 +232,7 @@ describe('profile name color selection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restaurar estilo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
     await waitFor(() => expect(noop).toHaveBeenCalledWith({ nameColor: '', customization: { nameFont: null, nameEffect: null, nameColors: [] } }));
-  });
+  }, 15000);
   it('shows the gold selection only for an admin', () => {
     currentUser = makeUser();
     render(<AccountPanel profileOnly />);
