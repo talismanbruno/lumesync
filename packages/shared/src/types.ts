@@ -530,6 +530,8 @@ export type ServerEvent =
 export interface RegisterRequest {
   username: string;
   password: string;
+  /** Private recovery address; usable only after ownership verification. */
+  email?: string;
   displayName?: string;
   avatarColor?: string;
   homeInstance?: string;
@@ -551,6 +553,7 @@ export interface AuthResponse {
   token: string;
   user: User;
   recoveryCodes?: string[];
+  emailVerificationSent?: boolean;
 }
 
 export interface CreateSpaceRequest {

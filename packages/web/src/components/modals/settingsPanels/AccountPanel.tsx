@@ -15,6 +15,7 @@ import type { User, UserStatus, AvatarColor } from '@backspace/shared';
 import type { FederationOpResult } from '../../../utils/federationOps';
 import { ProfileCustomizationEditor } from './ProfileCustomizationEditor';
 import type { ProfileCustomization } from '@backspace/shared';
+import { RecoveryEmailPanel } from './RecoveryEmailPanel';
 export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const updateProfile = useAuthStore((s) => s.updateProfile);
@@ -75,9 +76,6 @@ export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean })
   const [passwordResults, setPasswordResults] = useState<FederationOpResult[] | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [recoveryPassword, setRecoveryPassword] = useState('');
-  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
-  const [recoveryError, setRecoveryError] = useState('');
 
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -564,25 +562,7 @@ export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean })
         </form>
       </div>
 
-      {!user.homeInstance && <div className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3.5 space-y-3">
-        <div className="text-sm font-semibold text-txt-primary">{uiText("Códigos de recuperação")}</div>
-        <p className="text-xs text-txt-secondary">{uiText("Use um código se esquecer sua senha. Gerar novos códigos invalida os anteriores.")}</p>
-        <input type="password" value={recoveryPassword} onChange={e => setRecoveryPassword(e.target.value)} placeholder={uiText("Senha atual")} autoComplete="current-password" className="input-standard w-full" />
-        <button type="button" disabled={!recoveryPassword} className="px-4 py-2 bg-accent-primary text-white text-sm rounded-lg disabled:opacity-50" onClick={async () => {
-          setRecoveryError('');
-          try {
-            const result = await api.auth.recoveryCodes(recoveryPassword);
-            setRecoveryCodes(result.recoveryCodes);
-            setRecoveryPassword('');
-          } catch (error) { setRecoveryError(error instanceof Error ? error.message : uiText("Não foi possível gerar códigos")); }
-        }}>{uiText("Gerar novos códigos")}</button>
-        {recoveryError && <p className="text-xs text-txt-danger">{recoveryError}</p>}
-        {recoveryCodes && <div>
-          <p className="text-xs text-txt-secondary">{uiText("Guarde agora: estes códigos não serão exibidos novamente.")}</p>
-          <pre className="mt-2 p-3 rounded bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{recoveryCodes.join('\n')}</pre>
-          <button type="button" className="mt-2 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}>{uiText("Copiar códigos")}</button>
-        </div>}
-      </div>}
+      {!user.homeInstance && <RecoveryEmailPanel />}
 
       {/* ── Danger Zone ── */}
       <div>

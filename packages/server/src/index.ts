@@ -53,7 +53,10 @@ async function main(): Promise<void> {
 
   app.addHook('onSend', async (_request, reply, payload) => {
     reply.header('X-Content-Type-Options', 'nosniff');
-    reply.header('X-Frame-Options', 'DENY');
+    // The public cosmetic demo is embedded by the landing on this same origin.
+    const profileDemo = _request.url.split('?')[0] === '/site/assets/profile/index.html';
+    reply.header('X-Frame-Options', profileDemo ? 'SAMEORIGIN' : 'DENY');
+    if (profileDemo) reply.header('Content-Security-Policy', "frame-ancestors 'self'");
     reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     reply.header('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=()');
     return payload;
@@ -120,12 +123,15 @@ async function main(): Promise<void> {
   // Serve built frontend in production
   const webDistPath = path.resolve(import.meta.dirname ?? '.', '../../web/dist');
   if (fs.existsSync(webDistPath)) {
+    app.get('/site', async (_request, reply) => reply.redirect('/site/'));
     await app.register(fastifyStatic, {
       root: webDistPath,
       prefix: '/',
       wildcard: false,
       setHeaders(response, filePath) {
-        if (path.basename(filePath) === 'index.html') {
+        if (filePath.includes(`${path.sep}site${path.sep}`)) {
+          response.header('Cache-Control', 'no-cache');
+        } else if (path.basename(filePath) === 'index.html') {
           response.header('Cache-Control', 'no-cache');
         } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
           response.header('Cache-Control', 'public, max-age=31536000, immutable');
@@ -179,7 +185,7 @@ async function main(): Promise<void> {
       if (request.url.startsWith('/api/') || request.url.startsWith('/ws')) {
         return reply.code(404).send({ error: 'Not found', statusCode: 404 });
       }
-      if (request.url.startsWith('/assets/')) {
+      if (request.url.startsWith('/assets/') || request.url.startsWith('/site/')) {
         return reply.code(404).type('text/plain').send('Asset not found');
       }
       return reply.sendFile('index.html');

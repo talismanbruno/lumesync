@@ -109,6 +109,12 @@ export class BackspaceApiClient {
     login: (data: LoginRequest) => Promise<AuthResponse>;
     recover: (data: { username: string; recoveryCode: string; newPassword: string }) => Promise<{ success: boolean }>;
     recoveryCodes: (password: string) => Promise<{ recoveryCodes: string[] }>;
+    emailStatus: () => Promise<{ available: boolean }>;
+    recoveryEmail: () => Promise<{ email: string | null; pendingEmail: string | null; verified: boolean; available: boolean }>;
+    setRecoveryEmail: (data: { email: string; password: string }) => Promise<{ success: boolean; sent: boolean }>;
+    verifyEmail: (token: string) => Promise<{ success: boolean }>;
+    forgotPassword: (email: string) => Promise<{ success: boolean }>;
+    resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean }>;
     logout: () => Promise<{ success: boolean }>;
     checkUsername: (username: string) => Promise<{ available: boolean; reason?: string }>;
     checkInvite: (token: string) => Promise<CheckInviteResponse>;
@@ -432,6 +438,12 @@ export class BackspaceApiClient {
         request<AuthResponse>('POST', '/auth/login', data, false),
       recover: (data) => request<{ success: boolean }>('POST', '/auth/recover', data, false),
       recoveryCodes: (password: string) => request<{ recoveryCodes: string[] }>('POST', '/auth/recovery-codes', { password }),
+      emailStatus: () => request<{ available: boolean }>('GET', '/auth/email-status', undefined, false),
+      recoveryEmail: () => request('GET', '/auth/recovery-email'),
+      setRecoveryEmail: (data) => request('POST', '/auth/recovery-email', data),
+      verifyEmail: (token) => request('POST', '/auth/verify-email', { token }, false),
+      forgotPassword: (email) => request('POST', '/auth/forgot-password', { email }, false),
+      resetPassword: (token, newPassword) => request('POST', '/auth/reset-password', { token, newPassword }, false),
       logout: () => request<{ success: boolean }>('POST', '/auth/logout', undefined, false),
       checkUsername: (username: string) =>
         request<{ available: boolean; reason?: string }>('GET', `/auth/check-username?username=${encodeURIComponent(username)}`, undefined, false),

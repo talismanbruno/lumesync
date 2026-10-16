@@ -28,7 +28,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /^\/uploads/],
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /^\/uploads/, /^\/site(?:\/|$)/],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,

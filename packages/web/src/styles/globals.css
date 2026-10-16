@@ -1425,6 +1425,12 @@
   box-shadow: 0 0 0 3px rgba(0, 209, 255, 0.06);
 }
 
+/* Account access must stay readable, including explanations and help controls. */
+:is(.lume-auth-shell, .lume-register-shell) .text-txt-tertiary { color: #94a2ad; }
+:is(.lume-auth-shell, .lume-register-shell) .text-txt-secondary { color: #bec7ce; }
+:is(.lume-auth-shell, .lume-register-shell) input::placeholder { color: #7e8b95; opacity: 1; }
+:is(.lume-auth-shell, .lume-register-shell) button[aria-expanded] { color: #a9b6bf; border-color: #53616c; }
+
 .lume-auth-card button[type="submit"] {
   min-height: 46px;
   border-radius: 13px;

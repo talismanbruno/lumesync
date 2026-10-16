@@ -10,8 +10,8 @@ import type { AvatarColorPreset, CheckInviteResponse, InstanceInfoResponse, User
 import { api, RateLimitError } from '../../api/client';
 import { useTransferStore } from '../../stores/transferStore';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
-import { SourceCodeLink } from '../ui/SourceCodeLink';
 import { DesktopDownloadLink } from './DesktopDownloadLink';
+import { FieldHelp, PasswordField } from './authFields';
 
 // Single-source regex for extracting a bare invite token from a pasted full URL.
 // Token format: 22 chars base64url ([A-Za-z0-9_-]).
@@ -28,6 +28,7 @@ export function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
 
   // Username availability check
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
@@ -61,8 +62,7 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
-  const [pendingSession, setPendingSession] = useState<{ token: string; user: User; codes: string[] } | null>(null);
-  const [codesSaved, setCodesSaved] = useState(false);
+  const [pendingSession, setPendingSession] = useState<{ token: string; user: User; sent: boolean } | null>(null);
 
   const initSession = useAuthStore((s) => s.initSession);
   const navigate = useNavigate();
@@ -191,18 +191,18 @@ export function RegisterPage() {
 
     if (trimmed.length < 3 || trimmed.length > 32) {
       setUsernameStatus(trimmed.length > 0 ? 'invalid' : 'idle');
-      setUsernameStatusMessage(trimmed.length > 0 ? 'Username must be between 3 and 32 characters' : '');
+      setUsernameStatusMessage(trimmed.length > 0 ? 'Use de 3 a 32 caracteres.' : '');
       return;
     }
 
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
       setUsernameStatus('invalid');
-      setUsernameStatusMessage('Username can only contain lowercase letters, numbers, and underscores');
+      setUsernameStatusMessage('Use apenas letras minúsculas, números e _.');
       return;
     }
 
     setUsernameStatus('checking');
-    setUsernameStatusMessage('Checking availability...');
+    setUsernameStatusMessage('Conferindo disponibilidade…');
 
     usernameCheckTimerRef.current = setTimeout(async () => {
       const controller = new AbortController();
@@ -217,10 +217,10 @@ export function RegisterPage() {
           setUsernameStatusMessage(result.reason);
         } else if (result.available) {
           setUsernameStatus('available');
-          setUsernameStatusMessage('Username is available');
+          setUsernameStatusMessage('Este usuário está disponível.');
         } else {
           setUsernameStatus('taken');
-          setUsernameStatusMessage('Username is already taken');
+          setUsernameStatusMessage('Este usuário já está em uso. Tente outro.');
         }
       } catch {
         if (controller.signal.aborted) return;
@@ -273,11 +273,11 @@ export function RegisterPage() {
       return;
     }
     if (trimmed.length < 3 || trimmed.length > 32) {
-      setError(uiText("Username must be between 3 and 32 characters"));
+      setError('Use de 3 a 32 caracteres no usuário.');
       return;
     }
     if (!/^[a-z0-9_]+$/.test(trimmed)) {
-      setError(uiText("Username can only contain lowercase letters, numbers, and underscores"));
+      setError('No usuário, use apenas letras minúsculas, números e _.');
       return;
     }
     if (usernameStatus === 'taken' || usernameStatus === 'invalid') {
@@ -287,12 +287,12 @@ export function RegisterPage() {
       setError(uiText("Informe sua senha"));
       return;
     }
-    if (password.length < 6) {
-      setError(uiText("Password must be at least 6 characters"));
+    if (password.length < 8 || password.length > 1024) {
+      setError('Use uma senha com pelo menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
-      setError(uiText("Passwords do not match"));
+      setError('As senhas precisam ser iguais.');
       return;
     }
 
@@ -352,6 +352,7 @@ export function RegisterPage() {
       const response = await api.auth.register({
         username: username.trim(),
         password,
+        ...(email.trim() ? { email: email.trim() } : {}),
         displayName: dn,
         avatarColor: ac,
         ...(tokenForRegister ? { inviteToken: tokenForRegister } : {}),
@@ -370,9 +371,8 @@ export function RegisterPage() {
         }
       }
 
-      // Show one-time codes before navigation; the server stores only their hashes.
-      if (response.recoveryCodes?.length) {
-        setPendingSession({ token: response.token, user: finalUser, codes: response.recoveryCodes });
+      if (email.trim()) {
+        setPendingSession({ token: response.token, user: finalUser, sent: response.emailVerificationSent === true });
       } else {
         initSession(response.token, finalUser);
         navigate(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
@@ -397,12 +397,9 @@ export function RegisterPage() {
   if (pendingSession) return (
     <div className="min-h-full flex items-center justify-center bg-surface-base p-5">
       <div className="w-full max-w-lg rounded-xl border border-white/10 bg-surface-raised p-6 text-txt-primary">
-        <h1 className="text-xl font-bold">{uiText("Guarde seus códigos de recuperação")}</h1>
-        <p className="mt-2 text-sm text-txt-secondary">{uiText("Eles permitem trocar sua senha se você perdê-la. Cada código funciona uma vez. Eles não serão mostrados de novo.")}</p>
-        <pre className="mt-4 p-4 rounded-lg bg-black/30 text-sm select-all whitespace-pre-wrap break-all">{pendingSession.codes.join('\n')}</pre>
-        <button type="button" className="mt-3 text-sm text-accent-primary" onClick={() => void navigator.clipboard.writeText(pendingSession.codes.join('\n'))}>{uiText("Copiar códigos")}</button>
-        <label className="mt-5 flex items-center gap-2 text-sm"><input type="checkbox" checked={codesSaved} onChange={e => setCodesSaved(e.target.checked)} /> {uiText(" Guardei os códigos em lugar seguro")}</label>
-        <button type="button" disabled={!codesSaved} className="mt-4 w-full rounded-lg bg-accent-primary px-4 py-2 text-white disabled:opacity-50" onClick={() => {
+        <h1 className="text-xl font-bold">Sua conta está pronta</h1>
+        <p className="mt-3 text-sm leading-6 text-txt-secondary">{pendingSession.sent ? `Enviamos uma confirmação para ${email.trim()}. Abra o e-mail para ativar a recuperação da sua conta. Você já pode usar o Lume.` : 'Seu e-mail foi salvo, mas a confirmação ainda não foi enviada. Reenvie a confirmação em Configurações → Minha conta quando o envio de e-mails estiver disponível.'}</p>
+        <button type="button" className="mt-6 w-full rounded-lg bg-accent-primary px-4 py-3 text-black font-semibold" onClick={() => {
           initSession(pendingSession.token, pendingSession.user);
           navigate(redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
         }}>{uiText("Continuar para o Lume")}</button>
@@ -424,7 +421,7 @@ export function RegisterPage() {
     // the visible viewport once the iOS keyboard claims ~300 px). `h-full` (rather than
     // `min-h-full`) makes this element exactly viewport-height; the inner flex wrapper
     // uses `min-h-full` so short content still centers vertically.
-    <div className="h-full overflow-y-auto bg-surface-base relative">
+    <div className="lume-register-shell h-full overflow-y-auto bg-surface-base relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(0,209,255,0.10)_0%,transparent_42%)] pointer-events-none" />
       <div className="min-h-full flex items-center justify-center px-4 py-6 md:py-10 relative z-10">
         <div className="w-full max-w-[480px] bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-6 md:p-8 shadow-elevation-high overflow-hidden backdrop-blur-xl">
@@ -522,10 +519,9 @@ export function RegisterPage() {
               )}
 
               <div className="mb-5">
-                <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  {uiText("Username ")}<span className="text-txt-danger">*</span>
-                </label>
+                <div className="flex items-center gap-2 mb-2"><label htmlFor="signup-username" className="text-sm font-semibold text-txt-secondary">Usuário</label><FieldHelp label="Ajuda sobre usuário">Este será seu identificador para entrar no Lume. Use de 3 a 32 caracteres: letras minúsculas, números ou _. O nome do seu perfil pode ser diferente.</FieldHelp></div>
                 <input
+                  id="signup-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
@@ -561,31 +557,9 @@ export function RegisterPage() {
                 )}
               </div>
 
-              <div className="mb-5">
-                <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  {uiText("Password ")}<span className="text-txt-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-standard w-full py-2.5 text-base md:text-sm"
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <div className="mb-5">
-                <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                  {uiText("Confirm Password ")}<span className="text-txt-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input-standard w-full py-2.5 text-base md:text-sm"
-                  autoComplete="new-password"
-                />
-              </div>
+              <div className="mb-5"><label htmlFor="signup-email" className="block text-sm font-semibold text-txt-secondary mb-2">E-mail de recuperação <span className="font-normal text-xs text-txt-tertiary">(recomendado)</span></label><input id="signup-email" type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-standard w-full py-3 text-base" autoComplete="email" maxLength={254} placeholder="voce@exemplo.com" aria-describedby="signup-email-help" /><p id="signup-email-help" className="mt-2 text-xs leading-5 text-txt-tertiary">Não aparece no seu perfil. Confirme o endereço para recuperar sua conta se esquecer a senha.</p></div>
+              <div className="mb-5"><PasswordField id="signup-password" label="Senha" value={password} onChange={setPassword} creating /></div>
+              <div className="mb-5"><PasswordField id="signup-confirm" label="Repita a senha" value={confirmPassword} onChange={setConfirmPassword} creating confirmation /></div>
 
               <button
                 type="submit"
@@ -594,7 +568,7 @@ export function RegisterPage() {
                 // tighter desktop look from before.
                 className="w-full py-3 md:py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uiText("Continue")}</button>
+                Continuar</button>
 
               {/* Helper text when invite is required but not yet entered */}
               {inviteRequired && !manualInviteToken.trim() && !urlInviteToken && (
@@ -603,17 +577,17 @@ export function RegisterPage() {
               )}
 
               <p className="mt-3 text-sm text-txt-tertiary">
-                {uiText("Already have an account?")}{' '}
+                Já tem uma conta?{' '}
                 <Link to={`/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">
-                  {uiText("Log In")}</Link>
+                  Entrar</Link>
               </p>
             </form>
           </div>
         ) : (
           <div key="step2" className={`w-full${direction === 'forward' ? ' animate-step-forward' : ''}`}>
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-txt-primary">{uiText("Make it yours")}</h1>
-              <p className="text-txt-tertiary text-sm mt-1">{uiText("Personalize your profile, or skip for now")}</p>
+              <h1 className="text-2xl font-bold text-txt-primary">Seu perfil, do seu jeito</h1>
+              <p className="text-txt-tertiary text-sm mt-1">Escolha seu nome e sua foto. Você pode mudar tudo depois.</p>
             </div>
 
             {retryAfter > 0 && (
@@ -654,7 +628,7 @@ export function RegisterPage() {
                 onClick={() => avatarInputRef.current?.click()}
                 className="text-xs text-accent-primary hover:underline mt-2"
               >
-                {uiText("Upload photo")}</button>
+                Enviar foto</button>
               <input
                 ref={avatarInputRef}
                 type="file"
@@ -667,12 +641,12 @@ export function RegisterPage() {
             {/* Display Name */}
             <div className="mb-5">
               <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                {uiText("Display Name")}</label>
+                Nome no perfil</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={username.trim() || uiText("Display name")}
+                placeholder={username.trim() || 'Como você quer aparecer'}
                 className="input-standard w-full py-2.5 text-base md:text-sm"
                 autoComplete="name"
               />
@@ -681,7 +655,7 @@ export function RegisterPage() {
             {/* Avatar Color Picker */}
             <div className="mb-6">
               <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-                {uiText("Avatar Color")}</label>
+                Cor do avatar</label>
               {/* Color swatch row: gap tightens on narrow viewports so the 7 swatches
                   fit inside a 360 px viewport (p-6 inner content area is ~280 px;
                   7×32 + 6×10 = 284 px would overflow with gap-2.5). */}
@@ -716,8 +690,8 @@ export function RegisterPage() {
               {retryAfter > 0
                 ? uiText("Tente novamente em {0}s", [retryAfter])
                 : isRegistering
-                  ? uiText("Creating account...")
-                  : uiText("Get Started")}
+                  ? 'Criando sua conta…'
+                  : 'Criar minha conta'}
             </button>
 
             <div className="flex items-center justify-between mt-3">
@@ -728,26 +702,20 @@ export function RegisterPage() {
                 // py-2 px-1 widens the tap area on mobile while keeping the visual link style.
                 className="text-sm text-txt-tertiary hover:text-txt-secondary transition-colors disabled:opacity-50 py-2 px-1 -mx-1"
               >
-                {uiText("Back")}</button>
+                Voltar</button>
               <button
                 type="button"
                 onClick={() => handleRegister(true)}
                 disabled={isDisabled}
                 className="text-sm text-txt-tertiary hover:text-txt-secondary transition-colors disabled:opacity-50 py-2 px-1 -mx-1"
               >
-                {uiText("Skip for now")}</button>
+                Personalizar depois</button>
             </div>
           </div>
         )}
 
         <DesktopDownloadLink />
 
-        {/* AGPL § 13: source offer for anonymous visitors, shown on both steps. */}
-        {instanceInfo && (
-          <div className="mt-6 pt-4 border-t border-white/[0.04] flex justify-center">
-            <SourceCodeLink sourceCodeUrl={instanceInfo.sourceCodeUrl} version={instanceInfo.version} commit={instanceInfo.commit} />
-          </div>
-        )}
         </div>
       </div>
 

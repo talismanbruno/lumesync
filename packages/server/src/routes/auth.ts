@@ -13,6 +13,8 @@ import { fetchPeerEpoch } from '../utils/federationEpoch.js';
 import { getInviteByToken, inviteStatus, redeemInvite, InviteUnavailableError } from '../utils/inviteService.js';
 import { verifyAttachProofWithPeer } from '../utils/federationAttach.js';
 import { safeFetch } from '../utils/ssrf.js';
+import { emailRecoveryRoutes } from './emailRecovery.js';
+import { normalizeEmail, sendAccountEmail, setPendingEmail } from '../utils/accountEmail.js';
 
 function codeHash(code: string): string {
   return createHash('sha256').update(code).digest('hex');
@@ -27,6 +29,7 @@ function issueRecoveryCodes(userId: string): string[] {
 }
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
+  await emailRecoveryRoutes(app);
   app.post<{ Body: RegisterRequest }>('/api/auth/register', {
     config: {
       rateLimit: {
@@ -94,11 +97,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
-    if (password.length < 8) {
+    if (password.length < 8 || password.length > 1024) {
       return reply.code(400).send({ error: 'Password must be at least 8 characters', statusCode: 400 });
     }
 
     const db = getDb();
+
+    const email = request.body.email === undefined ? null : normalizeEmail(request.body.email);
+    if (request.body.email !== undefined && (!email || homeInstance)) {
+      return reply.code(400).send({ error: 'Informe um e-mail válido para uma conta local.', statusCode: 400 });
+    }
 
     // Read both gates from instance_settings.
     // - registrationOpen: nullable column; null falls back to env var (config.registrationOpen).
@@ -335,10 +343,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const token = signJwt({ userId: user.id, username: user.username });
     setMediaAuthCookie(reply, token);
 
+    let emailVerificationSent = false;
+    if (email) {
+      setPendingEmail(user.id, email);
+      try { emailVerificationSent = await sendAccountEmail(user.id, email, 'verify'); }
+      catch { app.log.warn('Registration email delivery failed'); }
+    }
     const response: AuthResponse = {
       token,
       user: sanitizeUser(user, true),
       ...(recoveryCodes ? { recoveryCodes } : {}),
+      ...(email ? { emailVerificationSent } : {}),
     };
 
     return reply.header('Cache-Control', 'no-store').code(201).send(response);

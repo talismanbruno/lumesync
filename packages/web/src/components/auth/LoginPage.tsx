@@ -1,198 +1,109 @@
-import { t as uiText } from '../../i18n';
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { api, RateLimitError } from '../../api/client';
-import type { InstanceInfoResponse } from '@backspace/shared';
-import { SourceCodeLink } from '../ui/SourceCodeLink';
+import { api, HttpError, RateLimitError } from '../../api/client';
 import { DesktopDownloadLink } from './DesktopDownloadLink';
+import { FieldHelp, PasswordField } from './authFields';
 
 export function LoginPage() {
+  const location = useLocation();
+  const action = location.pathname === '/reset-password' ? 'reset' : location.pathname === '/verify-email' ? 'verify' : 'login';
+  const [token] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') ?? '');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [email, setEmail] = useState('');
   const [recovering, setRecovering] = useState(false);
-  const [recoveryCode, setRecoveryCode] = useState('');
-  const [recoveryDone, setRecoveryDone] = useState(false);
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [mailAvailable, setMailAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState(0);
-  const login = useAuthStore((s) => s.login);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const login = useAuthStore(s => s.login);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
+  const isAction = action !== 'login';
 
-  // AGPL § 13: anonymous users must be able to reach the source of the running
-  // version. Fetched from the unauthenticated public info endpoint.
-  const [instanceInfo, setInstanceInfo] = useState<InstanceInfoResponse | null>(null);
   useEffect(() => {
-    let cancelled = false;
-    api.instance.info()
-      .then((info) => { if (!cancelled) setInstanceInfo(info); })
-      .catch(() => { /* Non-critical — link is simply omitted if unreachable. */ });
-    return () => { cancelled = true; };
-  }, []);
-
+    if (!recovering) return;
+    let active = true;
+    api.auth.emailStatus().then(result => { if (active) setMailAvailable(result.available); }).catch(() => { if (active) setMailAvailable(false); });
+    return () => { active = false; };
+  }, [recovering]);
   useEffect(() => {
     if (retryAfter <= 0) return;
-    const timer = setInterval(() => {
-      setRetryAfter((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    const timer = setTimeout(() => setRetryAfter(value => Math.max(0, value - 1)), 1000);
+    return () => clearTimeout(timer);
   }, [retryAfter]);
+  // Keep the token in memory only; remove it from the address bar/history early.
+  useEffect(() => {
+    if (isAction && location.hash) window.history.replaceState(window.history.state, '', location.pathname + location.search);
+  }, [isAction, location.hash, location.pathname, location.search]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (busy) return;
     setError('');
-
-    if (!username.trim()) {
-      setError(uiText("Informe seu usuário"));
-      return;
-    }
-    if (!password) {
-      setError(uiText("Informe sua senha"));
-      return;
-    }
-
+    if (action === 'reset' && (password.length < 8 || password.length > 1024)) { setError('Use uma senha com pelo menos 8 caracteres.'); return; }
+    if (action === 'reset' && password !== confirmation) { setError('As senhas precisam ser iguais.'); return; }
+    setBusy(true);
     try {
-      if (recovering) {
-        await api.auth.recover({ username: username.trim(), recoveryCode: recoveryCode.trim(), newPassword: password });
-        setRecoveryDone(true);
-        setRecovering(false);
-        setPassword('');
-        setRecoveryCode('');
-        return;
-      }
-      await login(username.trim(), password);
-      if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
-        navigate(redirect);
-      } else {
-        navigate('/channels/@me');
+      if (action === 'verify') { await api.auth.verifyEmail(token); setDone(true); }
+      else if (action === 'reset') { await api.auth.resetPassword(token, password); setDone(true); setPassword(''); setConfirmation(''); }
+      else if (recovering) { await api.auth.forgotPassword(email.trim()); setDone(true); }
+      else {
+        await login(username.trim(), password);
+        navigate(redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : '/channels/@me');
       }
     } catch (err) {
-      if (err instanceof RateLimitError) {
-        setRetryAfter(err.retryAfter);
-        setError('');
-      } else {
-        setError(err instanceof Error ? err.message : uiText("Não foi possível entrar"));
-      }
-    }
-  };
+      if (err instanceof RateLimitError) setRetryAfter(err.retryAfter);
+      else if (err instanceof HttpError && err.status === 401 && action === 'login' && !recovering) setError('Usuário ou senha incorretos. Confira os dados ou use “Esqueci minha senha”.');
+      else if (err instanceof HttpError && err.status >= 500) setError('Não foi possível conectar ao Lume. Tente novamente em instantes.');
+      else setError(err instanceof Error ? err.message : 'Não foi possível continuar. Tente novamente.');
+    } finally { setBusy(false); }
+  }
 
-  const isDisabled = isLoading || retryAfter > 0;
+  const title = done ? (action === 'verify' ? 'E-mail confirmado' : action === 'reset' ? 'Senha atualizada' : 'Confira seu e-mail')
+    : action === 'verify' ? 'Confirme seu e-mail' : action === 'reset' ? 'Crie uma nova senha' : recovering ? 'Esqueceu sua senha?' : 'Entre no Lume';
+  const description = done ? (action === 'verify' ? 'Seu endereço já pode ser usado para recuperar sua conta.' : action === 'reset' ? 'Entre com sua nova senha. As sessões anteriores foram encerradas.' : 'Se este endereço estiver confirmado em uma conta, você receberá um link. Confira também a pasta de spam.')
+    : action === 'verify' ? 'Confirme que este endereço é seu para proteger o acesso à sua conta.' : action === 'reset' ? 'Escolha uma senha que você ainda não usa em outros aplicativos.' : recovering ? 'Informe o e-mail de recuperação que você confirmou na sua conta.' : 'Use o usuário e a senha que você escolheu ao criar sua conta.';
+  const noToken = isAction && !/^[a-f0-9]{64}$/.test(token);
 
-  return (
-    <div className="lume-auth-shell min-h-full flex items-center justify-center bg-surface-base relative overflow-hidden px-4 py-8">
-      <div className="lume-auth-orbit lume-auth-orbit-a" />
-      <div className="lume-auth-orbit lume-auth-orbit-b" />
-      <div className="lume-auth-layout w-full max-w-[1040px] relative z-10 grid lg:grid-cols-[1.15fr_0.85fr] items-stretch">
-        <section className="lume-auth-intro hidden lg:flex flex-col justify-between p-12 min-h-[600px]">
-          <img src="/icons/logo-wordmark.png" alt={uiText("Lume")} className="h-10 w-auto self-start object-contain" />
-          <div>
-            <span className="lume-auth-kicker">{uiText("COMUNICAÇÃO EM ÓRBITA")}</span>
-            <h2 className="mt-5 text-[44px] leading-[1.04] font-bold tracking-[-0.045em] text-white">
-              {uiText("Sua galera,")}<br /><span className="text-accent-primary">{uiText("no mesmo ritmo.")}</span>
-            </h2>
-            <p className="mt-5 max-w-[430px] text-[15px] leading-7 text-txt-tertiary">
-              {uiText("Converse, compartilhe e entre em chamada num espaço leve, direto e feito para pertencer a vocês.")}</p>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-txt-tertiary">
-            <span className="lume-live-dot" />
-            <span>{uiText("Lume Orbital está online")}</span>
-          </div>
+  return <div className="h-full overflow-y-auto bg-surface-base">
+    <main className="lume-auth-shell min-h-full flex items-center justify-center relative px-4 py-8">
+      <div className="lume-auth-layout w-full max-w-[1040px] relative grid lg:grid-cols-[1.1fr_0.9fr] items-stretch">
+        <section className="lume-auth-intro hidden lg:flex flex-col justify-between p-12 min-h-[610px]">
+          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-10 w-auto self-start object-contain" />
+          <div><h2 className="text-[48px] leading-[1.06] font-bold tracking-[-0.045em] text-white">Suas conversas<br />merecem <span className="text-accent-primary">algo novo.</span></h2>
+            <p className="mt-6 max-w-[360px] text-[15px] leading-7 text-txt-tertiary">A interface que você já conhece, com algo a mais. Voz, mensagens e personalização gratuita.</p></div>
+          <p className="text-xs text-txt-tertiary">No navegador ou no aplicativo. Do seu jeito.</p>
         </section>
-
-      <div className="lume-auth-card w-full max-w-[440px] lg:max-w-none bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-8 shadow-elevation-high relative backdrop-blur-xl">
-        <div className="text-center mb-6">
-          <img src="/icons/logo-wordmark.png" alt={uiText("Lume")} className="h-10 w-auto mx-auto mb-6 object-contain lg:hidden" />
-          <h1 className="text-2xl font-bold text-txt-primary">{uiText("Bem-vindo de volta")}</h1>
-          <p className="text-txt-tertiary mt-1">{uiText("Sua galera está te esperando.")}</p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {retryAfter > 0 && (
-            <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-sm">
-              <p className="font-medium text-accent-amber">{uiText("Muitas tentativas de acesso")}</p>
-              <p className="text-txt-secondary mt-0.5">{uiText("Tente novamente em ")}{retryAfter}{uiText("s")}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-4 p-3 bg-accent-rose/10 border border-accent-rose/30 rounded text-txt-danger text-sm">
-              {error}
-            </div>
-          )}
-
-          {recoveryDone && <p className="mb-4 text-sm text-accent-primary">{uiText("Senha alterada. Entre com a nova senha.")}</p>}
-
-          <div className="mb-5">
-            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              {uiText("Usuário ")}<span className="text-txt-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="input-standard w-full py-2.5"
-              autoFocus
-              autoComplete="username"
-            />
-          </div>
-
-          <div className="mb-5">
-            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">
-              {recovering ? uiText("Nova senha") : uiText("Senha")} <span className="text-txt-danger">*</span>
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-standard w-full py-2.5"
-              autoComplete={recovering ? 'new-password' : 'current-password'}
-            />
-          </div>
-
-          {recovering && <div className="mb-5">
-            <label className="block text-xs font-bold text-txt-secondary uppercase mb-2">{uiText("Código de recuperação")}</label>
-            <input type="text" value={recoveryCode} onChange={e => setRecoveryCode(e.target.value)} className="input-standard w-full py-2.5" autoComplete="off" required />
-          </div>}
-
-          <button
-            type="submit"
-            disabled={isDisabled}
-            className="w-full py-2.5 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {retryAfter > 0
-              ? uiText("Tente novamente em {0}s", [retryAfter])
-              : isLoading
-                ? uiText("Entrando...")
-                : recovering ? uiText("Trocar senha") : uiText("Entrar")}
-          </button>
-
-          <button type="button" className="mt-3 text-sm text-accent-primary hover:underline" onClick={() => { setRecovering(!recovering); setError(''); setRecoveryDone(false); }}>
-            {recovering ? uiText("Voltar para entrar") : uiText("Esqueci minha senha")}
-          </button>
-
-          <p className="mt-3 text-sm text-txt-tertiary">
-            {uiText("Ainda não tem uma conta?")}{' '}
-            <Link to={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">
-              {uiText("Criar conta")}</Link>
-          </p>
-          <DesktopDownloadLink />
-        </form>
-
-        {instanceInfo && (
-          <div className="mt-6 pt-4 border-t border-white/[0.04] flex justify-center">
-            <SourceCodeLink sourceCodeUrl={instanceInfo.sourceCodeUrl} version={instanceInfo.version} commit={instanceInfo.commit} />
-          </div>
-        )}
+        <section className="lume-auth-card w-full bg-surface-elevated/90 border border-white/[0.06] rounded-2xl p-6 sm:p-9 shadow-elevation-high relative">
+          <img src="/icons/logo-wordmark.png" alt="Lume" className="h-9 w-auto mx-auto mb-7 object-contain lg:hidden" />
+          <header className="mb-7"><h1 className="text-[28px] font-bold tracking-tight text-txt-primary">{title}</h1><p className="text-sm leading-6 text-txt-tertiary mt-2">{description}</p></header>
+          {done ? <div className="space-y-5"><div className="rounded-xl border border-accent-primary/20 bg-accent-primary/5 p-4 text-sm text-txt-secondary">{action === 'login' ? 'O link vale por 15 minutos e funciona uma única vez.' : 'Tudo certo. Você já pode continuar.'}</div>
+            <Link to="/login" className="block text-center rounded-xl bg-accent-primary px-4 py-3 font-semibold text-black" onClick={() => { setDone(false); setRecovering(false); }}>Voltar para entrar</Link></div>
+          : <form onSubmit={handleSubmit} className="space-y-5">
+            {error && <p role="alert" className="p-3 rounded-lg bg-accent-rose/10 text-txt-danger text-sm">{error}</p>}
+            {retryAfter > 0 && <p role="status" className="text-sm text-accent-amber">Muitas tentativas. Tente de novo em {retryAfter}s.</p>}
+            {noToken ? <p role="alert" className="text-sm text-txt-secondary">Este link está incompleto. Solicite um novo link de recuperação ou confirmação.</p> : <>
+              {!isAction && !recovering && <div><div className="flex items-center gap-2 mb-2"><label htmlFor="login-username" className="text-sm font-semibold text-txt-secondary">Usuário</label><FieldHelp label="Ajuda sobre usuário">É o identificador que você criou no cadastro, como jogador_01. Ele pode ser diferente do nome que aparece no seu perfil.</FieldHelp></div>
+                <input id="login-username" name="username" className="input-standard w-full py-3 text-base" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="Seu nome de usuário" required autoFocus /></div>}
+              {recovering && !isAction && <div><label htmlFor="recovery-email" className="block text-sm font-semibold text-txt-secondary mb-2">E-mail de recuperação</label><input id="recovery-email" className="input-standard w-full py-3 text-base" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="voce@exemplo.com" required autoFocus />
+                {mailAvailable === false && <p role="status" className="mt-3 text-xs leading-5 text-accent-amber">O envio de e-mails ainda não está disponível. Tente novamente mais tarde.</p>}</div>}
+              {(action === 'reset' || (!isAction && !recovering)) && <PasswordField id="login-password" label={action === 'reset' ? 'Nova senha' : 'Senha'} value={password} onChange={setPassword} creating={action === 'reset'} />}
+              {action === 'reset' && <PasswordField id="confirm-password" label="Repita a nova senha" value={confirmation} onChange={setConfirmation} creating confirmation />}
+              <button type="submit" disabled={busy || retryAfter > 0 || (recovering && mailAvailable === false)} className="w-full rounded-xl py-3 bg-accent-primary hover:bg-accent-primary/85 text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors">{busy ? (action === 'login' && !recovering ? 'Entrando…' : 'Aguarde…') : action === 'verify' ? 'Confirmar meu e-mail' : action === 'reset' ? 'Salvar nova senha' : recovering ? 'Enviar link de recuperação' : 'Entrar'}</button>
+            </>}
+            {isAction ? <Link className="block text-sm text-accent-primary" to="/login">Voltar para entrar</Link> : <>
+              <button type="button" className="text-sm text-accent-primary hover:underline" onClick={() => { setRecovering(!recovering); setError(''); setDone(false); setPassword(''); }}>{recovering ? 'Voltar para entrar' : 'Esqueci minha senha'}</button>
+              <p className="text-sm text-txt-tertiary">Ainda não tem uma conta? <Link to={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">Criar conta</Link></p>
+            </>}
+          </form>}
+          {!isAction && <DesktopDownloadLink />}
+        </section>
       </div>
-      </div>
-    </div>
-  );
+    </main>
+  </div>;
 }

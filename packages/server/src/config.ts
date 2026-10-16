@@ -74,6 +74,13 @@ export const config = {
   publicOrigin,
   sourceCodeUrl,
   commit,
+  mail: {
+    publicUrl: envOptional('AUTH_EMAIL_PUBLIC_URL') ?? publicOrigin ?? (envOptional('DOMAIN') ? `https://${envOptional('DOMAIN')}` : undefined),
+    resendApiKey: envOptional('RESEND_API_KEY'),
+    from: envOptional('MAIL_FROM'),
+    // Explicit opt-in, never served over HTTP and disabled in production.
+    previewDir: process.env.NODE_ENV !== 'production' ? envOptional('EMAIL_PREVIEW_DIR') : undefined,
+  },
 
   livekit: {
     url: envOptional('LIVEKIT_URL'),

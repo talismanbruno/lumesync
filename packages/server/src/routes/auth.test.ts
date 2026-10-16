@@ -641,6 +641,24 @@ describe('POST /api/auth/register — federation gate split', () => {
   });
 });
 
+describe('POST /api/auth/register — private recovery email', () => {
+  it('keeps a new address unverified and outside the public user response', async () => {
+    testDb.insert(schema.instanceSettings).values({ id: 1, registrationOpen: 1, updatedAt: Date.now() }).onConflictDoUpdate({ target: schema.instanceSettings.id, set: { registrationOpen: 1 } }).run();
+    const response = await app.inject({ method: 'POST', url: '/api/auth/register', payload: { username: 'email_owner', password: 'password123', email: 'Private@Example.com' } });
+    expect(response.statusCode).toBe(201);
+    expect(response.json().user).not.toHaveProperty('email');
+    expect(response.json().user).not.toHaveProperty('pendingEmail');
+    const row = testDb.select().from(schema.accountEmails).get()!;
+    expect(row.email).toBeNull(); expect(row.pendingEmail).toBe('private@example.com');
+    expect(response.json().emailVerificationSent).toBe(false);
+  });
+  it('rejects malformed email before creating an account', async () => {
+    const response = await app.inject({ method: 'POST', url: '/api/auth/register', payload: { username: 'bad_email', password: 'password123', email: 'invalid' } });
+    expect(response.statusCode).toBe(400);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.username, 'bad_email')).get()).toBeUndefined();
+  });
+});
+
 describe('POST /api/auth/register — first-user-admin promotion', () => {
   beforeEach(() => {
     // Start from a completely empty users table (no pre-seeded admin from outer beforeEach).

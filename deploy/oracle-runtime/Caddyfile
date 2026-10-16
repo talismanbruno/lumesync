@@ -8,10 +8,17 @@ lumesocial.online, 163-176-48-153.sslip.io {
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains"
         X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
         -Server
+    }
+
+    @appFrames not path /site/assets/profile/index.html
+    header @appFrames X-Frame-Options "DENY"
+    @profileDemo path /site/assets/profile/index.html
+    header @profileDemo {
+        >X-Frame-Options "SAMEORIGIN"
+        >Content-Security-Policy "frame-ancestors 'self'"
     }
 
     request_body {

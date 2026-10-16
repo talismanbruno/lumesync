@@ -54,6 +54,24 @@ export const recoveryCodes = sqliteTable('recovery_codes', {
   createdAt: integer('created_at').notNull(),
 }, (table) => ({ pk: primaryKey({ columns: [table.userId, table.codeHash] }) }));
 
+// Recovery addresses are private account data, never part of public profiles or federation.
+export const accountEmails = sqliteTable('account_emails', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  email: text('email').unique(),
+  pendingEmail: text('pending_email'),
+  verifiedAt: integer('verified_at'),
+});
+
+export const accountEmailTokens = sqliteTable('account_email_tokens', {
+  tokenHash: text('token_hash').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  purpose: text('purpose').notNull(),
+  email: text('email').notNull(),
+  passwordEpoch: integer('password_epoch').notNull(),
+  createdAt: integer('created_at').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+}, table => [index('idx_account_email_tokens_user').on(table.userId)]);
+
 export const spaces = sqliteTable('spaces', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

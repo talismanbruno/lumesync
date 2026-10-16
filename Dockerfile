@@ -34,6 +34,8 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared/ packages/shared/
 COPY packages/server/ packages/server/
 COPY packages/web/ packages/web/
+COPY landing/ landing/
+COPY scripts/package-landing.mjs scripts/
 
 # Build the web frontend
 RUN echo "Building Lume web at ${BACKSPACE_COMMIT}" && pnpm --filter @backspace/web build

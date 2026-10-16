@@ -57,6 +57,8 @@ export function App() {
         <ScreenSharePicker />
         <Routes>
           <Route path="/download/mac" element={<MacDownloads />} />
+          <Route path="/reset-password" element={<LoginPage key="reset" />} />
+          <Route path="/verify-email" element={<LoginPage key="verify" />} />
           <Route
             path="/login"
             element={

@@ -169,6 +169,13 @@
       "when": 1792059300000,
       "tag": "0023_profile_customization",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1792145700000,
+      "tag": "0024_account_email_recovery",
+      "breakpoints": true
     }
   ]
 }

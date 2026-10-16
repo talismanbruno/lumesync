@@ -1,0 +1,21 @@
+.site-nav .site-brand{width:48px;height:48px}
+.site-nav .site-brand>img{width:40px;height:40px;border-radius:12px;filter:drop-shadow(0 0 10px #38d2e410)}
+.hero-positioning{display:inline-flex;align-items:center;gap:10px;color:#8acbda;font-size:9px;font-weight:550;letter-spacing:2px;line-height:1.5;margin-bottom:23px}
+.hero-positioning:before{content:"";width:24px;height:1px;background:linear-gradient(90deg,transparent,#74def0)}
+html[data-hook=light] .home-hero .hero-copy{max-width:940px;padding-top:168px}
+html[data-hook=light] .home-hero h1{font-size:76px;line-height:1.09;letter-spacing:-3px}
+html[data-hook=light] .home-hero .description{font-size:17px;max-width:620px;margin-top:25px;color:#b5c7ce}
+.hero-specifics{display:block;font-size:12px;color:#72919e;margin-top:9px;letter-spacing:0}
+html[data-hook=light] .home-hero .hero-actions{margin-top:34px}
+.reasons .section-intro h2{max-width:900px}
+.reasons .section-intro>p{color:#8ca8b5}
+.reason{transition:background .2s}
+.reason:hover{background:linear-gradient(145deg,#4acbd004,transparent 65%)}
+.site-nav.scrolled:after{left:12px;right:12px;transform:scaleX(var(--page-read,0));transform-origin:left center;background:linear-gradient(90deg,#46c8de99,#c4faffb3);box-shadow:0 0 8px #54b4ce25}
+.download-heading h2{white-space:nowrap}
+.capture-shell{transform-origin:center top}
+@media(max-width:940px){html[data-hook=light] .home-hero .hero-copy{max-width:calc(100% - 48px);padding-top:142px}html[data-hook=light] .home-hero h1{font-size:65px;letter-spacing:-2.6px}.hero-specifics{font-size:11px}.site-nav .site-brand>img{width:38px;height:38px}}
+@media(max-width:640px){.site-nav .site-brand{width:40px;height:40px}.site-nav .site-brand>img{width:35px;height:35px;border-radius:10px}.hero-positioning{font-size:7px;letter-spacing:1.35px;margin-bottom:22px;gap:8px}.hero-positioning:before{width:15px}html[data-hook=light] .home-hero .hero-copy{max-width:calc(100% - 34px);padding-top:135px}html[data-hook=light] .home-hero h1{font-size:clamp(33px,9.1vw,51px);letter-spacing:-1.35px;line-height:1.12}html[data-hook=light] .home-hero .description{font-size:13px;max-width:310px;line-height:1.7;margin-top:25px}.hero-specifics{font-size:10px;line-height:1.8;margin-top:12px;max-width:280px;margin-inline:auto}html[data-hook=light] .home-hero .hero-actions{margin-top:30px}.reasons .section-intro h2{font-size:36px;letter-spacing:-1.5px}.download-heading h2{font-size:46px}}
+@media(prefers-reduced-motion:reduce){.reason{transition:none}}
+#download-status:empty{display:none}#download-status{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:90;width:max-content;max-width:calc(100% - 36px);padding:13px 18px;border:1px solid #5dbed23d;border-radius:11px;background:#101b20f5;box-shadow:0 8px 40px #0007;font-size:12px;line-height:1.6;color:#d0e6ed}
+.mac-download-dialog{width:min(410px,calc(100% - 36px));padding:30px;border:1px solid #8bd3e22b;border-radius:20px;background:#0e171b;color:#e3f0f4;box-shadow:0 25px 90px #0008}.mac-download-dialog::backdrop{background:#02080ccc;backdrop-filter:blur(8px)}.mac-download-dialog h2{font-size:24px;letter-spacing:-.8px;margin:10px 0}.mac-download-dialog>p{font-size:12px;line-height:1.7;color:#95b0bb;margin-bottom:22px}.mac-download-dialog>[data-close]{position:absolute;right:15px;top:12px;border:0;background:none;color:#94aeb8;font-size:24px}.mac-download-dialog>[data-mac-architecture]{display:flex;flex-direction:column;gap:7px;width:100%;text-align:left;background:#14252c;border:1px solid #7bc2d024;border-radius:11px;padding:17px;color:#dfedf2;margin-top:10px;transition:background .15s,border-color .15s}.mac-download-dialog>[data-mac-architecture]:hover{background:#1d3540;border-color:#7bc2d077}.mac-download-dialog strong{font-size:14px}.mac-download-dialog button>span{font-size:11px;color:#8cabb9}.mac-download-dialog>small{display:block;font-size:10px;color:#668593;margin-top:20px}.primary-button[aria-busy=true]{cursor:progress;opacity:.8}

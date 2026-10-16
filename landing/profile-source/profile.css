@@ -1,0 +1,7 @@
+html{color-scheme:dark}
+html,body,#root{height:auto!important;min-height:0!important;margin:0!important;background:transparent!important;overflow:hidden!important}
+body{font-family:'DM Sans',sans-serif}
+#root{width:100%;padding:4px 4px 10px;box-sizing:border-box}
+.live-profile-root{width:100%;min-width:0}
+.profile-poster{width:100%;height:auto;display:block}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

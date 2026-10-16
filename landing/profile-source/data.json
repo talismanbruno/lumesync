@@ -1,0 +1,117 @@
+{
+  "user": {
+    "id": "landing-lume-demo",
+    "username": "lume_demo",
+    "displayName": "Lume Studio",
+    "avatar": "./avatar.png",
+    "banner": "./banner.gif",
+    "accentColor": "#10101f",
+    "nameColor": null,
+    "avatarColor": "#7060b8",
+    "bio": "Banner, avatar, moldura e efeitos.\nPersonalização completa, do seu jeito.",
+    "status": "online",
+    "customStatus": "Criando algo novo no Lume.",
+    "isAdmin": false,
+    "createdAt": 1792076400000,
+    "homeInstance": null,
+    "homeUserId": null,
+    "replicatedInstances": [],
+    "customization": {
+      "avatarDecorationId": "1466993897333985337",
+      "profileEffectId": "1466972315265798215",
+      "nameplateId": "1519015716097888296",
+      "profileFrameId": "1484726324580061191",
+      "nameFont": "Fraunces",
+      "nameEffect": "glow",
+      "nameColors": [
+        "#b7e8ff",
+        "#c6a5ff",
+        "#f4d8ff"
+      ],
+      "themeColor": "#0e0d20",
+      "themeSecondaryColor": "#263461"
+    }
+  },
+  "items": [
+    {
+      "id": "1466993897333985337",
+      "type": 0,
+      "name": "Brilho Neon (Ametista)",
+      "category": "Fluxo",
+      "categoryId": "1466889339966587046",
+      "description": "Anel sólido roxo pulsando e brilhando gentilmente.",
+      "staticSrc": "./media/a8ed520ee40b354436a5fd7bd08336c7675e27dd40f894b20a387e13c994a2fb.png",
+      "animatedSrc": "./media/7627dc3b155dfbb259fd5c9c167fa1d4184344cf1e106b9444680e929ad12304.png"
+    },
+    {
+      "id": "1466972315265798215",
+      "type": 1,
+      "name": "Luzes Cíclicas (Vaporwave)",
+      "category": "Fluxo Vol. 2",
+      "categoryId": "1514654595299672245",
+      "description": "Borda em gradiente iridescente rosa e verde-azulado com raios emanantes que giram ao redor do perfil.",
+      "staticSrc": "./media/48461795fe21f9b263e828bfbef0c3cc2925441cd2e98fb0bbcdd89a59bc477b.png",
+      "layers": [
+        {
+          "src": "./media/c9be0322ac47a5a0cd9d689c406d3c56cfa71885aab4d2b28b514e30caf89959.png",
+          "duration": 2000,
+          "start": 0,
+          "loop": false,
+          "loopDelay": 0,
+          "zIndex": 100,
+          "randomizedSources": []
+        },
+        {
+          "src": "./media/fc8465b365d7212c02c4aa7c5f4ee0bfcd1f66acf1c35b0becb04c2a009c3374.png",
+          "duration": 5000,
+          "start": 2000,
+          "loop": true,
+          "loopDelay": 0,
+          "zIndex": 101,
+          "randomizedSources": []
+        }
+      ]
+    },
+    {
+      "id": "1519015716097888296",
+      "type": 2,
+      "name": "Cosmo Encantado",
+      "category": "Devaneio",
+      "categoryId": "1479186830472511588",
+      "description": "Nuvens cósmicas oníricas roxas e rosa com planetas brilhantes, bolhas e um cometa com as cores do arco-íris",
+      "staticSrc": "./media/0d7a282bdb4630e607ee770f70f12ff9963ff901fd14f0283ff00b11bacd5f1d.png",
+      "animatedSrc": "./media/b9192eccbf5321453711253d9911eb4ea44fef5c0e0b88fea2ebc66a4680db2d.png"
+    },
+    {
+      "id": "1484726324580061191",
+      "type": 3,
+      "name": "Cristais (Ametista)",
+      "category": "Molduras",
+      "categoryId": "1484726324580061185",
+      "description": "Grandes aglomerados de cristais roxos coroam o topo e se estendem parcialmente pelas laterais do perfil",
+      "staticSrc": "./media/c59ee46b842ad78879bf3c50837248a6d3d34d24adcb2ba9c15f17be617e2002.png",
+      "frameLayers": [
+        {
+          "id": "1514422966870347837",
+          "type": "staple",
+          "order": "front",
+          "anchor": "top",
+          "responsive": false,
+          "src": "./media/c59ee46b842ad78879bf3c50837248a6d3d34d24adcb2ba9c15f17be617e2002.png"
+        },
+        {
+          "id": "1514422970251083806",
+          "type": "staple",
+          "order": "back",
+          "anchor": "top",
+          "responsive": false,
+          "src": "./media/b9926208a1aa8af453c8276ebc1d83adcaa5a13cf7b204ef7a933b6812904316.png"
+        }
+      ],
+      "frameWidth": 1200,
+      "overflowTop": 304,
+      "overflowBottom": 0,
+      "overflowHorizontal": 56
+    }
+  ]
+}
