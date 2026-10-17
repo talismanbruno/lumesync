@@ -1,4 +1,5 @@
 import { isElectron } from './platform';
+import { appPath } from '../utils/appRoutes';
 import { useUIStore } from '../stores/uiStore';
 
 interface NotificationOptions {
@@ -24,7 +25,7 @@ export function sendNotification(title: string, body: string, options?: Notifica
           });
         } else {
           const destination = `/channels/${encodeURIComponent(spaceId || '@me')}/${encodeURIComponent(channelId)}`;
-          window.history.pushState({}, '', destination);
+          window.history.pushState({}, '', appPath(destination));
           window.dispatchEvent(new PopStateEvent('popstate'));
         }
       }

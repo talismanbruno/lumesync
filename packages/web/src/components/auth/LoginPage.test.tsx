@@ -12,10 +12,9 @@ afterEach(cleanup);
 function page(path = '/login') { return render(<MemoryRouter initialEntries={[path]}><LoginPage /></MemoryRouter>); }
 
 describe('simple account access', () => {
-  it('explains the username, reveals the password on request, and logs in with the chosen credentials', async () => {
+  it('shows a clean login, reveals the password on request, and logs in with the chosen credentials', async () => {
     page();
-    fireEvent.click(screen.getByRole('button', { name: 'Ajuda sobre usuário' }));
-    expect(screen.getByRole('note').textContent).toContain('diferente do nome');
+    expect(screen.queryByRole('button', { name: /Ajuda sobre/ })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Usuário'), { target: { value: ' demo_user ' } });
     fireEvent.change(screen.getByLabelText('Senha', { exact: true }), { target: { value: 'my-password' } });
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar senha' }));

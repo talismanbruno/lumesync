@@ -11,7 +11,7 @@ import { api, RateLimitError } from '../../api/client';
 import { useTransferStore } from '../../stores/transferStore';
 import { waitForTransferAttachment } from '../../utils/waitForTransfer';
 import { DesktopDownloadLink } from './DesktopDownloadLink';
-import { FieldHelp, PasswordField } from './authFields';
+import { PasswordField } from './authFields';
 
 // Single-source regex for extracting a bare invite token from a pasted full URL.
 // Token format: 22 chars base64url ([A-Za-z0-9_-]).
@@ -519,7 +519,7 @@ export function RegisterPage() {
               )}
 
               <div className="mb-5">
-                <div className="flex items-center gap-2 mb-2"><label htmlFor="signup-username" className="text-sm font-semibold text-txt-secondary">Usuário</label><FieldHelp label="Ajuda sobre usuário">Este será seu identificador para entrar no Lume. Use de 3 a 32 caracteres: letras minúsculas, números ou _. O nome do seu perfil pode ser diferente.</FieldHelp></div>
+                <label htmlFor="signup-username" className="block mb-2 text-sm font-semibold text-txt-secondary">Usuário</label>
                 <input
                   id="signup-username"
                   type="text"
@@ -529,7 +529,9 @@ export function RegisterPage() {
                   className="input-standard w-full py-2.5 text-base md:text-sm"
                   autoFocus
                   autoComplete="username"
+                  aria-describedby="signup-username-help"
                 />
+                <p id="signup-username-help" className="mt-2 text-xs leading-5 text-txt-tertiary">Use de 3 a 32 caracteres: letras minúsculas, números ou _. Você usa esse identificador para entrar.</p>
                 {usernameStatus !== 'idle' && (
                   <div className={`mt-1.5 flex items-center gap-1.5 text-xs ${
                     usernameStatus === 'available' ? 'text-status-online' :

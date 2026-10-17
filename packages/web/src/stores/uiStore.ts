@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { appRelativePath } from '../utils/appRoutes';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@backspace/shared';
 
@@ -169,7 +170,7 @@ export const useUIStore = create<UIState>()(
       floatingPanelHeight: 140,
       setFloatingPanelHeight: (height) => set({ floatingPanelHeight: height }),
 
-      mobileScreen: typeof window !== 'undefined' && /^\/channels\/@me(?:\/|$)/.test(window.location.pathname)
+      mobileScreen: typeof window !== 'undefined' && /^\/channels\/@me(?:\/|$)/.test(appRelativePath(window.location.pathname))
         ? 'dms'
         : 'spaces',
       mobileStack: [],

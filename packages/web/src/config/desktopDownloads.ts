@@ -31,7 +31,7 @@ export function getDesktopDownload(): DesktopDownload {
   }
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform)) {
     return {
-      url: '/download/mac',
+      url: '/app/download/mac',
       label: uiText("Baixar Lume para macOS"),
       detail: 'Intel ou Apple Silicon',
     };

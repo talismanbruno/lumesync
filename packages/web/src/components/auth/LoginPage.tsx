@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useAuthStore } from '../../stores/authStore';
 import { api, HttpError, RateLimitError } from '../../api/client';
 import { DesktopDownloadLink } from './DesktopDownloadLink';
-import { FieldHelp, PasswordField } from './authFields';
+import { PasswordField } from './authFields';
+import { appPath } from '../../utils/appRoutes';
 
 export function LoginPage() {
   const location = useLocation();
@@ -38,7 +39,7 @@ export function LoginPage() {
   }, [retryAfter]);
   // Keep the token in memory only; remove it from the address bar/history early.
   useEffect(() => {
-    if (isAction && location.hash) window.history.replaceState(window.history.state, '', location.pathname + location.search);
+    if (isAction && location.hash) window.history.replaceState(window.history.state, '', appPath(location.pathname) + location.search);
   }, [isAction, location.hash, location.pathname, location.search]);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -88,7 +89,7 @@ export function LoginPage() {
             {error && <p role="alert" className="p-3 rounded-lg bg-accent-rose/10 text-txt-danger text-sm">{error}</p>}
             {retryAfter > 0 && <p role="status" className="text-sm text-accent-amber">Muitas tentativas. Tente de novo em {retryAfter}s.</p>}
             {noToken ? <p role="alert" className="text-sm text-txt-secondary">Este link está incompleto. Solicite um novo link de recuperação ou confirmação.</p> : <>
-              {!isAction && !recovering && <div><div className="flex items-center gap-2 mb-2"><label htmlFor="login-username" className="text-sm font-semibold text-txt-secondary">Usuário</label><FieldHelp label="Ajuda sobre usuário">É o identificador que você criou no cadastro, como jogador_01. Ele pode ser diferente do nome que aparece no seu perfil.</FieldHelp></div>
+              {!isAction && !recovering && <div><label htmlFor="login-username" className="block mb-2 text-sm font-semibold text-txt-secondary">Usuário</label>
                 <input id="login-username" name="username" className="input-standard w-full py-3 text-base" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="Seu nome de usuário" required autoFocus /></div>}
               {recovering && !isAction && <div><label htmlFor="recovery-email" className="block text-sm font-semibold text-txt-secondary mb-2">E-mail de recuperação</label><input id="recovery-email" className="input-standard w-full py-3 text-base" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="voce@exemplo.com" required autoFocus />
                 {mailAvailable === false && <p role="status" className="mt-3 text-xs leading-5 text-accent-amber">O envio de e-mails ainda não está disponível. Tente novamente mais tarde.</p>}</div>}

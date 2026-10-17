@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { appRelativePath } from '../utils/appRoutes';
 import type { Space, Channel, ChannelCategory, MemberWithUser, SpaceWithChannelsAndMembers, Role, SpaceFolder, SpaceLayoutItem, DmChannel, User, UpdateSpaceRequest, CreateSpaceRequest } from '@backspace/shared';
 import { api, BackspaceApiClient } from '../api/client';
 import { resolveAssetUrl, normalizeUserAssets } from '../utils/assetUrls';
@@ -1279,7 +1280,7 @@ export function isDmChannel(channelId: string): boolean {
   }
   // Before WS ready populates dmChannels, fall back to URL path
   if (typeof window !== 'undefined') {
-    return window.location.pathname.startsWith('/channels/@me/');
+    return appRelativePath(window.location.pathname).startsWith('/channels/@me/');
   }
   return false;
 }

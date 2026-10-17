@@ -77,7 +77,7 @@ const knownInstanceOrigins = new Set<string>();
 // Upstream fallback for the "Source code" menu items and the About panel.
 // Used when the connected instance can't be reached or advertises no source URL.
 const UPSTREAM_SOURCE_URL = 'https://github.com/talismanbruno/lumesync';
-const LUME_INSTANCE_URL = 'https://lumesocial.online';
+const LUME_INSTANCE_URL = 'https://lumesocial.online/app/';
 
 /**
  * Resolve the Corresponding Source URL for the instance the desktop app is
@@ -501,9 +501,9 @@ function createWindow(): void {
       if (
         (u.protocol === 'http:' || u.protocol === 'https:') &&
         knownInstanceOrigins.has(u.origin) &&
-        u.pathname.startsWith('/join/')
+        /^\/(?:app\/)?join\//.test(u.pathname)
       ) {
-        mainWindow?.webContents.send('open-internal-route', u.pathname + u.search);
+        mainWindow?.webContents.send('open-internal-route', u.pathname.replace(/^\/app(?=\/)/, '') + u.search);
         return { action: 'deny' };
       }
     } catch { /* malformed URL — fall through to external */ }

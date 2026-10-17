@@ -26,7 +26,7 @@ function renderLinks(){
   for(const button of buttons){
     const text=platform==='ios'?'Abrir no navegador':labels[platform]?'Baixar para '+labels[platform]:'Ver downloads';
     const label=button.querySelector('[data-download-label]');if(label)label.textContent=text;
-    if(platform==='ios'){button.href='https://lumesocial.online/register';continue;}
+    if(platform==='ios'){button.href='https://lumesocial.online/app/register';continue;}
     const selection=selectAsset(releases,platform,architecture);
     button.href=selection?.asset?.url||'#downloads';
   }
@@ -44,7 +44,7 @@ function renderLinks(){
 function start(asset){status.textContent='Seu download está começando.';location.assign(asset.url);}
 async function download(target=platform){
   if(busy)return;
-  if(target==='ios'){location.assign('https://lumesocial.online/register');return;}
+  if(target==='ios'){location.assign('https://lumesocial.online/app/register');return;}
   if(target==='unknown'){document.querySelector('#downloads').scrollIntoView({behavior:'smooth'});return;}
   busy=true;
   buttons.forEach(button=>button.setAttribute('aria-busy','true'));

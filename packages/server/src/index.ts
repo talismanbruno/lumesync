@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
-import fastifyStatic from '@fastify/static';
+import { registerWebHosting } from './webHosting.js';
 import { config } from './config.js';
 import { getDb, getRawDb, closeDatabase } from './db/index.js';
 import { checkFfmpeg } from './utils/thumbnail.js';
@@ -38,7 +38,6 @@ import { isTrustedProxyAddress } from './utils/trustedProxy.js';
 import { registerWebSocket } from './ws/handler.js';
 import { MAX_WS_PAYLOAD_BYTES } from './ws/limits.js';
 import path from 'path';
-import fs from 'fs';
 
 async function main(): Promise<void> {
   const app = Fastify({
@@ -122,23 +121,7 @@ async function main(): Promise<void> {
 
   // Serve built frontend in production
   const webDistPath = path.resolve(import.meta.dirname ?? '.', '../../web/dist');
-  if (fs.existsSync(webDistPath)) {
-    app.get('/site', async (_request, reply) => reply.redirect('/site/'));
-    await app.register(fastifyStatic, {
-      root: webDistPath,
-      prefix: '/',
-      wildcard: false,
-      setHeaders(response, filePath) {
-        if (filePath.includes(`${path.sep}site${path.sep}`)) {
-          response.header('Cache-Control', 'no-cache');
-        } else if (path.basename(filePath) === 'index.html') {
-          response.header('Cache-Control', 'no-cache');
-        } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
-          response.header('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-      },
-    });
-  }
+  await registerWebHosting(app, webDistPath);
 
   // Initialize database
   getDb();
@@ -178,19 +161,6 @@ async function main(): Promise<void> {
   app.get('/api/health', async () => {
     return { status: 'ok', timestamp: Date.now() };
   });
-
-  // SPA fallback - serve index.html for non-API routes
-  if (fs.existsSync(webDistPath)) {
-    app.setNotFoundHandler((request, reply) => {
-      if (request.url.startsWith('/api/') || request.url.startsWith('/ws')) {
-        return reply.code(404).send({ error: 'Not found', statusCode: 404 });
-      }
-      if (request.url.startsWith('/assets/') || request.url.startsWith('/site/')) {
-        return reply.code(404).type('text/plain').send('Asset not found');
-      }
-      return reply.sendFile('index.html');
-    });
-  }
 
   try {
     await app.listen({ port: config.port, host: config.host });

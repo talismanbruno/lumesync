@@ -1,3 +1,4 @@
+import { appPath, appRelativePath } from '../utils/appRoutes';
 import type {
   AuthResponse,
   RegisterRequest,
@@ -895,10 +896,10 @@ export class BackspaceApiClient {
 function handleUnauthorized(): void {
   localStorage.removeItem('backspace_token');
   if (
-    !window.location.pathname.startsWith('/login') &&
-    !window.location.pathname.startsWith('/register')
+    !appRelativePath(window.location.pathname).startsWith('/login') &&
+    !appRelativePath(window.location.pathname).startsWith('/register')
   ) {
-    window.location.href = '/login';
+    window.location.href = appPath('/login');
   }
 }
 

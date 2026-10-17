@@ -5,7 +5,7 @@ Landing pública do Lume. A abertura, o texto e o perfil animado foram aprovados
 - Vercel: selecione `landing` como **Root Directory** e deixe o framework como **Other**.
 - GitHub Pages: publique o conteúdo desta pasta na raiz da branch escolhida.
 
-O build do aplicativo copia esta pasta para `/site/` por meio de `scripts/package-landing.mjs`. A raiz do aplicativo permanece disponível aos clientes desktop já instalados. O perfil de demonstração só aceita incorporação pela mesma origem.
+O build publica a landing na raiz `/`, com assets em `/site/`, por meio de `scripts/package-landing.mjs`. O aplicativo usa `/app/`. Links antigos de login, canais e convites redirecionam para o novo caminho. Clientes Electron e Android já instalados são encaminhados da raiz para `/app/`, e o PWA inicia em `/app/channels/@me`. O perfil de demonstração só aceita incorporação pela mesma origem.
 
 Os downloads consultam as releases públicas, incluindo beta, para escolher o instalador compatível mais recente. Quando o navegador do Mac não informa a arquitetura, a página pede Apple Silicon ou Intel e memoriza a escolha.
 

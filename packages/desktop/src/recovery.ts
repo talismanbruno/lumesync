@@ -393,7 +393,7 @@ export function isValidRecoveryAction(action: unknown): action is RecoveryAction
 export function handleRecoveryAction(action: RecoveryAction): void {
   switch (action) {
     case 'reload': {
-      const url = loadInstanceUrl() ?? 'https://lumesocial.online';
+      const url = loadInstanceUrl() ?? 'https://lumesocial.online/app/';
       // Optimistic exit — clear recovery state BEFORE loading. If the load
       // fails, did-fail-load re-enters recovery. If it stalls, boot timer fires.
       recoveryStore.markRecoveryExited();
@@ -427,7 +427,7 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       recoveryStore.update({ mode: 'normal', reason: null });
       console.log('[recovery] exited (change-instance)');
       clearInstanceUrl();
-      mainWindowRef?.loadURL('https://lumesocial.online');
+      mainWindowRef?.loadURL('https://lumesocial.online/app/');
       // Ensure visible — tray clicks may happen with window hidden, and the
       // recovery surface should also remain visible during the navigation.
       // When invoked from recovery.html (window already showing), these are

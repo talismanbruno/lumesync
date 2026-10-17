@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -9,4 +9,7 @@ if (!html.includes('Suas conversas') || html.includes('PRÉVIA EM CONSTRUÇÃO')
 await mkdir(destination, { recursive: true });
 // Only published website assets belong in the application image.
 await cp(source, destination, { recursive: true, filter: file => !file.endsWith('README.md') && !file.endsWith('vercel.json') && !file.includes('profile-source') });
-console.log('Landing packaged at /site/');
+const rootHtml = html.replace(/\b(src|href)="(?![a-z]+:|\/|#)([^"]+)"/gi, '$1="/site/$2"')
+  .replace('<head>', `<head><script>if(matchMedia('(display-mode: standalone)').matches||navigator.standalone||window.backspace)location.replace('/app/'+location.search+location.hash);</script>`);
+await writeFile(resolve(destination, 'root.html'), rootHtml);
+console.log('Landing packaged for / with assets at /site/');

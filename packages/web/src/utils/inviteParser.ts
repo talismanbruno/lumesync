@@ -20,7 +20,7 @@ export function parseInviteInput(input: string): { code: string; origin?: string
     }
 
     // Extract code from /join/{code} path
-    const match = parsed.pathname.match(/^\/join\/([^/]+)$/);
+    const match = parsed.pathname.match(/^\/(?:app\/)?join\/([^/]+)$/);
     if (!match) {
       throw new Error('Invalid invite link — expected format: https://instance/join/CODE');
     }

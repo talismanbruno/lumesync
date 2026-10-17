@@ -46,7 +46,7 @@ export async function sendAccountEmail(userId: string, email: string, purpose: '
     tokenHash, userId, purpose, email, passwordEpoch: user.passwordChangedAt ?? 0,
     createdAt: now, expiresAt: now + (purpose === 'reset' ? 15 * 60_000 : 24 * 60 * 60_000),
   }).run();
-  const url = new URL(purpose === 'reset' ? '/reset-password' : '/verify-email', publicUrl()!);
+  const url = new URL(purpose === 'reset' ? '/app/reset-password' : '/app/verify-email', publicUrl()!);
   // Fragments stay out of HTTP access logs and Referer headers.
   url.hash = new URLSearchParams({ token }).toString();
   const subject = purpose === 'reset' ? 'Redefina sua senha do Lume' : 'Confirme seu e-mail no Lume';

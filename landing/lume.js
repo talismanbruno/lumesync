@@ -1,3 +1,4 @@
+const landingAssetBase = new URL('.', document.currentScript.src);
 const root = document.documentElement;
 const nav = document.querySelector('.site-nav');
 const menuButton = document.querySelector('.menu-toggle');
@@ -41,7 +42,7 @@ if ('IntersectionObserver' in window) {
 function selectCapture(value, focus = false) {
   const selected = captures[value];
   if (!selected) return;
-  captureImage.src = selected.src;
+  captureImage.src = new URL(selected.src, landingAssetBase).href;
   captureImage.alt = selected.alt;
   panel.setAttribute('aria-labelledby', 'tab-' + value);
   document.querySelector('#capture-description').textContent = selected.description;

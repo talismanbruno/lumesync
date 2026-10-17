@@ -15,7 +15,7 @@ export default defineConfig({
         short_name: 'Lume',
         description: 'Comunicação em tempo real para conversar, criar comunidades e compartilhar momentos.',
         display: 'standalone',
-        start_url: '/channels/@me',
+        start_url: '/app/channels/@me',
         id: '/',
         lang: 'pt-BR',
         theme_color: '#050505',
@@ -28,6 +28,11 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // Do not let Workbox's / -> /index.html alias replace the landing.
+        directoryIndex: '',
+        // Never let an installed worker replace the marketing root with the app shell.
+        // Legacy routes stay available offline until installed manifests update.
+        navigateFallbackAllowlist: [/^\/app(?:\/|$)/, /^\/(?:login|register|channels|join|explore|reset-password|verify-email|download)(?:\/|$)/],
         navigateFallbackDenylist: [/^\/api/, /^\/ws/, /^\/uploads/, /^\/site(?:\/|$)/],
         skipWaiting: true,
         clientsClaim: true,

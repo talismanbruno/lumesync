@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useInstanceStore } from '../../stores/instanceStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { api } from '../../api/client';
+import { appPath } from '../../utils/appRoutes';
 import { deleteAccountOnRemotes, type FederationOpResult } from '../../utils/federationOps';
 
 interface DeleteAccountModalProps {
@@ -88,7 +89,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
     if (deletionComplete && step === 'complete') {
       const timer = setTimeout(() => {
         localStorage.removeItem('backspace_token');
-        window.location.href = '/login';
+        window.location.href = appPath('/login');
       }, 3000);
       return () => clearTimeout(timer);
     }

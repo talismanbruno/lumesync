@@ -11,8 +11,10 @@ import './styles/customization.css';
 import './styles/self-profile-menu.css';
 import './styles/mac-desktop.css';
 import { configureDesktopRendering } from './platform/desktopRendering';
+import { migrateAppLocation } from './utils/appRoutes';
 
 initializeLanguage();
+migrateAppLocation();
 configureDesktopRendering();
 installStaleChunkRecovery();
 
@@ -128,7 +130,7 @@ startPendingMessageOrchestrator();
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/app">
       <SwAutoUpdate />
       <ErrorBoundary>
         <App />
