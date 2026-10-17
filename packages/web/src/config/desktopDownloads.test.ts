@@ -35,7 +35,7 @@ describe('desktop downloads', () => {
 
   it('lets Mac users choose the matching architecture without guessing from MacIntel user agents', () => {
     vi.stubGlobal('navigator', { platform: 'MacIntel', userAgent: 'Mozilla/5.0 (Macintosh)' });
-    expect(getDesktopDownload().url).toBe('/download/mac');
+    expect(getDesktopDownload().url).toBe('/app/download/mac');
     expect(getDesktopDownload().detail).toContain('Apple Silicon');
     expect(getMacDownloads().map(download => download.filename)).toEqual([`Lume-${LUME_DESKTOP_VERSION}-arm64.dmg`, `Lume-${LUME_DESKTOP_VERSION}-x64.dmg`]);
   });
