@@ -10,6 +10,6 @@ await mkdir(destination, { recursive: true });
 // Only published website assets belong in the application image.
 await cp(source, destination, { recursive: true, filter: file => !file.endsWith('README.md') && !file.endsWith('vercel.json') && !file.includes('profile-source') });
 const rootHtml = html.replace(/\b(src|href)="(?![a-z]+:|\/|#)([^"]+)"/gi, '$1="/site/$2"')
-  .replace('<head>', `<head><script>if(matchMedia('(display-mode: standalone)').matches||navigator.standalone||window.backspace)location.replace('/app/'+location.search+location.hash);</script>`);
+  .replace('<head>', '<head><style>html[data-lume-session-check] body{visibility:hidden}</style><script src="/site/root-entry.js"></script>');
 await writeFile(resolve(destination, 'root.html'), rootHtml);
 console.log('Landing packaged for / with assets at /site/');
