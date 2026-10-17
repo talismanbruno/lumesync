@@ -16,6 +16,7 @@ export default defineConfig({
         description: 'Comunicação em tempo real para conversar, criar comunidades e compartilhar momentos.',
         display: 'standalone',
         start_url: '/app/channels/@me',
+        scope: '/app/',
         id: '/',
         lang: 'pt-BR',
         theme_color: '#050505',
