@@ -20,9 +20,10 @@ const PICKERS = {
 type PickerKey = keyof typeof PICKERS;
 const EFFECT_LABELS: Record<string, string> = { solid: 'Sólido', gradient: 'Degradê', neon: 'Neon', toon: 'Contorno', pop: 'Pop', glow: 'Brilho', prism: 'Prisma', gummy: 'Gummy' };
 
-export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, bannerFallback, editable }: {
+export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, bannerFallback, editable, effectReplayKey = 0 }: {
   user: User; avatarSrc?: string | null; bannerSrc?: string | null; bannerFallback: string;
   editable?: { displayName: (value: string) => void; bio: (value: string) => void; customStatus: (value: string) => void };
+  effectReplayKey?: number;
 }) {
   const name = user.displayName?.trim() || user.username;
   return <ProfileFrameSpace customization={user.customization}><article className="lume-customization-preview" aria-label="Prévia do perfil" style={getProfileThemeStyle(user)}>
@@ -38,7 +39,7 @@ export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, banner
       </> : <><p className="lume-customization-preview-status">{user.customStatus}</p><div className="lume-customization-preview-bio">{user.bio || 'Seu perfil, do seu jeito.'}</div></>}
       <div className="lume-customization-member-since"><span>MEMBRO DESDE</span><strong>{new Date(user.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div>
     </div>
-    <ProfileCosmetics customization={user.customization} />
+    <ProfileCosmetics customization={user.customization} replayKey={effectReplayKey} />
   </article></ProfileFrameSpace>;
 }
 

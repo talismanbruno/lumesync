@@ -22,7 +22,10 @@ liveProfile.addEventListener('load', () => syncProfile(true));
 addEventListener('message', event => {
   if (event.origin !== location.origin || event.source !== liveProfile.contentWindow) return;
   if (event.data?.type === 'lume-profile-ready') syncProfile(true);
-  if (event.data?.type === 'lume-profile-size' && Number.isFinite(event.data.height) && event.data.height >= 120 && event.data.height <= 1600) liveProfile.style.height = Math.ceil(event.data.height) + 'px';
+  if (event.data?.type === 'lume-profile-size' && Number.isFinite(event.data.height) && event.data.height >= 120 && event.data.height <= 1600) {
+    const height = Math.ceil(event.data.height) + 'px';
+    if (liveProfile.style.height !== height) liveProfile.style.height = height;
+  }
 });
 replay.addEventListener('click', () => { if (!reduced()) liveProfile.contentWindow?.postMessage({ type: 'lume-profile-control', animated: true, replay: true }, location.origin); });
 function syncMotion() { syncProfile(); }

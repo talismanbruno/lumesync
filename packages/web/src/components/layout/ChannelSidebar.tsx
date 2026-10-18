@@ -24,7 +24,6 @@ import { useDragManager, type DropTarget, type LayoutItem } from '../../hooks/us
 import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 import { useAudioDevices } from '../../hooks/useAudioDevices';
 import { AudioDevicePanel } from '../voice/AudioDevicePanel';
-import { UserBadges } from '../ui/UserBadges';
 import { SelfProfileMenu } from './SelfProfileMenu';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { PeopleIcon } from '../ui/PeopleIcon';
@@ -933,7 +932,6 @@ function UserAreaPanel({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 min-w-0">
               <span className="text-[13.5px] font-semibold text-txt-primary truncate leading-tight"><ProfileName user={user}>{user.displayName ?? user.username}</ProfileName></span>
-              <UserBadges user={user} size={14} />
             </div>
             <div className="text-[11px] text-txt-tertiary truncate leading-tight group-hover:text-txt-secondary">@{user.username}</div>
           </div>

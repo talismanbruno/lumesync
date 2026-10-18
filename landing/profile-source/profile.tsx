@@ -7,6 +7,7 @@ import '../../packages/web/src/styles/globals.css';
 import '../../packages/web/src/styles/customization.css';
 import './profile.css';
 import data from './data.json';
+import { MotionSuspendedContext } from '../../packages/web/src/hooks/useReducedMotion';
 
 // Resolve against the iframe document so the same build works at /site/ and on Pages.
 const localData = JSON.parse(JSON.stringify(data), (_key, value) =>
@@ -15,7 +16,7 @@ const items = localData.items as CosmeticItem[];
 useCustomizationStore.setState({ items, byId: new Map(items.map(item => [item.id, item])), loaded: true, loading: false, error: null });
 const user = localData.user as User;
 
-function Showcase() {
+export function Showcase() {
   const [animated, setAnimated] = useState(window.self === window.top && !matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [cycle, setCycle] = useState(0);
   useEffect(() => {
@@ -25,15 +26,24 @@ function Showcase() {
       if (event.data.replay === true) setCycle(value => value + 1);
     };
     addEventListener('message', onControl);
-    const report = () => parent.postMessage({ type: 'lume-profile-size', height: Math.ceil(document.querySelector('#root')!.getBoundingClientRect().height) }, location.origin);
+    let previousHeight = 0;
+    let fontsReady = false;
+    let active = true;
+    const report = () => {
+      if (!fontsReady || !active) return;
+      const height = Math.ceil(document.querySelector('#root')!.getBoundingClientRect().height);
+      if (height === previousHeight) return;
+      previousHeight = height;
+      parent.postMessage({ type: 'lume-profile-size', height }, location.origin);
+    };
     const observer = new ResizeObserver(report);
     observer.observe(document.querySelector('#root')!);
-    report();
+    document.fonts.ready.then(() => { fontsReady = true; report(); });
     parent.postMessage({ type: 'lume-profile-ready' }, location.origin);
-    return () => { removeEventListener('message', onControl); observer.disconnect(); };
+    return () => { active = false; removeEventListener('message', onControl); observer.disconnect(); };
   }, []);
-  return <div className="lume-customization-editor live-profile-root">{animated
-    ? <CustomizationProfilePreview key={cycle} user={user} avatarSrc={user.avatar} bannerSrc={user.banner} bannerFallback="#08101e" />
-    : <img className="profile-poster" src="./poster.webp" alt="Perfil de demonstração Lume Studio com banner, cristais, decoração de avatar e cores personalizadas." />}</div>;
+  return <MotionSuspendedContext.Provider value={!animated}><div className="lume-customization-editor live-profile-root" data-motion={animated ? 'playing' : 'paused'}>
+    <CustomizationProfilePreview effectReplayKey={cycle} user={user} avatarSrc={user.avatar} bannerSrc={animated ? user.banner : new URL('./banner-still.webp', location.href).href} bannerFallback="#08101e" />
+  </div></MotionSuspendedContext.Provider>;
 }
 createRoot(document.getElementById('root')!).render(<Showcase />);

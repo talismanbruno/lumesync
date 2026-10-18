@@ -45,7 +45,7 @@ function EffectLayer({ layer }: { layer: CosmeticLayer }) {
   return visible ? <img key={cycle} src={sources[(cycle - 1) % sources.length]} alt="" aria-hidden="true" className="lume-profile-effect-layer" style={{ zIndex: layer.zIndex }} /> : null;
 }
 
-export function ProfileCosmetics({ customization, effects = true }: { customization?: ProfileCustomization | null; effects?: boolean }) {
+export function ProfileCosmetics({ customization, effects = true, replayKey = 0 }: { customization?: ProfileCustomization | null; effects?: boolean; replayKey?: number }) {
   const reducedMotion = useReducedMotion();
   const effect = useCosmeticItem(customization?.profileEffectId);
   const frame = useCosmeticItem(customization?.profileFrameId);
@@ -71,7 +71,7 @@ export function ProfileCosmetics({ customization, effects = true }: { customizat
       else { style.top = 0; style.height = '100%'; }
       return <img key={layer.id} src={layer.src} alt="" className={`lume-profile-frame-layer lume-profile-frame-${layer.type}`} style={style} />;
     })}
-    {effects && !reducedMotion && effect?.layers?.map((layer, index) => <EffectLayer key={`${effect.id}-${index}`} layer={layer} />)}
+    {effects && !reducedMotion && effect?.layers?.map((layer, index) => <EffectLayer key={`${effect.id}-${index}-${replayKey}`} layer={layer} />)}
   </div>;
 }
 
