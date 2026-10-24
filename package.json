@@ -41,7 +41,9 @@
       "fast-uri": "3.1.8",
       "@fastify/busboy": "3.2.2",
       "brace-expansion@^5": "5.0.12",
-      "js-yaml": "4.3.2"
+      "js-yaml": "4.3.2",
+      "undici@^7": "7.30.1",
+      "undici@^6": "6.29.1"
     }
   }
 }
