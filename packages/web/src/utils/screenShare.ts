@@ -1,5 +1,5 @@
 import { t as uiText } from '../i18n';
-import { Room, Track, BackupCodecPolicy } from 'livekit-client';
+import { Room, RoomEvent, Track, BackupCodecPolicy } from 'livekit-client';
 import { useVoiceStore } from '../stores/voiceStore';
 import type { ScreenShareConfig } from '../stores/voiceStore';
 import { getStreamingLimits } from '../stores/settingsStore';
@@ -8,6 +8,7 @@ import { broadcastVoiceStatus } from './voice';
 import { activate as activateHwOverdrive, deactivate as deactivateHwOverdrive } from './hwOverdrive';
 import { useUIStore } from '../stores/uiStore';
 import { isElectron } from '../platform/platform';
+import { hasIsolatedScreenAudio, isolateScreenAudio } from './screenShareAudioPolicy';
 import {
   STANDARD_RESOLUTIONS, STANDARD_FRAMERATES, WIDTH_MAP,
   BITRATE_MATRIX_KBPS,
@@ -236,95 +237,147 @@ export async function applyOverdrive(
 }
 
 // ---------------------------------------------------------------------------
-// Start screen sharing — single path via setScreenShareEnabled()
-// In Electron, getDisplayMedia() is intercepted by setDisplayMediaRequestHandler
-// in the main process, which shows the custom picker automatically.
+// Capture first, validate isolation, then publish. Desktop still uses the native picker.
 // ---------------------------------------------------------------------------
 
 let screenShareGeneration = 0;
+let screenShareStartPending = false;
+let activeCapture: { room: Room; stream: MediaStream; dispose: () => void } | null = null;
+
+function disposeCapture() {
+  const capture = activeCapture;
+  activeCapture = null;
+  capture?.dispose();
+  capture?.stream.getTracks().forEach(track => track.stop());
+}
+
+const UNSAFE_SCREEN_AUDIO = 'A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, compartilhe outra guia com áudio ou use uma versão compatível do aplicativo.';
 
 export async function startScreenShare(room: Room): Promise<boolean> {
-  console.log('[SS] startScreenShare called, room state:', room.state);
+  if (screenShareStartPending) return false;
+  if (room.localParticipant.getTrackPublications().some(p => p.source === Track.Source.ScreenShare)) return true;
+  screenShareStartPending = true;
+  const generation = ++screenShareGeneration;
   const config = useVoiceStore.getState().screenShareConfig;
   const hwOverdrive = useVoiceStore.getState().hwOverdrive;
   const opts = buildScreenShareOptions(config);
-
-  // Activate SDP profile override before WebRTC negotiation
-  if (hwOverdrive) {
-    activateHwOverdrive();
-  }
+  const desktop = isElectron();
+  let stream: MediaStream | undefined;
+  const publishing: MediaStreamTrack[] = [];
+  if (hwOverdrive) activateHwOverdrive();
 
   try {
-    // For native mode: omit resolution constraint to capture at display's full native resolution
-    const captureOptions: any = {
-      // The desktop picker decides whether audio is granted after this request
-      // begins. Request it up front so enabling it inside the picker works too.
-      audio: (isElectron() || config.shareAudio) ? {
-        // Electron 43.4+ respects this constraint for system loopback too.
-        // @ts-ignore — restrictOwnAudio is not yet in all TS type definitions
+    const video: MediaTrackConstraints = { frameRate: { ideal: opts.capture.frameRate } };
+    if (opts.capture.width > 0 && opts.capture.height > 0) {
+      video.width = { ideal: opts.capture.width };
+      video.height = { ideal: opts.capture.height };
+    }
+    // Call synchronously from the original click, before the first await.
+    // Direct capture is intentional: the installed SDK drops windowAudio.
+    const constraints = {
+      video,
+      audio: (desktop || config.shareAudio) ? {
         restrictOwnAudio: true,
         echoCancellation: false,
         noiseSuppression: false,
         autoGainControl: false,
         channelCount: 2,
       } : false,
-      frameRate: opts.capture.frameRate,
-    };
-    if (opts.capture.width > 0 && opts.capture.height > 0) {
-      captureOptions.resolution = { width: opts.capture.width, height: opts.capture.height };
+      selfBrowserSurface: 'exclude',
+      surfaceSwitching: 'exclude',
+      systemAudio: 'include',
+      windowAudio: 'window',
+    } as DisplayMediaStreamOptions;
+    stream = await navigator.mediaDevices.getDisplayMedia(constraints);
+    const current = () => generation === screenShareGeneration && room.state === 'connected';
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack || videoTrack.readyState !== 'live') throw new Error('Screen capture supplied no live video');
+    if (!current()) { stream.getTracks().forEach(track => track.stop()); return false; }
+    videoTrack.contentHint = opts.contentHint;
+    const wantAudio = useVoiceStore.getState().screenShareConfig.shareAudio;
+    const audioTracks = stream.getAudioTracks();
+    let audioTrack: MediaStreamTrack | undefined;
+    let unsafeAudio = false;
+    let isolationWarningShown = false;
+    for (const candidate of audioTracks) {
+      if (wantAudio && !audioTrack && await isolateScreenAudio(videoTrack, candidate, desktop)) audioTrack = candidate;
+      else { if (wantAudio) unsafeAudio = true; candidate.stop(); }
     }
+    if (!current() || videoTrack.readyState !== 'live') { stream.getTracks().forEach(track => track.stop()); return false; }
 
-    const track = await room.localParticipant.setScreenShareEnabled(true, captureOptions, {
+    const onEnded = () => { if (activeCapture?.stream === stream) void stopScreenShare(room); };
+    const onDisconnected = () => { if (activeCapture?.stream === stream) handleScreenShareUnpublished(); };
+    videoTrack.addEventListener('ended', onEnded, { once: true });
+    room.on(RoomEvent.Disconnected, onDisconnected);
+    let guard: ReturnType<typeof setInterval> | undefined;
+    const checkAudio = () => {
+      if (!audioTrack || hasIsolatedScreenAudio(videoTrack, audioTrack, desktop)) return;
+      // Stop locally before asynchronous unpublication, preserving video and mic.
+      const rejected = audioTrack;
+      audioTrack = undefined;
+      unsafeAudio = true;
+      rejected.enabled = false;
+      rejected.stop();
+      void room.localParticipant.unpublishTrack(rejected).catch(error => console.warn('[ScreenShare] Audio cleanup:', error));
+      useUIStore.getState().addToast(uiText(UNSAFE_SCREEN_AUDIO), 'warning', 10000);
+      isolationWarningShown = true;
+      if (guard) clearInterval(guard);
+    };
+    const onAudioEnded = () => { if (guard) clearInterval(guard); };
+    const capturedAudio = audioTrack;
+    activeCapture = { room, stream, dispose: () => {
+      videoTrack.removeEventListener('ended', onEnded);
+      room.off(RoomEvent.Disconnected, onDisconnected);
+      videoTrack.removeEventListener('resize', checkAudio);
+      videoTrack.removeEventListener('unmute', checkAudio);
+      capturedAudio?.removeEventListener('unmute', checkAudio);
+      capturedAudio?.removeEventListener('ended', onAudioEnded);
+      if (guard) clearInterval(guard);
+    } };
+    publishing.push(videoTrack);
+    await room.localParticipant.publishTrack(videoTrack, {
+      source: Track.Source.ScreenShare,
       videoCodec: opts.publish.videoCodec,
       videoEncoding: opts.publish.videoEncoding,
-      // LiveKit uses screenShareEncoding (not videoEncoding) for screen share tracks.
-      // Without this, the default ScreenSharePresets.h1080fps15 caps at 15fps.
       screenShareEncoding: opts.publish.videoEncoding,
       simulcast: opts.publish.simulcast,
-      ...(opts.publish.backupCodec ? {
-        backupCodec: opts.publish.backupCodec,
-        backupCodecPolicy: opts.publish.backupCodecPolicy,
-      } : {}),
+      ...(opts.publish.backupCodec ? { backupCodec: opts.publish.backupCodec, backupCodecPolicy: opts.publish.backupCodecPolicy } : {}),
     });
-
-    console.log('[SS] setScreenShareEnabled returned:', !!track);
-    if (!track) {
-      if (hwOverdrive) deactivateHwOverdrive();
-      useUIStore.getState().addToast(uiText("O compartilhamento não começou. Tente selecionar outra tela ou janela."), 'warning');
-      return false;
-    }
-
-    // Set content hint from builder (motion for gaming, detail for text)
-    const screenPub = room.localParticipant.getTrackPublications()
-      .find(p => p.source === Track.Source.ScreenShare);
-    if (screenPub?.track?.mediaStreamTrack) {
-      screenPub.track.mediaStreamTrack.contentHint = opts.contentHint;
-    }
-
-    useVoiceStore.setState({ isScreenSharing: true });
-    const audioPublication = room.localParticipant.getTrackPublications().find(p => p.source === Track.Source.ScreenShareAudio && p.track);
-    if (useVoiceStore.getState().screenShareConfig.shareAudio && !audioPublication) {
-      useUIStore.getState().addToast(uiText("A tela está sendo compartilhada sem áudio. Para transmitir o som, selecione uma fonte com áudio e habilite a opção no seletor."), 'warning', 7000);
-    } else if (isElectron() && audioPublication?.track?.mediaStreamTrack) {
-      const settings = audioPublication.track.mediaStreamTrack.getSettings() as MediaTrackSettings & { restrictOwnAudio?: boolean };
-      if (settings.restrictOwnAudio === false) {
-        useUIStore.getState().addToast(uiText("Este sistema ainda inclui o som do Lume no compartilhamento. As vozes da chamada podem voltar como eco para quem assiste."), 'warning', 9000);
+    if (!current() || videoTrack.readyState !== 'live') throw new Error('Screen capture ended during publication');
+    if (audioTrack) {
+      checkAudio();
+      if (audioTrack) {
+        publishing.push(audioTrack);
+        await room.localParticipant.publishTrack(audioTrack, {
+          source: Track.Source.ScreenShareAudio,
+          forceStereo: audioTrack.getSettings().channelCount === 2,
+          dtx: false,
+        });
+        videoTrack.addEventListener('resize', checkAudio);
+        videoTrack.addEventListener('unmute', checkAudio);
+        audioTrack?.addEventListener('unmute', checkAudio);
+        audioTrack?.addEventListener('ended', onAudioEnded);
+        if (audioTrack) guard = setInterval(checkAudio, 1000);
+        checkAudio();
       }
     }
-    applyScreenShareOverdrive(room, ++screenShareGeneration);
-
-    // Schedule hardware encoder detection
-    if (hwOverdrive) {
-      scheduleEncoderDetection(room);
+    if (!current() || videoTrack.readyState !== 'live') throw new Error('Screen capture ended during publication');
+    useVoiceStore.setState({ isScreenSharing: true });
+    if (wantAudio && !audioTrack && !isolationWarningShown) {
+      useUIStore.getState().addToast(uiText(unsafeAudio ? UNSAFE_SCREEN_AUDIO : 'A tela está sendo compartilhada sem áudio. Para transmitir o som, selecione uma fonte com áudio e habilite a opção no seletor.'), 'warning', 10000);
     }
-
+    applyScreenShareOverdrive(room, generation);
+    if (hwOverdrive) scheduleEncoderDetection(room);
     return true;
   } catch (err) {
+    const interrupted = generation !== screenShareGeneration || room.state !== 'connected';
+    if (activeCapture?.stream === stream) disposeCapture();
+    stream?.getTracks().forEach(track => track.stop());
+    await Promise.allSettled(publishing.map(track => room.localParticipant.unpublishTrack(track)));
+    if (interrupted) return false;
     console.error('[ScreenShare] Failed to start screen share:', err);
     if (hwOverdrive) deactivateHwOverdrive();
-    // Loopback unsupported (Linux without pulse, macOS without Catap) makes
-    // the whole getDisplayMedia call reject. No auto-retry: the picker
-    // selection was consumed, retrying would re-prompt it.
+    useVoiceStore.setState({ isScreenSharing: false });
     const errorName = err instanceof Error ? err.name : '';
     const message = errorName === 'NotAllowedError' || errorName === 'AbortError'
       ? 'Compartilhamento cancelado ou permissão negada.'
@@ -335,6 +388,8 @@ export async function startScreenShare(room: Room): Promise<boolean> {
           : 'Não foi possível iniciar o compartilhamento de tela. Tente novamente.';
     useUIStore.getState().addToast(message, 'warning', 7000);
     return false;
+  } finally {
+    screenShareStartPending = false;
   }
 }
 
@@ -445,6 +500,7 @@ function scheduleEncoderDetection(room: Room): void {
 
 export async function stopScreenShare(room: Room): Promise<void> {
   screenShareGeneration++;
+  disposeCapture();
   try {
     await room.localParticipant.setScreenShareEnabled(false);
   } catch (err) {
@@ -471,6 +527,7 @@ export async function changeScreenShare(room: Room): Promise<void> {
 
 export function handleScreenShareUnpublished(): void {
   screenShareGeneration++;
+  disposeCapture();
   deactivateHwOverdrive();
   useVoiceStore.setState({ isScreenSharing: false, hwOverdrive: false });
   broadcastVoiceStatus();

@@ -28,6 +28,16 @@ beforeEach(() => {
 });
 
 describe('screen audio volume', () => {
+  it('keeps content audio while two remote viewers and the local member speak together', () => {
+    useVoiceStore.setState({
+      participants: [remote,
+        { userId: 'third', identity: 'third:name', isLocal: false, audioTrack: {} } as ParticipantInfo,
+        { userId: 'me', identity: 'me:name', isLocal: true } as ParticipantInfo],
+      speakingParticipantIds: new Set(['other:name', 'third:name', 'me:name']),
+    });
+    render(<GlobalAudioRenderer />);
+    expect(screenPlayback()).toMatchObject({ volume: 2, muted: false });
+  });
   it('boosts screen audio independently from microphones', () => {
     render(<GlobalAudioRenderer />);
     expect(screenPlayback().volume).toBe(2);

@@ -322,6 +322,20 @@ When neither native API is available the effect returns without throwing; the `v
 
 ## Audio Processing
 
+Screen-audio isolation (2026-10-23): capture is inspected **before** publication.
+Separate browser-tab audio is allowed; system/window audio requires the returned
+track to confirm `restrictOwnAudio: true`, with a supported post-capture constraint
+attempt when needed. Unsupported/unknown isolation keeps video and the call but
+does not publish system audio, with an explanatory message. No speech-triggered
+muting was added. The Brave/Windows 11 report, limitations and test matrix are in
+[Screen-share audio isolation plan](../operations/2026-10-23-screen-share-audio-isolation-plan.md).
+
+The direct `getDisplayMedia` call preserves `windowAudio: 'window'`, which the
+previous SDK option conversion dropped. OS stop, disconnect and failed/partial
+publication clean up both tracks. Source switching in the picker is disabled;
+track settings are also rechecked on resume/resize and during capture. Runtime
+confirmation is not a substitute for the documented real-device audio tests.
+
 | Feature | Default | User Control | Notes |
 |---------|---------|-------------|-------|
 | Echo Cancellation | on | yes | Stays on during screen share (Chrome AEC handles it) |
