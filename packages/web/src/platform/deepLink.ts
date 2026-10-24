@@ -17,7 +17,7 @@ export function useDeepLinkHandler(): void {
     if (!isElectron()) return;
 
     const api = window.backspace!;
-    api.onDeepLink((url: string) => {
+    const offDeepLink = api.onDeepLink((url: string) => {
       let parsed: URL;
       try {
         parsed = new URL(url);
@@ -32,6 +32,9 @@ export function useDeepLinkHandler(): void {
       // lume://join/code  → host="join", pathname="/code"
       // lume://channel/spaceId/channelId → host="channel", pathname="/spaceId/channelId"
       const host = parsed.hostname;
+      // Login callbacks are handled only by a matching pending PKCE attempt.
+      // Do not log authorization codes or overwrite an authenticated session.
+      if (host === 'auth' && parsed.pathname === '/callback') return;
       const pathParts = parsed.pathname.split('/').filter(Boolean);
 
       if (host === 'join' && pathParts.length >= 1) {
@@ -51,6 +54,6 @@ export function useDeepLinkHandler(): void {
       // path is e.g. '/join/cb265c4e' — already a normalized React Router path
       navigate(path);
     });
-    return () => { offInternal(); };
+    return () => { offDeepLink(); offInternal(); };
   }, [navigate]);
 }

@@ -106,6 +106,8 @@ export class HttpError extends Error {
 
 export class BackspaceApiClient {
   readonly auth: {
+    authorizeDesktop: (challenge: string) => Promise<{ code: string }>;
+    exchangeDesktop: (code: string, verifier: string) => Promise<AuthResponse>;
     register: (data: RegisterRequest) => Promise<AuthResponse>;
     login: (data: LoginRequest) => Promise<AuthResponse>;
     recover: (data: { username: string; recoveryCode: string; newPassword: string }) => Promise<{ success: boolean }>;
@@ -429,6 +431,8 @@ export class BackspaceApiClient {
     }
 
     this.auth = {
+      authorizeDesktop: (challenge) => request('POST', '/auth/desktop/authorize', { challenge }),
+      exchangeDesktop: (code, verifier) => request('POST', '/auth/desktop/exchange', { code, verifier }, false),
       register: (data: RegisterRequest) =>
         request<AuthResponse>('POST', '/auth/register', {
           ...data,
@@ -899,7 +903,9 @@ function handleUnauthorized(): void {
     !appRelativePath(window.location.pathname).startsWith('/login') &&
     !appRelativePath(window.location.pathname).startsWith('/register')
   ) {
-    window.location.href = appPath('/login');
+    const desktopReturn = appRelativePath(window.location.pathname) === '/desktop-login'
+      ? '?redirect=' + encodeURIComponent('/desktop-login' + window.location.search + window.location.hash) : '';
+    window.location.href = appPath('/login') + desktopReturn;
   }
 }
 

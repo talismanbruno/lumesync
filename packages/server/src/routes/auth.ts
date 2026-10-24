@@ -14,6 +14,7 @@ import { getInviteByToken, inviteStatus, redeemInvite, InviteUnavailableError } 
 import { verifyAttachProofWithPeer } from '../utils/federationAttach.js';
 import { safeFetch } from '../utils/ssrf.js';
 import { emailRecoveryRoutes } from './emailRecovery.js';
+import { desktopLoginRoutes } from './desktopLogin.js';
 import { normalizeEmail, sendAccountEmail, setPendingEmail } from '../utils/accountEmail.js';
 
 function codeHash(code: string): string {
@@ -30,6 +31,7 @@ function issueRecoveryCodes(userId: string): string[] {
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   await emailRecoveryRoutes(app);
+  await desktopLoginRoutes(app);
   app.post<{ Body: RegisterRequest }>('/api/auth/register', {
     config: {
       rateLimit: {

@@ -5,6 +5,8 @@ import { api, HttpError, RateLimitError } from '../../api/client';
 import { DesktopDownloadLink } from './DesktopDownloadLink';
 import { PasswordField } from './authFields';
 import { appPath } from '../../utils/appRoutes';
+import { DesktopBrowserLogin } from './DesktopBrowserLogin';
+import { isElectron } from '../../platform/platform';
 
 export function LoginPage() {
   const location = useLocation();
@@ -20,11 +22,13 @@ export function LoginPage() {
   const [mailAvailable, setMailAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState('');
   const [retryAfter, setRetryAfter] = useState(0);
+  const [manualLogin, setManualLogin] = useState(false);
   const login = useAuthStore(s => s.login);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
   const isAction = action !== 'login';
+  const browserLogin = isElectron() && !manualLogin && !isAction && !recovering;
 
   useEffect(() => {
     if (!recovering) return;
@@ -68,7 +72,7 @@ export function LoginPage() {
   const title = done ? (action === 'verify' ? 'E-mail confirmado' : action === 'reset' ? 'Senha atualizada' : 'Confira seu e-mail')
     : action === 'verify' ? 'Confirme seu e-mail' : action === 'reset' ? 'Crie uma nova senha' : recovering ? 'Esqueceu sua senha?' : 'Entre no Lume';
   const description = done ? (action === 'verify' ? 'Seu endereço já pode ser usado para recuperar sua conta.' : action === 'reset' ? 'Entre com sua nova senha. As sessões anteriores foram encerradas.' : 'Se este endereço estiver confirmado em uma conta, você receberá um link. Confira também a pasta de spam.')
-    : action === 'verify' ? 'Confirme que este endereço é seu para proteger o acesso à sua conta.' : action === 'reset' ? 'Escolha uma senha que você ainda não usa em outros aplicativos.' : recovering ? 'Informe o e-mail de recuperação que você confirmou na sua conta.' : 'Use o usuário e a senha que você escolheu ao criar sua conta.';
+    : action === 'verify' ? 'Confirme que este endereço é seu para proteger o acesso à sua conta.' : action === 'reset' ? 'Escolha uma senha que você ainda não usa em outros aplicativos.' : recovering ? 'Informe o e-mail de recuperação que você confirmou na sua conta.' : browserLogin ? 'Continue com a conta que você já usa no navegador.' : 'Use o usuário e a senha que você escolheu ao criar sua conta.';
   const noToken = isAction && !/^[a-f0-9]{64}$/.test(token);
 
   return <div className="h-full overflow-y-auto bg-surface-base">
@@ -85,6 +89,7 @@ export function LoginPage() {
           <header className="mb-7"><h1 className="text-[28px] font-bold tracking-tight text-txt-primary">{title}</h1><p className="text-sm leading-6 text-txt-tertiary mt-2">{description}</p></header>
           {done ? <div className="space-y-5"><div className="rounded-xl border border-accent-primary/20 bg-accent-primary/5 p-4 text-sm text-txt-secondary">{action === 'login' ? 'O link vale por 15 minutos e funciona uma única vez.' : 'Tudo certo. Você já pode continuar.'}</div>
             <Link to="/login" className="block text-center rounded-xl bg-accent-primary px-4 py-3 font-semibold text-black" onClick={() => { setDone(false); setRecovering(false); }}>Voltar para entrar</Link></div>
+          : browserLogin ? <DesktopBrowserLogin redirect={redirect} onUsePassword={() => setManualLogin(true)} />
           : <form onSubmit={handleSubmit} className="space-y-5">
             {error && <p role="alert" className="p-3 rounded-lg bg-accent-rose/10 text-txt-danger text-sm">{error}</p>}
             {retryAfter > 0 && <p role="status" className="text-sm text-accent-amber">Muitas tentativas. Tente de novo em {retryAfter}s.</p>}
@@ -98,6 +103,7 @@ export function LoginPage() {
               <button type="submit" disabled={busy || retryAfter > 0 || (recovering && mailAvailable === false)} className="w-full rounded-xl py-3 bg-accent-primary hover:bg-accent-primary/85 text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors">{busy ? (action === 'login' && !recovering ? 'Entrando…' : 'Aguarde…') : action === 'verify' ? 'Confirmar meu e-mail' : action === 'reset' ? 'Salvar nova senha' : recovering ? 'Enviar link de recuperação' : 'Entrar'}</button>
             </>}
             {isAction ? <Link className="block text-sm text-accent-primary" to="/login">Voltar para entrar</Link> : <>
+              {isElectron() && manualLogin && !recovering && <button type="button" className="block text-sm text-accent-primary hover:underline" onClick={() => setManualLogin(false)}>Continuar pelo navegador</button>}
               <button type="button" className="text-sm text-accent-primary hover:underline" onClick={() => { setRecovering(!recovering); setError(''); setDone(false); setPassword(''); }}>{recovering ? 'Voltar para entrar' : 'Esqueci minha senha'}</button>
               <p className="text-sm text-txt-tertiary">Ainda não tem uma conta? <Link to={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-accent-primary hover:underline">Criar conta</Link></p>
             </>}
