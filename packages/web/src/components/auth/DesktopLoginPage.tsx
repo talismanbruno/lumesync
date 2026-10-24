@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
@@ -17,15 +17,15 @@ export function DesktopLoginPage() {
   const [busy, setBusy] = useState(false);
   const [callback, setCallback] = useState('');
   const [error, setError] = useState('');
+  const automaticStarted = useRef(false);
+  const authorizing = useRef(false);
   useEffect(() => {
     if (valid && token && !user) void useAuthStore.getState().loadUser();
   }, [valid, token, user]);
 
-  if (isElectron()) return <Navigate to="/login" replace />;
-  if (valid && !token) return <Navigate to={'/login?redirect=' + encodeURIComponent('/desktop-login' + location.hash)} replace />;
-
-  async function approve() {
-    if (busy || callback || !valid || !user) return;
+  const approve = useCallback(async () => {
+    if (authorizing.current || callback || !valid || !token || !user || isElectron()) return;
+    authorizing.current = true;
     setBusy(true); setError('');
     try {
       const { code } = await api.auth.authorizeDesktop(challenge);
@@ -35,19 +35,30 @@ export function DesktopLoginPage() {
       openDesktopLoginCallback(url.href);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível autorizar. Tente novamente pelo aplicativo.');
-    } finally { setBusy(false); }
-  }
+    } finally { authorizing.current = false; setBusy(false); }
+  }, [callback, valid, token, user, challenge, state]);
+
+  useEffect(() => {
+    if (automaticStarted.current || !valid || !token || !user || isElectron()) return;
+    // This first-party handoff returns only a short-lived code to a fixed local
+    // protocol. The desktop still needs its in-memory state and private proof;
+    // visiting this page alone cannot create a usable desktop session.
+    automaticStarted.current = true;
+    void approve();
+  }, [valid, token, user, approve]);
+
+  if (isElectron()) return <Navigate to="/login" replace />;
+  if (valid && !token) return <Navigate to={'/login?redirect=' + encodeURIComponent('/desktop-login' + location.hash)} replace />;
 
   return <main className="min-h-screen bg-surface-base flex items-center justify-center p-5">
     <section className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-surface-elevated p-8 shadow-elevation-high">
       <img src="/icons/logo-wordmark.png" alt="Lume" className="h-9 w-auto mb-8 object-contain" />
-      <h1 className="text-2xl font-bold tracking-tight text-txt-primary">{callback ? 'Tudo pronto para entrar' : 'Sua conta, agora no aplicativo.'}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-txt-primary">{callback ? 'Sua conta está pronta no aplicativo.' : 'Conectando você ao Lume…'}</h1>
       {!valid ? <p role="alert" className="mt-4 text-sm leading-6 text-txt-secondary">Este pedido está incompleto. Abra o aplicativo e escolha “Continuar pelo navegador”.</p>
         : callback ? <><p className="mt-4 text-sm leading-6 text-txt-secondary">Permita abrir o Lume para concluir. Se ele não abriu, use o botão abaixo. Depois de entrar, você pode fechar esta aba.</p>
           <a href={callback} className="mt-6 block rounded-xl bg-accent-primary px-4 py-3 text-center font-semibold text-black">Abrir Lume</a></>
-        : <><p className="mt-4 text-sm leading-6 text-txt-secondary">Você já está conectado{user ? ` como @${user.username}` : ''}. Confirme para continuar no aplicativo sem digitar sua senha.</p>
-          <p className="mt-4 rounded-lg bg-white/[0.04] p-3 text-xs leading-5 text-txt-secondary">Continue apenas se você acabou de iniciar este pedido no aplicativo Lume neste computador.</p>
-          <button type="button" onClick={() => void approve()} disabled={busy || !user} className="mt-6 w-full rounded-xl bg-accent-primary px-4 py-3 font-semibold text-black disabled:opacity-50">{busy ? 'Autorizando…' : user ? `Continuar como @${user.username}` : 'Conferindo sua conta…'}</button></>}
+        : <><p role="status" className="mt-4 text-sm leading-6 text-txt-secondary">{user ? `Encontramos sua sessão como @${user.username}. Estamos conectando sua conta ao aplicativo, sem pedir a senha de novo.` : 'Estamos conferindo sua sessão neste navegador…'}</p>
+          {error && <button type="button" onClick={() => void approve()} disabled={busy} className="mt-6 w-full rounded-xl bg-accent-primary px-4 py-3 font-semibold text-black disabled:opacity-50">{busy ? 'Tentando novamente…' : 'Tentar novamente'}</button>}</>}
       {error && <p role="alert" className="mt-4 text-sm text-txt-danger">{error}</p>}
       <Link to="/channels/@me" className="mt-6 block text-center text-sm text-txt-tertiary hover:underline">Continuar no navegador</Link>
     </section>

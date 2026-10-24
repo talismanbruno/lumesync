@@ -78,7 +78,7 @@ export function DesktopBrowserLogin({ redirect, onUsePassword }: { redirect?: st
     <button type="button" onClick={() => void start()} disabled={phase === 'opening' || phase === 'exchanging'} className="w-full rounded-lg bg-accent-primary px-4 py-3 font-semibold text-black disabled:opacity-50">
       {phase === 'opening' ? 'Abrindo navegador…' : phase === 'exchanging' ? 'Entrando no aplicativo…' : phase === 'waiting' ? 'Abrir navegador novamente' : 'Continuar pelo navegador'}
     </button>
-    {phase === 'waiting' && <p role="status" className="text-xs leading-5 text-txt-secondary">No navegador, confirme sua conta e permita abrir o Lume. O aplicativo entra em seguida.</p>}
+    {phase === 'waiting' && <p role="status" className="text-xs leading-5 text-txt-secondary">Estamos verificando sua sessão no navegador padrão. Se for solicitado, permita abrir o Lume. O aplicativo entra em seguida.</p>}
     {error && <p role="alert" className="text-xs leading-5 text-txt-danger">{error}</p>}
     <button type="button" className="text-xs text-txt-secondary underline" onClick={() => {
       generation.current++; pending.current = null; setPhase('idle'); setError('');

@@ -2,9 +2,9 @@
 
 ## Experiência
 
-Quando um app desktop sem sessão abre a tela de entrada pela primeira vez naquela janela, ele abre a confirmação no navegador padrão do sistema. Se a pessoa já está conectada à mesma instância naquele navegador, só confirma **Continuar como @usuário** e permite abrir o Lume. Não digita novamente usuário e senha.
+Quando um app desktop sem sessão abre a tela de entrada pela primeira vez naquela janela, ele abre a verificação no navegador padrão do sistema. Se a pessoa já está conectada à mesma instância naquele navegador, a conta é enviada automaticamente ao aplicativo; o navegador ainda pode pedir permissão para abrir o Lume. Não digita novamente usuário e senha.
 
-A tela do app prioriza esse caminho. **Entrar com usuário e senha** abre o formulário habitual; cancelamento e falhas deixam essa alternativa disponível. O navegador não recebe uma aprovação automática só por visitar a página. Se não estiver conectado, o login web preserva o pedido de retorno.
+A tela do app prioriza esse caminho. **Entrar com usuário e senha** abre o formulário habitual; cancelamento e falhas deixam essa alternativa disponível. A verificação e a passagem da sessão são automáticas quando existe uma conta conectada. Não é possível executar código só por baixar o instalador: a verificação começa ao abrir o aplicativo. Se não estiver conectado, o login web preserva o pedido de retorno.
 
 Não há leitura de cookies, bancos de dados, arquivos ou perfis dos navegadores. O navegador padrão pode ser diferente daquele em que a pessoa está conectada; nesse caso ela pode abrir a confirmação no navegador correto ou entrar normalmente. Depois de autenticado, o app mantém sua própria sessão pelo mecanismo existente do Lume.
 
@@ -12,7 +12,7 @@ Não há leitura de cookies, bancos de dados, arquivos ou perfis dos navegadores
 
 1. O cliente desktop gera, com Web Crypto, `state` aleatório e uma prova PKCE S256. A prova privada fica somente em memória; o pedido vale por cinco minutos.
 2. Abre `/app/desktop-login#challenge=...&state=...` na mesma origem. O fragmento não contém JWT ou prova privada e não é enviado em solicitações HTTP da navegação.
-3. A página confirma a sessão atual. Uma sessão ausente ou expirada encaminha para o login, preservando o pedido. A aprovação exige clique explícito e autenticação Bearer.
+3. A página confirma a sessão atual. Uma sessão ausente ou expirada encaminha para o login, preservando o pedido. Com sessão carregada e pedido válido, a passagem começa uma única vez, inclusive sob StrictMode. A emissão do código exige autenticação Bearer.
 4. `POST /api/auth/desktop/authorize` emite um código aleatório, válido por 60 segundos e ligado à prova, ao usuário e ao estado de revogação da senha. O servidor guarda somente o hash do código.
 5. O navegador abre o protocolo já registrado `lume://auth/callback?code=...&state=...`. Não envia o JWT do navegador, senha ou prova privada ao protocolo do sistema.
 6. O app aceita apenas um callback correspondente ao pedido ativo e dentro da validade. Envia código e prova privada para `POST /api/auth/desktop/exchange` na instância original.
@@ -28,6 +28,7 @@ A abertura em navegador externo e o vínculo por PKCE seguem os princípios de [
 - Códigos não são persistidos em banco nem reutilizados. Uma troca simultânea só pode ter um vencedor. Tentativas sem a prova correta não consomem a autorização legítima.
 - Callback sem pedido ativo, com estado divergente, campos duplicados, rota/protocolo incorretos ou prazo vencido é ignorado. Um login manual que termina durante a troca não pode ser substituído pela autorização atrasada.
 - O app abre o navegador automaticamente uma única vez por janela. Logout ou mudança de formulário não fica abrindo novas abas repetidamente.
+- A página de passagem pode emitir automaticamente um código temporário para um pedido válido. Esse código sozinho não é uma sessão: só o aplicativo local com o pedido pendente, o estado correspondente e a prova privada consegue usá-lo. A URL de retorno usa sempre o protocolo local fixo, sem destino controlado pelo solicitante. Não há entrega de tokens a páginas externas.
 - O navegador pode pedir permissão para abrir o aplicativo. O botão **Abrir Lume** permite repetir essa abertura sem emitir outra autorização.
 - A sessão continua usando o JWT e as regras de duração/revogação já existentes. Não é uma implementação nova de gerenciamento de sessões por dispositivo.
 - O app desktop atual já possui protocolo e ponte de deep links. Não há mudança no binário Electron, banco, formato de sessão ou credenciais salvas. O recurso não é anunciado como login automático do APK Android.
@@ -36,6 +37,6 @@ A abertura em navegador externo e o vínculo por PKCE seguem os princípios de [
 
 - Servidor: sessão obrigatória, desafio inválido, código sem JWT, troca correta, prova errada, replay, concorrência, expiração, senha alterada, conta suspensa/excluída e isolamento entre instâncias/processos.
 - Cliente: prova S256, ausência de segredo na URL, vínculo do callback, cancelamento, limpeza de listeners, retorno atrasado, erro/expiração e abertura única sob React StrictMode.
-- Confirmação web: nunca aprova ao carregar/visualizar o link; mantém a conta visível; envia somente código e estado ao app; preserva o pedido pelo login; rejeita campos duplicados.
+- Verificação web: inicia automaticamente uma única vez após carregar a conta; envia somente código e estado ao app; preserva o pedido pelo login; rejeita campos duplicados; falhas oferecem tentativa manual sem repetição automática.
 - Login e recuperação existentes continuam cobertos pelos testes de regressão. A revisão visual local usa somente a conta fictícia `@lume_demo`; não autoriza nem altera uma conta de produção.
-- Na validação instalada: abrir o desktop deslogado com navegador já conectado; confirmar a conta; aceitar a abertura do Lume; verificar entrada e persistência após reabrir. Repetir com navegador deslogado, navegador padrão diferente e cancelamento. O salto real pelo protocolo do sistema deve ser validado nos instaladores Windows, macOS e Linux; testes de componentes não substituem essa checagem.
+- Na validação instalada: abrir o desktop deslogado com navegador já conectado; verificar a detecção automática da conta; aceitar a abertura do Lume se solicitado; verificar entrada e persistência após reabrir. Repetir com navegador deslogado, navegador padrão diferente e cancelamento. O salto real pelo protocolo do sistema deve ser validado nos instaladores Windows, macOS e Linux; testes de componentes não substituem essa checagem.

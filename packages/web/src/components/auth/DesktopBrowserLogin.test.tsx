@@ -23,7 +23,7 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); delete window.backspace; });
 function page() { return render(<MemoryRouter><DesktopBrowserLogin /></MemoryRouter>); }
-async function start() { fireEvent.click(screen.getByRole('button', { name: 'Continuar pelo navegador' })); await screen.findByText(/No navegador, confirme/); }
+async function start() { fireEvent.click(screen.getByRole('button', { name: 'Continuar pelo navegador' })); await screen.findByText(/Estamos verificando sua sessão/); }
 
 describe('desktop browser-session handoff', () => {
   it('opens only the approval URL, keeps the proof private and waits for a matching callback', async () => {
