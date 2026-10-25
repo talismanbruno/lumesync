@@ -276,6 +276,9 @@ invisible to electron-updater.
 | Periodic check | Every 4 hours |
 | Manual check | `check-for-updates` IPC from renderer |
 
+Startup opens the app directly. The Windows update check and download run in
+the background and never gate entry behind the local update splash.
+
 ### Event Flow (main -> renderer)
 
 | Event | IPC Channel | Payload | Condition |
@@ -333,6 +336,7 @@ Two flags not in the public state: `inRecoveryMode` (private to the store, guard
 | Mechanism | Catches | Notes |
 |-----------|---------|-------|
 | `did-fail-load` | Network/HTTP transport failures (DNS, refused, TLS, transport-level) | Filtered by `isMainFrame`; ignores `errorCode === -3` (ERR_ABORTED). 5xx with body does NOT fire — falls through to boot timer. |
+| Connection deadline | Main-frame HTTP(S) request that never receives a page | 20 seconds from `did-start-navigation` to `did-navigate`; independent of renderer boot. Subframes and same-document routing do not affect it. |
 | `render-process-gone` | Renderer process termination | Filtered by reason; `clean-exit` ignored. Triggers on `crashed`, `killed`, `oom`, `launch-failed`, `integrity-failure`. |
 | `unresponsive` | Main thread blocked >10s | 10s grace period; cancelled by `responsive` event. Matches Chrome's "page not responding" pattern. |
 | Boot-completion ping | JS exceptions during boot, module-init throws, broken preload calls — failures the other events don't catch | `window.backspace.rendererReady()` from web side; main-side timer (20s, packaged builds only, http(s):// URLs only) |
@@ -342,9 +346,9 @@ The boot ping is **not a heartbeat** — it is a one-shot per-navigation signal.
 - `packages/web/src/App.tsx` — `useEffect` with `[]` deps, fires on first commit (semantic: "renderer survived render," not "data loaded")
 - `packages/web/src/main.tsx` — `ErrorBoundary.componentDidCatch`, fires when in-app error UI mounts (so the boot timer doesn't override the ErrorBoundary fallback 20s later)
 
-Main-side gating uses a per-navigation `pingReceivedThisNav` flag (reset on `did-navigate`, set in `handleRendererReady`). If the ping arrives BEFORE the timer is armed — the typical SPA case, because `useEffect` runs in a microtask after bundle execution + React render, which is before `window.onload` that `did-finish-load` waits on — `armBootTimer` checks the flag and short-circuits. If the ping arrives AFTER the timer is armed (less-common ordering), it clears the existing timer via `clearBootTimer`. Either path means a healthy renderer never trips false recovery. The `bootArmed` flag retains its role: it ensures a `clearBootTimer` call inside the timeout callback is a no-op if the timer was already disarmed by the ping.
+Main-side gating uses a per-navigation `pingReceivedThisNav` flag (reset on `did-navigate`, set in `handleRendererReady`). The boot timer begins at navigation commit, before React boots, and a renderer-ready ping clears it. `armBootTimer` also refuses to arm after an early ping, so a late caller cannot rearm a timer for a healthy renderer. Completion of images or other resources is not required to start or cancel this deadline.
 
-Navigation-aware arming: `did-navigate` (top-level non-same-document) clears any pending timer, resets `pingReceivedThisNav`, and queues a fresh arm for `did-finish-load`. `did-navigate-in-page` (SPA routing) is ignored, so React Router channel switches don't trip the timer.
+Navigation-aware arming: `did-navigate` (top-level non-same-document) clears the connection deadline, resets `pingReceivedThisNav`, and starts the boot timer immediately. It does not wait for `did-finish-load`, so blocked images or resources cannot leave startup unbounded. `did-navigate-in-page` (SPA routing) is ignored, so React Router channel switches don't trip the timer.
 
 ### Recovery UI
 

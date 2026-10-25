@@ -348,7 +348,8 @@ export function enterRecoveryMode(reason: { code: RecoveryReasonCode; detail: st
 
   if (!mainWindowRef || mainWindowRef.isDestroyed()) return;
 
-  mainWindowRef.loadFile(path.join(__dirname, '..', 'resources', 'recovery.html'));
+  void mainWindowRef.loadFile(path.join(__dirname, '..', 'resources', 'recovery.html'))
+    .catch(() => { /* did-fail-load updates the reason; the re-entry guard prevents a loop */ });
   // Force-show even when launched hidden (--hidden via autostart) — recovery
   // must be visible regardless of prior visibility state.
   mainWindowRef.show();
@@ -399,7 +400,7 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       recoveryStore.markRecoveryExited();
       recoveryStore.update({ mode: 'normal', reason: null });
       console.log('[recovery] exited (reload)');
-      mainWindowRef?.loadURL(url);
+      void mainWindowRef?.loadURL(url).catch(() => { /* did-fail-load or the deadline shows recovery */ });
       return;
     }
     case 'check-update': {
@@ -427,7 +428,7 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       recoveryStore.update({ mode: 'normal', reason: null });
       console.log('[recovery] exited (change-instance)');
       clearInstanceUrl();
-      mainWindowRef?.loadURL('https://lumesocial.online/app/');
+      void mainWindowRef?.loadURL('https://lumesocial.online/app/').catch(() => { /* recovery handles failed/aborted navigation */ });
       // Ensure visible — tray clicks may happen with window hidden, and the
       // recovery surface should also remain visible during the navigation.
       // When invoked from recovery.html (window already showing), these are
@@ -451,37 +452,56 @@ export function handleRecoveryAction(action: RecoveryAction): void {
 // webContents event handlers
 // ---------------------------------------------------------------------------
 // Attaches Electron BrowserWindow event listeners that feed into recovery mode.
-// All closure-local state (pendingArm, unresponsiveTimer) is scoped to the
+// All closure-local state (connectionTimer, unresponsiveTimer) is scoped to the
 // function call so each window attachment gets its own independent instance.
 // ---------------------------------------------------------------------------
 
 const UNRESPONSIVE_GRACE_MS = 10_000;
+const CONNECTION_TIMEOUT_MS = 20_000;
 
 export function attachRecoveryHandlers(win: BrowserWindow): void {
-  let pendingArm = false;
+  let connectionTimer: ReturnType<typeof setTimeout> | null = null;
   let unresponsiveTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearConnectionTimer = () => {
+    if (connectionTimer) clearTimeout(connectionTimer);
+    connectionTimer = null;
+  };
+
+  // loadURL can remain pending before did-navigate/did-finish-load, leaving the
+  // previous document (formerly the update splash) visible indefinitely. Start
+  // a deadline before the first response, including DNS/TLS/proxy stalls.
+  win.webContents.on('did-start-navigation', (details, url, isInPlace, isMainFrame) => {
+    if (!(details.isMainFrame ?? isMainFrame) || (details.isSameDocument ?? isInPlace)) return;
+    clearConnectionTimer();
+    clearBootTimer();
+    const target = details.url ?? url;
+    if (!app.isPackaged || !/^https?:\/\//.test(target)) return;
+    connectionTimer = setTimeout(() => {
+      connectionTimer = null;
+      if (win.isDestroyed()) return;
+      enterRecoveryMode({ code: 'load-failed', detail: 'ERR_TIMED_OUT: no page response within 20000ms' });
+    }, CONNECTION_TIMEOUT_MS);
+  });
 
   // did-navigate fires only for top-level non-same-document navigation.
   // SPA in-page routing (history.pushState, hash) fires did-navigate-in-page,
   // which we deliberately ignore — keeps the boot timer from misfiring on
   // every channel switch.
   win.webContents.on('did-navigate', () => {
+    clearConnectionTimer();
     clearBootTimer();
-    pendingArm = true;
     pingReceivedThisNav = false;  // reset for new navigation
-  });
-
-  win.webContents.on('did-finish-load', () => {
-    if (pendingArm) {
-      pendingArm = false;
-      armBootTimer(win);
-    }
+    // The HTML response arrived. Do not wait for all images/resources to finish
+    // before detecting a blocked bundle or a renderer that never boots.
+    armBootTimer(win);
   });
 
   win.webContents.on('did-fail-load',
     (_e, errorCode, errorDescription, validatedURL, isMainFrame) => {
       if (!isMainFrame) return;       // ignore sub-resource failures (favicon, broken <img>)
       if (errorCode === -3) return;   // ERR_ABORTED — intentional nav interruption
+      clearConnectionTimer();
+      clearBootTimer();
       enterRecoveryMode({
         code: 'load-failed',
         detail: `${errorCode} ${errorDescription} @ ${validatedURL}`,
@@ -490,6 +510,8 @@ export function attachRecoveryHandlers(win: BrowserWindow): void {
 
   win.webContents.on('render-process-gone', (_e, details) => {
     if (details.reason === 'clean-exit') return;  // normal quit, ignore
+    clearConnectionTimer();
+    clearBootTimer();
     enterRecoveryMode({
       code: 'render-gone',
       detail: details.reason,  // crashed | killed | oom | launch-failed | integrity-failure
@@ -512,5 +534,12 @@ export function attachRecoveryHandlers(win: BrowserWindow): void {
       clearTimeout(unresponsiveTimer);
       unresponsiveTimer = null;
     }
+  });
+
+  win.once('closed', () => {
+    clearConnectionTimer();
+    clearBootTimer();
+    if (unresponsiveTimer) clearTimeout(unresponsiveTimer);
+    unresponsiveTimer = null;
   });
 }
