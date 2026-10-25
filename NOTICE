@@ -38,8 +38,12 @@ works and trademarks of the project. Neither the AGPL nor the commercial license
 grants any right to use these trademarks; trademark use is governed separately by
 applicable law.
 
-In-application UI icons are hand-authored inline SVGs and are covered by the
-project license.
+Unless otherwise noted, in-application UI icons are hand-authored inline SVGs
+and are covered by the project license.
+
+The call-end glyph is from Microsoft Fluent UI System Icons (MIT License),
+Copyright (c) 2020 Microsoft Corporation. Its complete license is shipped at
+packages/web/public/licenses/fluent-system-icons.txt.
 
 ================================================================================
 npm dependencies

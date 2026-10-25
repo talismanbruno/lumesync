@@ -5,7 +5,8 @@ type OrbitalIconName =
   | 'camera' | 'screen' | 'quality' | 'image' | 'clear' | 'friends' | 'hangup' | 'transfer' | 'download' | 'chat';
 
 export function OrbitalIcon({ name, size = 20, cut = false, className = '' }: { name: OrbitalIconName; size?: number; cut?: boolean; className?: string }) {
-  const motionRef = useIconMotion(name);
+  // Keep the end-call symbol centered and still, as in the approved preview.
+  const motionRef = useIconMotion(name === 'hangup' ? '' : name);
   const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   const glyph = {
     plus: <path d="M12 5v14M5 12h14" />,
@@ -22,7 +23,8 @@ export function OrbitalIcon({ name, size = 20, cut = false, className = '' }: { 
     image: <><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4-4 3 3 2-2 5 5"/></>,
     clear: <><path d="M3 10v4M7.5 6.5v11M12 3v18M16.5 6.5v11M21 10v4"/></>,
     friends: <><circle cx="10" cy="9" r="3"/><path d="M4 19c.5-3.4 2.4-5 6-5s5.5 1.6 6 5"/><circle cx="18" cy="9" r="2" opacity=".5"/><path d="M17 14c2.2.1 3.4 1.4 3.8 3.5" opacity=".5"/></>,
-    hangup: <path d="M4 15c4.7-4 11.3-4 16 0l-3 3-2.5-2v-2.1a9 9 0 0 0-5 0V16L7 18l-3-3Z"/>,
+    // Fluent UI System Icons, Microsoft (MIT); /licenses/fluent-system-icons.txt.
+    hangup: <path fill="currentColor" stroke="none" d="M21.9487 12.9921L21.7513 14.0287C21.5664 15 20.6588 15.6523 19.6305 15.5529L17.5841 15.3552C16.6923 15.269 15.9325 14.6356 15.7056 13.7892L15.0743 11.434C14.1398 11.0508 13.1099 10.8756 11.9845 10.9085C10.8591 10.9414 9.81232 11.1773 8.84412 11.6161L8.45304 13.8209C8.30481 14.6566 7.61525 15.2799 6.74193 15.3677L4.70741 15.5723C3.69224 15.6744 2.71891 15.0284 2.43031 14.0611L2.12104 13.0245C1.8132 11.9927 2.08792 10.9068 2.84222 10.1739C4.62301 8.44357 7.59203 7.57574 11.7493 7.57034C15.9126 7.56498 18.974 8.42752 20.9337 10.158C21.7582 10.8862 22.1443 11.9643 21.9487 12.9921Z"/>,
     transfer: <><path d="M5 8h11M13 5l3 3-3 3M19 16H8M11 13l-3 3 3 3"/><circle cx="12" cy="12" r="9" opacity=".22"/></>,
     download: <><path className="lume-motion-download-arrow" d="M12 3v12m-5-5 5 5 5-5"/><path className="lume-motion-download-tray" d="M5 16v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/></>,
     chat: <><path d="M6 4h12a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H9l-6 3V7a3 3 0 0 1 3-3Z"/><path d="M8 9h8M8 13h5"/></>,

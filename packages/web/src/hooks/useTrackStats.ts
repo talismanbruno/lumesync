@@ -98,16 +98,6 @@ function reportKind(report: any): 'audio' | 'video' | null {
   return null;
 }
 
-function inferSimulcastLayer(width: number | null, height: number | null): string | null {
-  if (height !== null && height > 0) {
-    if (height >= 1000) return 'High';
-    if (height >= 700) return 'Medium';
-    return 'Low';
-  }
-  if (width !== null && width > 0) return 'Low';
-  return null;
-}
-
 // ── Hook ──
 
 export function useTrackStats(enabled: boolean): TrackStatsSnapshot | null {
@@ -500,7 +490,9 @@ export function useTrackStats(enabled: boolean): TrackStatsSnapshot | null {
                   height,
                   fps,
                   qualityLimitation: null,
-                  simulcastLayer: inferSimulcastLayer(width, height),
+                  // Resolution is not proof of a simulcast layer. A single
+                  // VP9 layer can change dimensions at the encoder itself.
+                  simulcastLayer: null,
                 });
               }
             }

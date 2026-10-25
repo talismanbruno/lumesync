@@ -8,7 +8,11 @@ export function hasIsolatedScreenAudio(video: MediaStreamTrack, audio: MediaStre
   // A separate browser tab has its own audio source. The capturing tab is
   // excluded from the picker, and in-picker source switching is disabled.
   if (!desktop && video.getSettings().displaySurface === 'browser') return true;
-  return (audio.getSettings() as IsolatedAudioSettings).restrictOwnAudio === true;
+  const settings = audio.getSettings() as IsolatedAudioSettings;
+  // Electron's custom picker can report the preference even on a global
+  // loopback backend (notably Linux). Require the native exclusion source too.
+  if (desktop && settings.deviceId !== 'loopbackWithoutChrome') return false;
+  return settings.restrictOwnAudio === true;
 }
 
 export async function isolateScreenAudio(video: MediaStreamTrack, audio: MediaStreamTrack, desktop: boolean): Promise<boolean> {

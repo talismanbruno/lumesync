@@ -86,7 +86,6 @@ export function VoiceGrid({ participants }: VoiceGridProps) {
         <div
           className="flex-1 p-2 min-h-0 cursor-pointer relative"
           onClick={() => setFocusedParticipant(null)}
-          title={uiText("Click to return to grid view")}
         >
           {renderTile(focusedTile, true)}
 

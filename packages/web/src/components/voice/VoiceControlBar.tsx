@@ -211,7 +211,8 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
         {/* Disconnect */}
         <button
           onClick={handleDisconnect}
-          className={`${btnBase} bg-accent-rose hover:bg-accent-rose/80 text-white`}
+          className={`${btnBase} lume-call-disconnect`}
+          aria-label={uiText("Desconectar")}
           title={uiText("Desconectar")}
         >
           <OrbitalIcon name="hangup" />

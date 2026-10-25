@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Track, type Room } from 'livekit-client';
 
 const fixtures = vi.hoisted(() => ({
-  desktop: false, toast: vi.fn(), capture: vi.fn(), supported: false,
+  desktop: false, toast: vi.fn(), capture: vi.fn(), supported: false, prepareOutput: vi.fn(),
   state: { screenShareConfig: { height: 1080 as number | 'native', fps: 30, mode: 'gaming', customBitrateKbps: null, shareAudio: true }, hwOverdrive: false, isScreenSharing: false },
 }));
 vi.mock('../stores/voiceStore', () => ({ useVoiceStore: { getState: () => fixtures.state, setState: (state: object) => Object.assign(fixtures.state, state) } }));
@@ -11,7 +11,8 @@ vi.mock('../stores/settingsStore', () => ({ getStreamingLimits: () => ({ bitrate
 vi.mock('../platform/platform', () => ({ isElectron: () => fixtures.desktop }));
 vi.mock('./voice', () => ({ broadcastVoiceStatus: vi.fn() }));
 vi.mock('./hwOverdrive', () => ({ activate: vi.fn(), deactivate: vi.fn() }));
-import { startScreenShare, stopScreenShare } from './screenShare';
+vi.mock('./screenShareOutput', () => ({ prepareScreenShareOutput: fixtures.prepareOutput }));
+import { buildScreenShareOptions, startScreenShare, stopScreenShare } from './screenShare';
 
 function mediaTrack(kind: 'video' | 'audio', settings: Record<string, unknown> = {}) {
   const track = Object.assign(new EventTarget(), {
@@ -47,10 +48,41 @@ beforeEach(() => {
   Object.assign(fixtures.state, { isScreenSharing: false, hwOverdrive: false });
   Object.assign(fixtures.state.screenShareConfig, { shareAudio: true, height: 1080 });
   fixtures.toast.mockReset(); fixtures.capture.mockReset();
+  fixtures.prepareOutput.mockReset().mockResolvedValue({ allowed: true, safe: () => true, watch: () => () => {} });
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
     getDisplayMedia: fixtures.capture, getSupportedConstraints: () => ({ restrictOwnAudio: fixtures.supported }),
   } });
   currentRoom = room();
+});
+
+describe('screenshare encoder content hints', () => {
+  it.each(['gaming', 'text'] as const)('preserves the SDK VP9 motion workaround in %s mode', mode => {
+    fixtures.state.hwOverdrive = false;
+    const options = buildScreenShareOptions({ ...fixtures.state.screenShareConfig, mode });
+    expect(options.publish.videoCodec).toBe('vp9');
+    expect(options.contentHint).toBe('motion');
+    expect(options.overdrive.degradationPreference).toBe(mode === 'text' ? 'maintain-resolution' : 'balanced');
+  });
+
+  it('retains detail encoding for text shared with H264', () => {
+    fixtures.state.hwOverdrive = true;
+    const options = buildScreenShareOptions({ ...fixtures.state.screenShareConfig, mode: 'text' });
+    expect(options.publish.videoCodec).toBe('h264');
+    expect(options.contentHint).toBe('detail');
+  });
+
+  it('keeps VP9 on the motion path after both delayed quality adjustments', async () => {
+    const { video } = capture();
+    fixtures.state.screenShareConfig.mode = 'text';
+    try {
+      expect(await startScreenShare(currentRoom)).toBe(true);
+      expect(video.contentHint).toBe('motion');
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(video.contentHint).toBe('motion');
+    } finally {
+      fixtures.state.screenShareConfig.mode = 'gaming';
+    }
+  });
 });
 afterEach(async () => { await stopScreenShare(currentRoom); vi.clearAllTimers(); vi.useRealTimers(); });
 const publishedAudio = () => currentRoom.localParticipant.publishTrack.mock.calls.filter(([, options]) => options.source === Track.Source.ScreenShareAudio);
@@ -119,7 +151,7 @@ describe('screen audio is isolated before publication', () => {
   });
   it('preserves the audio toggle and permits enabling it in the desktop picker', async () => {
     fixtures.desktop = true; fixtures.state.screenShareConfig.shareAudio = false;
-    const { stream } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));
+    const { stream } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true, deviceId: 'loopbackWithoutChrome' }));
     fixtures.capture.mockImplementation(async () => { fixtures.state.screenShareConfig.shareAudio = true; return stream; });
     await startScreenShare(currentRoom); expect(publishedAudio()).toHaveLength(1);
     expect(fixtures.state.screenShareConfig.shareAudio).toBe(true);
@@ -158,6 +190,52 @@ describe('screen audio is isolated before publication', () => {
     expect(audio!.enabled).toBe(false); expect(audio!.stop).toHaveBeenCalled(); expect(video.stop).not.toHaveBeenCalled();
     expect(currentRoom.localParticipant.unpublishTrack).toHaveBeenCalledWith(audio);
     expect(fixtures.state.isScreenSharing).toBe(true);
+  });
+  it.each(['loopback', undefined])('rejects desktop global audio %s even when the preference claims exclusion', async deviceId => {
+    fixtures.desktop = true;
+    const { video, audio } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true, deviceId }));
+    expect(await startScreenShare(currentRoom)).toBe(true);
+    expect(publishedAudio()).toHaveLength(0);
+    expect(audio!.stop).toHaveBeenCalled(); expect(video.stop).not.toHaveBeenCalled();
+    expect(fixtures.prepareOutput).not.toHaveBeenCalled();
+  });
+  it('waits for a verified playback route before publishing any screen audio', async () => {
+    capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));
+    let finish!: (guard: unknown) => void;
+    fixtures.prepareOutput.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    const pending = startScreenShare(currentRoom);
+    await vi.waitFor(() => expect(fixtures.prepareOutput).toHaveBeenCalled());
+    expect(publishedAudio()).toHaveLength(0);
+    finish({ allowed: true, safe: () => true, watch: () => () => {} });
+    expect(await pending).toBe(true); expect(publishedAudio()).toHaveLength(1);
+  });
+  it('honors explicit video-only sharing without a misleading isolation warning', async () => {
+    const { audio, video } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));
+    fixtures.prepareOutput.mockResolvedValue({ allowed: false, silent: true });
+    expect(await startScreenShare(currentRoom)).toBe(true);
+    expect(audio!.stop).toHaveBeenCalled(); expect(video.stop).not.toHaveBeenCalled();
+    expect(publishedAudio()).toHaveLength(0); expect(fixtures.toast).not.toHaveBeenCalled();
+  });
+  it('cancels the output choice and releases capture when sharing is stopped before publication', async () => {
+    const { audio, video } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));
+    fixtures.prepareOutput.mockImplementation((_video, _desktop, signal: AbortSignal) => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true });
+    }));
+    const pending = startScreenShare(currentRoom);
+    await vi.waitFor(() => expect(fixtures.prepareOutput).toHaveBeenCalled());
+    await stopScreenShare(currentRoom);
+    expect(await pending).toBe(false); expect(audio!.stop).toHaveBeenCalled(); expect(video.stop).toHaveBeenCalled();
+    expect(currentRoom.localParticipant.publishTrack).not.toHaveBeenCalled();
+  });
+  it('stops screen audio if playback is switched back through a mixer', async () => {
+    const { audio, video } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));
+    let notify!: () => void; let safe = true; const dispose = vi.fn();
+    fixtures.prepareOutput.mockResolvedValue({ allowed: true, safe: () => safe, watch: (fn: () => void) => { notify = fn; return dispose; } });
+    await startScreenShare(currentRoom);
+    safe = false; notify();
+    expect(audio!.enabled).toBe(false); expect(audio!.stop).toHaveBeenCalled();
+    expect(video.stop).not.toHaveBeenCalled(); expect(dispose).toHaveBeenCalled();
+    expect(currentRoom.localParticipant.unpublishTrack).toHaveBeenCalledWith(audio);
   });
   it('ends audio together with video when sharing is stopped in the OS picker', async () => {
     const { video, audio } = capture(undefined, mediaTrack('audio', { restrictOwnAudio: true }));

@@ -5,6 +5,7 @@ import { RegisterPage } from './components/auth/RegisterPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { JoinPage } from './components/JoinPage';
 import { ScreenSharePicker } from './components/voice/ScreenSharePicker';
+import { ScreenShareAudioOutputDialog } from './components/voice/ScreenShareAudioOutputDialog';
 import { useAuthStore } from './stores/authStore';
 import { isElectron } from './platform/platform';
 import { MacDownloads } from './components/auth/MacDownloads';
@@ -56,6 +57,7 @@ export function App() {
       </>}
       <div className={showTitleBar ? 'flex-1 min-h-0' : 'contents'}>
         <ScreenSharePicker />
+        <ScreenShareAudioOutputDialog />
         <Routes>
           <Route path="/desktop-login" element={<DesktopLoginPage />} />
           <Route path="/download/mac" element={<MacDownloads />} />

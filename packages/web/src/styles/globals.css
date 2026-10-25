@@ -1091,15 +1091,16 @@
   transform: translateY(-1px);
 }
 
-.lume-disconnect {
-  color: rgb(var(--txt-danger));
-  background: rgba(255, 79, 102, 0.075);
-  border: 1px solid rgba(255, 79, 102, 0.14);
+.lume-call-disconnect {
+  color: #fff;
+  background: #e53942;
+  border: 0;
+  border-radius: 9999px;
 }
 
-.lume-disconnect:hover {
-  background: rgba(255, 79, 102, 0.22);
-  border-color: rgba(255, 79, 102, 0.34);
+.lume-call-disconnect:hover {
+  color: #fff;
+  background: #c92d37;
 }
 
 /* ── Lume Controls ──────────────────────────────────────────────────────── */

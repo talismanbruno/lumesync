@@ -6335,7 +6335,19 @@ export const messages = {
   "Não foi possível abrir a tela cheia. Tente novamente.": [
     "Could not enter full screen. Try again.",
     "Não foi possível abrir a tela cheia. Tente novamente."
-  ]
+  ],
+  "Compartilhar sem retorno da chamada": ["Share without call feedback", "Compartilhar sem retorno da chamada"],
+  "A saída {0} pode colocar as vozes da chamada na transmissão. Escolha o fone ou alto-falante diretamente para manter o som do conteúdo sem esse retorno.": [
+    "The output {0} can feed call voices back into your stream. Select your headphones or speakers directly to keep content audio without this feedback.",
+    "A saída {0} pode colocar as vozes da chamada na transmissão. Escolha o fone ou alto-falante diretamente para manter o som do conteúdo sem esse retorno."
+  ],
+  "Ouvir a chamada em": ["Listen to the call on", "Ouvir a chamada em"],
+  "A mudança vale para o som do Lume. Os outros aplicativos continuam usando a saída atual.": [
+    "This changes Lume's audio output. Other apps keep using their current output.",
+    "A mudança vale para o som do Lume. Os outros aplicativos continuam usando a saída atual."
+  ],
+  "Usar esta saída e compartilhar": ["Use this output and share", "Usar esta saída e compartilhar"],
+  "Compartilhar sem áudio do sistema": ["Share without system audio", "Compartilhar sem áudio do sistema"]
 } as const;
 
 export type MessageKey = keyof typeof messages;

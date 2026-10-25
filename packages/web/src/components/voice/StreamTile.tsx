@@ -13,6 +13,7 @@ import { getSfxVolume } from '../../utils/sfx';
 import { ScreenShareSettingsPopover } from './ScreenShareSettingsPopover';
 import { useVoiceParticipantMeta } from '../../hooks/useVoiceParticipantMeta';
 import type { StreamTile as StreamTileType } from '../../hooks/useLiveKit';
+import { formatVideoQuality, observedVideoFps, sampleVideoPlayback, type PlaybackSample } from '../../utils/videoPlaybackQuality';
 
 interface StreamTileProps {
   tile: StreamTileType;
@@ -187,26 +188,25 @@ export function StreamTile({ tile, large }: StreamTileProps) {
     }
   }, [liveLkScreenTrack]);
 
-  // Quality badge (poll every 3s)
+  // Actual playback quality (poll every 3s). Track settings may advertise
+  // Infinity or a nominal frame rate, neither of which measures displayed FPS.
   useEffect(() => {
-    if (!liveScreenTrack) {
+    const videoEl = videoRef.current;
+    if (!liveScreenTrack || !videoEl) {
       setQualityBadge('');
       return;
     }
+    let previous: PlaybackSample | null = null;
     const update = () => {
-      const settings = liveScreenTrack.getSettings();
-      const h = settings.height ?? 0;
-      const fps = Math.round(settings.frameRate ?? 0);
-      if (h > 0 && fps > 0) {
-        setQualityBadge(`${h}P ${fps}FPS`);
-      } else if (h > 0) {
-        setQualityBadge(`${h}P`);
-      }
+      const sample = sampleVideoPlayback(videoEl, performance.now());
+      const height = sample.height || liveScreenTrack.getSettings().height || 0;
+      setQualityBadge(formatVideoQuality(height, observedVideoFps(previous, sample)));
+      previous = sample;
     };
     update();
     const interval = setInterval(update, 3000);
     return () => clearInterval(interval);
-  }, [liveScreenTrack]);
+  }, [liveScreenTrack, isWatching]);
 
   // Force re-render on track end
   const [, forceUpdate] = useState(0);
