@@ -130,7 +130,7 @@ export function VoiceControls() {
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <button
             onClick={handleDisconnect}
-            className="lume-call-disconnect w-8 h-8 flex items-center justify-center transition-colors rounded-full"
+            className="lume-call-disconnect lume-sidebar-disconnect w-8 h-8 flex items-center justify-center transition-colors"
             aria-label={uiText("Desconectar")}
             title={uiText("Desconectar")}
           >

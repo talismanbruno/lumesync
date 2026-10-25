@@ -41,9 +41,9 @@ applicable law.
 Unless otherwise noted, in-application UI icons are hand-authored inline SVGs
 and are covered by the project license.
 
-The call-end glyph is from Microsoft Fluent UI System Icons (MIT License),
-Copyright (c) 2020 Microsoft Corporation. Its complete license is shipped at
-packages/web/public/licenses/fluent-system-icons.txt.
+The license for the Microsoft Fluent UI System Icons call-end glyph used in
+earlier versions is retained at packages/web/public/licenses/fluent-system-icons.txt
+(MIT License; Copyright (c) 2020 Microsoft Corporation).
 
 ================================================================================
 npm dependencies

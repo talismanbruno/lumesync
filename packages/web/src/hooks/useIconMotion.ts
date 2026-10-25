@@ -7,7 +7,8 @@ export function useIconMotion(name: string) {
     if (!['plus', 'tune', 'hangup'].includes(name)) return;
     const svg = ref.current;
     const button = svg?.closest('button');
-    const glyph = svg?.querySelector<SVGGElement>(`.lume-motion-${name}`);
+    // The receiver moves into the cradle; the cradle stays fixed.
+    const glyph = svg?.querySelector<SVGGraphicsElement>(name === 'hangup' ? '.lume-motion-handset' : `.lume-motion-${name}`);
     if (!button || !glyph || typeof glyph.animate !== 'function' || typeof window.matchMedia !== 'function') return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let animation: Animation | undefined;

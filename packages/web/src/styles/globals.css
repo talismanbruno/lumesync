@@ -1092,15 +1092,28 @@
 }
 
 .lume-call-disconnect {
-  color: #fff;
-  background: #e53942;
-  border: 0;
+  color: rgb(var(--text-secondary));
+  background: rgb(var(--bg-channel));
+  border: 1px solid rgba(229, 57, 66, 0.22);
   border-radius: 9999px;
 }
 
-.lume-call-disconnect:hover {
-  color: #fff;
-  background: #c92d37;
+.lume-call-disconnect:is(:hover, :focus-visible) {
+  color: #ef7c85;
+  background: rgb(var(--bg-elevated));
+  border-color: rgba(229, 57, 66, 0.46);
+}
+
+.lume-sidebar-disconnect {
+  color: rgb(var(--text-tertiary));
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(229, 57, 66, 0.18);
+  border-radius: 10px;
+}
+
+.lume-sidebar-disconnect:is(:hover, :focus-visible) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(229, 57, 66, 0.34);
 }
 
 /* ── Lume Controls ──────────────────────────────────────────────────────── */
@@ -1532,9 +1545,11 @@
 
 
 /* Functional motion: one pass on hover/focus, with no delay to actions. */
-.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-hangup {
+.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-hangup, .lume-motion-handset {
   transform-origin: 12px 12px;
 }
+.lume-motion-cradle { opacity: 0; transition: opacity 260ms ease; }
+button:is(:hover, :focus-visible):not(:disabled) .lume-motion-cradle { opacity: 0.65; }
 button:is(:hover, :focus-visible):not(:disabled) .lume-motion-needle { animation: lume-motion-compass 1664ms cubic-bezier(.4, 0, .2, 1) both; }
 @keyframes lume-motion-compass { 0%, 100% { transform: rotate(0); } 45% { transform: rotate(-65deg); } }
 button:is(:hover, :focus-visible):not(:disabled) .lume-motion-mic:not(.is-cut) .lume-motion-mic-capsule { animation: lume-motion-mic 1040ms ease-in-out; }
@@ -1564,7 +1579,7 @@ button:is(:hover, :focus-visible):not(:disabled) .lume-motion-download-tray { tr
 .lume-friends-tab-marker { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 2px; background: rgb(0, 209, 255); pointer-events: none; transition: transform 240ms cubic-bezier(.2, .7, .2, 1), width 240ms cubic-bezier(.2, .7, .2, 1), opacity 160ms ease; }
 .lume-friends-panel { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
-  button :is(.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-mic-capsule, .lume-motion-mic-support, .lume-motion-audio-echo, .lume-motion-echo-left, .lume-motion-echo-right, .lume-motion-download-arrow, .lume-motion-download-tray, .lume-motion-hangup),
+  button :is(.lume-motion-tune, .lume-motion-plus, .lume-motion-needle, .lume-motion-mic-capsule, .lume-motion-mic-support, .lume-motion-audio-echo, .lume-motion-echo-left, .lume-motion-echo-right, .lume-motion-download-arrow, .lume-motion-download-tray, .lume-motion-hangup, .lume-motion-handset, .lume-motion-cradle),
   .lume-motion-community::after, .lume-friends-panel, .lume-settings-modal {
     animation: none !important; transition: none !important; transform: none !important;
   }
