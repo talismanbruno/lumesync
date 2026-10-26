@@ -5,6 +5,8 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useDragToClose } from '../../hooks/useDragToClose';
 import { VoiceUserRow } from './VoiceUserRow';
+import { CallParticipantTarget } from './CallParticipantTarget';
+import { useUIStore } from '../../stores/uiStore';
 
 /**
  * Permission state for the in-sheet camera preview. Mirrors the smaller
@@ -546,7 +548,7 @@ export function MobileVoiceJoinSheet({
                 const isPermMuted = permissionMutedUserIds.has(`${spaceId}:${userId}`);
 
                 return (
-                  <div key={userId} className="py-1.5 rounded-lg">
+                  <CallParticipantTarget key={userId} userId={userId} roomId={channelId} user={member?.user} onOpenCall={() => { onClose(); useUIStore.getState().pushMobileScreen('voice-full'); }} className="py-1.5 rounded-lg">
                     <VoiceUserRow
                       user={member?.user}
                       userId={member?.user.homeUserId ?? userId}
@@ -562,7 +564,7 @@ export function MobileVoiceJoinSheet({
                       isPermissionMuted={isPermMuted}
                       isSpeaking={speakingUserIds.has(userId)}
                     />
-                  </div>
+                  </CallParticipantTarget>
                 );
               })}
             </div>

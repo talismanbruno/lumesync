@@ -18,6 +18,7 @@ import { TransferOwnershipModal } from '../modals/TransferOwnershipModal';
 import { MobileFolderSheet } from './MobileFolderSheet';
 import { useInstanceStore } from '../../stores/instanceStore';
 import { VoiceUserRow } from '../voice/VoiceUserRow';
+import { CallParticipantTarget } from '../voice/CallParticipantTarget';
 import { MobileVoiceJoinSheet } from '../voice/MobileVoiceJoinSheet';
 import { buildVoiceParticipantMenuItems } from '../voice/voiceMenuItems';
 import { joinVoiceChannel } from '../../utils/voice';
@@ -598,11 +599,15 @@ export function MobileSpacesScreen() {
               const isPermissionMuted = permissionMutedUserIds.has(`${spaceId}:${userId}`);
 
               return (
-                <div
+                <CallParticipantTarget
                   key={userId}
+                  userId={userId}
+                  roomId={channel.id}
+                  user={member?.user}
+                  onOpenCall={() => pushMobileScreen('voice-full')}
                   data-context-menu={`voice-user-${userId}`}
                   className="px-3 py-1 rounded-lg hover:bg-interactive-hover transition-colors"
-                  onClick={() => openModal('userProfile', { userId: member?.user.homeUserId ?? userId })}
+                  onOpenProfile={() => openModal('userProfile', { userId: member?.user.homeUserId ?? userId })}
                   onContextMenu={(e) => handleVoiceUserContextMenu(e, userId, channel.id)}
                 >
                   <VoiceUserRow
@@ -622,7 +627,7 @@ export function MobileSpacesScreen() {
                     isSpeaking={speakingUserIds.has(userId)}
                     size="compact"
                   />
-                </div>
+                </CallParticipantTarget>
               );
             })}
           </div>

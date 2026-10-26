@@ -14,6 +14,7 @@ interface VoiceGridProps {
 export function VoiceGrid({ participants }: VoiceGridProps) {
   const focusedParticipantId = useVoiceStore((s) => s.focusedParticipantId);
   const setFocusedParticipant = useVoiceStore((s) => s.setFocusedParticipant);
+  const watchingStreams = useVoiceStore((s) => s.watchingStreams);
   const [stripHidden, setStripHidden] = useState(false);
 
   const tiles = useMemo(() => deriveGridTiles(participants), [participants]);
@@ -31,7 +32,8 @@ export function VoiceGrid({ participants }: VoiceGridProps) {
       tiles
         .filter(
           (t): t is GridTile & { kind: 'stream' } =>
-            t.kind === 'stream' && t.screenTrack?.readyState === 'live',
+            t.kind === 'stream' && (t.screenTrack?.readyState === 'live'
+              || !t.screenTrack && (t.participant.isLocal || watchingStreams.has(t.participant.userId))),
         )
         .map((t) => t.key),
     );
@@ -43,7 +45,7 @@ export function VoiceGrid({ participants }: VoiceGridProps) {
     ) {
       setFocusedParticipant(null);
     }
-  }, [tiles, focusedParticipantId, setFocusedParticipant]);
+  }, [tiles, focusedParticipantId, setFocusedParticipant, watchingStreams]);
 
   if (tiles.length === 0) {
     return (

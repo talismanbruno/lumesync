@@ -7,9 +7,7 @@ import { useVoiceStore } from '../../stores/voiceStore';
 import { useContextMenuStore, type ContextMenuItem } from '../../stores/contextMenuStore';
 import { getActiveRoom, setStreamSubscription } from '../../hooks/useLiveKit';
 import { stopScreenShare, changeScreenShare } from '../../utils/screenShare';
-import { encodeStreamWatch } from '../../utils/streamWatchProtocol';
-import { AudioManager } from '../../audio/AudioManager';
-import { getSfxVolume } from '../../utils/sfx';
+import { notifyStreamWatch as handleViewerWatchToggle } from '../../utils/watchParticipantStream';
 import { ScreenShareSettingsPopover } from './ScreenShareSettingsPopover';
 import { useVoiceParticipantMeta } from '../../hooks/useVoiceParticipantMeta';
 import type { StreamTile as StreamTileType } from '../../hooks/useLiveKit';
@@ -125,33 +123,6 @@ function StreamAttenuationItem() {
       )}
     </div>
   );
-}
-
-/**
- * Handles a deliberate viewer watch / stop-watch action: plays the local
- * feedback cue on the viewer's OWN machine and notifies the streamer so their
- * streamer-side watcher set updates.
- *
- * Called only from explicit user-action sites (the "Watch Stream" button and
- * the watch/stop context-menu items) — never from automatic teardown paths
- * (streamer stops sharing, participant disconnect), which must stay silent on
- * the viewer side. The local cue is played directly rather than derived from a
- * `watchingStreams` diff precisely so those teardown paths don't trigger it.
- *
- * The cue plays unconditionally (independent of the data-channel round-trip to
- * the streamer), so the viewer gets identical feedback on every platform —
- * Safari and the Electron desktop app alike.
- */
-function handleViewerWatchToggle(streamerUserId: string, watching: boolean): void {
-  AudioManager.getInstance().playSound(
-    watching ? 'stream_user_joined' : 'stream_user_left',
-    { volume: getSfxVolume() },
-  );
-  const room = getActiveRoom();
-  if (!room) return;
-  const payload = encodeStreamWatch({ type: 'stream_watch', target: streamerUserId, watching });
-  // Reliable delivery; data channels are room-scoped and small (under 1KB).
-  void room.localParticipant.publishData(payload, { reliable: true });
 }
 
 export function StreamTile({ tile, large }: StreamTileProps) {
@@ -366,13 +337,14 @@ export function StreamTile({ tile, large }: StreamTileProps) {
           <div className="text-center px-4">
             <p className="text-txt-primary text-sm font-semibold">
               {displayName} {uiText(" is streaming")}</p>
-            {!isLocal && (
+            {!isLocal && !isWatching && (
               <button
                 onClick={handleWatch}
                 className="mt-2 px-4 py-1.5 bg-accent-primary hover:bg-accent-primary/80 rounded text-white text-xs font-semibold transition-colors"
               >
                 {uiText("Watch Stream")}</button>
             )}
+            {!isLocal && isWatching && <p role="status" className="mt-2 text-xs text-txt-tertiary">Carregando transmissão…</p>}
           </div>
         </div>
       )}

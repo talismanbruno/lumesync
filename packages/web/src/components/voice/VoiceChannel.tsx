@@ -7,6 +7,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useContextMenuStore } from '../../stores/contextMenuStore';
 import { buildVoiceParticipantMenuItems } from './voiceMenuItems';
 import { VoiceUserRow } from './VoiceUserRow';
+import { CallParticipantTarget } from './CallParticipantTarget';
 
 const EMPTY_VOICE_USERS: string[] = [];
 
@@ -150,8 +151,13 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
             const isBeingDragged = userDrag?.isBeingDragged ?? false;
 
             return (
-              <div
+              <CallParticipantTarget
                 key={userId}
+                userId={userId}
+                roomId={channelId}
+                user={profileUser}
+                disabled={isBeingDragged}
+                onOpenCall={onClick}
                 data-context-menu
                 className={`px-[10px] py-1 rounded-[6px] hover:bg-interactive-hover transition-colors ${
                   isDraggable ? 'cursor-grab active:cursor-grabbing' : profileUser ? 'cursor-pointer' : ''
@@ -159,19 +165,8 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
                 draggable={isDraggable}
                 onDragStart={isDraggable ? userDrag!.onDragStart : undefined}
                 onDragEnd={isDraggable ? userDrag!.onDragEnd : undefined}
-                onClick={(event) => {
-                  if (!profileUser || isBeingDragged) return;
-                  openUserProfile(profileUser, { top: event.clientY, left: event.clientX + 12 });
-                }}
+                onOpenProfile={position => { if (profileUser && !isBeingDragged) openUserProfile(profileUser, position); }}
                 onContextMenu={(e) => handleContextMenu(e, userId)}
-                role={profileUser ? 'button' : undefined}
-                tabIndex={profileUser ? 0 : undefined}
-                onKeyDown={(event) => {
-                  if (!profileUser || (event.key !== 'Enter' && event.key !== ' ')) return;
-                  event.preventDefault();
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  openUserProfile(profileUser, { top: rect.top, left: rect.right + 12 });
-                }}
               >
                 <VoiceUserRow
                       user={profileUser}
@@ -190,7 +185,7 @@ export function VoiceChannel({ channelId, channelName, onClick, locked, canManag
                   isLocallyMuted={userId !== myUser?.id && (participantMutes.get(userId) ?? false)}
                   isSpeaking={speakingUserIds.has(userId)}
                 />
-              </div>
+              </CallParticipantTarget>
             );
           })}
         </div>

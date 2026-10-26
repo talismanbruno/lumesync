@@ -10,6 +10,17 @@ import { isSelf, parseFederatedUsername } from '../../utils/identity';
 import { api } from '../../api/client';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { DmMemberRow, type DmMemberRowAction } from './DmMemberRow';
+import { useVoiceStore } from '../../stores/voiceStore';
+import { CallParticipantTarget } from '../voice/CallParticipantTarget';
+
+function DmCallMemberTarget({ member, roomId, children }: { member: User; roomId: string; children: React.ReactNode }) {
+  const participant = useVoiceStore(state => state.activeDmCall?.dmChannelId === roomId && state.isLiveKitConnected
+    ? state.participants.find(person => person.userId === member.id || person.homeUserId === member.id
+      || !!member.homeUserId && (person.userId === member.homeUserId || person.homeUserId === member.homeUserId))
+    : undefined);
+  if (!participant) return <>{children}</>;
+  return <CallParticipantTarget userId={participant.userId} roomId={roomId} user={member}>{children}</CallParticipantTarget>;
+}
 
 /**
  * Right-side roster for group DMs. Mirrors `MemberSidebar`'s layout language
@@ -198,15 +209,17 @@ export function DmRosterPanel() {
           <div data-dm-roster-section="owner" className="mb-4">
             <h4 className="text-[10.5px] font-bold text-txt-tertiary uppercase tracking-[0.06em] px-2 mb-1">
               {uiText("OWNER")}</h4>
-            <DmMemberRow
-              member={ownerMember}
-              isOwner
-              isSelf={!!authUser && isSelf(ownerMember, authUser)}
-              callerIsOwner={callerIsOwner}
-              isFriend={isFriendOfCaller(ownerMember)}
-              showKebab
-              onMenuAction={handleMenuAction}
-            />
+            <DmCallMemberTarget key={ownerMember.id} member={ownerMember} roomId={dmChannel.id}>
+              <DmMemberRow
+                member={ownerMember}
+                isOwner
+                isSelf={!!authUser && isSelf(ownerMember, authUser)}
+                callerIsOwner={callerIsOwner}
+                isFriend={isFriendOfCaller(ownerMember)}
+                showKebab
+                onMenuAction={handleMenuAction}
+              />
+            </DmCallMemberTarget>
           </div>
         )}
 
@@ -216,16 +229,18 @@ export function DmRosterPanel() {
               {uiText("ONLINE — ")}{onlineMembers.length}
             </h4>
             {onlineMembers.map((m) => (
-              <DmMemberRow
-                key={m.id}
-                member={m}
-                isOwner={false}
-                isSelf={!!authUser && isSelf(m, authUser)}
-                callerIsOwner={callerIsOwner}
-                isFriend={isFriendOfCaller(m)}
-                showKebab
-                onMenuAction={handleMenuAction}
-              />
+              <DmCallMemberTarget key={m.id} member={m} roomId={dmChannel.id}>
+                <DmMemberRow
+                  key={m.id}
+                  member={m}
+                  isOwner={false}
+                  isSelf={!!authUser && isSelf(m, authUser)}
+                  callerIsOwner={callerIsOwner}
+                  isFriend={isFriendOfCaller(m)}
+                  showKebab
+                  onMenuAction={handleMenuAction}
+                />
+              </DmCallMemberTarget>
             ))}
           </div>
         )}
@@ -236,16 +251,18 @@ export function DmRosterPanel() {
               {uiText("OFFLINE — ")}{offlineMembers.length}
             </h4>
             {offlineMembers.map((m) => (
-              <DmMemberRow
-                key={m.id}
-                member={m}
-                isOwner={false}
-                isSelf={!!authUser && isSelf(m, authUser)}
-                callerIsOwner={callerIsOwner}
-                isFriend={isFriendOfCaller(m)}
-                showKebab
-                onMenuAction={handleMenuAction}
-              />
+              <DmCallMemberTarget key={m.id} member={m} roomId={dmChannel.id}>
+                <DmMemberRow
+                  key={m.id}
+                  member={m}
+                  isOwner={false}
+                  isSelf={!!authUser && isSelf(m, authUser)}
+                  callerIsOwner={callerIsOwner}
+                  isFriend={isFriendOfCaller(m)}
+                  showKebab
+                  onMenuAction={handleMenuAction}
+                />
+              </DmCallMemberTarget>
             ))}
           </div>
         )}
