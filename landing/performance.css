@@ -1,0 +1,97 @@
+#desempenho{position:relative;z-index:1;padding-top:35px}
+
+  #desempenho .lpr-product {
+    --lpr-bg:#080b0d; --lpr-surface:#101619;
+    --lpr-fg:#f2fafa; --lpr-muted:#a1b2b8;
+    --lpr-border:#243238; --lpr-accent:#6fe7ee;
+    --lpr-accent-text:var(--lpr-accent);
+    --lpr-halo:color-mix(in srgb,var(--lpr-accent) 10%,transparent);
+    box-sizing:border-box; width:100%; padding:26px 30px 25px; border-radius:22px;
+    background:radial-gradient(ellipse at 78% 4%,var(--lpr-halo),transparent 45%),var(--lpr-bg);
+    color:var(--lpr-fg); font-family:inherit; text-align:left;
+  }
+  #desempenho .lpr-product * { box-sizing:border-box; }
+  #desempenho :is(p,h2,h3) { margin:0; }
+  #desempenho .lpr-product svg { flex-shrink:0; width:16px; height:16px; }
+  #desempenho .lpr-topline { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-right:68px; }
+  #desempenho .lpr-wordmark { font-size:24px; font-weight:750; letter-spacing:-1.3px; }
+  #desempenho .lpr-topline > span:last-child { color:var(--lpr-muted); font-size:11px; letter-spacing:1.3px; }
+  #desempenho .lpr-intro { padding:35px 0 26px; }
+  #desempenho .lpr-kicker { display:flex; align-items:center; gap:8px; color:var(--lpr-accent-text); font-size:11px; font-weight:650; letter-spacing:1.3px; }
+  #desempenho .lpr-kicker > span { width:5px; height:5px; border-radius:50%; background:var(--lpr-accent); }
+  #desempenho .lpr-ratio { margin-top:10px; font-size:clamp(88px,17vw,130px); line-height:1.1; font-weight:760; letter-spacing:-7px; }
+  #desempenho .lpr-ratio > span { color:var(--lpr-accent-text); font-weight:450; }
+  #desempenho .lpr-intro h2 { font-size:clamp(26px,4.8vw,36px); line-height:1.12; letter-spacing:-1.2px; font-weight:700; }
+  #desempenho .lpr-intro p { margin-top:14px; color:var(--lpr-muted); font-size:14px; line-height:1.6; }
+  #desempenho .lpr-race-panel { padding:20px 22px; background:var(--lpr-surface); border:1px solid var(--lpr-border); border-radius:17px; }
+  #desempenho .lpr-panel-title { display:flex; justify-content:space-between; gap:12px; color:var(--lpr-muted); font-size:11px; letter-spacing:.7px; }
+  #desempenho .lpr-timer { font-size:12px; letter-spacing:0; font-variant-numeric:tabular-nums; }
+  #desempenho .lpr-race-row { margin-top:18px; }
+  #desempenho .lpr-data-label { display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:13px; line-height:1.5; }
+  #desempenho .lpr-data-label strong { font-size:17px; font-weight:650; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  #desempenho .lpr-data-label small { font-size:11px; font-weight:400; }
+  #desempenho .lpr-brand { font-weight:650; }
+  #desempenho .lpr-secondary { color:var(--lpr-muted); }
+  #desempenho .lpr-ready { display:inline-block; width:13px; height:13px; margin-left:5px; color:var(--lpr-accent-text); vertical-align:-2px; }
+  #desempenho .lpr-track { height:12px; margin-top:7px; border-radius:6px; background:color-mix(in srgb,var(--lpr-muted) 9%,transparent); overflow:hidden; }
+  #desempenho .lpr-fill { height:100%; border:0; border-radius:inherit; }
+  #desempenho .lpr-lume { background:var(--lpr-accent); }
+  #desempenho .lpr-discord { background:color-mix(in srgb,var(--lpr-muted) 48%,transparent); }
+  #desempenho .lpr-race-actions { margin-top:21px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  #desempenho .lpr-replay { display:flex; align-items:center; gap:7px; padding:10px 12px; border:1px solid var(--lpr-border); border-radius:8px; background:var(--lpr-bg); color:var(--lpr-fg); font:inherit; font-size:12px; line-height:1.3; }
+  #desempenho .lpr-replay:hover { background:color-mix(in srgb,var(--lpr-accent) 10%,var(--lpr-bg)); }
+  #desempenho .lpr-replay svg { width:13px; height:13px; }
+  #desempenho .lpr-race-status { flex:1; min-width:140px; font-size:11px; line-height:1.5; color:var(--lpr-muted); }
+  #desempenho .lpr-memory {
+    position:relative; margin-top:24px; padding:24px 26px 27px; border-radius:18px;
+    border:1px solid color-mix(in srgb,var(--lpr-accent) 20%,var(--lpr-border));
+    background:radial-gradient(ellipse at 0% 30%,var(--lpr-halo),transparent 75%),var(--lpr-surface);
+  }
+  #desempenho .lpr-memory-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:9px; color:var(--lpr-muted); font-size:11px; letter-spacing:.7px; }
+  #desempenho .lpr-memory-top > span:first-child { display:flex; align-items:center; gap:8px; color:var(--lpr-accent-text); }
+  #desempenho .lpr-memory-top svg { width:15px; height:15px; }
+  #desempenho .lpr-memory-body { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:30px; align-items:center; margin-top:15px; }
+  #desempenho .lpr-memory-value { font-size:clamp(80px,13vw,104px); line-height:1.05; letter-spacing:-6px; font-weight:760; font-variant-numeric:tabular-nums; }
+  #desempenho .lpr-memory-value > span { font-size:.45em; vertical-align:18%; padding-left:2px; letter-spacing:-1px; color:var(--lpr-accent-text); }
+  #desempenho .lpr-memory h2 { margin-top:5px; font-size:27px; font-weight:650; line-height:1.2; letter-spacing:-.6px; }
+  #desempenho .lpr-memory-headline p { margin-top:8px; color:var(--lpr-muted); font-size:12px; line-height:1.55; }
+  #desempenho .lpr-memory-compare .lpr-data-label { font-size:14px; }
+  #desempenho .lpr-memory-compare .lpr-data-label strong { font-size:25px; letter-spacing:-.6px; }
+  #desempenho .lpr-memory-compare .lpr-data-label small { font-size:12px; letter-spacing:0; }
+  #desempenho .lpr-memory-compare .lpr-track { height:13px; margin:8px 0 18px; }
+  #desempenho .lpr-memory-compare p { margin-top:1px; color:var(--lpr-muted); font-size:11px; line-height:1.55; }
+  #desempenho .lpr-extra-heading { margin:28px 0 14px; color:var(--lpr-muted); font-size:11px; letter-spacing:1.1px; line-height:1.5; }
+  #desempenho .lpr-capabilities { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+  #desempenho .lpr-capabilities article { display:flex; gap:13px; padding:18px 3px 8px; border-top:1px solid var(--lpr-border); }
+  #desempenho .lpr-capabilities article > svg { color:var(--lpr-accent-text); width:19px; height:19px; margin-top:7px; }
+  #desempenho .lpr-capabilities article > div { min-width:0; }
+  #desempenho .lpr-capabilities strong { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; font-size:clamp(26px,4.2vw,34px); font-weight:700; line-height:1.3; letter-spacing:-1px; }
+  #desempenho .lpr-capabilities small { font-size:14px; font-weight:600; letter-spacing:0; color:var(--lpr-accent-text); white-space:nowrap; }
+  #desempenho .lpr-capabilities h3 { font-size:14px; font-weight:550; margin-top:7px; line-height:1.5; }
+  #desempenho .lpr-capabilities p { margin-top:5px; color:var(--lpr-muted); font-size:11px; line-height:1.6; }
+  #desempenho .lpr-foot { margin-top:24px; padding-top:16px; border-top:1px solid var(--lpr-border); color:var(--lpr-muted); font-size:11px; line-height:1.6; }
+  #desempenho .lpr-local-note { display:flex; align-items:center; flex-wrap:wrap; gap:7px; }
+  #desempenho .lpr-local-note svg { width:13px; height:13px; }
+  #desempenho .lpr-foot > p { margin-top:5px; }
+  #desempenho .lpr-foot details { margin-top:8px; }
+  #desempenho .lpr-foot summary { width:fit-content; text-decoration:underline; text-underline-offset:3px; }
+  #desempenho .lpr-foot details p { margin-top:10px; max-width:68ch; }
+  @media(max-width:520px) {
+    #desempenho .lpr-product { padding:22px 18px; border-radius:16px; }
+    #desempenho .lpr-topline { padding-right:55px; }
+    #desempenho .lpr-topline > span:last-child { letter-spacing:.2px; }
+    #desempenho .lpr-kicker { letter-spacing:.2px; }
+    #desempenho .lpr-intro { padding:35px 0 26px; }
+    #desempenho .lpr-ratio { font-size:108px; }
+    #desempenho .lpr-intro h2 { font-size:30px; }
+    #desempenho .lpr-race-panel { padding:21px 18px; }
+    #desempenho .lpr-race-actions { gap:12px; }
+    #desempenho .lpr-replay { min-height:44px; }
+    #desempenho .lpr-memory { padding:22px 20px; }
+    #desempenho .lpr-memory-top { letter-spacing:.2px; }
+    #desempenho .lpr-memory-body { grid-template-columns:1fr; gap:24px; margin-top:18px; }
+    #desempenho .lpr-memory-value { font-size:98px; }
+    #desempenho .lpr-memory-headline p { font-size:12px; }
+    #desempenho .lpr-capabilities { grid-template-columns:1fr; gap:12px; }
+    #desempenho .lpr-extra-heading { letter-spacing:.4px; }
+  }
