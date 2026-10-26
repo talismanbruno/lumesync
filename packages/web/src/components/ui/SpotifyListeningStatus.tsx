@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getSpotifyListeningActivity } from '@backspace/shared';
 import type { User } from '@backspace/shared';
 import { useActivityStore } from '../../stores/activityStore';
+import { BrandIcon } from './BrandIcon';
 
 // Deliberately mounted only in profile/social surfaces, never shared name or call components.
 export function SpotifyListeningStatus({ user }: { user: Pick<User, 'id' | 'homeUserId' | 'status'> }) {
@@ -17,7 +18,7 @@ export function SpotifyListeningStatus({ user }: { user: Pick<User, 'id' | 'home
   if (!track) return null;
   const description = 'Ouvindo ' + track.details + (track.state ? ' — ' + track.state : '');
   return <div className="flex min-w-0 items-center gap-1.5 text-[11px] leading-5 text-emerald-300" title={description} aria-label={description + ' (Spotify)'}>
-    <svg aria-hidden="true" className="shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
+    <BrandIcon platform="spotify" size={16} />
     <span className="truncate">Ouvindo <strong className="font-medium">{track.details}</strong>{track.state ? ' · ' + track.state : ''}</span>
   </div>;
 }

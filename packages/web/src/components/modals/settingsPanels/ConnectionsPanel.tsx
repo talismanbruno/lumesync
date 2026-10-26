@@ -6,6 +6,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { api } from '../../../api/client';
 import { isElectron } from '../../../platform/platform';
 import { ProfileSocialLinks } from '../../ui/ProfileSocialLinks';
+import { BrandIcon } from '../../ui/BrandIcon';
 
 export function ConnectionsPanel() {
   const user = useAuthStore(state => state.user);
@@ -47,19 +48,19 @@ export function ConnectionsPanel() {
         <div><h3 className="font-semibold text-txt-primary">Suas redes, no seu perfil</h3><p className="text-sm text-txt-tertiary mt-1">Adicione os perfis que você quer compartilhar com outras pessoas no Lume.</p></div>
         <form onSubmit={add} className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
-            <label className="text-xs text-txt-secondary sm:w-40">Rede social<select value={platform} onChange={event => { setPlatform(event.target.value as ProfileLinkPlatform); setValue(''); setError(''); }} className="mt-1 block w-full rounded-lg bg-surface-base border border-white/10 p-2 text-sm text-txt-primary">{PROFILE_LINK_PLATFORMS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+            <label className="text-xs text-txt-secondary sm:w-40"><span className="inline-flex items-center gap-1.5"><BrandIcon platform={platform} size={14} />Rede social</span><select value={platform} onChange={event => { setPlatform(event.target.value as ProfileLinkPlatform); setValue(''); setError(''); }} className="mt-1 block w-full rounded-lg bg-surface-base border border-white/10 p-2 text-sm text-txt-primary">{PROFILE_LINK_PLATFORMS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
             <label className="flex-1 min-w-0 text-xs text-txt-secondary">{platform === 'epicgames' ? 'Nome de exibição' : 'Link ou usuário'}<input value={value} onChange={event => setValue(event.target.value)} placeholder={selected.placeholder} maxLength={512} autoComplete="off" className="mt-1 block w-full rounded-lg bg-surface-base border border-white/10 p-2 text-sm text-txt-primary" /></label>
           </div>
           {platform === 'epicgames' && <p className="text-xs text-txt-tertiary">Seu nome na Epic aparece no perfil para as pessoas encontrarem você.</p>}
           <button type="submit" disabled={busy || !value.trim()} className="rounded-lg px-4 py-2 text-sm font-semibold bg-accent-primary text-black disabled:opacity-40">{busy ? 'Salvando…' : links.some(link => link.platform === platform) ? 'Atualizar rede' : 'Adicionar rede'}</button>
         </form>
-        {links.length > 0 && <div className="space-y-2">{links.map(link => <div key={link.platform} className="flex items-center justify-between gap-3"><span className="text-sm text-txt-secondary truncate"><strong>{PROFILE_LINK_PLATFORMS.find(item => item.id === link.platform)!.label}</strong> · {link.value}</span><button type="button" disabled={busy} onClick={() => void save(links.filter(item => item.platform !== link.platform))} aria-label={'Remover ' + PROFILE_LINK_PLATFORMS.find(item => item.id === link.platform)!.label} className="text-xs text-txt-tertiary hover:text-red-300 p-2">Remover</button></div>)}</div>}
+        {links.length > 0 && <div className="space-y-2">{links.map(link => <div key={link.platform} className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2 min-w-0 text-sm text-txt-secondary"><BrandIcon platform={link.platform} className="text-txt-primary" /><span className="truncate"><strong>{PROFILE_LINK_PLATFORMS.find(item => item.id === link.platform)!.label}</strong> · {link.value}</span></span><button type="button" disabled={busy} onClick={() => void save(links.filter(item => item.platform !== link.platform))} aria-label={'Remover ' + PROFILE_LINK_PLATFORMS.find(item => item.id === link.platform)!.label} className="text-xs text-txt-tertiary hover:text-red-300 p-2">Remover</button></div>)}</div>}
         <ProfileSocialLinks user={{ socialLinks: links }} />
         {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
         {message && <p role="status" className="text-sm text-emerald-300">{message}</p>}
       </section>
       <section className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.035] p-4 space-y-3">
-        <div className="flex items-center justify-between"><h3 className="font-semibold text-txt-primary">O que você está ouvindo</h3><span className="text-xs text-emerald-300">Spotify</span></div>
+        <div className="flex items-center justify-between"><h3 className="font-semibold text-txt-primary">O que você está ouvindo</h3><span className="inline-flex items-center gap-2 text-xs text-emerald-300"><BrandIcon platform="spotify" />Spotify</span></div>
         <p className="text-sm text-txt-tertiary">Mostre a música atual abaixo do seu nome nos perfis, contatos e conversas. Ela não aparece nas listas nem nas telas de chamada.</p>
         {!spotify && !spotifyError && <p role="status" className="text-xs text-txt-tertiary">Verificando conexão…</p>}
         {spotify && !spotify.available && <p className="text-xs text-txt-tertiary">A conexão automática com o Spotify ainda não está disponível. Você já pode adicionar o link do seu perfil acima.</p>}
