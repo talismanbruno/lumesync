@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+// Profile download fixtures use reserved .test hosts, never live DNS/network.
+vi.mock('../utils/ssrf.js', () => ({ safeFetch: vi.fn(async () => new Response(null, { status: 404 })) }));
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { and, eq } from 'drizzle-orm';
@@ -469,6 +471,7 @@ describe('processFriendRequestCreateEvent — branch coverage', () => {
           avatarColor: 'mint',
           banner: 'banner-bob.png',
           bio: 'I build things.',
+          socialLinks: [{ platform: 'x', value: 'https://x.com/bob' }],
         },
       },
     });
@@ -486,6 +489,7 @@ describe('processFriendRequestCreateEvent — branch coverage', () => {
     expect(stub!.banner).toBe('https://orbit.test/api/uploads/banner-bob.png');
     expect(stub!.avatarColor).toBe('mint');
     expect(stub!.bio).toBe('I build things.');
+    expect(JSON.parse(stub!.socialLinks)).toEqual([{ platform: 'x', value: 'https://x.com/bob' }]);
 
     // The WS broadcast carries the hydrated profile.
     const [, evt] = sendToUser.mock.calls[0]!;

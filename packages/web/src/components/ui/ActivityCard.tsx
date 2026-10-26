@@ -5,6 +5,7 @@ import { getPrimaryActivity } from '@backspace/shared/src/activities.js';
 interface ActivityCardProps {
   activities: Activity[];
   fallbackCustomStatus?: string | null;
+  hideSpotify?: boolean;
 }
 
 function formatElapsed(startMs: number): string {
@@ -36,8 +37,8 @@ export function hasRichActivity(activities: Activity[]): boolean {
  * Renders activity details (app name + elapsed time).
  * The glass card wrapper is applied by the parent row container.
  */
-export function ActivityCard({ activities, fallbackCustomStatus }: ActivityCardProps) {
-  const primary = getPrimaryActivity(activities);
+export function ActivityCard({ activities, fallbackCustomStatus, hideSpotify = false }: ActivityCardProps) {
+  const primary = getPrimaryActivity(hideSpotify ? activities.filter(activity => !(activity.type === 'listening' && activity.name === 'Spotify')) : activities);
 
   if (!primary) {
     if (fallbackCustomStatus) {

@@ -7,7 +7,7 @@ import { SelfProfileMenu } from './SelfProfileMenu';
 const mocks = vi.hoisted(() => ({ update: vi.fn(), openModal: vi.fn(), addToast: vi.fn() }));
 vi.mock('../../stores/authStore', () => ({ useAuthStore: (select: (state: { user: null; updateProfile: typeof mocks.update }) => unknown) => select({ user: null, updateProfile: mocks.update }) }));
 vi.mock('../../stores/spaceStore', () => ({ useSpaceStore: (select: (state: { userViews: Map<string, never> }) => unknown) => select({ userViews: new Map() }) }));
-vi.mock('../../stores/activityStore', () => ({ useActivityStore: (select: (state: { myActivities: null }) => unknown) => select({ myActivities: null }) }));
+vi.mock('../../stores/activityStore', () => ({ useActivityStore: (select: (state: { myActivities: null; userActivities: Map<string, never> }) => unknown) => select({ myActivities: null, userActivities: new Map() }) }));
 vi.mock('../../stores/uiStore', () => ({ useUIStore: Object.assign((select: (state: { openUserProfile: () => void; isMobile: boolean }) => unknown) => select({ openUserProfile: vi.fn(), isMobile: false }), { getState: () => ({ openModal: mocks.openModal, addToast: mocks.addToast }) }) }));
 vi.mock('../../utils/clipboard', () => ({ copyText: vi.fn().mockResolvedValue(true) }));
 

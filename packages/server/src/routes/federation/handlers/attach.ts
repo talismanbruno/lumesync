@@ -1,3 +1,4 @@
+import { parseProfileSocialLinks } from '@backspace/shared';
 import path from 'node:path';
 import { config } from '../../../config.js';
 import { getDb, getRawDb, schema } from '../../../db/index.js';
@@ -277,6 +278,7 @@ export function registerAttachRoutes(app: FastifyInstance): void {
         avatarColor: home.profile.avatarColor ?? detached.avatarColor,
         nameColor: home.profile.nameColor ?? null,
         customization: home.profile.customization ? JSON.stringify(home.profile.customization) : null,
+        socialLinks: JSON.stringify(parseProfileSocialLinks(home.profile.socialLinks)),
         bio: home.profile.bio,
       }).where(eq(schema.users.id, detached.id)).run();
     }

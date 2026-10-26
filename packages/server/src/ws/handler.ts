@@ -124,6 +124,7 @@ class ConnectionManager {
   // ─── Rich Presence ──────────────────────────────────────────────────────
   // userId → Activity[] (ephemeral, same lifecycle as voiceUserStates)
   private userActivities: Map<string, Activity[]> = new Map();
+  private spotifyActivities = new Map<string, Activity>();
   // userId → boolean (cached from DB at auth time, updated via REST)
   private userShowActivity: Map<string, boolean> = new Map();
   // userId → status string (cached at auth, updated on presence_update)
@@ -358,11 +359,20 @@ class ConnectionManager {
   }
 
   getUserActivities(userId: string): Activity[] {
-    return this.userActivities.get(userId) ?? [];
+    const activities = this.userActivities.get(userId) ?? [];
+    const spotify = this.spotifyActivities.get(userId);
+    if (!spotify || !this.getUserShowActivity(userId) || this.getUserStatus(userId) === 'offline' || (spotify.timestamps?.end ?? 0) <= Date.now()) return activities;
+    return [...activities.filter(activity => !(activity.type === 'listening' && activity.name === 'Spotify')).slice(0, 4), spotify];
+  }
+
+  setSpotifyActivity(userId: string, activity: Activity | null): void {
+    if (activity) this.spotifyActivities.set(userId, activity);
+    else this.spotifyActivities.delete(userId);
   }
 
   clearUserActivities(userId: string): void {
     this.userActivities.delete(userId);
+    this.spotifyActivities.delete(userId);
   }
 
   setUserShowActivity(userId: string, show: boolean): void {
@@ -1663,6 +1673,7 @@ function buildReadyPayload(userId: string): {
     }
   }
 
+  collectUserActivities(userId, user.customStatus);
   for (const space of spaces) {
     for (const member of space.members) {
       collectUserActivities(member.userId, member.user?.customStatus ?? null);

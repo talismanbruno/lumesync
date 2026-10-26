@@ -127,6 +127,23 @@ beforeEach(async () => {
 });
 
 describe('PATCH /api/users/@me — durable-field write-protection', () => {
+  it('normalizes and persists public social links, and supports clearing', async () => {
+    const headers = { Authorization: 'Bearer ' + detachedToken() };
+    const saved = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers, payload: { socialLinks: [{ platform: 'x', value: '@lume' }, { platform: 'epicgames', value: 'Lume Player' }] } });
+    expect(saved.statusCode).toBe(200);
+    expect(saved.json().socialLinks).toEqual([{ platform: 'x', value: 'https://x.com/lume' }, { platform: 'epicgames', value: 'Lume Player' }]);
+    expect(JSON.parse(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()!.socialLinks)).toEqual(saved.json().socialLinks);
+    expect((await app.inject({ method: 'PATCH', url: '/api/users/@me', headers, payload: { socialLinks: null } })).json().socialLinks).toEqual([]);
+  });
+  it('rejects unsafe links without persisting a partial update', async () => {
+    const res = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers: { Authorization: 'Bearer ' + detachedToken() }, payload: { socialLinks: [{ platform: 'x', value: 'https://evil.test/name' }], displayName: 'Should not save' } });
+    expect(res.statusCode).toBe(400);
+    expect(testDb.select().from(schema.users).where(eq(schema.users.id, DETACHED_ID)).get()!.displayName).toBe('Alice');
+  });
+  it('protects replicated social links from local edits', async () => {
+    const res = await app.inject({ method: 'PATCH', url: '/api/users/@me', headers: { Authorization: 'Bearer ' + federatedToken() }, payload: { socialLinks: [] } });
+    expect(res.statusCode).toBe(403);
+  });
   it('detached account CAN edit durable profile fields', async () => {
     const res = await app.inject({
       method: 'PATCH',

@@ -8,6 +8,8 @@ import { getDb, getRawDb, closeDatabase } from './db/index.js';
 import { checkFfmpeg } from './utils/thumbnail.js';
 import { authRoutes } from './routes/auth.js';
 import { userRoutes } from './routes/users.js';
+import { spotifyRoutes } from './routes/spotify.js';
+import { startSpotifyWorker, stopSpotifyWorker } from './utils/spotify.js';
 import { customizationRoutes, isCustomizationMediaRequest } from './routes/customization.js';
 import { spaceRoutes } from './routes/spaces.js';
 import { channelRoutes } from './routes/channels.js';
@@ -136,6 +138,7 @@ async function main(): Promise<void> {
 
   await app.register(authRoutes);
   await app.register(userRoutes);
+  await app.register(spotifyRoutes);
   await app.register(customizationRoutes);
   await app.register(spaceRoutes);
   await app.register(channelRoutes);
@@ -189,11 +192,13 @@ async function main(): Promise<void> {
   }
 
   startBackupWorker();
+  startSpotifyWorker();
 
   const shutdown = async () => {
     console.log('Shutting down...');
     stopFederationWorkers();
     stopBackupWorker();
+    stopSpotifyWorker();
     await app.close();
     closeDatabase(); // checkpoints WAL — leaves a complete on-disk file
     process.exit(0);

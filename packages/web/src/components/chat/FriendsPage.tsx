@@ -1,3 +1,4 @@
+import { SpotifyListeningStatus } from '../ui/SpotifyListeningStatus';
 import { ProfileName } from '../ui/ProfileName';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { t as uiText } from '../../i18n';
@@ -79,12 +80,14 @@ function ActivityFriendItem({
           <Username user={canonical} username={friendDisplayName} className={`text-sm leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : 'text-txt-primary'}`} />
           <UserBadges user={canonical} size={14} />
         </div>
+        <SpotifyListeningStatus user={canonical} />
         {!isOffline && isFederationGlobeApplicable(canonical) && (
           <div className="text-[10px] leading-[1.3] text-txt-tertiary truncate opacity-60">@{parseFederatedUsername(canonical.username).domain}</div>
         )}
         {!isOffline && (
           <ActivityCard
             activities={activities}
+            hideSpotify
             fallbackCustomStatus={canonical.customStatus}
           />
         )}
@@ -518,6 +521,7 @@ const FriendItem = memo(function FriendItem({ friend, onRemove, onDm }: { friend
             <span className="text-txt-primary font-semibold text-[15px]"><ProfileName user={canonical}>{friendDisplayName}</ProfileName></span>
             <span className="text-txt-tertiary text-[13px] opacity-60 group-hover:opacity-100 transition-opacity font-medium">@{friend.username}</span>
           </div>
+          <SpotifyListeningStatus user={canonical} />
           <div className="flex items-center gap-1.5">
             <span className="text-[12px] text-txt-tertiary font-medium">{statusLabel[friend.status] ?? friend.status}</span>
             {instanceLabel && (

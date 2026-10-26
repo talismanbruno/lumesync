@@ -4,7 +4,7 @@ import { getDb, schema } from '../db/index.js';
 import { authenticate, verifyPassword, hashPassword, signJwt, setMediaAuthCookie, clearMediaAuthCookie, getRequestAuthToken } from '../utils/auth.js';
 import { connectionManager } from '../ws/handler.js';
 import type { UpdateUserRequest, VerifyPasswordRequest, VerifyPasswordResponse, ChangePasswordRequest, ChangePasswordResponse, DeleteAccountRequest, ReplicatedInstance, SpaceLayoutItem, SpaceFolder, Activity, FederationIdentityDeleteRequest, FederationIdentityDeleteResponse, FederationIdentityDeleteResult, FederationProfileUpdatePayload } from '@backspace/shared';
-import { isAvatarColor, isProfileCustomization, parseProfileCustomization } from '@backspace/shared';
+import { isAvatarColor, isProfileCustomization, parseProfileCustomization, normalizeProfileSocialLinks, parseProfileSocialLinks } from '@backspace/shared';
 import { hasValidCosmeticSelections } from '../utils/customizationCatalog.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { deleteUploadFile, deleteAttachmentByFilename } from '../utils/fileCleanup.js';
@@ -204,7 +204,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // Fetch the current user row upfront — used for:
     // 1. Write-protection guard (replicated users can't update durable fields)
     // 2. Change detection (only relay if values actually differ)
-    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'customization', 'avatarColor', 'bio'] as const;
+    const DURABLE_PROFILE_FIELDS = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'customization', 'avatarColor', 'bio', 'socialLinks'] as const;
     const preUpdateUser = db.select().from(schema.users).where(eq(schema.users.id, request.userId)).get();
     if (!preUpdateUser) {
       return reply.code(404).send({ error: 'User not found', statusCode: 404 });
@@ -219,6 +219,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       if (hasDurableField) {
         return reply.code(403).send({ error: 'Profile fields are managed by your home instance', statusCode: 403 });
       }
+    }
+
+    if (request.body.socialLinks !== undefined) {
+      const links = normalizeProfileSocialLinks(request.body.socialLinks);
+      if (!links) return reply.code(400).send({ error: 'Informe links de perfil válidos, sem repetir a rede social.', statusCode: 400 });
+      updateData.socialLinks = JSON.stringify(links);
     }
 
     if (displayName !== undefined) {
@@ -411,6 +417,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
             accentColor: preUpdateUser.accentColor,
             nameColor: preUpdateUser.nameColor,
             customization: parseProfileCustomization(preUpdateUser.customization),
+            socialLinks: parseProfileSocialLinks(preUpdateUser.socialLinks),
             avatarColor: preUpdateUser.avatarColor,
             bio: preUpdateUser.bio,
           };
@@ -463,7 +470,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Detect profile changes and stamp timestamp
-    const hasProfileChange = ['displayName', 'avatar', 'banner', 'accentColor', 'nameColor', 'customization', 'avatarColor', 'bio', 'customStatus'].some(f => f in updateData);
+    const hasProfileChange = [...DURABLE_PROFILE_FIELDS, 'customStatus'].some(f => f in updateData);
     const hasDurableChange = DURABLE_PROFILE_FIELDS.some(f => f in updateData);
     if (hasDurableChange) {
       (updateData as Record<string, unknown>).profileUpdatedAt = Date.now();
@@ -591,6 +598,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           accentColor: updatedUser!.accentColor,
           nameColor: updatedUser!.nameColor,
           customization: parseProfileCustomization(updatedUser!.customization),
+          socialLinks: parseProfileSocialLinks(updatedUser!.socialLinks),
           avatarColor: updatedUser!.avatarColor,
           bio: updatedUser!.bio,
         };

@@ -1,0 +1,30 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import type { User } from '@backspace/shared';
+import { ConnectionsPanel } from './ConnectionsPanel';
+const mocks = vi.hoisted(() => ({ update: vi.fn(), status: vi.fn(), start: vi.fn() }));
+const user = { id: 'me', socialLinks: [{ platform: 'x', value: 'https://x.com/lume' }] } as User;
+vi.mock('../../../stores/authStore', () => ({ useAuthStore: Object.assign((select: (state: { user: User }) => unknown) => select({ user }), { getState: () => ({ updateProfile: mocks.update }) }) }));
+vi.mock('../../../api/client', () => ({ api: { spotify: { status: mocks.status, start: mocks.start } } }));
+vi.mock('../ConnectedInstances', () => ({ ConnectedInstances: () => <div>Servidores conectados</div> }));
+beforeEach(() => { vi.clearAllMocks(); mocks.status.mockResolvedValue({ available: false, connected: false, showListening: false }); mocks.update.mockResolvedValue(undefined); });
+afterEach(cleanup);
+it('keeps public social links usable with Spotify not configured', async () => {
+  render(<ConnectionsPanel />);
+  await screen.findByText(/ainda não está disponível/);
+  expect(screen.getByRole('button', { name: 'Conectar Spotify' })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText('Rede social'), { target: { value: 'steam' } });
+  fireEvent.change(screen.getByLabelText('Link ou usuário'), { target: { value: 'player' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Adicionar rede' }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ socialLinks: [{ platform: 'x', value: 'https://x.com/lume' }, { platform: 'steam', value: 'https://steamcommunity.com/id/player' }] }));
+  expect(screen.getByText('Servidores conectados')).toBeInTheDocument();
+});
+it('removes a social link and exposes validation errors before saving', async () => {
+  render(<ConnectionsPanel />);
+  fireEvent.change(screen.getByLabelText('Link ou usuário'), { target: { value: 'https://evil.test/lume' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Atualizar rede' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('Confira o endereço');
+  expect(mocks.update).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Remover X' }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ socialLinks: [] }));
+});

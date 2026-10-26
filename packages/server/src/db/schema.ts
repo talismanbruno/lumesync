@@ -27,6 +27,7 @@ export const users = sqliteTable('users', {
   accentColor: text('accent_color'),
   nameColor: text('name_color'),
   customization: text('customization'),
+  socialLinks: text('social_links').notNull().default('[]'),
   avatarColor: text('avatar_color'),
   bio: text('bio'),
   isDeleted: integer('is_deleted').default(0),
@@ -47,6 +48,23 @@ export const users = sqliteTable('users', {
   lastSeenAt: integer('last_seen_at'),
   createdAt: integer('created_at').notNull(),
 });
+
+// Private OAuth credentials: never include these tables in public profile payloads.
+export const spotifyConnections = sqliteTable('spotify_connections', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  encryptedTokens: text('encrypted_tokens').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+  passwordEpoch: integer('password_epoch').notNull(),
+  showListening: integer('show_listening').notNull().default(1),
+  updatedAt: integer('updated_at').notNull(),
+});
+export const spotifyOauthStates = sqliteTable('spotify_oauth_states', {
+  stateHash: text('state_hash').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  encryptedVerifier: text('encrypted_verifier').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+  passwordEpoch: integer('password_epoch').notNull(),
+}, table => [index('idx_spotify_oauth_user').on(table.userId)]);
 
 export const recoveryCodes = sqliteTable('recovery_codes', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

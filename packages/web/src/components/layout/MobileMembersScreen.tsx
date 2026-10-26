@@ -1,3 +1,4 @@
+import { SpotifyListeningStatus } from '../ui/SpotifyListeningStatus';
 import { getNameStyle } from '../../utils/nameAppearance';
 import { t as uiText } from '../../i18n';
 import React, { useMemo } from 'react';
@@ -90,12 +91,14 @@ function MobileMemberRow({
           className={`text-[13.5px] leading-[1.2] font-medium truncate ${isOffline ? 'text-txt-tertiary' : (!colorStyle ? 'text-txt-primary' : '')}`}
           style={getNameStyle(canonical)}
         />
+        <SpotifyListeningStatus user={canonical} />
         {!isOffline && isFederationGlobeApplicable(canonical) && (
           <div className="text-[10px] leading-[1.3] text-txt-tertiary truncate opacity-60">@{parseFederatedUsername(canonical.username).domain}</div>
         )}
         {!isOffline && (
           <ActivityCard
             activities={activities}
+            hideSpotify
             fallbackCustomStatus={canonical.customStatus}
           />
         )}

@@ -1,3 +1,5 @@
+import { SpotifyListeningStatus } from '../ui/SpotifyListeningStatus';
+import { ProfileSocialLinks } from '../ui/ProfileSocialLinks';
 import { useEffect, useRef, useState } from 'react';
 import type { User, UserStatus } from '@backspace/shared';
 import { useAuthStore } from '../../stores/authStore';
@@ -75,7 +77,9 @@ export function SelfProfileMenu({ user, onClose, onEdit }: { user: User; onClose
             <button type="button" className="lume-self-status-bubble" onClick={() => { setDraftStatus(user.customStatus ?? ''); setStatusOpen(value => !value); }} aria-expanded={statusOpen}>{user.customStatus || '+ Adicionar status'}</button>
           </div>
           <div className="lume-self-profile-name"><ProfileName user={user}>{user.displayName || user.username}</ProfileName></div>
+          <SpotifyListeningStatus user={user} />
           <div className="lume-self-profile-handle"><span>@{user.username}</span><UserBadges user={user} size={17} /></div>
+          <ProfileSocialLinks user={user} />
           {user.bio && <p className="lume-self-profile-bio">{user.bio}</p>}
           {!!activities?.length && <div className="lume-self-profile-activity"><ActivityCard activities={activities} /></div>}
         </div>

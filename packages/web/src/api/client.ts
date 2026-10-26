@@ -105,6 +105,13 @@ export class HttpError extends Error {
 }
 
 export class BackspaceApiClient {
+  readonly spotify: {
+    status: () => Promise<import('@backspace/shared').SpotifyConnectionStatus>;
+    start: () => Promise<{ url: string }>;
+    complete: (code: string, state: string) => Promise<{ success: boolean }>;
+    setListening: (showListening: boolean) => Promise<{ success: boolean }>;
+    disconnect: () => Promise<{ success: boolean }>;
+  };
   readonly auth: {
     authorizeDesktop: (challenge: string) => Promise<{ code: string }>;
     exchangeDesktop: (code: string, verifier: string) => Promise<AuthResponse>;
@@ -458,6 +465,13 @@ export class BackspaceApiClient {
         request<AttachProofResponse>('POST', '/auth/attach-proof', { targetDomain }),
     };
 
+    this.spotify = {
+      status: () => request('GET', '/connections/spotify'),
+      start: () => request('POST', '/connections/spotify/start'),
+      complete: (code, state) => request('POST', '/connections/spotify/complete', { code, state }),
+      setListening: showListening => request('PATCH', '/connections/spotify', { showListening }),
+      disconnect: () => request('DELETE', '/connections/spotify'),
+    };
     this.users = {
       me: () => request<User>('GET', '/users/@me'),
       update: (data: UpdateUserRequest) => request<User>('PATCH', '/users/@me', data),

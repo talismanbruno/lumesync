@@ -1,3 +1,4 @@
+import { SpotifyListeningStatus } from '../ui/SpotifyListeningStatus';
 import { ProfileName } from '../ui/ProfileName';
 import { t as uiText } from '../../i18n';
 import type { DmChannel, User } from '@backspace/shared';
@@ -191,6 +192,7 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
             </span>
           )}
         </div>
+        {!isGroup && firstOther && <SpotifyListeningStatus user={firstOther} />}
         {previewText && (
           <div className={previewClass}>
             {previewText}

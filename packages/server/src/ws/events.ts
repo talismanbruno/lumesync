@@ -548,14 +548,15 @@ function handleActivityUpdate(event: Record<string, unknown>, userId: string): v
   connectionManager.setUserActivities(userId, activities);
   const status = connectionManager.getUserStatus(userId);
 
-  const payload = { type: 'presence_update' as const, userId, status, activities };
+  const mergedActivities = connectionManager.getUserActivities(userId);
+  const payload = { type: 'presence_update' as const, userId, status, activities: mergedActivities };
   const targets = collectProfileBroadcastTargetIds(userId);
   for (const uid of targets) connectionManager.sendToUser(uid, payload);
   connectionManager.sendToUser(userId, payload);
 
   // S2S: project to all active peers (activities + current status).
   void import('../utils/federationPresence.js').then(({ queuePresenceRelay }) => {
-    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd' | 'offline', activities); } catch (e) { console.warn('[ws] queuePresenceRelay(activity) failed', e); }
+    try { queuePresenceRelay(userId, status as 'online' | 'working' | 'idle' | 'dnd' | 'offline', mergedActivities); } catch (e) { console.warn('[ws] queuePresenceRelay(activity) failed', e); }
   });
 }
 

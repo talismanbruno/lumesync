@@ -47,7 +47,7 @@ function EffectLayer({ layer }: { layer: CosmeticLayer }) {
 
 export function ProfileCosmetics({ customization, effects = true, replayKey = 0 }: { customization?: ProfileCustomization | null; effects?: boolean; replayKey?: number }) {
   const reducedMotion = useReducedMotion();
-  const effect = useCosmeticItem(customization?.profileEffectId);
+  const effect = useCosmeticItem(effects ? customization?.profileEffectId : undefined);
   const frame = useCosmeticItem(customization?.profileFrameId);
   const root = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(340);

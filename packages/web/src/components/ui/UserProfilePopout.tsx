@@ -1,3 +1,5 @@
+import { SpotifyListeningStatus } from './SpotifyListeningStatus';
+import { ProfileSocialLinks } from './ProfileSocialLinks';
 import { t as uiText } from '../../i18n';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -126,9 +128,11 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
             <Username user={user} username={user.displayName ?? baseName} className="text-[16px] font-semibold leading-tight" />
             <UserBadges user={user} size={16} />
           </div>
+          <SpotifyListeningStatus user={user} />
           <div className="text-[13px] text-txt-tertiary">
             <Username username={user.username} showAt className="text-[13px] text-txt-tertiary" />
           </div>
+          <ProfileSocialLinks user={user} />
           {user.customStatus && (
             <div className="text-[13px] text-txt-secondary italic mt-1">
               {user.customStatus}

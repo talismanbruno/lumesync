@@ -1,7 +1,7 @@
 import type { User, ReplicatedInstance } from '@backspace/shared';
 import { schema } from '../db/index.js';
 import { normalizeNameColor } from './nameColor.js';
-import { parseProfileCustomization } from '@backspace/shared';
+import { parseProfileCustomization, parseProfileSocialLinks } from '@backspace/shared';
 import { getPreferredStatus } from './preferredStatus.js';
 
 export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = false): User {
@@ -16,6 +16,7 @@ export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = fal
       accentColor: null,
       nameColor: null,
       customization: null,
+      socialLinks: [],
       avatarColor: null,
       bio: null,
       status: 'offline',
@@ -52,6 +53,7 @@ export function sanitizeUser(row: typeof schema.users.$inferSelect, isSelf = fal
     accentColor: row.accentColor ?? null,
     nameColor: row.nameColor === 'gold' && !row.homeInstance && row.isAdmin !== 1 ? null : normalizeNameColor(row.nameColor),
     customization: parseProfileCustomization(row.customization),
+    socialLinks: parseProfileSocialLinks(row.socialLinks),
     avatarColor: (row.avatarColor as User['avatarColor']) ?? null,
     bio: row.bio ?? null,
     status: (row.status ?? 'offline') as User['status'],

@@ -1,3 +1,5 @@
+import { SpotifyListeningStatus } from '../ui/SpotifyListeningStatus';
+import { ProfileSocialLinks } from '../ui/ProfileSocialLinks';
 import { sanitizeImageSource } from '../../utils/safeUrls';
 import { ProfileName } from '../ui/ProfileName';
 import { Nameplate, ProfileCosmetics } from '../ui/ProfileCosmetics';
@@ -307,9 +309,11 @@ export function UserProfileModal() {
               <Username user={user} username={displayName} className="text-[20px] font-bold leading-tight" />
               <UserBadges user={user} size={18} />
             </div>
+          <SpotifyListeningStatus user={user} />
             <div className="text-[14px] text-txt-tertiary mt-0.5">
               <Username username={user.username} showAt className="text-[14px] text-txt-tertiary" />
             </div>
+            <ProfileSocialLinks user={user} />
             {user.customStatus && (
               <div className="text-[13px] text-txt-secondary italic mt-1">
                 {user.customStatus}

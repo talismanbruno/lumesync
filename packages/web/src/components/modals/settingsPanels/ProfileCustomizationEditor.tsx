@@ -20,10 +20,11 @@ const PICKERS = {
 type PickerKey = keyof typeof PICKERS;
 const EFFECT_LABELS: Record<string, string> = { solid: 'Sólido', gradient: 'Degradê', neon: 'Neon', toon: 'Contorno', pop: 'Pop', glow: 'Brilho', prism: 'Prisma', gummy: 'Gummy' };
 
-export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, bannerFallback, editable, effectReplayKey = 0 }: {
+export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, bannerFallback, editable, effectReplayKey = 0, showProfileEffect = true }: {
   user: User; avatarSrc?: string | null; bannerSrc?: string | null; bannerFallback: string;
   editable?: { displayName: (value: string) => void; bio: (value: string) => void; customStatus: (value: string) => void };
   effectReplayKey?: number;
+  showProfileEffect?: boolean;
 }) {
   const name = user.displayName?.trim() || user.username;
   return <ProfileFrameSpace customization={user.customization}><article className="lume-customization-preview" aria-label="Prévia do perfil" style={getProfileThemeStyle(user)}>
@@ -39,7 +40,7 @@ export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, banner
       </> : <><p className="lume-customization-preview-status">{user.customStatus}</p><div className="lume-customization-preview-bio">{user.bio || 'Seu perfil, do seu jeito.'}</div></>}
       <div className="lume-customization-member-since"><span>MEMBRO DESDE</span><strong>{new Date(user.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div>
     </div>
-    <ProfileCosmetics customization={user.customization} replayKey={effectReplayKey} />
+    <ProfileCosmetics customization={user.customization} replayKey={effectReplayKey} effects={showProfileEffect} />
   </article></ProfileFrameSpace>;
 }
 
@@ -98,7 +99,7 @@ function CosmeticPicker({ field, user, avatarSrc, bannerSrc, bannerFallback, onA
         {!loading && !error && filtered.length === 0 && <p className="lume-cosmetic-empty">Nenhuma opção encontrada.</p>}
         {filtered.length > limit && <button type="button" className="lume-customization-secondary lume-cosmetic-load-more" onClick={() => setLimit(value => value + 36)}>Carregar mais</button>}
       </section>
-      <aside className="lume-cosmetic-selected-preview"><CustomizationProfilePreview user={previewUser} avatarSrc={avatarSrc} bannerSrc={bannerSrc} bannerFallback={bannerFallback} /><div className="lume-cosmetic-selection-info"><strong>{choice?.name ?? 'Nenhum'}</strong><span>{choice?.category ?? 'Sem personalização'}</span><p>{choice?.description}</p></div></aside>
+      <aside className="lume-cosmetic-selected-preview"><CustomizationProfilePreview user={previewUser} avatarSrc={avatarSrc} bannerSrc={bannerSrc} bannerFallback={bannerFallback} showProfileEffect={field === 'profileEffectId'} /><div className="lume-cosmetic-selection-info"><strong>{choice?.name ?? 'Nenhum'}</strong><span>{choice?.category ?? 'Sem personalização'}</span><p>{choice?.description}</p></div></aside>
     </div>
     <footer><button type="button" className="lume-customization-secondary" onClick={onClose}>Cancelar</button><button type="button" className="lume-customization-primary" onClick={() => onApply(selected)}>Aplicar</button></footer>
   </EditorDialog>;
@@ -161,7 +162,7 @@ function FlagPicker({ field, user, avatarSrc, bannerSrc, bannerFallback, onApply
         {!error && countries.length > 0 && filtered.length === 0 && <p className="lume-cosmetic-empty">Nenhum país encontrado.</p>}
         <nav className="lume-flag-pagination" aria-label="Páginas de bandeiras"><button type="button" className="lume-customization-secondary" aria-label="Página anterior" disabled={page === 0} onClick={() => setPage(value => value - 1)}>←</button><span>{page + 1} / {pages}</span><button type="button" className="lume-customization-secondary" aria-label="Próxima página" disabled={page + 1 >= pages} onClick={() => setPage(value => value + 1)}>→</button></nav>
       </section>
-      <aside className="lume-cosmetic-selected-preview"><CustomizationProfilePreview user={previewUser} avatarSrc={avatarSrc} bannerSrc={bannerSrc} bannerFallback={bannerFallback} /><div className="lume-cosmetic-selection-info"><strong>{choice?.name ?? 'Sem bandeira'}</strong><span>{field === 'bannerFlag' ? 'Banner animado' : 'Placa de identificação animada'}</span><p>Tecido em movimento, com luz e ondulação.</p></div></aside>
+      <aside className="lume-cosmetic-selected-preview"><CustomizationProfilePreview user={previewUser} avatarSrc={avatarSrc} bannerSrc={bannerSrc} bannerFallback={bannerFallback} showProfileEffect={false} /><div className="lume-cosmetic-selection-info"><strong>{choice?.name ?? 'Sem bandeira'}</strong><span>{field === 'bannerFlag' ? 'Banner animado' : 'Placa de identificação animada'}</span><p>Tecido em movimento, com luz e ondulação.</p></div></aside>
     </div>
     <footer><button type="button" className="lume-customization-secondary" onClick={onClose}>Cancelar</button><button type="button" className="lume-customization-primary" onClick={() => onApply(selected)}>Aplicar</button></footer>
   </EditorDialog>;

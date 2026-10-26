@@ -1,4 +1,4 @@
-import { parseProfileCustomization, type ProfileCustomization } from '@backspace/shared';
+import { parseProfileSocialLinks, parseProfileCustomization, type ProfileSocialLink, type ProfileCustomization } from '@backspace/shared';
 import { buildFederationHeaders, verifySignature, getOurOrigin } from './federationAuth.js';
 import { safeFetch } from './ssrf.js';
 
@@ -71,7 +71,7 @@ export async function verifyAttachProofWithPeer(
 export async function fetchHomeProfileByHomeId(
   peer: PeerForAttach,
   homeUserId: string,
-): Promise<{ username: string; profile: { displayName: string | null; avatar: string | null; avatarColor: string | null; nameColor?: string | null; customization?: ProfileCustomization | null; banner: string | null; bio: string | null } } | null> {
+): Promise<{ username: string; profile: { displayName: string | null; avatar: string | null; avatarColor: string | null; nameColor?: string | null; customization?: ProfileCustomization | null; socialLinks?: ProfileSocialLink[]; banner: string | null; bio: string | null } } | null> {
   const body = JSON.stringify({ homeUserId });
   const headers = buildFederationHeaders(body, peer.hmacSecret, getOurOrigin());
 
@@ -91,7 +91,7 @@ export async function fetchHomeProfileByHomeId(
   try {
     const parsed = await res.json() as {
       found?: boolean;
-      user?: { username?: string; profile?: { displayName?: string | null; avatar?: string | null; avatarColor?: string | null; nameColor?: string | null; customization?: ProfileCustomization | null; banner?: string | null; bio?: string | null } };
+      user?: { username?: string; profile?: { displayName?: string | null; avatar?: string | null; avatarColor?: string | null; nameColor?: string | null; customization?: ProfileCustomization | null; socialLinks?: ProfileSocialLink[]; banner?: string | null; bio?: string | null } };
     };
     if (!parsed.found || !parsed.user || typeof parsed.user.username !== 'string' || !parsed.user.profile) return null;
     const p = parsed.user.profile;
@@ -103,6 +103,7 @@ export async function fetchHomeProfileByHomeId(
         avatarColor: p.avatarColor ?? null,
         nameColor: p.nameColor ?? null,
         customization: parseProfileCustomization(p.customization),
+        socialLinks: parseProfileSocialLinks(p.socialLinks),
         banner: p.banner ?? null,
         bio: p.bio ?? null,
       },

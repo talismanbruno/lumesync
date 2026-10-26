@@ -253,6 +253,8 @@ export function tombstoneUser(uid: string, options?: TombstoneOptions): string[]
       }
     }
 
+    tx.delete(schema.spotifyConnections).where(eq(schema.spotifyConnections.userId, uid)).run();
+    tx.delete(schema.spotifyOauthStates).where(eq(schema.spotifyOauthStates.userId, uid)).run();
     // Tombstone user row — rename username to free it for reuse
     tx.update(schema.users).set({
       username: `!deleted:${uid}`,
@@ -265,6 +267,7 @@ export function tombstoneUser(uid: string, options?: TombstoneOptions): string[]
       accentColor: null,
       nameColor: null,
       customization: null,
+      socialLinks: '[]',
       avatarColor: null,
       replicatedInstances: '[]',
       isDeleted: 1,

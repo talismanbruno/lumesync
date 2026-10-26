@@ -10,6 +10,7 @@ import { useAuthStore } from './stores/authStore';
 import { isElectron } from './platform/platform';
 import { MacDownloads } from './components/auth/MacDownloads';
 import { DesktopLoginPage } from './components/auth/DesktopLoginPage';
+import { SpotifyCallbackPage } from './components/auth/SpotifyCallbackPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -59,6 +60,7 @@ export function App() {
         <ScreenSharePicker />
         <ScreenShareAudioOutputDialog />
         <Routes>
+          <Route path="/connections/spotify/callback" element={<SpotifyCallbackPage />} />
           <Route path="/desktop-login" element={<DesktopLoginPage />} />
           <Route path="/download/mac" element={<MacDownloads />} />
           <Route path="/reset-password" element={<LoginPage key="reset" />} />

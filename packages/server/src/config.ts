@@ -74,6 +74,10 @@ export const config = {
   publicOrigin,
   sourceCodeUrl,
   commit,
+  spotify: {
+    clientId: envOptional('SPOTIFY_CLIENT_ID'),
+    publicUrl: envOptional('SPOTIFY_PUBLIC_URL') ?? publicOrigin ?? (envOptional('DOMAIN') ? 'https://' + envOptional('DOMAIN') : undefined),
+  },
   mail: {
     publicUrl: envOptional('AUTH_EMAIL_PUBLIC_URL') ?? publicOrigin ?? (envOptional('DOMAIN') ? `https://${envOptional('DOMAIN')}` : undefined),
     resendApiKey: envOptional('RESEND_API_KEY'),

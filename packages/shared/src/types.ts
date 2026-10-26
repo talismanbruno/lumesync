@@ -1,7 +1,10 @@
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 import type { ProfileCustomization } from './customization.js';
+import type { ProfileSocialLink } from './profileLinks.js';
 export * from './customization.js';
+export * from './profileLinks.js';
+export * from './spotify.js';
 
 export const MAX_MESSAGE_LENGTH = 4000;
 
@@ -24,6 +27,7 @@ export interface User {
   accentColor: string | null;
   nameColor?: string | null;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[];
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
@@ -595,6 +599,7 @@ export interface UpdateUserRequest {
   accentColor?: string;
   nameColor?: string;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[] | null;
   avatarColor?: string;
   bio?: string;
   customStatus?: string;
@@ -738,6 +743,7 @@ export interface Friend {
   accentColor: string | null;
   nameColor?: string | null;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[];
   avatarColor: AvatarColor | null;
   bio: string | null;
   status: UserStatus;
@@ -1205,6 +1211,7 @@ export interface FederationRelayProfileSnapshot {
   avatarColor?: string | null;
   nameColor?: string | null;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[];
   banner?: string | null;
   bio?: string | null;
   // Current presence at the moment the snapshot was built. Optional for
@@ -1240,6 +1247,7 @@ export interface FederationProfileUpdatePayload {
   accentColor: string | null;
   nameColor?: string | null;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[];
   avatarColor: string | null;
   bio: string | null;
 }
@@ -1360,6 +1368,7 @@ export interface FederationUserLookupRequest {
 export interface FederationUserLookupProfile {
   nameColor?: string | null;
   customization?: ProfileCustomization | null;
+  socialLinks?: ProfileSocialLink[];
   displayName: string | null;
   avatar: string | null;
   avatarColor: AvatarColor | null;
