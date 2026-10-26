@@ -18,7 +18,7 @@ export function SpotifyListeningStatus({ user }: { user: Pick<User, 'id' | 'home
   if (!track) return null;
   const description = 'Ouvindo ' + track.details + (track.state ? ' — ' + track.state : '');
   return <div className="flex min-w-0 items-center gap-1.5 text-[11px] leading-5 text-emerald-300" title={description} aria-label={description + ' (Spotify)'}>
-    <BrandIcon platform="spotify" size={16} />
+    <BrandIcon platform="spotify" size={12} />
     <span className="truncate">Ouvindo <strong className="font-medium">{track.details}</strong>{track.state ? ' · ' + track.state : ''}</span>
   </div>;
 }
