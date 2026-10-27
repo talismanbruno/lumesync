@@ -8,6 +8,7 @@ function fixture(options: { reduced?: boolean; paused?: boolean; observer?: bool
   const parsed = new DOMParser().parseFromString(markup, 'text/html');
   const section = doc.importNode(parsed.getElementById('desempenho')!, true);
   doc.body.append(section);
+  const race = section.querySelector<HTMLElement>('#lume-performance')!;
   if (options.paused) doc.documentElement.dataset.paused = 'true';
   let now = 0, nextFrame = 0, hidden = false;
   const frames = new Map<number, FrameRequestCallback>();
@@ -45,12 +46,14 @@ function fixture(options: { reduced?: boolean; paused?: boolean; observer?: bool
   };
   return {
     section, frames, enter, advance,
-    timer: () => section.querySelector('.lpr-timer')!.textContent,
-    status: () => section.querySelector('.lpr-race-status')!.textContent,
-    phase: () => section.dataset.raceState,
-    lume: () => parseFloat((section.querySelector('.lpr-race-lume') as HTMLElement).style.width),
-    discord: () => parseFloat((section.querySelector('.lpr-race-discord') as HTMLElement).style.width),
-    replay: () => section.querySelector<HTMLButtonElement>('.lpr-replay')!.click(),
+    timer: () => section.querySelector('.lp-timer')!.textContent,
+    status: () => section.querySelector('.lp-race-status')!.textContent,
+    phase: () => race.dataset.racePaused === 'true' ? 'paused' : race.dataset.raceState,
+    lume: () => parseFloat((section.querySelector('.lp-lume .lp-fill') as HTMLElement).style.width),
+    discord: () => parseFloat((section.querySelector('.lp-discord .lp-fill') as HTMLElement).style.width),
+    rocket: () => (section.querySelector('.lp-lume .lp-racer') as HTMLElement).style.left,
+    turtle: () => (section.querySelector('.lp-discord .lp-racer') as HTMLElement).style.left,
+    replay: () => section.querySelector<HTMLButtonElement>('.lp-replay')!.click(),
     setHidden(value: boolean) { hidden = value; doc.dispatchEvent(new Event('visibilitychange')); },
     setPaused(value: boolean) { doc.documentElement.dataset.paused = String(value); mutate(); },
     setReduced(value: boolean) { motion.matches = value; motion.dispatchEvent(new Event('change')); },
@@ -58,6 +61,11 @@ function fixture(options: { reduced?: boolean; paused?: boolean; observer?: bool
 }
 
 describe('landing performance comparison', () => {
+  it('does not initialize on a page without the comparison', () => {
+    const doc = document.implementation.createHTMLDocument();
+    expect(() => runInNewContext(source, { document: doc })).not.toThrow();
+  });
+
   it('waits for the visitor to reach the performance section', () => {
     const page = fixture();
     page.advance(30_000);
@@ -71,15 +79,25 @@ describe('landing performance comparison', () => {
     expect(page.frames.size).toBe(1);
   });
 
-  it('finishes Lume at 4.22 seconds and Discord at 19.81 seconds, then stops scheduling frames', () => {
+  it('runs the same distance, celebrates Lume at 4.22 seconds, and finishes Discord at 19.81 seconds', () => {
     const page = fixture();
     page.enter();
-    page.advance(4_220);
-    expect(page.status()).toContain('Lume pronto. O Discord');
-    expect(page.lume()).toBeCloseTo(4.22 / 19.81 * 100);
+    page.advance(4_219);
+    expect(page.lume()).toBeLessThan(100);
+    expect(page.phase()).toBe('running');
+    page.advance(1);
+    expect(page.status()).toContain('Lume chegou! O Discord');
+    expect(page.lume()).toBe(100);
+    expect(page.rocket()).toBe('100%');
+    expect(page.discord()).toBeCloseTo(4.22 / 19.81 * 100);
+    expect(parseFloat(page.turtle())).toBeCloseTo(page.discord());
+    expect(page.phase()).toBe('winner');
+    expect(page.section.querySelector('.lp-lume')!.classList.contains('is-finished')).toBe(true);
+    expect(page.section.querySelector('.lp-discord')!.classList.contains('is-finished')).toBe(false);
     page.advance(15_590);
     expect(page.timer()).toBe('19,81 s');
     expect(page.discord()).toBe(100);
+    expect(page.turtle()).toBe('100%');
     expect(page.phase()).toBe('finished');
     expect(page.frames.size).toBe(0);
   });
@@ -95,6 +113,7 @@ describe('landing performance comparison', () => {
     page.replay();
     expect(page.phase()).toBe('running');
     expect(page.timer()).toBe('0,00 s');
+    expect(page.section.querySelector('.lp-lume')!.classList.contains('is-finished')).toBe(false);
   });
 
   it('pauses in a hidden tab without counting the time spent away', () => {
@@ -128,6 +147,7 @@ describe('landing performance comparison', () => {
     page.enter();
     expect(page.phase()).toBe('finished');
     expect(page.discord()).toBe(100);
+    expect(page.lume()).toBe(100);
     expect(page.frames.size).toBe(0);
     page.replay();
     expect(page.frames.size).toBe(0);

@@ -1,112 +1,91 @@
 (() => {
-  const section = document.getElementById('desempenho');
-  if (!section) return;
-  const intro = section.querySelector('.lpr-intro');
-  const replay = section.querySelector('.lpr-replay');
-  const replayText = replay.querySelector('span');
-  const timer = section.querySelector('.lpr-timer');
-  const lumeBar = section.querySelector('.lpr-race-lume');
-  const discordBar = section.querySelector('.lpr-race-discord');
-  const ready = section.querySelector('.lpr-ready');
-  const status = section.querySelector('.lpr-race-status');
-  const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const lumeSeconds = 4.22;
-  const discordSeconds = 19.81;
+  const root = document.getElementById('lume-performance');
+  if (!root) return;
+  const race = root.querySelector('.lp-race');
+  const lume = root.querySelector('.lp-lume');
+  const discord = root.querySelector('.lp-discord');
+  const lumeFill = lume.querySelector('.lp-fill');
+  const discordFill = discord.querySelector('.lp-fill');
+  const rocket = lume.querySelector('.lp-racer');
+  const turtle = discord.querySelector('.lp-racer');
+  const timer = root.querySelector('.lp-timer');
+  const status = root.querySelector('.lp-race-status');
+  const replay = root.querySelector('.lp-replay');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  function blocked() { return document.hidden || document.documentElement.dataset.paused === 'true'; }
   let entered = false;
+  let running = false;
+  let elapsed = 0;
+  let started = 0;
   let frame = 0;
-  let phase = 'waiting';
-  let elapsedMs = 0;
-  let startedAt = 0;
-  let lumeReady = false;
-  let arrival;
-
-  function state(next) {
-    phase = next;
-    section.dataset.raceState = next;
-  }
+  let stage = '';
+  root.dataset.raceState = 'waiting';
+  root.dataset.racePaused = 'false';
   function draw(seconds) {
-    lumeBar.style.width = (Math.min(seconds, lumeSeconds) / discordSeconds * 100) + '%';
-    discordBar.style.width = (seconds / discordSeconds * 100) + '%';
-    timer.textContent = seconds.toFixed(2).replace('.', ',') + ' s';
-    if (seconds >= lumeSeconds && !lumeReady) {
-      lumeReady = true;
-      ready.style.visibility = 'visible';
-      status.textContent = 'Lume pronto. O Discord continua abrindo.';
+    const time = Math.max(0, Math.min(seconds, 19.81));
+    const lumeProgress = Math.min(time / 4.22, 1) * 100 + '%';
+    const discordProgress = Math.min(time / 19.81, 1) * 100 + '%';
+    lumeFill.style.width = lumeProgress;
+    discordFill.style.width = discordProgress;
+    rocket.style.left = lumeProgress;
+    turtle.style.left = discordProgress;
+    timer.textContent = time.toFixed(2).replace('.', ',') + ' s';
+    lume.classList.toggle('is-finished', time >= 4.22);
+    discord.classList.toggle('is-finished', time >= 19.81);
+    const next = time >= 19.81 ? 'finished' : time >= 4.22 ? 'winner' : 'running';
+    root.dataset.raceState = next;
+    if (next === 'finished') root.dataset.racePaused = 'false';
+    if (next !== stage) {
+      stage = next;
+      status.textContent = next === 'finished' ? 'Lume pronto 15,59 s antes, neste teste.' : next === 'winner' ? 'Lume chegou! O Discord continua abrindo.' : 'Os dois partem juntos.';
     }
   }
-  function finish() {
+  function pause() {
+    if (!running) return;
+    elapsed = Math.min(19.81, elapsed + (performance.now() - started) / 1000);
+    running = false;
+    root.dataset.racePaused = 'true';
     cancelAnimationFrame(frame);
-    state('finished');
-    elapsedMs = discordSeconds * 1000;
-    draw(discordSeconds);
-    ready.style.visibility = 'visible';
-    replayText.textContent = 'Repetir corrida';
-    status.textContent = 'Lume pronto 15,59 s antes, neste teste.';
-  }
-  function blocked() {
-    return document.hidden || document.documentElement.dataset.paused === 'true';
   }
   function tick(now) {
-    if (phase !== 'running') return;
+    if (!running) return;
     if (blocked()) { pause(); return; }
-    const seconds = Math.min(discordSeconds, (elapsedMs + now - startedAt) / 1000);
+    const seconds = Math.min(19.81, elapsed + (now - started) / 1000);
     draw(seconds);
-    if (seconds >= discordSeconds) { finish(); return; }
+    if (seconds >= 19.81) { elapsed = 19.81; running = false; return; }
     frame = requestAnimationFrame(tick);
   }
   function play() {
-    state('running');
-    startedAt = performance.now();
+    if (running || elapsed >= 19.81 || blocked()) return;
+    if (reduced.matches) { elapsed = 19.81; draw(elapsed); return; }
+    running = true;
+    root.dataset.racePaused = 'false';
+    started = performance.now();
     frame = requestAnimationFrame(tick);
   }
-  function pause() {
-    if (phase !== 'running') return;
-    elapsedMs = Math.min(discordSeconds * 1000, elapsedMs + performance.now() - startedAt);
-    cancelAnimationFrame(frame);
-    state('paused');
-  }
-  function sync() {
-    if (!entered || phase === 'finished') return;
-    if (motion.matches) { finish(); return; }
-    if (blocked()) { pause(); return; }
-    if (phase !== 'running') play();
-  }
   function start() {
+    pause();
     entered = true;
-    arrival?.disconnect();
-    cancelAnimationFrame(frame);
-    elapsedMs = 0;
-    lumeReady = false;
-    state('paused');
-    if (motion.matches) { finish(); return; }
-    ready.style.visibility = 'hidden';
+    elapsed = 0;
+    stage = '';
     draw(0);
-    replayText.textContent = 'Recomeçar corrida';
-    status.textContent = 'Comparação iniciada.';
-    sync();
+    root.dataset.racePaused = String(blocked());
+    play();
   }
-  state('waiting');
-  if (!motion.matches) {
-    ready.style.visibility = 'hidden';
-    draw(0);
-    status.textContent = 'A corrida começa ao entrar nesta seção.';
-  }
+  new MutationObserver(() => { if (blocked()) pause(); else if (entered) play(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-paused'] });
   replay.addEventListener('click', start);
-  motion.addEventListener('change', sync);
-  document.addEventListener('visibilitychange', sync);
+  document.addEventListener('visibilitychange', () => { if (blocked()) pause(); else if (entered) play(); });
   addEventListener('pagehide', pause);
-  addEventListener('pageshow', sync);
-  new MutationObserver(sync).observe(document.documentElement, {
-    attributes: true, attributeFilter: ['data-paused'],
-  });
-  if ('IntersectionObserver' in window) {
-    arrival = new IntersectionObserver(entries => {
-      if (!entered && entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .12)) start();
-    }, { threshold: .12 });
-    arrival.observe(intro);
-  } else {
-    // Older browsers retain the complete comparison without a scroll animation.
-    entered = true;
-    finish();
-  }
+  addEventListener('pageshow', () => { if (entered) play(); });
+  reduced.addEventListener('change', () => { if (reduced.matches) { pause(); elapsed = 19.81; draw(elapsed); } });
+  if (reduced.matches) { entered = true; elapsed = 19.81; draw(elapsed); }
+  else if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      if (!entered && entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .2)) {
+        observer.disconnect();
+        start();
+      }
+    }, { threshold:.2 });
+    observer.observe(race);
+  } else { entered = true; elapsed = 19.81; draw(elapsed); }
 })();
