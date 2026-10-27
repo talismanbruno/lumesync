@@ -234,7 +234,20 @@ export function MobileShell() {
   const shellHeight = keyboardOpen && vvHeight !== null ? `${vvHeight}px` : '100dvh';
 
   return (
-    <div className="flex flex-col" style={{ height: shellHeight }}>
+    <div
+      className="flex flex-col min-h-0"
+      data-mobile-shell
+      style={{
+        height: shellHeight,
+        boxSizing: 'border-box',
+        // Protect the whole stack, so opening a chat cannot escape the safe
+        // area. Bottom clearance is already owned by the nav/composer.
+        // The Android host reserves its bars natively and sends zero insets.
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
+    >
       <React.Suspense fallback={<div role="status" className="flex flex-1 items-center justify-center text-sm text-txt-secondary">{uiText("Abrindo tela…")}</div>}>
         <MobileScreenStack
           rootScreen={rootScreens[mobileScreen]}

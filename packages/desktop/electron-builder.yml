@@ -42,6 +42,9 @@ mac:
     - zip
 win:
   icon: ./build/icon.ico
+  signtoolOptions:
+    signingHashAlgorithms:
+      - sha256
   target:
     - nsis
 linux:

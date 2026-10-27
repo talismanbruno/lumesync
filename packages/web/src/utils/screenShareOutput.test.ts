@@ -76,10 +76,32 @@ describe('screen audio playback route', () => {
     f.context!.sinkId = ''; f.context!.dispatchEvent(new Event('sinkchange'));
     expect(unsafe).toHaveBeenCalledOnce(); dispose();
   });
-  it('detects a virtual mixer becoming the default after an OS device change', async () => {
+  it('pins a concrete output even when the system default currently has a hardware label', async () => {
     f.enumerate.mockResolvedValue(devices.map(d => d.deviceId === 'default' ? { ...d,label:'Default - Headphones' } : d));
     const guard = await prepare(), unsafe = vi.fn(), dispose = guard.watch(unsafe);
+    expect(f.choose).toHaveBeenCalled();
+    expect(f.context!.sinkId).toBe('headphones');
+    expect(f.state.outputDeviceId).toBe('headphones');
     f.enumerate.mockResolvedValue(devices); navigator.mediaDevices.dispatchEvent(new Event('devicechange'));
-    await vi.waitFor(() => expect(unsafe).toHaveBeenCalledOnce()); dispose();
+    await vi.waitFor(() => expect(f.enumerate).toHaveBeenCalledTimes(3));
+    expect(guard.safe()).toBe(true); expect(unsafe).not.toHaveBeenCalled(); dispose();
+  });
+  it('rejects an alias selected through a stale or manipulated output dialog', async () => {
+    f.choose.mockResolvedValue({deviceId:'default'});
+    expect((await prepare()).allowed).toBe(false); expect(f.route).not.toHaveBeenCalled();
+  });
+  it('stops accepting the route when a physical preference and actual sink disagree', async () => {
+    const other={kind:'audiooutput',deviceId:'monitor',label:'Monitor (HDMI Audio)'};
+    f.enumerate.mockResolvedValue([...devices,other]);
+    const guard=await prepare(), unsafe=vi.fn(), dispose=guard.watch(unsafe);
+    f.context!.sinkId='monitor'; f.context!.dispatchEvent(new Event('sinkchange'));
+    expect(guard.safe()).toBe(false); expect(unsafe).toHaveBeenCalledOnce(); dispose();
+  });
+  it('invalidates a pinned route when its device disappears', async () => {
+    const guard=await prepare(), unsafe=vi.fn(), dispose=guard.watch(unsafe);
+    f.enumerate.mockResolvedValue(devices.filter(d=>d.deviceId!=='headphones'));
+    navigator.mediaDevices.dispatchEvent(new Event('devicechange'));
+    await vi.waitFor(()=>expect(unsafe).toHaveBeenCalledOnce());
+    expect(guard.safe()).toBe(false);dispose();
   });
 });

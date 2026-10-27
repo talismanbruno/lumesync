@@ -10,6 +10,9 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.graphics.Color
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
 import android.webkit.PermissionRequest
@@ -23,6 +26,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebMessageCompat
@@ -66,9 +73,33 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Handle geometry natively on every WebView version, including those
+        // that do not expose system-bar safe areas to CSS yet.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         webView = WebView(this)
         configureWebView()
-        setContentView(webView)
+        val viewport = FrameLayout(this).apply {
+            setBackgroundColor(Color.rgb(5, 5, 5))
+            addView(webView, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ))
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(viewport) { view, windowInsets ->
+            val types = WindowInsetsCompat.Type.systemBars() or
+                WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime()
+            val insets = windowInsets.getInsets(types)
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            // The WebView now occupies the unobscured rectangle. Zero only
+            // handled types instead of consuming the update: newer WebViews
+            // must still receive notifications without applying the bars or
+            // keyboard a second time.
+            WindowInsetsCompat.Builder(windowInsets)
+                .setInsets(types, Insets.NONE)
+                .build()
+        }
+        setContentView(viewport)
+        ViewCompat.requestApplyInsets(viewport)
         if (savedInstanceState == null) webView.loadUrl(BuildConfig.LUME_BASE_URL) else webView.restoreState(savedInstanceState)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

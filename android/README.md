@@ -4,6 +4,26 @@ Aplicativo Android do Lume com a interface web e integração nativa para chamad
 
 O sistema visual móvel segue o aplicativo web autenticado do Lume: navegação raiz por Servidores, Conversas e Você, telas empilhadas para canais e chats, superfícies quase pretas e seleção em ciano.
 
+## Área útil da tela
+
+O contêiner nativo reserva o espaço das barras do sistema, do recorte da câmera
+e do teclado antes de medir a WebView. Os insets já tratados são zerados ao
+encaminhar a atualização à WebView, evitando que versões recentes apliquem o
+mesmo espaço duas vezes. A altura do site passa a refletir a área disponível,
+incluindo no chat e ao abrir o teclado. Não usar uma altura fixa para a barra
+de status: ela muda com aparelho, orientação e modo de navegação.
+
+No navegador/PWA, o `MobileShell` reserva os insets superiores e laterais de
+CSS ao redor de toda a pilha de telas. O espaço inferior continua sob controle
+do compositor e da navegação. A correção nativa requer um novo APK; atualizar
+somente o site não corrige WebViews antigas que não informam os insets a CSS.
+
+Antes de distribuir o APK, conferir em aparelho Android com navegação por gestos
+e por três botões: abrir DM/canal, girar a tela e abrir/fechar o teclado.
+O cabeçalho deve ficar abaixo da barra de horário/bateria, sem deslocar o
+compositor para trás do teclado. No navegador/PWA, conferir também iPhone com
+recorte e orientação horizontal.
+
 - login na conta existente;
 - sessão persistente sem armazenar a senha;
 - lista de servidores e canais acessíveis;

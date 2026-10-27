@@ -8,6 +8,11 @@ export function isVirtualAudioOutput(label: string): boolean {
   return /fxsound|voicemeeter|vb[- ]?audio|virtual\s+(?:audio|cable)|cable\s+input|steelseries.*sonar|sonar.*(?:gaming|chat|stream)|wave\s*link|elgato.*(?:wave|sound)|blackhole|soundflower|loopback\s+audio/i.test(label);
 }
 type Output = Pick<MediaDeviceInfo, 'deviceId' | 'label' | 'kind'>;
+// OS aliases can change endpoints underneath an active capture, including to
+// an external mixer. A readable label on "default" is not a pinned route.
+function isDirectOutput(output: Output | undefined): boolean {
+  return !!output?.label && !['', 'default', 'communications'].includes(output.deviceId) && !isVirtualAudioOutput(output.label);
+}
 export function resolveScreenShareOutput(devices: Output[], deviceId: string): Output | undefined {
   return devices.find(device => device.kind === 'audiooutput' && device.deviceId === (deviceId || 'default'));
 }
@@ -28,8 +33,8 @@ export async function prepareScreenShareOutput(video: MediaStreamTrack, desktop:
   };
   const intendedOutput = () => useVoiceStore.getState().outputDeviceId || 'default';
   const initial = resolveScreenShareOutput(outputs, actualOutput() ?? intendedOutput());
-  if (!initial?.label || isVirtualAudioOutput(initial.label)) {
-    const choices = outputs.filter(d => d.label && !['default', 'communications'].includes(d.deviceId) && !isVirtualAudioOutput(d.label));
+  if (!isDirectOutput(initial)) {
+    const choices = outputs.filter(isDirectOutput);
     const choice = await requestScreenAudioOutput(initial?.label || 'Padrão do sistema', choices, signal);
     if (choice === 'cancel' || signal.aborted) throw new DOMException('Capture cancelled', 'AbortError');
     if (choice === 'silent') return { ...unrestricted, allowed: false, silent: true };
@@ -37,7 +42,7 @@ export async function prepareScreenShareOutput(video: MediaStreamTrack, desktop:
     outputs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audiooutput');
     if (signal.aborted) throw new DOMException('Capture cancelled', 'AbortError');
     const selected = resolveScreenShareOutput(outputs, choice.deviceId);
-    if (!selected?.label || isVirtualAudioOutput(selected.label) || ['default', 'communications'].includes(choice.deviceId)) return { ...unrestricted, allowed: false };
+    if (!isDirectOutput(selected)) return { ...unrestricted, allowed: false };
     const previousOutput = intendedOutput();
     audio.ensureContext();
     await audio.setOutputDevice(choice.deviceId);
@@ -56,7 +61,7 @@ export async function prepareScreenShareOutput(video: MediaStreamTrack, desktop:
   const safe = () => {
     const intended = resolveScreenShareOutput(outputs, intendedOutput());
     const actual = resolveScreenShareOutput(outputs, actualOutput() ?? intendedOutput());
-    return !!intended?.label && !!actual?.label && !isVirtualAudioOutput(intended.label) && !isVirtualAudioOutput(actual.label);
+    return isDirectOutput(intended) && isDirectOutput(actual) && actual?.deviceId === intended?.deviceId;
   };
   return { allowed: safe(), safe, watch(onUnsafe) {
     let disposed = false;

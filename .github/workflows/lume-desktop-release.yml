@@ -59,6 +59,17 @@ jobs:
         run: pnpm exec electron-builder ${{ matrix.args }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          WIN_CSC_LINK: ${{ runner.os == 'Windows' && secrets.WIN_CSC_LINK || '' }}
+          WIN_CSC_KEY_PASSWORD: ${{ runner.os == 'Windows' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
+
+      - name: Verify Windows publisher signatures
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+        run: |
+          ./scripts/verify-windows-signatures.test.ps1
+          ./scripts/verify-windows-signatures.ps1 -Directory packages/desktop/dist-electron -RequireSignature:([bool]$env:WIN_CSC_LINK)
 
       - name: Upload installers
         uses: actions/upload-artifact@v4
