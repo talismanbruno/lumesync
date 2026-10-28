@@ -1,9 +1,15 @@
-import {REPOSITORY,RELEASE_API,detectPlatform,detectArchitecture,normalizeReleases,selectAsset,matchesInstallerReport} from './downloads-core.js';
+import {REPOSITORY,RELEASE_API,detectPlatform,detectArchitecture,normalizeReleases,selectAsset,matchesInstallerReport,selectInstallerReport} from './downloads-core.js';
 const platform=detectPlatform(navigator);
 const labels={windows:'Windows',mac:'macOS',linux:'Linux',android:'Android'};
 const buttons=[...document.querySelectorAll('[data-smart-download]')];
 const dialog=document.querySelector('#mac-download-dialog');
 const status=document.querySelector('#download-status');
+const currentReport=document.querySelector('[data-current-installer-report]');
+const reportDialog=document.querySelector('#mac-report-dialog');
+const reportEntries=[...document.querySelectorAll('[data-installer-report]')].map(link=>({platform:link.dataset.reportPlatform,arch:link.dataset.reportArch||null,filename:link.dataset.reportFilename,sha256:link.dataset.reportSha256,url:link.href,label:link.querySelector('span').textContent}));
+let currentReportSelection=null;
+reportDialog.querySelector('[data-report-close]').addEventListener('click',()=>reportDialog.close());
+currentReport.addEventListener('click',event=>{if(currentReportSelection?.choice){event.preventDefault();reportDialog.showModal();}});
 let releases=[],fetchedAt=0,pending=null,busy=false,architecture=null;
 function savedMac(){try{return ['arm64','x64'].includes(localStorage.getItem('lume.mac-architecture'))?localStorage.getItem('lume.mac-architecture'):null;}catch{return null;}}
 const architectureReady=detectArchitecture(navigator,platform).then(value=>{architecture=value||(platform==='mac'?savedMac():null);return architecture;});
@@ -23,6 +29,19 @@ async function getReleases(){
   return pending;
 }
 function renderLinks(){
+  currentReportSelection=selectInstallerReport(releases,reportEntries,platform,architecture);
+  currentReport.hidden=!currentReportSelection;
+  if(currentReportSelection){
+    currentReport.href=currentReportSelection.report?.url||'#mac-report-dialog';
+    currentReport.querySelector('[data-current-report-label]').textContent='Análise para '+labels[platform]+' · beta 25';
+    if(currentReportSelection.choice){
+      const options=reportDialog.querySelector('[data-mac-report-options]');options.replaceChildren();
+      for(const report of currentReportSelection.reports){
+        const link=document.createElement('a');link.href=report.url;link.target='_blank';link.rel='noopener noreferrer';link.className='mac-report-option';link.textContent=report.label;
+        link.addEventListener('click',()=>{try{localStorage.setItem('lume.mac-architecture',report.arch);}catch{}architecture=report.arch;reportDialog.close();renderLinks();});options.append(link);
+      }
+    }
+  }
   // A scan belongs to exact bytes, not to every future Lume installer.
   // Hide a previously reviewed report when the current download changes.
   if(releases.length){

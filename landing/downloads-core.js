@@ -50,3 +50,13 @@ export function selectAsset(releases,platform,arch){
   }
   return null;
 }
+
+export function selectInstallerReport(releases,reports,platform,arch){
+ const selection=selectAsset(releases,platform,arch);
+ if(selection?.choice){
+  const choices=['arm64','x64'].map(value=>selectInstallerReport(releases,reports,platform,value)?.report).filter(Boolean);
+  return choices.length?{choice:true,reports:choices}:null;
+ }
+ const report=reports.find(report=>report.platform===platform&&matchesInstallerReport(selection?.asset,report.filename,report.sha256));
+ return report?{report}:null;
+}
