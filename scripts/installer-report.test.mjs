@@ -31,3 +31,16 @@ test('rejects missing or malformed digests instead of treating them as proof',()
   assert.equal(matchesInstallerReport(asset,filename,sha),false);
  }
 });
+
+test('every advertised platform report matches its own release asset and hash',async()=>{
+ const html=await readFile(new URL('../landing/index.html',import.meta.url),'utf8');
+ const reports=[...html.matchAll(/<a data-installer-report data-report-platform="([^"]+)" data-report-arch="([^"]*)" data-report-filename="([^"]+)" data-report-sha256="([^"]+)" href="([^"]+)"/g)];
+ assert.equal(reports.length,7);
+ const raw={tag_name:'v1.0.0-beta.25',published_at:'2026-10-27T23:12:56Z',assets:reports.map(([,p,a,name,hash])=>({name,state:'uploaded',digest:'sha256:'+hash,browser_download_url:'https://github.com/talismanbruno/lumesync/releases/download/v1.0.0-beta.25/'+name}))};
+ const list=normalizeReleases([raw]);
+ for(const [,platform,arch,name,hash,url] of reports){
+  assert.equal(matchesInstallerReport(selectAsset(list,platform,arch||null)?.asset,name,hash),true,platform+' '+arch);
+  assert.equal(url,'https://www.virustotal.com/gui/file/'+hash+'/detection');
+ }
+ assert(!html.includes('100% Seguro'));
+});

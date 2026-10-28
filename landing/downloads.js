@@ -26,9 +26,10 @@ function renderLinks(){
   // A scan belongs to exact bytes, not to every future Lume installer.
   // Hide a previously reviewed report when the current download changes.
   if(releases.length){
-    const currentWindows=selectAsset(releases,'windows',platform==='windows'?architecture:'x64')?.asset;
+    
     for(const report of document.querySelectorAll('[data-installer-report]')){
-      report.hidden=!matchesInstallerReport(currentWindows,report.dataset.reportFilename,report.dataset.reportSha256);
+      const asset=selectAsset(releases,report.dataset.reportPlatform,report.dataset.reportArch||null)?.asset;
+      report.hidden=!matchesInstallerReport(asset,report.dataset.reportFilename,report.dataset.reportSha256);
     }
   }
   for(const button of buttons){
