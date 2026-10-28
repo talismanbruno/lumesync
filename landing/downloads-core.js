@@ -1,5 +1,8 @@
 export const REPOSITORY='https://github.com/talismanbruno/lumesync';
 export const RELEASE_API='https://api.github.com/repos/talismanbruno/lumesync/releases?per_page=30';
+export function matchesInstallerReport(asset,filename,sha256){
+  return !!asset&&asset.name===filename&&/^[a-f0-9]{64}$/.test(sha256||'')&&asset.sha256===sha256;
+}
 export function detectPlatform(nav){
   const ua=nav.userAgent||'',platform=nav.userAgentData?.platform||nav.platform||'';
   if(/Android/i.test(ua+' '+platform))return 'android';
@@ -24,7 +27,7 @@ export function normalizeReleases(input){
   if(!Array.isArray(input))throw Error('Invalid release response');
   return input.filter(r=>!r.draft&&r.published_at&&Array.isArray(r.assets)&&/^(?:lume-desktop-)?v?\d+\.\d+\.\d+/i.test(r.tag_name||''))
     .sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at))
-    .map(r=>({tag:r.tag_name,url:REPOSITORY+'/releases/tag/'+encodeURIComponent(r.tag_name),assets:r.assets.filter(a=>(!a.state||a.state==='uploaded')&&typeof a.name==='string'&&a.browser_download_url?.startsWith(REPOSITORY+'/releases/download/')).map(a=>({name:a.name,url:a.browser_download_url}))}));
+    .map(r=>({tag:r.tag_name,url:REPOSITORY+'/releases/tag/'+encodeURIComponent(r.tag_name),assets:r.assets.filter(a=>(!a.state||a.state==='uploaded')&&typeof a.name==='string'&&a.browser_download_url?.startsWith(REPOSITORY+'/releases/download/')).map(a=>({name:a.name,url:a.browser_download_url,...(/^sha256:[a-f0-9]{64}$/i.test(a.digest||'')?{sha256:a.digest.slice(7).toLowerCase()}:{} )}))}));
 }
 export function selectAsset(releases,platform,arch){
   for(const release of releases){

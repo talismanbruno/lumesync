@@ -1,4 +1,4 @@
-import {REPOSITORY,RELEASE_API,detectPlatform,detectArchitecture,normalizeReleases,selectAsset} from './downloads-core.js';
+import {REPOSITORY,RELEASE_API,detectPlatform,detectArchitecture,normalizeReleases,selectAsset,matchesInstallerReport} from './downloads-core.js';
 const platform=detectPlatform(navigator);
 const labels={windows:'Windows',mac:'macOS',linux:'Linux',android:'Android'};
 const buttons=[...document.querySelectorAll('[data-smart-download]')];
@@ -23,6 +23,14 @@ async function getReleases(){
   return pending;
 }
 function renderLinks(){
+  // A scan belongs to exact bytes, not to every future Lume installer.
+  // Hide a previously reviewed report when the current download changes.
+  if(releases.length){
+    const currentWindows=selectAsset(releases,'windows',platform==='windows'?architecture:'x64')?.asset;
+    for(const report of document.querySelectorAll('[data-installer-report]')){
+      report.hidden=!matchesInstallerReport(currentWindows,report.dataset.reportFilename,report.dataset.reportSha256);
+    }
+  }
   for(const button of buttons){
     const text=platform==='ios'?'Abrir no navegador':labels[platform]?'Baixar para '+labels[platform]:'Ver downloads';
     const label=button.querySelector('[data-download-label]');if(label)label.textContent=text;
