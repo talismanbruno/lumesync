@@ -87,24 +87,33 @@ export function AppLayout() {
     };
   }, []);
 
-  // MutationObserver: neutralize rogue LiveKit <audio> elements that bypass our Web Audio pipeline.
-  // LiveKit can re-attach hidden <audio> elements after .detach(), causing full-volume playback
-  // that ignores our volume/mute controls. Any <audio> without data-backspace is immediately killed.
+  // Neutralize unmanaged WebRTC audio elements that bypass our Web Audio pipeline.
+  // An extra player can duplicate remote voices when capture starts. Preserve
+  // ordinary audio attachments, which use a URL rather than srcObject.
   useEffect(() => {
+    const silenceUnmanagedAudio = (node: HTMLAudioElement) => {
+      if (node.dataset.backspace || !(node.srcObject instanceof MediaStream)) return;
+      node.muted = true;
+      node.volume = 0;
+      node.pause();
+      node.srcObject = null;
+    };
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         mutation.addedNodes.forEach((node) => {
-          if (node instanceof HTMLAudioElement && !node.dataset.backspace) {
-            node.muted = true;
-            node.volume = 0;
-            node.pause();
-            node.srcObject = null;
-          }
+          if (node instanceof HTMLAudioElement) silenceUnmanagedAudio(node);
         });
       }
     });
+    // An audio element can be inserted while empty and receive a LiveKit
+    // track later. Catch playback as well as insertion so it cannot create a
+    // second output path beside GlobalAudioRenderer.
+    const onPlay = (event: Event) => {
+      if (event.target instanceof HTMLAudioElement) silenceUnmanagedAudio(event.target);
+    };
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    document.addEventListener('play', onPlay, true);
+    return () => { observer.disconnect(); document.removeEventListener('play', onPlay, true); };
   }, []);
 
   // Sync persisted output device preference to AudioManager.
