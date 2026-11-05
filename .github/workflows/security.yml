@@ -1,6 +1,6 @@
 name: Security
 
-# Secret and fixable dependency/configuration findings block new releases.
+# Secrets, new dependency findings and blocked configurations fail Security.
 
 on:
   pull_request:
@@ -49,35 +49,56 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 2
-      - name: Check dependency changes
-        id: lockfile
-        run: |
-          if git diff --quiet HEAD^ HEAD -- pnpm-lock.yaml; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
       - name: Run OSV-Scanner
         id: osv
         uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
-        continue-on-error: true # existing dependency findings remain visible; new lockfile changes are gated below
+        continue-on-error: true # the comparison step checks this outcome and report
         with:
           scan-args: |-
             --lockfile=./pnpm-lock.yaml
             --format=sarif
             --output=osv-results.sarif
+      - name: Prepare previous dependency versions
+        id: baseline
+        if: steps.osv.outcome == 'failure' && github.event_name != 'schedule'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ && "$BASE_SHA" != "0000000000000000000000000000000000000000" ]]
+          git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null || git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          if git diff --quiet "$BASE_SHA" HEAD -- pnpm-lock.yaml; then
+            exit 0
+          fi
+          mkdir .osv-base
+          git show "$BASE_SHA:pnpm-lock.yaml" > .osv-base/pnpm-lock.yaml
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Scan previous dependency versions
+        id: osv-base
+        if: steps.baseline.outputs.changed == 'true'
+        uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --lockfile=./.osv-base/pnpm-lock.yaml
+            --format=sarif
+            --output=osv-base.sarif
+      - name: Block newly introduced vulnerable dependency versions
+        env:
+          CURRENT_OUTCOME: ${{ steps.osv.outcome }}
+          BASE_OUTCOME: ${{ steps.osv-base.outcome }}
+          LOCKFILE_CHANGED: ${{ steps.baseline.outputs.changed }}
+        run: |
+          if [ "$LOCKFILE_CHANGED" = true ]; then
+            node scripts/check-osv-regressions.mjs osv-results.sarif "$CURRENT_OUTCOME" osv-base.sarif "$BASE_OUTCOME"
+          else
+            node scripts/check-osv-regressions.mjs osv-results.sarif "$CURRENT_OUTCOME"
+          fi
       - name: Upload OSV SARIF
-        if: always()
+        if: always() && hashFiles('osv-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3.37.0
         with:
           sarif_file: osv-results.sarif
           category: osv-scanner
-      - name: Block vulnerable dependency changes
-        if: steps.lockfile.outputs.changed == 'true' && steps.osv.outcome == 'failure'
-        run: |
-          echo "Lockfile changed and OSV found vulnerabilities. Resolve them before release."
-          exit 1
-
   trivy-config:
     name: IaC/config scan (Trivy)
     runs-on: ubuntu-latest
