@@ -49,7 +49,7 @@ aplicativo ou pelo GitHub ajudam a priorizar as próximas correções.
 
 ## Desenvolvimento
 
-Requisitos: **Node.js 20 LTS** e **pnpm 10**.
+Requisitos: **Node.js 24 LTS** e **pnpm 10**.
 
 ```bash
 pnpm install

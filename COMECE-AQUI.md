@@ -15,13 +15,23 @@ No PowerShell, dentro desta pasta:
 .\Lume.ps1 build
 ```
 
-O assistente `Lume.ps1` usa o Node 20 local preservado e o pnpm 10.34.3 declarado pelo projeto. O primeiro uso do pnpm pode precisar de internet. Para instalar ou restaurar as dependências:
+O assistente `Lume.ps1` usa o Node.js 24, o Corepack e o pnpm 10.34.3 declarado pelo projeto. O primeiro uso do pnpm pode precisar de internet. Para instalar ou restaurar as dependências:
 
 ```powershell
 .\Lume.ps1 instalar
 ```
 
 O desenvolvimento normalmente abre a interface em `http://localhost:5173` e usa a API na porta 3005. Chamadas dependem da configuração de mídia. Este comando executa o código local.
+
+## Publicar o site e o servidor
+
+1. Na aba **Controle do Código-Fonte** do editor, use **+** ao lado de cada arquivo que deve entrar na publicação. Quem usa terminal pode selecionar com `git add -- caminho-do-arquivo`.
+2. Dê dois cliques em **Publicar-Lume.cmd** ou execute `.\Publicar-Lume.ps1` no PowerShell, a partir da pasta do Lume.
+3. Confira a lista. Quando puder interromper as chamadas ativas, digite `PUBLICAR`. Se houver arquivos selecionados, informe um nome curto para o commit. Aguarde a mensagem **Publicado**.
+
+O atalho envia os commits da `main`, espera CI, Security e CodeQL no GitHub e só aplica a imagem na Oracle depois que o workflow de publicação termina com sucesso. A promoção faz snapshot do banco e restaura a imagem anterior se a nova falhar na verificação de saúde. Se alguma etapa parar, a janela mostra o motivo ou o link para conferir no GitHub. Depois de resolver, execute o mesmo atalho novamente.
+
+`.\Publicar-Lume.ps1 -Conferir` mostra a seleção e verifica os acessos do GitHub e da Oracle sem publicar. O atalho usa a credencial do GitHub já salva no Git Credential Manager e a chave local em `.deploy-local/ssh/oracle-lume-core`. Para gerar novos instaladores desktop ou APK, use o workflow separado de [releases do Lume](docs/systems/deployment.md#unified-lume-releases).
 
 ## Onde fica cada parte
 

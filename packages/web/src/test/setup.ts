@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-// Node 20+ ships a built-in `localStorage`/`sessionStorage` stub on globalThis
+// Node 24 ships a built-in `localStorage`/`sessionStorage` stub on globalThis
 // that has no methods unless `--localstorage-file=PATH` is provided. Vitest's
 // jsdom env only overwrites globals it knows about, and neither storage is in
 // that list — so Node's broken stub shadows jsdom's working implementation,
@@ -70,7 +70,7 @@ if (typeof ClipboardItem === 'undefined') {
   };
 }
 
-// jsdom's Blob implementation has no `.stream()` method on Node 20 (Node 25+
+// jsdom's Blob implementation has no `.stream()` method on Node 24 (Node 25+
 // happens to provide one, which is why this only surfaces on the pinned target
 // runtime). undici's `Response` constructor extracts a Blob body by calling
 // `blob.stream()`, so `new Response(blob)` throws "object.stream is not a

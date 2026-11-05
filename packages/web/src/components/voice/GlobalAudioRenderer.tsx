@@ -9,7 +9,7 @@ import type { ParticipantInfo } from '../../hooks/useLiveKit';
  * Renders a muted <audio> element as a Chrome keep-alive for the WebRTC track.
  * All actual audio output goes through Web Audio (GainNode -> ctx.destination).
  */
-function AudioTrackElement({
+const AudioTrackElement = React.memo(function AudioTrackElement({
   track,
   globalVolume,
   perSourceVolume,
@@ -51,7 +51,7 @@ function AudioTrackElement({
   // keep-alive so Chrome continues processing the WebRTC track.
   // Real audio output goes through the Web Audio pipeline.
   return <audio ref={audioRef} autoPlay playsInline data-backspace="keepalive" />;
-}
+});
 
 /**
  * Always-mounted component that manages Web Audio pipelines
@@ -78,16 +78,15 @@ export function GlobalAudioRenderer() {
   const watchingStreams = useVoiceStore((s) => s.watchingStreams);
   const streamAttenuationEnabled = useVoiceStore((s) => s.streamAttenuationEnabled);
   const streamAttenuationStrength = useVoiceStore((s) => s.streamAttenuationStrength);
-  const speakingParticipantIds = useVoiceStore((s) => s.speakingParticipantIds);
+  const someoneIsSpeaking = useVoiceStore((s) => s.streamAttenuationEnabled
+    && s.participants.some(p => !p.isLocal && p.screenAudioTrack && s.watchingStreams.has(p.userId))
+    && s.participants.some(p => !p.isLocal && s.speakingParticipantIds.has(p.identity)));
 
   // Compute effective deafened: user intent || server enforcement
   const spaceId = useSpaceStore((s) => currentVoiceChannelId ? s.channelToSpaceMap.get(currentVoiceChannelId) : null);
   const myOriginId = currentVoiceChannelId ? getMyUserIdForOrigin(getChannelOrigin(currentVoiceChannelId)) : undefined;
   const spaceKey = (spaceId && myOriginId) ? `${spaceId}:${myOriginId}` : '';
   const isDeafened = isDeafenedIntent || spaceDeafenedUserIds.has(spaceKey);
-
-  // Determine if someone is currently speaking (for stream attenuation)
-  const someoneIsSpeaking = participants.some((p) => !p.isLocal && speakingParticipantIds.has(p.identity));
 
   // Only render audio for remote participants
   const remoteParticipants = participants.filter((p) => !p.isLocal);

@@ -51,7 +51,7 @@ jobs:
           version: 10.34.3
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
       - name: Check version at the build commit
         id: version
         run: node scripts/verify-release.mjs version

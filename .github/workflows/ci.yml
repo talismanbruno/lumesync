@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - node-version: 20
+          - node-version: 24
 
     steps:
       - name: Harden the runner
@@ -73,7 +73,7 @@ jobs:
 
   # Aggregate gate reporting a single, matrix-independent "Build & test" status.
   # Branch protection on main requires the "Build & test" context, but the matrix
-  # job above reports a versioned context ("Build & test (Node 20)"). This job
+  # job above reports a versioned context ("Build & test (Node 24)"). This job
   # keeps the stable required context alive and fails unless the production
   # runtime succeeds (if: always() guarantees a definitive result).
   build-and-test-required:

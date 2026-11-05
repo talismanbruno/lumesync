@@ -67,8 +67,8 @@ One installer, three modes, recorded as `DEPLOY_MODE` in `.env`. `install.sh` au
 
 `Dockerfile` has two stages:
 
-1. **`builder`** (`node:20-slim`) — enables pnpm via corepack, installs the full workspace with `pnpm install --frozen-lockfile`, copies `shared`/`server`/`web` source, and runs `pnpm --filter @backspace/web build` to produce the static frontend (`packages/web/dist`).
-2. **`runtime`** (`node:20-slim`) — installs `ffmpeg` (media) + `gosu` (privilege drop) only — **no C toolchain**, since `better-sqlite3`/`sharp` load prebuilt binaries — installs production-only deps with `pnpm install --prod --frozen-lockfile` (`tsx` is a server runtime dependency), copies `shared` + `server` source and the prebuilt `web/dist`, creates `/app/data/uploads`, and runs the server **as the non-root `node` user** via `docker-entrypoint.sh` (which chowns `/app/data` as root, then `exec gosu node`) with `node --import tsx/esm src/index.ts` from `/app/packages/server`.
+1. **`builder`** (`node:24-slim`) — enables pnpm via corepack, installs the full workspace with `pnpm install --frozen-lockfile`, copies `shared`/`server`/`web` source, and runs `pnpm --filter @backspace/web build` to produce the static frontend (`packages/web/dist`).
+2. **`runtime`** (`node:24-slim`) — installs `ffmpeg` (media) + `gosu` (privilege drop) only — **no C toolchain**, since `better-sqlite3`/`sharp` load prebuilt binaries — installs production-only deps with `pnpm install --prod --frozen-lockfile` (`tsx` is a server runtime dependency), copies `shared` + `server` source and the prebuilt `web/dist`, creates `/app/data/uploads`, and runs the server **as the non-root `node` user** via `docker-entrypoint.sh` (which chowns `/app/data` as root, then `exec gosu node`) with `node --import tsx/esm src/index.ts` from `/app/packages/server`.
 
 The server is run through `tsx` (no separate transpile step); TypeScript is executed directly at runtime.
 
@@ -368,7 +368,7 @@ The third-party images are **pinned to explicit tags** in `docker-compose.yml`, 
 
 Pinning makes deploys reproducible — a rebuild pulls the exact same proxy/SFU version every time, so an upstream release can't silently change behavior under you.
 
-The `backspace` image itself defaults to `ghcr.io/thezwiss/backspace:latest` (`BACKSPACE_IMAGE` / `BACKSPACE_IMAGE_TAG`). `latest` is chosen for a frictionless first install, but it is a **moving** tag: operators who want reproducible upgrades should pin `BACKSPACE_IMAGE_TAG` to a released version (e.g. `1.0.0`) in `.env` and bump it deliberately. On the source-build paths (`deploy.sh`, `install.sh`'s fallback) the image is built from the `Dockerfile`, which pins the `node:20-slim` base.
+The `backspace` image itself defaults to `ghcr.io/thezwiss/backspace:latest` (`BACKSPACE_IMAGE` / `BACKSPACE_IMAGE_TAG`). `latest` is chosen for a frictionless first install, but it is a **moving** tag: operators who want reproducible upgrades should pin `BACKSPACE_IMAGE_TAG` to a released version (e.g. `1.0.0`) in `.env` and bump it deliberately. On the source-build paths (`deploy.sh`, `install.sh`'s fallback) the image is built from the `Dockerfile`, which pins the `node:24-slim` base.
 
 **Upgrade procedure:** bump the tag in `docker-compose.yml` → test the new version (locally or on one box) → redeploy. Concretely:
 

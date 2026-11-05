@@ -10,12 +10,10 @@ Source files:
 
 ## Voice Channel Join Flow
 
-1. Client sends `voice_join { channelId }` via WS
-2. Server checks CONNECT permission, enforces one-room-per-user
-3. Server loads voice restrictions from DB (space mute/deafen)
-4. Server broadcasts `voice_state_update { action: 'join' }` to space
-5. Client calls `POST /api/livekit/token { channelId }` → gets JWT + LiveKit URL
-6. Client connects to LiveKit room with token
+1. Client starts resuming local audio and requests a token from `POST /api/livekit/token { channelId }` without waiting for audio to resume.
+2. Server checks CONNECT permission and capacity before issuing the token and LiveKit URL.
+3. Client connects to the LiveKit room and sends `voice_join { channelId }` via WebSocket.
+4. Server checks permissions, enforces one room per user, loads voice restrictions and broadcasts the join to the space.
 
 ### Voice presence bootstrap on mid-session space join
 
@@ -34,6 +32,8 @@ See `docs/systems/websocket.md` → "Mid-session space join" for the full ration
 `utils/voice.joinVoiceChannel` fires `AudioContext.resume()` and `AudioManager.setInputDevice(inputDeviceId)` (which ends in `getUserMedia({audio:…})`) **synchronously inside** the click handler, before the `connectFn(channelId)` call. iOS Safari only surfaces the microphone permission prompt when `getUserMedia` is invoked from inside an active user-gesture; the original flow only acquired the mic in `useLiveKit`'s `syncMic` effect, which fires AFTER `room.connect()` resolves (token fetch + WS handshake) — many awaits past the gesture window. iOS PWA standalone is especially strict and would silently never surface the prompt; the user would see "Waiting for others to join…" indefinitely until they locked/unlocked the device (which iOS treats as a fresh activation).
 
 Pre-arm is fire-and-forget: the mic acquisition runs in parallel with the LiveKit handshake, and `AudioManager.inputSwitchChain`'s serialization guarantees `useLiveKit.syncMic`'s subsequent call short-circuits on the already-acquired `currentStream` (no double prompt, no second `getUserMedia`).
+
+Call exit, terminal disconnect, failed entry and layout teardown release the upstream capture and detach its source. If a permission prompt is still pending, its eventual stream is stopped before it can attach to the graph. LiveKit reconnects within the same call keep the capture available.
 
 ### Listener mode (`micPermissionDenied`)
 

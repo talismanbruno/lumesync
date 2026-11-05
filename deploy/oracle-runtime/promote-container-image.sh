@@ -9,6 +9,13 @@ commit="${3:?full source commit is required}"
 app_dir="${LUME_APP_DIR:-/home/ubuntu/lume-core}"
 
 case "$image" in
+  ghcr.io/talismanbruno/lumesync@sha256:*)
+    digest="${image##*:}"
+    case "$digest" in
+      *[!0-9a-f]*) echo "Invalid image digest" >&2; exit 2 ;;
+    esac
+    [ "${#digest}" -eq 64 ] || { echo "Invalid image digest" >&2; exit 2; }
+    ;;
   ghcr.io/talismanbruno/lumesync:*) ;;
   *) echo "Refusing unexpected image: $image" >&2; exit 2 ;;
 esac

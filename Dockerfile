@@ -3,7 +3,7 @@
 # ============================================================
 
 # Stage 1: Install dependencies and build frontend
-FROM node:20-slim AS builder
+FROM node:24-slim AS builder
 
 # Tie the frontend build cache to the exact reviewed source revision. Source
 # COPY checks should already invalidate naturally, but this makes a stale web
@@ -42,7 +42,7 @@ RUN echo "Building Lume web at ${BACKSPACE_COMMIT}" && pnpm --filter @backspace/
 
 # ============================================================
 # Stage 2: Production runtime
-FROM node:20-slim AS runtime
+FROM node:24-slim AS runtime
 
 RUN corepack enable && corepack prepare pnpm@10.34.3 --activate
 
@@ -72,6 +72,7 @@ COPY patches/ patches/
 # already compiled in the builder stage, so shipping its runtime dependencies
 # only increases the image size and attack surface.
 RUN pnpm install --prod --frozen-lockfile --filter @backspace/server...
+RUN cd packages/server && node -e "const db = new (require('better-sqlite3'))(':memory:'); db.prepare('SELECT 1').get(); db.close();"
 
 # npm/corepack are build-time package managers and are not used by the running
 # service. Remove them (and their bundled dependency trees) from the final image

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import type { ParticipantInfo } from '../../hooks/useLiveKit';
 vi.mock('../../audio/AudioManager', () => ({
   AudioManager: { getInstance: () => ({ setInputVolume: vi.fn(), setOutputDevice: vi.fn() }) },
@@ -59,6 +59,14 @@ describe('screen audio volume', () => {
     useVoiceStore.setState({ streamAttenuationEnabled: true, speakingParticipantIds: new Set(['other:name']) });
     render(<GlobalAudioRenderer />);
     expect(screenPlayback().volume).toBe(1);
+  });
+  it('keeps audio players idle on speaker changes when attenuation is disabled', () => {
+    render(<GlobalAudioRenderer />);
+    vi.mocked(useAudioTrackPlayer).mockClear();
+
+    act(() => useVoiceStore.getState().setSpeakingParticipants(new Set([remote.identity])));
+
+    expect(useAudioTrackPlayer).not.toHaveBeenCalled();
   });
   it('does not silence screen audio because of a stale speaking flag on a muted mic', () => {
     useVoiceStore.setState({

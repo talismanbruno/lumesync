@@ -384,6 +384,8 @@ export function useLiveKit() {
     const effKey = (effSpaceId && effMyId) ? `${effSpaceId}:${effMyId}` : '';
     const effectiveMuted = isMuted || spaceMutedUserIds.has(effKey) || permissionMutedUserIds.has(effKey);
     const effectiveDeafened = isDeafened || spaceDeafenedUserIds.has(effKey);
+    let cancelled = false;
+    const isCurrent = () => !cancelled && roomRef.current === r;
 
     const syncMic = async () => {
       try {
@@ -392,6 +394,7 @@ export function useLiveKit() {
         // Sync voice processing settings to AudioManager
         audioManager.setVoiceProcessing({ echoCancellation, noiseSuppression, autoGainControl });
         await audioManager.setRnnoiseEnabled(rnnoiseEnabled);
+        if (!isCurrent()) return;
 
         const micPub = r.localParticipant.getTrackPublications()
           .find(p => p.source === Track.Source.Microphone);
@@ -421,8 +424,10 @@ export function useLiveKit() {
         // and at the right volume, then republish if the published track is
         // stale or missing.
         try {
-          await audioManager.setInputDevice(inputDeviceId);
+          const stream = await audioManager.setInputDevice(inputDeviceId);
+          if (!stream || !isCurrent()) return;
         } catch (err: any) {
+          if (!isCurrent()) return;
           // Late denial (e.g. iOS standalone PWA where the pre-arm in
           // `joinVoiceChannel` ran inside the gesture but the prompt is
           // delivered out-of-band; the user denies after `room.connect()`
@@ -453,6 +458,7 @@ export function useLiveKit() {
     });
 
     return () => {
+      cancelled = true;
       unsubscribeResume();
     };
   }, [isMuted, isDeafened, spaceMutedUserIds, spaceDeafenedUserIds, permissionMutedUserIds, inputDeviceId, inputVolume, isConnected, echoCancellation, noiseSuppression, autoGainControl, rnnoiseEnabled, micPermissionDenied]);
@@ -486,8 +492,8 @@ export function useLiveKit() {
         // Probe succeeded — device is back. Re-acquire and force a republish.
         if (roomRef.current !== subscriberRoom) return;
         try {
-          await am.setInputDevice(deviceId);
-          if (roomRef.current !== subscriberRoom) return;
+          const stream = await am.setInputDevice(deviceId);
+          if (!stream || roomRef.current !== subscriberRoom) return;
           await republishMicrophone(subscriberRoom, lastMicGenRef);
           return;
         } catch {
@@ -596,8 +602,12 @@ export function useLiveKit() {
     };
     const gen = ++_connectGeneration;
 
-    // Ensure AudioContext is created and resumed before tracks arrive
-    await AudioManager.getInstance().resumeContext();
+    // Start in the gesture, but let signaling proceed while the browser
+    // starts the audio device or waits for permission to play.
+    const audioManager = AudioManager.getInstance();
+    void audioManager.resumeContext().catch(err => {
+      console.warn('[LiveKit] AudioContext resume failed:', err);
+    });
 
     // 1. Reset state immediately to reflect "Loading/Switching" in UI
     SpeakingDetector.getInstance().clear();
@@ -608,6 +618,7 @@ export function useLiveKit() {
     setIsConnecting(true);
     setConnectionState(ConnectionState.Connecting);
     setConnectionError(null);
+    connectedChannelRef.current = null;
     setConnectedChannelId(null); // Clear this so AppLayout knows we are transitioning
 
     useVoiceStore.getState().setConnectionError(null);
@@ -625,6 +636,7 @@ export function useLiveKit() {
       } catch (err) {
         console.warn('Error disconnecting from previous room:', err);
       }
+      if (gen !== _connectGeneration) return;
       roomRef.current = null;
       _activeRoom = null;
     }
@@ -838,6 +850,7 @@ export function useLiveKit() {
       });
       newRoom.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
         if (roomRef.current !== newRoom) return;
+        if (gen === _connectGeneration) audioManager.releaseInput();
         const reconnectWasPending = reconnectStartedAtRef.current !== null;
         reconnectStartedAtRef.current = null;
         if (reason !== DisconnectReason.CLIENT_INITIATED || reconnectWasPending) {
@@ -881,8 +894,6 @@ export function useLiveKit() {
       // Tell WS server we're in the voice channel now that LiveKit is connected
       registerWithServer();
 
-      updateParticipants();
-
       // Subscribe to non-screen-share tracks from existing participants (safety net)
       newRoom.remoteParticipants.forEach((rp) => {
         rp.trackPublications.forEach((pub) => {
@@ -896,7 +907,7 @@ export function useLiveKit() {
       });
 
       // Initial mute state check
-      const { isMuted: wasMuted, isDeafened: wasDeafened } = useVoiceStore.getState();
+      const { isDeafened: wasDeafened } = useVoiceStore.getState();
       useVoiceStore.setState({ isCameraOn: false, isScreenSharing: false });
       
       if (wasDeafened) {
@@ -904,12 +915,20 @@ export function useLiveKit() {
       }
       
       updateParticipants();
-    } catch (err) { if (gen === _connectGeneration) { setConnectionError(uiText("Failed to connect")); useVoiceStore.getState().setConnectionError(uiText("Failed to connect")); useVoiceStore.getState().leaveVoice(); } }
+    } catch (err) {
+      if (gen === _connectGeneration) {
+        audioManager.releaseInput();
+        setConnectionError(uiText("Failed to connect"));
+        useVoiceStore.getState().setConnectionError(uiText("Failed to connect"));
+        useVoiceStore.getState().leaveVoice();
+      }
+    }
     finally { if (gen === _connectGeneration) setIsConnecting(false); }
   }, [updateParticipants, handleDataReceived]);
 
   const disconnect = useCallback(async () => {
     _connectGeneration++;
+    AudioManager.getInstance().releaseInput();
     SpeakingDetector.getInstance().clear();
     deactivateHwOverdrive();
     connectedChannelRef.current = null;
@@ -1003,7 +1022,18 @@ export function useLiveKit() {
   }, [room, screenShareConfig, isScreenSharing, isCameraOn, hwOverdrive]);
 
   useEffect(() => {
-    return () => { _connectGeneration++; SpeakingDetector.getInstance().clear(); deactivateHwOverdrive(); if (roomRef.current) { destroyRoom(roomRef.current); roomRef.current = null; _activeRoom = null; } };
+    return () => {
+      _connectGeneration++;
+      AudioManager.getInstance().releaseInput();
+      SpeakingDetector.getInstance().clear();
+      deactivateHwOverdrive();
+      const roomToDestroy = roomRef.current;
+      roomRef.current = null;
+      if (roomToDestroy) {
+        if (_activeRoom === roomToDestroy) _activeRoom = null;
+        void destroyRoom(roomToDestroy)?.catch(err => console.warn('[LiveKit] Room cleanup failed:', err));
+      }
+    };
   }, []);
 
 

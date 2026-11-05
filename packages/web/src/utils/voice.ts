@@ -172,8 +172,7 @@ export function joinVoiceChannel(
   audioManager.clearInputDenial();
   // Resume the AudioContext synchronously inside the gesture too — iOS
   // requires `AudioContext.resume()` to be invoked from a user
-  // activation. Fire-and-forget; `useLiveKit.connect` also calls this
-  // and will await the same context.
+  // activation. The call can start signaling while the context resumes.
   audioManager.resumeContext().catch((err) => {
     console.warn('[voice] AudioContext resume failed:', err);
   });
@@ -229,10 +228,12 @@ export async function requestMicPermission(): Promise<boolean> {
   // actually fires `getUserMedia` instead of re-throwing the cached error.
   audioManager.clearInputDenial();
   try {
-    // Resume context first — iOS may have suspended it during the denied
-    // state.
-    await audioManager.resumeContext();
-    await audioManager.setInputDevice(inputDeviceId);
+    // Start both operations from the retry gesture. A call exit invalidates
+    // any input request that is still waiting for permission.
+    void audioManager.resumeContext().catch((err: unknown) => {
+      console.warn('[voice] AudioContext resume failed:', err);
+    });
+    if (!await audioManager.setInputDevice(inputDeviceId)) return false;
     useVoiceStore.getState().setMicPermissionDenied(false);
     return true;
   } catch (err: unknown) {

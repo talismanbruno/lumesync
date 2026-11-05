@@ -26,6 +26,7 @@ export class AudioManager {
   private voiceNoiseSuppression = true;
   private voiceAutoGainControl = true;
   private streamGeneration = 0;
+  private inputGeneration = 0;
   private inputSwitchChain: Promise<MediaStream | null> = Promise.resolve(null);
   private rnnoiseNode: AudioWorkletNode | null = null;
   private stereoMerger: ChannelMergerNode | null = null;
@@ -222,12 +223,32 @@ export class AudioManager {
    * call short-circuits if the first already set the same device.
    */
   async setInputDevice(deviceId: string): Promise<MediaStream | null> {
-    const job = this.inputSwitchChain.then(() => this._setInputDeviceImpl(deviceId));
+    const generation = this.inputGeneration;
+    const job = this.inputSwitchChain.then(() => this._setInputDeviceImpl(deviceId, generation));
     this.inputSwitchChain = job.catch(() => null);
     return job;
   }
 
-  private async _setInputDeviceImpl(deviceId: string): Promise<MediaStream | null> {
+  releaseInput(): void {
+    // getUserMedia cannot be aborted. Discard streams from any request that
+    // was started or queued before the call ended.
+    this.inputGeneration++;
+    this.stopCurrentInput();
+  }
+
+  private stopCurrentInput(): void {
+    const stream = this.currentStream;
+    this.currentStream = null;
+    this.inputSource?.disconnect();
+    this.inputSource = null;
+    stream?.getTracks().forEach(track => {
+      track.onended = null;
+      track.stop();
+    });
+  }
+
+  private async _setInputDeviceImpl(deviceId: string, generation: number): Promise<MediaStream | null> {
+    if (generation !== this.inputGeneration) return null;
     if (!this.isInitialized) this.initContext();
 
     // Skip if already set and stream is active
@@ -242,19 +263,7 @@ export class AudioManager {
     }
 
     try {
-      if (this.currentStream) {
-        // Detach our `onended` handlers BEFORE stopping. `.stop()` synchronously
-        // queues an `ended` event on each track; by clearing the listener first
-        // we guarantee the deliberate-replace path never notifies subscribers,
-        // regardless of microtask/task ordering.
-        const oldTracks = this.currentStream.getTracks();
-        oldTracks.forEach(t => { t.onended = null; });
-        oldTracks.forEach(t => t.stop());
-        // Drop the reference immediately so any stray handler that survived
-        // (e.g. attached by external code) sees `currentStream` no longer
-        // pointing to the old stream and bails out via the identity check.
-        this.currentStream = null;
-      }
+      this.stopCurrentInput();
 
       // Chrome AEC stays on during screen share — headphone users unaffected,
       // speaker users get proper echo cancellation.
@@ -280,6 +289,10 @@ export class AudioManager {
       };
 
       const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (generation !== this.inputGeneration) {
+        newStream.getTracks().forEach(track => track.stop());
+        return null;
+      }
       // Successful acquisition — clear any cached denial so next swap is
       // unimpeded. (Most commonly hit when the user grants permission via
       // the explicit `requestMicPermission` retry path, but also covers
@@ -296,15 +309,13 @@ export class AudioManager {
       this.attachInputEndedListeners(newStream);
 
       if (this.ctx && this.inputGain) {
-        if (this.inputSource) {
-          this.inputSource.disconnect();
-        }
         this.inputSource = this.ctx.createMediaStreamSource(this.currentStream);
         this.inputSource.connect(this.getInputTarget());
       }
 
       return this.currentStream;
     } catch (err) {
+      if (generation !== this.inputGeneration) return null;
       console.error('[AudioManager] Failed to set input device:', err);
       // Cache permission denials so syncMic's racing call doesn't fire a
       // second `getUserMedia` while the user is still resolving the first
@@ -380,7 +391,7 @@ export class AudioManager {
   }
 
   async setRnnoiseEnabled(enabled: boolean): Promise<void> {
-    if (enabled === this.rnnoiseEnabled && this.rnnoiseReady) return;
+    if (enabled === this.rnnoiseEnabled) return;
     if (!this.isInitialized) this.initContext();
 
     if (enabled && !this.rnnoiseReady) {
@@ -431,13 +442,7 @@ export class AudioManager {
 
     // Force track re-publish so LiveKit picks up the new pipeline
     this.streamGeneration++;
-    if (this.currentStream) {
-      // Detach listeners before stopping (see `_setInputDeviceImpl`).
-      const tracks = this.currentStream.getTracks();
-      tracks.forEach(t => { t.onended = null; });
-      tracks.forEach(t => t.stop());
-      this.currentStream = null;
-    }
+    this.stopCurrentInput();
   }
 
   isRnnoiseEnabled(): boolean {
@@ -467,11 +472,7 @@ export class AudioManager {
       changed = true;
     }
     if (changed && this.currentStream) {
-      // Detach listeners before stopping (see `_setInputDeviceImpl`).
-      const tracks = this.currentStream.getTracks();
-      tracks.forEach(t => { t.onended = null; });
-      tracks.forEach(t => t.stop());
-      this.currentStream = null;
+      this.stopCurrentInput();
     }
   }
 
