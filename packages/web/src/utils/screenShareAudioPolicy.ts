@@ -1,3 +1,4 @@
+import { isNativeScreenAudioTrack } from './nativeScreenAudio';
 /** Display audio is a separate source from microphone audio. Never gate it on speech. */
 type IsolatedAudioSettings = MediaTrackSettings & { restrictOwnAudio?: boolean };
 type IsolatedAudioCapabilities = MediaTrackCapabilities & { restrictOwnAudio?: boolean[] };
@@ -5,6 +6,7 @@ type IsolatedAudioConstraints = MediaTrackConstraints & { restrictOwnAudio: { ex
 
 export function hasIsolatedScreenAudio(video: MediaStreamTrack, audio: MediaStreamTrack, desktop: boolean): boolean {
   if (audio.readyState !== 'live' || video.readyState !== 'live') return false;
+  if (desktop && isNativeScreenAudioTrack(audio)) return true;
   // A separate browser tab has its own audio source. The capturing tab is
   // excluded from the picker, and in-picker source switching is disabled.
   if (!desktop && video.getSettings().displaySurface === 'browser') return true;

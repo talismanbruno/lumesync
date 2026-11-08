@@ -6288,9 +6288,9 @@ export const messages = {
     "Screen sharing did not start. Try selecting another screen or window.",
     "O compartilhamento não começou. Tente selecionar outra tela ou janela."
   ],
-  "A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, compartilhe outra guia com áudio ou use uma versão compatível do aplicativo.": [
-    "Your screen is still being shared without system audio because this source did not confirm call-audio exclusion. To share sound, share another tab with audio or use a compatible app version.",
-    "A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, compartilhe outra guia com áudio ou use uma versão compatível do aplicativo."
+  "A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, escolha uma saída de áudio física e tente novamente, ou compartilhe uma guia com áudio no navegador.": [
+    "Your screen is still being shared without system audio because this source did not confirm call-audio exclusion. To share sound, select a physical audio output and try again, or share a browser tab with audio.",
+    "A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, escolha uma saída de áudio física e tente novamente, ou compartilhe uma guia com áudio no navegador."
   ],
   "A tela está sendo compartilhada sem áudio. Para transmitir o som, selecione uma fonte com áudio e habilite a opção no seletor.": [
     "The screen is being shared without audio. To include sound, select a source with audio and enable it in the picker.",

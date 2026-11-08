@@ -1021,3 +1021,33 @@ Earlier builds wrote to `<appData>/@backspace/desktop/`. On first launch after t
 1. Set `isQuitting = true` (allows window close to proceed)
 2. Stop activity detection (clear interval, null callback)
 3. Stop keybind manager (release active actions, stop uIOhook)
+
+## Native Windows screen audio (08/11/2026)
+
+`src/windowsScreenAudio.ts` owns a single helper and parses bounded length-prefixed
+PCM packets. `native/WindowsProcessAudio.cs` is compiled with the installed .NET
+Framework compiler by `scripts/build-native.cjs`. The packager's beforePack hook
+builds it on Windows; `resources/native/*.exe` is explicitly unpacked from ASAR.
+Windows builds require the Framework64 v4.0.30319 compiler. No third-party audio
+driver, Node native addon or extra npm dependency is installed.
+
+The renderer cannot choose a PID, executable, command or capture mode. Main fixes
+the exclusion PID to its own process tree. Starting requires an unconsumed,
+two-minute grant created by an explicit screen/window selection with audio
+enabled, from the main app frame. Stop is scoped to the generated capture ID.
+Navigations, renderer loss and quit revoke capture. The helper also watches stdin
+closure and the excluded parent's lifetime.
+
+Bridge: startScreenAudio, stopScreenAudio, onScreenAudioData, onScreenAudioEnded.
+PCM is transient and not saved. stdout packet length is bounded to one second of
+stereo float32 data, with a separate 1 MiB transport-buffer cap. The worklet bounds
+queued audio and discards stale latency after renderer stalls.
+
+Validation commands after compiling desktop:
+- node scripts/windows-screen-audio-smoke.cjs <electron.exe>
+- node scripts/windows-screen-audio-flow.cjs <electron.exe>
+
+The first checks native exclusion with sibling synthetic sources. The second
+uses production preload, transport, worklet and MediaStreamTrack, then sends the
+track through a local WebRTC peer pair and measures it at the receiver. These
+are local synthetic tests, not a two-person LiveKit acceptance call.

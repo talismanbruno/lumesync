@@ -85,6 +85,18 @@ contextBridge.exposeInMainWorld('backspace', {
   },
 
   // Screen share picker coordination
+  startScreenAudio: () => ipcRenderer.invoke('start-screen-audio'),
+  stopScreenAudio: (id: string) => ipcRenderer.send('stop-screen-audio', id),
+  onScreenAudioData: (callback: (data: { id: string; pcm: Uint8Array }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: string; pcm: Uint8Array }) => callback(data);
+    ipcRenderer.on('screen-audio-data', handler);
+    return () => { ipcRenderer.removeListener('screen-audio-data', handler); };
+  },
+  onScreenAudioEnded: (callback: (data: { id: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: string }) => callback(data);
+    ipcRenderer.on('screen-audio-ended', handler);
+    return () => { ipcRenderer.removeListener('screen-audio-ended', handler); };
+  },
   onScreenShareSources: (callback: (request: { requestId: string; sources: unknown[] }) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, request: { requestId: string; sources: unknown[] }) => {
       callback(request);

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Track, type Room } from 'livekit-client';
 
 const fixtures = vi.hoisted(() => ({
+  nativeTrack: null as MediaStreamTrack | null, nativeStart: vi.fn(),
   desktop: false, toast: vi.fn(), capture: vi.fn(), supported: false, prepareOutput: vi.fn(),
   state: { screenShareConfig: { height: 1080 as number | 'native', fps: 30, mode: 'gaming', customBitrateKbps: null, shareAudio: true }, hwOverdrive: false, isScreenSharing: false },
 }));
@@ -12,6 +13,7 @@ vi.mock('../platform/platform', () => ({ isElectron: () => fixtures.desktop }));
 vi.mock('./voice', () => ({ broadcastVoiceStatus: vi.fn() }));
 vi.mock('./hwOverdrive', () => ({ activate: vi.fn(), deactivate: vi.fn() }));
 vi.mock('./screenShareOutput', () => ({ prepareScreenShareOutput: fixtures.prepareOutput }));
+vi.mock('./nativeScreenAudio', () => ({ startNativeScreenAudio: fixtures.nativeStart, isNativeScreenAudioTrack: (track: MediaStreamTrack) => track === fixtures.nativeTrack }));
 import { buildScreenShareOptions, startScreenShare, stopScreenShare } from './screenShare';
 
 function mediaTrack(kind: 'video' | 'audio', settings: Record<string, unknown> = {}) {
@@ -25,7 +27,7 @@ function mediaTrack(kind: 'video' | 'audio', settings: Record<string, unknown> =
 }
 function capture(video = mediaTrack('video', { displaySurface: 'monitor' }), audio?: ReturnType<typeof mediaTrack>) {
   const tracks = audio ? [video, audio] : [video];
-  const stream = { getTracks: () => tracks, getVideoTracks: () => [video], getAudioTracks: () => audio ? [audio] : [] } as unknown as MediaStream;
+  const stream = { addTrack: (track: MediaStreamTrack) => tracks.push(track as typeof video), getTracks: () => tracks, getVideoTracks: () => [video], getAudioTracks: () => audio ? [audio] : [] } as unknown as MediaStream;
   fixtures.capture.mockResolvedValue(stream);
   return { video, audio, stream };
 }
@@ -44,6 +46,7 @@ function room() {
 }
 let currentRoom: ReturnType<typeof room>;
 beforeEach(() => {
+  window.backspace = undefined; fixtures.nativeTrack = null; fixtures.nativeStart.mockReset().mockResolvedValue(null);
   vi.useFakeTimers(); fixtures.desktop = false; fixtures.supported = false;
   Object.assign(fixtures.state, { isScreenSharing: false, hwOverdrive: false });
   Object.assign(fixtures.state.screenShareConfig, { shareAudio: true, height: 1080 });
@@ -88,6 +91,53 @@ afterEach(async () => { await stopScreenShare(currentRoom); vi.clearAllTimers();
 const publishedAudio = () => currentRoom.localParticipant.publishTrack.mock.calls.filter(([, options]) => options.source === Track.Source.ScreenShareAudio);
 
 describe('screen audio is isolated before publication', () => {
+  it('replaces rejected Windows loopback with the native isolated source and stops it with video', async () => {
+    fixtures.desktop = true;
+    window.backspace = { startScreenAudio: vi.fn() } as unknown as BackspaceElectronAPI;
+    const { audio } = capture(undefined, mediaTrack('audio', { deviceId: 'loopback', restrictOwnAudio: false }));
+    const nativeTrack = mediaTrack('audio', { channelCount: 2 });
+    fixtures.nativeTrack = nativeTrack;
+    const stop = vi.fn();
+    fixtures.nativeStart.mockResolvedValue({ track: nativeTrack, stop });
+    expect(await startScreenShare(currentRoom)).toBe(true);
+    expect(audio!.stop).toHaveBeenCalled();
+    expect(publishedAudio()).toEqual([[nativeTrack, expect.objectContaining({ forceStereo: true, dtx: false })]]);
+    expect(fixtures.toast).not.toHaveBeenCalled();
+    await stopScreenShare(currentRoom);
+    expect(stop).toHaveBeenCalled();
+    expect(nativeTrack.stop).toHaveBeenCalled();
+  });
+  it('keeps video without unsafe loopback when native activation fails', async () => {
+    fixtures.desktop = true;
+    window.backspace = { startScreenAudio: vi.fn() } as unknown as BackspaceElectronAPI;
+    const { video } = capture(undefined, mediaTrack('audio', { deviceId: 'loopback' }));
+    fixtures.nativeStart.mockRejectedValue(new Error('Native unavailable'));
+    expect(await startScreenShare(currentRoom)).toBe(true);
+    expect(publishedAudio()).toHaveLength(0);
+    expect(video.stop).not.toHaveBeenCalled();
+  });
+  it('does not start native capture when the user opts for video only', async () => {
+    fixtures.desktop = true;
+    window.backspace = { startScreenAudio: vi.fn() } as unknown as BackspaceElectronAPI;
+    capture(); fixtures.state.screenShareConfig.shareAudio = false;
+    expect(await startScreenShare(currentRoom)).toBe(true);
+    expect(fixtures.nativeStart).not.toHaveBeenCalled();
+  });
+  it('releases a native capture that completes after the call was stopped', async () => {
+    fixtures.desktop = true;
+    window.backspace = { startScreenAudio: vi.fn() } as unknown as BackspaceElectronAPI;
+    capture();
+    const stop = vi.fn(); const nativeTrack = mediaTrack('audio');
+    fixtures.nativeTrack = nativeTrack;
+    let finish!: (value: { track: MediaStreamTrack; stop: () => void }) => void;
+    fixtures.nativeStart.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    const pending = startScreenShare(currentRoom);
+    await vi.waitFor(() => expect(finish).toBeDefined());
+    await stopScreenShare(currentRoom); finish({ track: nativeTrack, stop });
+    expect(await pending).toBe(false);
+    expect(stop).toHaveBeenCalled();
+    expect(currentRoom.localParticipant.publishTrack).not.toHaveBeenCalled();
+  });
   it('requests isolated window audio and own-audio exclusion directly from the original gesture', async () => {
     capture();
     const pending = startScreenShare(currentRoom);

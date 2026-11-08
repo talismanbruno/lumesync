@@ -9,6 +9,7 @@ import { activate as activateHwOverdrive, deactivate as deactivateHwOverdrive } 
 import { useUIStore } from '../stores/uiStore';
 import { isElectron } from '../platform/platform';
 import { hasIsolatedScreenAudio, isolateScreenAudio } from './screenShareAudioPolicy';
+import { startNativeScreenAudio, type NativeScreenAudio } from './nativeScreenAudio';
 import { prepareScreenShareOutput, type ScreenShareOutputGuard } from './screenShareOutput';
 import {
   STANDARD_RESOLUTIONS, STANDARD_FRAMERATES, WIDTH_MAP,
@@ -256,7 +257,7 @@ function disposeCapture() {
   capture?.stream.getTracks().forEach(track => track.stop());
 }
 
-const UNSAFE_SCREEN_AUDIO = 'A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, compartilhe outra guia com áudio ou use uma versão compatível do aplicativo.';
+const UNSAFE_SCREEN_AUDIO = 'A tela continua sendo compartilhada sem áudio do sistema, pois esta fonte não confirmou a exclusão das vozes da chamada. Para transmitir som, escolha uma saída de áudio física e tente novamente, ou compartilhe uma guia com áudio no navegador.';
 
 export async function startScreenShare(room: Room): Promise<boolean> {
   if (screenShareStartPending) return false;
@@ -270,6 +271,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
   const opts = buildScreenShareOptions(config);
   const desktop = isElectron();
   let stream: MediaStream | undefined;
+  let nativeAudio: NativeScreenAudio | null = null;
   const publishing: MediaStreamTrack[] = [];
   const cancelPending = () => abort.abort();
   let pendingVideo: MediaStreamTrack | undefined;
@@ -321,7 +323,22 @@ export async function startScreenShare(room: Room): Promise<boolean> {
       if (wantAudio) unsafeAudio = true;
       candidate.stop();
     }
-    if (!current() || videoTrack.readyState !== 'live') { stream.getTracks().forEach(track => track.stop()); return false; }
+    // Chromium gates process exclusion on Windows 11. The native backend probes
+    // the OS API directly and never falls back to device-wide loopback.
+    if (wantAudio && !audioTrack && desktop && window.backspace?.startScreenAudio && !isolationWarningShown) {
+      outputGuard ??= await prepareScreenShareOutput(videoTrack, desktop, abort.signal);
+      if (outputGuard.allowed) {
+        try {
+          nativeAudio = await startNativeScreenAudio(abort.signal);
+          if (nativeAudio) { audioTrack = nativeAudio.track; stream.addTrack(audioTrack); }
+        } catch (error) {
+          if (abort.signal.aborted) throw error;
+          console.warn('[ScreenShare] Native audio unavailable:', error);
+          unsafeAudio = true;
+        }
+      } else if (outputGuard.silent) isolationWarningShown = true;
+    }
+    if (!current() || videoTrack.readyState !== 'live') { nativeAudio?.stop(); stream.getTracks().forEach(track => track.stop()); return false; }
 
     const onEnded = () => { if (activeCapture?.stream === stream) void stopScreenShare(room); };
     const onDisconnected = () => { if (activeCapture?.stream === stream) handleScreenShareUnpublished(); };
@@ -337,15 +354,17 @@ export async function startScreenShare(room: Room): Promise<boolean> {
       unsafeAudio = true;
       rejected.enabled = false;
       rejected.stop();
+      nativeAudio?.stop();
       void room.localParticipant.unpublishTrack(rejected).catch(error => console.warn('[ScreenShare] Audio cleanup:', error));
       useUIStore.getState().addToast(uiText(UNSAFE_SCREEN_AUDIO), 'warning', 10000);
       isolationWarningShown = true;
       if (guard) clearInterval(guard);
       stopOutputGuard?.();
     };
-    const onAudioEnded = () => { if (guard) clearInterval(guard); stopOutputGuard?.(); };
+    const onAudioEnded = () => { checkAudio(); if (guard) clearInterval(guard); stopOutputGuard?.(); };
     const capturedAudio = audioTrack;
     activeCapture = { room, stream, dispose: () => {
+      nativeAudio?.stop();
       videoTrack.removeEventListener('ended', onEnded);
       room.off(RoomEvent.Disconnected, onDisconnected);
       videoTrack.removeEventListener('resize', checkAudio);
@@ -394,6 +413,7 @@ export async function startScreenShare(room: Room): Promise<boolean> {
   } catch (err) {
     const interrupted = generation !== screenShareGeneration || room.state !== 'connected';
     if (activeCapture?.stream === stream) disposeCapture();
+    nativeAudio?.stop();
     stream?.getTracks().forEach(track => track.stop());
     await Promise.allSettled(publishing.map(track => room.localParticipant.unpublishTrack(track)));
     if (interrupted) return false;

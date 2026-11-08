@@ -72,6 +72,10 @@ interface BackspaceElectronAPI {
   onOpenInternalRoute: (callback: (path: string) => void) => (() => void);
 
   // Screen share picker coordination
+  startScreenAudio?: () => Promise<{ id: string; sampleRate: number; channels: number }>;
+  stopScreenAudio?: (id: string) => void;
+  onScreenAudioData?: (callback: (data: { id: string; pcm: Uint8Array }) => void) => (() => void);
+  onScreenAudioEnded?: (callback: (data: { id: string }) => void) => (() => void);
   onScreenShareSources: (callback: (request: ElectronScreenShareRequest) => void) => (() => void);
   selectScreenSource: (requestId: string, sourceId: string | null, shareAudio?: boolean) => void;
 

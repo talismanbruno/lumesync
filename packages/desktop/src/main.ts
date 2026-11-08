@@ -39,6 +39,7 @@ import {
   type RecoveryState,
 } from './recovery';
 import { migrateUserData } from './userDataMigration';
+import { WindowsScreenAudio } from './windowsScreenAudio';
 
 // Override Electron's package.json-derived app name so userData lives at
 // "<appData>/Backspace" instead of leaking the monorepo's "@backspace/desktop"
@@ -63,6 +64,17 @@ app.setName('Lume');
 }
 
 let mainWindow: BrowserWindow | null = null;
+let nativeScreenAudioGrant = 0;
+const nativeScreenAudio = new WindowsScreenAudio(
+  app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'native', 'LumeProcessAudio.exe')
+    : path.join(__dirname, '..', 'resources', 'native', 'LumeProcessAudio.exe'),
+  process.pid,
+);
+function revokeNativeScreenAudio(): void {
+  nativeScreenAudioGrant = 0;
+  nativeScreenAudio.stop();
+}
 const keybindManager = new KeybindManager();
 let tray: Tray | null = null;
 let isQuitting = false;
@@ -452,7 +464,13 @@ function createWindow(): void {
     }
   });
 
+  mainWindow.webContents.on('did-start-navigation', (_event, _url, _inPlace, isMainFrame) => {
+    if (isMainFrame && !_inPlace) revokeNativeScreenAudio();
+  });
+  mainWindow.webContents.on('render-process-gone', revokeNativeScreenAudio);
+  mainWindow.webContents.on('destroyed', revokeNativeScreenAudio);
   mainWindow.on('closed', () => {
+    revokeNativeScreenAudio();
     setMainWindow(null);
     mainWindow = null;
     // Clear recovery state so macOS dock-activate (which calls createWindow again)
@@ -524,6 +542,22 @@ function showNotification(title: string, body: string, onClick?: () => void): vo
 // ─── IPC Handlers ───────────────────────────────────────────────────────────
 
 function registerIpcHandlers(): void {
+  ipcMain.handle('start-screen-audio', async (event) => {
+    const contents = mainWindow?.webContents;
+    if (process.platform !== 'win32' || !contents || event.sender !== contents
+      || event.senderFrame !== contents.mainFrame || nativeScreenAudioGrant < Date.now()) {
+      throw new Error('Select a screen with audio before starting capture');
+    }
+    nativeScreenAudioGrant = 0;
+    return nativeScreenAudio.start(
+      (id, pcm) => { if (!contents.isDestroyed()) contents.send('screen-audio-data', { id, pcm }); },
+      (id) => { if (!contents.isDestroyed()) contents.send('screen-audio-ended', { id }); },
+    );
+  });
+  ipcMain.on('stop-screen-audio', (event, id: unknown) => {
+    if (event.sender !== mainWindow?.webContents || typeof id !== 'string') return;
+    nativeScreenAudio.stop(id);
+  });
   ipcMain.on('get-preferred-languages', (event) => {
     event.returnValue = app.getPreferredSystemLanguages();
   });
@@ -1046,6 +1080,10 @@ if (!gotTheLock) {
         //     `PulseaudioLoopbackForScreenShare` feature flag we enable above.
         //     Fails on PipeWire-only systems without pulse compat — the
         //     renderer catches that and toasts the user.
+        revokeNativeScreenAudio();
+        if (process.platform === 'win32' && shareAudio && request.audioRequested) {
+          nativeScreenAudioGrant = Date.now() + 120_000;
+        }
         callback({ video: selected, ...(shareAudio && request.audioRequested ? { audio: 'loopback' } : {}) });
       } catch (err) {
         console.error('[Main:ScreenShare] Handler error:', err);
@@ -1165,6 +1203,7 @@ if (!gotTheLock) {
   });
 
   app.on('before-quit', () => {
+    revokeNativeScreenAudio();
     isQuitting = true;
     stopActivityDetection();
     keybindManager.stop();

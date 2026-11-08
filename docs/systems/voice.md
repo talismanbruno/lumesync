@@ -479,3 +479,34 @@ Mic publishes the output of a Web Audio graph (RNNoise, gain, AEC) — `LocalPar
 
 ### Federation
 No federation work. The LK room is at the host instance; remote peers connect to it directly. `switchActiveDevice` is room-internal and works regardless of where the room lives.
+
+## Windows process-loopback fallback (08/11/2026)
+
+The desktop can supply a native system-audio source when Chromium returns a
+non-isolated loopback track. The native helper activates WASAPI process loopback
+with EXCLUDE_TARGET_PROCESS_TREE for the Electron main PID. It never substitutes
+device-wide capture or microphone capture. Activation is probed at runtime:
+Chromium 150 gates its own process-loopback route on Windows 11, while the native
+API was successfully exercised on the current Windows 10 build 19045.
+
+Flow: explicit source selection with system audio enabled → bounded main-frame
+capture grant → native activation → framed 48 kHz stereo float PCM over stdout →
+preload IPC → bounded AudioWorklet ring → publication-only MediaStreamDestination →
+LiveKit ScreenShareAudio. The worklet is never connected to audible output.
+Microphone publication and voice activity are independent. Current generation,
+output-route verification and cancellation checks still apply before publishing.
+
+Only tracks owned by the live native bridge are accepted as native-isolated;
+arbitrary Web Audio tracks and generic loopback remain rejected. Native audio is
+released on cancellation, video stop, call disconnection, renderer navigation/
+crash or app quit. Unexpected native exit stops and unpublishes the audio track
+while retaining video.
+
+Use a specific physical output for call playback. External mixers may re-emit
+Lume audio from another process and defeat process exclusion. The existing
+output chooser and route-change guard are retained. The default-route tone test
+did reproduce recapture; the direct-output test passed. This mechanism does not
+eliminate acoustic microphone echo from loudspeakers.
+
+Both updated desktop and updated web client are required. Older desktop clients
+without the bridge keep the existing verified-capture/video-only behavior.
