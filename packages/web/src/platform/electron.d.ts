@@ -62,6 +62,9 @@ interface BackspaceElectronAPI {
   checkForUpdates: () => void;
   getVersion: () => Promise<string>;
 
+  getWindowVisibility?: () => Promise<boolean>;
+  onWindowVisibilityChange?: (callback: (visible: boolean) => void) => (() => void);
+
   // Window focus (Task 2.2)
   onWindowFocusChange: (callback: (focused: boolean) => void) => (() => void);
 

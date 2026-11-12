@@ -14,12 +14,29 @@ interface DecoderConstructor { new(options: { data: ArrayBuffer; type: string; p
 export function AvatarDecoration({ id, playing }: { id: string; playing: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const player = useRef<{ play(): void; pause(): void } | null>(null);
-  const playingRef = useRef(playing);
-  playingRef.current = playing;
+  const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden');
+  const [nativeVisible, setNativeVisible] = useState(true);
+  const active = playing && visible && nativeVisible;
+  const playingRef = useRef(active);
+  playingRef.current = active;
   const [painted, setPainted] = useState(false);
   const [nativeFallback, setNativeFallback] = useState(false);
   const source = cosmeticAvatarUrl(id, true)!;
   const still = cosmeticAvatarUrl(id, false)!;
+
+  useEffect(() => {
+    const updateVisibility = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    const bridge = window.backspace;
+    let disposed = false, changed = false;
+    const unsubscribe = bridge?.onWindowVisibilityChange?.(value => { changed = true; setNativeVisible(value); });
+    void bridge?.getWindowVisibility?.().then(value => { if (!disposed && !changed) setNativeVisible(value); }).catch(() => {});
+    return () => { disposed = true; unsubscribe?.(); };
+  }, []);
 
   useEffect(() => {
     const Decoder = (window as unknown as { ImageDecoder?: DecoderConstructor }).ImageDecoder;
@@ -38,6 +55,7 @@ export function AvatarDecoration({ id, playing }: { id: string; playing: boolean
     let exhausted = false;
     let resumeRequested = false;
     let failed = false;
+    let releaseRequested = false;
     const abort = new AbortController();
     const release = () => { decoder?.close(); decoder = null; };
     const load = async () => {
@@ -88,6 +106,7 @@ export function AvatarDecoration({ id, playing }: { id: string; playing: boolean
         if (!disposed && !abort.signal.aborted) { failed = true; setNativeFallback(true); release(); }
       } finally {
         decoding = false;
+        if (releaseRequested && !playingRef.current) release();
         if (resumeRequested && playingRef.current && !disposed && !failed) {
           resumeRequested = false; clearTimeout(timer);
           timer = setTimeout(() => { void tick(); }, 16);
@@ -96,6 +115,7 @@ export function AvatarDecoration({ id, playing }: { id: string; playing: boolean
     };
     player.current = {
       play() {
+        releaseRequested = false;
         clearTimeout(releasing); clearTimeout(timer);
         if (decoding) resumeRequested = true;
         else void tick();
@@ -103,7 +123,7 @@ export function AvatarDecoration({ id, playing }: { id: string; playing: boolean
       pause() {
         clearTimeout(timer);
         // Retain just the canvas and encoded bytes after a pause, not all decoded frames.
-        releasing = setTimeout(() => { if (!decoding) release(); }, 1500);
+        releasing = setTimeout(() => { releaseRequested = true; if (!decoding) release(); }, 1500);
       },
     };
     return () => {
@@ -115,12 +135,12 @@ export function AvatarDecoration({ id, playing }: { id: string; playing: boolean
   }, [id, source]);
 
   useEffect(() => {
-    if (playing) player.current?.play();
+    if (active) player.current?.play();
     else player.current?.pause();
-  }, [playing, id]);
+  }, [active, id]);
 
-  return <span className="lume-avatar-decoration" aria-hidden="true" data-decoration-playing={playing}>
-    {(!painted || nativeFallback) && <img src={nativeFallback && playing ? source : still} alt="" className="w-full h-full object-contain" />}
+  return <span className="lume-avatar-decoration" aria-hidden="true" data-decoration-playing={active}>
+    {(!painted || nativeFallback) && <img src={nativeFallback && active ? source : still} alt="" className="w-full h-full object-contain" />}
     {!nativeFallback && <canvas ref={canvas} width={288} height={288} className="w-full h-full" style={{ display: painted ? 'block' : 'none' }} />}
   </span>;
 }

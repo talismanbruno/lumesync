@@ -42,6 +42,7 @@ import { migrateUserData } from './userDataMigration';
 import { WindowsScreenAudio } from './windowsScreenAudio';
 import type { AppUpdater } from 'electron-updater';
 import { configureDesktopUpdater } from './desktopUpdater';
+import { attachWindowVisibility, isWindowVisible } from './windowVisibility';
 
 // Override Electron's package.json-derived app name so userData lives at
 // "<appData>/Backspace" instead of leaking the monorepo's "@backspace/desktop"
@@ -397,6 +398,7 @@ function createWindow(): void {
   mainWindow.webContents.on('render-process-gone', () => { voiceSessionActive = false; });
   setMainWindow(mainWindow);
   attachRecoveryHandlers(mainWindow);
+  attachWindowVisibility(mainWindow);
   keybindManager.setWindow(mainWindow);
 
   if (savedState.isMaximized) {
@@ -659,6 +661,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('get-app-version', () => app.getVersion());
+  ipcMain.handle('get-window-visibility', event => event.sender === mainWindow?.webContents && isWindowVisible(mainWindow));
 
   // Auto-launch settings
   ipcMain.handle('get-auto-launch-settings', (): { openAtLogin: boolean; startMinimized: boolean } => {

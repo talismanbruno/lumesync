@@ -52,3 +52,32 @@ it('decodes original frames on demand, pauses without work, resumes and closes r
   expect(decode).toHaveBeenCalledTimes(afterClose);
   expect(closeDecoder).toHaveBeenCalledTimes(2);
 });
+
+it('suspends original animation when the document becomes hidden', () => {
+  const { container } = render(<AvatarDecoration id="101" playing />);
+  expect(container.querySelector('img')).toHaveAttribute('src', '/api/customization/items/101/animated');
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  act(() => document.dispatchEvent(new Event('visibilitychange')));
+  expect(container.querySelector('img')).toHaveAttribute('src', '/api/customization/items/101/static');
+});
+
+it('releases a decoder whose pending decode finishes after the pause deadline', async () => {
+  vi.useFakeTimers();
+  let finish!: (value: unknown) => void;
+  const close = vi.fn(), closeFrame = vi.fn();
+  class SlowDecoder {
+    tracks = { ready: Promise.resolve(), selectedTrack: { frameCount: 60, repetitionCount: Infinity } };
+    decode() { return new Promise(resolve => { finish = resolve; }); }
+    close = close;
+  }
+  vi.stubGlobal('ImageDecoder', SlowDecoder);
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => Uint8Array.of(137).buffer }));
+  const { rerender } = render(<AvatarDecoration id="101" playing />);
+  await act(() => vi.advanceTimersByTimeAsync(1));
+  rerender(<AvatarDecoration id="101" playing={false} />);
+  await act(() => vi.advanceTimersByTimeAsync(1600));
+  expect(close).not.toHaveBeenCalled();
+  await act(async () => { finish({ image: { duration: 83_000, close: closeFrame } }); });
+  expect(closeFrame).toHaveBeenCalledOnce();
+  expect(close).toHaveBeenCalledOnce();
+});

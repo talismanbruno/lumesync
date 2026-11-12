@@ -61,6 +61,12 @@ contextBridge.exposeInMainWorld('backspace', {
   getVersion: () => ipcRenderer.invoke('get-app-version'),
 
   // Window focus
+  getWindowVisibility: (): Promise<boolean> => ipcRenderer.invoke('get-window-visibility'),
+  onWindowVisibilityChange: (callback: (visible: boolean) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, visible: boolean) => callback(visible);
+    ipcRenderer.on('window-visibility-changed', handler);
+    return () => ipcRenderer.removeListener('window-visibility-changed', handler);
+  },
   onWindowFocusChange: (callback: (focused: boolean) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, focused: boolean) => callback(focused);
     ipcRenderer.on('window-focus-changed', handler);
