@@ -7,9 +7,12 @@ import { exitVoiceFullscreen, getVoiceFullscreenElement } from '../../utils/voic
 import { VoiceControlBar } from './VoiceControlBar';
 import { VoiceGrid } from './VoiceGrid';
 import { VoiceUser } from './VoiceUser';
+import { StreamPreviewCard } from './StreamPreviewCard';
+import { watchParticipantStream } from '../../utils/watchParticipantStream';
 
-export function CompactCallPanel({ active }: { active: boolean }) {
+export function CompactCallPanel({ active, privateCall = false, roomId }: { active: boolean; privateCall?: boolean; roomId: string }) {
   const participants = useVoiceStore(s => s.participants);
+  const focusedParticipantId = useVoiceStore(s => s.focusedParticipantId);
   const connected = useVoiceStore(s => s.isLiveKitConnected);
   const connectionError = useVoiceStore(s => s.connectionError);
   const voiceFullscreen = useUIStore(s => s.voiceFullscreen);
@@ -19,7 +22,13 @@ export function CompactCallPanel({ active }: { active: boolean }) {
 
   const tiles = useMemo(() => deriveGridTiles(participants), [participants]);
   const hasMedia = tiles.some(tile => tile.kind === 'stream' || tile.participant.isCameraOn);
-  const showMedia = active && hasMedia && expanded;
+  const selectedStream = tiles.some(tile => tile.kind === 'stream' && tile.key === focusedParticipantId);
+  const showMedia = active && hasMedia && (expanded || (privateCall && selectedStream));
+
+  const toggleMedia = () => {
+    if (showMedia) useVoiceStore.getState().setFocusedParticipant(null);
+    setExpanded(!showMedia);
+  };
 
   useEffect(() => {
     if (!active || !hasMedia) setExpanded(false);
@@ -53,7 +62,7 @@ export function CompactCallPanel({ active }: { active: boolean }) {
     <section
       aria-label={uiText("Chamada")}
       aria-hidden={!active}
-      className={`lume-compact-call ${active ? 'is-active' : ''}`}
+      className={`lume-compact-call ${privateCall ? 'lume-compact-call-private' : ''} ${active ? 'is-active' : ''}`}
     >
       <div className="lume-compact-call-clip">
         <div
@@ -69,7 +78,12 @@ export function CompactCallPanel({ active }: { active: boolean }) {
             ) : (
               <div className="lume-call-participant-scroll">
                 <div className="lume-call-participants">
-                  {tiles.map(tile => tile.kind === 'user' && <VoiceUser key={tile.key} tile={tile} compact />)}
+                  {tiles.map(tile => tile.kind === 'user' && <VoiceUser key={tile.key} tile={tile} compact compactAvatarSize={privateCall ? 80 : 48} />)}
+                  {privateCall && !showMedia && tiles.map(tile => tile.kind === 'stream' && (
+                    <StreamPreviewCard key={tile.key} tile={tile} onOpen={() => {
+                      if (watchParticipantStream(tile.participant.userId, roomId)) setExpanded(true);
+                    }} />
+                  ))}
                 </div>
               </div>
             ))}
@@ -82,7 +96,7 @@ export function CompactCallPanel({ active }: { active: boolean }) {
           <VoiceControlBar
             active={active}
             mediaExpanded={showMedia}
-            onToggleMedia={active && hasMedia ? () => setExpanded(value => !value) : undefined}
+            onToggleMedia={active && hasMedia ? toggleMedia : undefined}
           />
         </div>
       </div>

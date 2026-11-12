@@ -5,6 +5,7 @@ import type { ParticipantInfo } from '../../hooks/useLiveKit';
 vi.mock('../../hooks/useWebSocket', () => ({ wsSend: vi.fn(), getRejectedPeerOrigins: () => new Set(), getAwaitingApprovalPeerOrigins: () => new Set() }));
 vi.mock('../../audio/AudioManager', () => ({ AudioManager: { getInstance: () => ({ setOutputDevice() {}, setVolume() {} }) } }));
 import { VoiceGrid } from './VoiceGrid';
+import { StreamTile } from './StreamTile';
 import { VoiceChannel } from './VoiceChannel';
 import { buildVoiceParticipantMenuItems } from './voiceMenuItems';
 import { ContextMenuRenderer } from '../ui/ContextMenuRenderer';
@@ -39,7 +40,7 @@ beforeEach(() => {
   useVoiceStore.setState({
     currentVoiceChannelId: 'voice', activeDmCall: null, participants: [participant], focusedParticipantId: null,
     isMuted: false, isDeafened: false, isLiveKitConnected: true,
-    participantMutes: new Map(), participantVolumes: new Map(), unwatchedCameras: new Set(),
+    watchingStreams: new Set(), participantMutes: new Map(), participantVolumes: new Map(), unwatchedCameras: new Set(),
     voiceUsers: new Map([['voice', ['self', 'peer']]]), spaceMutedUserIds: new Set(), spaceDeafenedUserIds: new Set(), permissionMutedUserIds: new Set(),
   });
   useSpaceStore.setState({
@@ -64,6 +65,22 @@ describe('call participant interactions', () => {
     fireEvent.click(screen.getByLabelText('Pessoa'));
     expect(useUIStore.getState().userProfilePopout.user).toBeNull();
     expect(useVoiceStore.getState().focusedParticipantId).toBeNull();
+  });
+
+  it('attaches an already subscribed screen when the viewer opens the stream', () => {
+    const screenTrack = Object.assign(new EventTarget(), { readyState: 'live', getSettings: () => ({}) }) as MediaStreamTrack;
+    const attach = vi.fn();
+    const detach = vi.fn();
+    const { container, unmount } = render(<StreamTile tile={{
+      key: 'peer:stream', kind: 'stream', participant: { ...participant, isScreenSharing: true },
+      screenTrack, screenAudioTrack: null, lkScreenTrack: { attach, detach } as any,
+    }} />);
+    expect(attach).not.toHaveBeenCalled();
+    act(() => useVoiceStore.getState().watchStream('peer'));
+    expect(attach).toHaveBeenCalledWith(container.querySelector('video'));
+    expect(container.querySelector('video')).not.toBeNull();
+    unmount();
+    expect(detach).toHaveBeenCalledTimes(1);
   });
 
   it('uses the same menu in the call and the server voice list, without a right-click also focusing', () => {

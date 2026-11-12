@@ -7,7 +7,7 @@ import path from 'path';
 
 const EXT_MIMETYPES: Record<string, string> = {
   '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-  '.png': 'image/png', '.gif': 'image/gif', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.apng': 'image/apng', '.gif': 'image/gif', '.svg': 'image/svg+xml',
   '.avif': 'image/avif', '.tiff': 'image/tiff', '.bmp': 'image/bmp',
   '.ico': 'image/x-icon',
   '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',

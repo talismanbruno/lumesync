@@ -140,6 +140,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
 
   const liveScreenTrack = tile.screenTrack?.readyState === 'live' ? tile.screenTrack : null;
   const liveLkScreenTrack = liveScreenTrack ? tile.lkScreenTrack : null;
+  const showVideo = !!liveScreenTrack && (isLocal || isWatching);
 
   // Quality badge state
   const [qualityBadge, setQualityBadge] = useState<string>('');
@@ -157,7 +158,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
     } else {
       videoEl.srcObject = null;
     }
-  }, [liveLkScreenTrack]);
+  }, [liveLkScreenTrack, showVideo]);
 
   // Actual playback quality (poll every 3s). Track settings may advertise
   // Infinity or a nominal frame rate, neither of which measures displayed FPS.
@@ -321,7 +322,7 @@ export function StreamTile({ tile, large }: StreamTileProps) {
       }`}
       onContextMenu={handleContextMenu}
     >
-      {hasVideo && isWatching ? (
+      {showVideo ? (
         <video
           ref={videoRef}
           autoPlay

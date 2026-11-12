@@ -25,6 +25,7 @@ import { useDelayedLoading } from '../../hooks/useDelayedLoading';
 import { useAudioDevices } from '../../hooks/useAudioDevices';
 import { AudioDevicePanel } from '../voice/AudioDevicePanel';
 import { SelfProfileMenu } from './SelfProfileMenu';
+import { UpdateToast } from '../ui/UpdateToast';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 import { PeopleIcon } from '../ui/PeopleIcon';
 import { useDmContextMenu } from '../../hooks/useDmContextMenu';
@@ -400,6 +401,7 @@ export function ChannelSidebar() {
   // Floating bottom panel — shared between DM view and server view
   const floatingPanel = user ? (
     <div ref={setFloatingPanelEl} data-pip-obstacle="bottom" className="fixed bottom-0 left-0 right-0 z-[105] p-2 md:right-auto md:w-[296px] md:bottom-[10px] md:left-[10px] md:p-0">
+      <UpdateToast anchored />
       <div className="lume-connection-panel glass-bubble rounded-[20px]">
         {/* Voice controls (expands when connected) */}
         {(currentVoiceChannelId || activeDmCall) && <VoiceControls />}

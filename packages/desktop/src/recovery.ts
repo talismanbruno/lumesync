@@ -22,6 +22,7 @@ export interface RecoveryState {
   reason: { code: RecoveryReasonCode; detail: string } | null;
   updateState: UpdateState;
   updateVersion: string | null;
+  updateProgress?: { percent: number; transferred: number; total: number } | null;
   lastUpdateError: { message: string; code: string | null; at: number } | null;
   lastCheckResult: 'up-to-date' | 'failed' | null;
 }
@@ -31,6 +32,7 @@ const INITIAL_STATE: RecoveryState = {
   reason: null,
   updateState: 'idle',
   updateVersion: null,
+  updateProgress: null,
   lastUpdateError: null,
   lastCheckResult: null,
 };
@@ -404,8 +406,17 @@ export function handleRecoveryAction(action: RecoveryAction): void {
       return;
     }
     case 'check-update': {
-      recoveryStore.update({ updateState: 'checking', lastCheckResult: null });
-      autoUpdaterRef?.checkForUpdates().catch(() => { /* check-phase errors stay silent */ });
+      const { updateState } = recoveryStore.get();
+      if (!autoUpdaterRef || updateState === 'checking' || updateState === 'downloading' || updateState === 'downloaded') return;
+      recoveryStore.update({ updateState: 'checking', updateVersion: null, lastCheckResult: null, lastUpdateError: null });
+      void autoUpdaterRef.checkForUpdates().catch((err: unknown) => {
+        if (recoveryStore.get().updateState !== 'checking') return;
+        recoveryStore.update({
+          updateState: 'error',
+          lastCheckResult: 'failed',
+          lastUpdateError: { message: err instanceof Error ? err.message : String(err), code: extractErrorCode(err), at: Date.now() },
+        });
+      });
       return;
     }
     case 'install-update': {

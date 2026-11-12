@@ -2,6 +2,8 @@ import { t as uiText } from '../../../i18n';
 import { useState, useEffect } from 'react';
 import { Toggle } from '../../ui/Toggle';
 import { getMacDownloads } from '../../../config/desktopDownloads';
+import { useDesktopUpdateState } from '../../../hooks/useDesktopUpdateState';
+import { useVoiceStore } from '../../../stores/voiceStore';
 
 function AutoLaunchSettings() {
   const [openAtLogin, setOpenAtLogin] = useState(false);
@@ -71,39 +73,75 @@ function AutoLaunchSettings() {
 
 function UpdateSettings() {
   const [version, setVersion] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
-  const [runtime, setRuntime] = useState<{ platform: string; arch: string; translated: boolean } | null>(null);
+  const [requested, setRequested] = useState(false);
+  const [checkExpired, setCheckExpired] = useState(false);
+  const [runtime, setRuntime] = useState<{ platform: string; arch: string; translated: boolean; updatesSupported?: boolean } | null>(null);
+  const { updateState, updateVersion, updateProgress, lastUpdateError, lastCheckResult, checkForUpdates } = useDesktopUpdateState(requested);
+  const voiceActive = useVoiceStore(state => !!(state.currentVoiceChannelId || state.activeDmCall || state.outgoingCall));
+  const supported = runtime?.updatesSupported ?? window.backspace?.platform === 'win32';
 
   useEffect(() => {
-    window.backspace?.getVersion().then(setVersion).catch(() => {});
+    void window.backspace?.getVersion?.().then(setVersion).catch(() => {});
     void window.backspace?.getRuntimeInfo?.().then(setRuntime).catch(() => {});
   }, []);
 
-  const handleCheck = () => {
-    setChecking(true);
-    window.backspace?.checkForUpdates();
-    // Reset after a few seconds — electron-updater doesn't have a "no update" callback
-    setTimeout(() => setChecking(false), 5000);
-  };
+  useEffect(() => {
+    if (!requested) return;
+    if (updateState === 'downloading' || updateState === 'downloaded' || updateState === 'error' || lastCheckResult === 'up-to-date') {
+      setRequested(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setRequested(false);
+      setCheckExpired(true);
+    }, 60_000);
+    return () => window.clearTimeout(timer);
+  }, [requested, updateState, lastCheckResult]);
+
+  const checking = updateState === 'checking' || requested;
+  const downloading = updateState === 'downloading';
+  const ready = updateState === 'downloaded';
+  const status = checkExpired ? uiText("A verificação demorou mais que o esperado.")
+    : ready ? uiText("Versão {0} baixada", [updateVersion])
+    : downloading ? uiText("Baixando a versão {0}… {1}%", [updateVersion, Math.round(updateProgress?.percent ?? 0)])
+    : checking ? uiText("Checking...")
+    : updateState === 'error' ? lastUpdateError?.message ?? uiText("Não foi possível verificar ou baixar a atualização.")
+    : lastCheckResult === 'up-to-date' ? uiText("Você está usando a versão mais recente")
+    : uiText("Check for new versions of the desktop app");
 
   return (
-    <div className="flex items-center justify-between py-1">
-      <div className="flex-1 mr-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 py-1">
+      <div className="flex-1 min-w-36">
         <div className="text-sm text-txt-primary">
           {version ? uiText("Versão {0}", [version]) : uiText("Lume Desktop")}
         </div>
-        <div className="text-xs text-txt-tertiary mt-0.5">
-          {uiText("Check for new versions of the desktop app")}</div>
+        <div className="text-xs text-txt-tertiary mt-0.5" role="status">
+          {ready && voiceActive ? uiText("Finalize a chamada para reiniciar com segurança") : status}
+          {downloading && <progress className="block w-full h-1 mt-2 accent-purple-500" aria-label="Download da atualização nas configurações" value={updateProgress?.percent ?? 0} max={100} />}
+        </div>
         {runtime?.platform === 'darwin' && <p className="text-xs text-txt-secondary mt-2">{runtime.translated ? 'Versão Intel via Rosetta. Seu Mac pode usar a versão nativa.' : runtime.arch === 'arm64' ? 'Apple Silicon · versão nativa' : 'Mac Intel · versão nativa'}</p>}
         {runtime?.translated && <a href={getMacDownloads()[0]!.url} className="inline-block text-xs text-accent-primary mt-2">Baixar versão Apple Silicon →</a>}
       </div>
-      <button
-        onClick={handleCheck}
-        disabled={checking}
-        className="px-3 py-1.5 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded-lg transition-colors disabled:opacity-50"
-      >
-        {checking ? uiText("Checking...") : uiText("Check for Updates")}
-      </button>
+      {supported ? (
+        <button
+          type="button"
+          onClick={() => {
+            if (ready) { window.backspace?.installUpdate(); return; }
+            setCheckExpired(false);
+            setRequested(true);
+            checkForUpdates();
+          }}
+          disabled={checking || downloading || (ready && voiceActive)}
+          className="px-3 py-1.5 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] hover:bg-white/[0.08] rounded-lg transition-colors disabled:opacity-50"
+        >
+          {ready ? uiText("Atualizar e reiniciar") : downloading ? uiText("Baixando atualização…") : checking ? uiText("Checking...") : uiText("Verificar atualizações")}
+        </button>
+      ) : (
+        <a href="https://github.com/talismanbruno/lumesync/releases" target="_blank" rel="noopener noreferrer"
+          className="px-3 py-1.5 text-sm text-txt-secondary hover:text-txt-primary bg-white/[0.04] rounded-lg">
+          {uiText("Ver versões disponíveis")}
+        </a>
+      )}
     </div>
   );
 }

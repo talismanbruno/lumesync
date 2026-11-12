@@ -8,6 +8,7 @@ interface RecoveryState {
   reason: { code: RecoveryReasonCode; detail: string } | null;
   updateState: UpdateState;
   updateVersion: string | null;
+  updateProgress?: { percent: number; transferred: number; total: number } | null;
   lastUpdateError: { message: string; code: string | null; at: number } | null;
   lastCheckResult: 'up-to-date' | 'failed' | null;
 }
@@ -36,7 +37,7 @@ interface BackspaceElectronAPI {
   preferredLanguages?: string[];
   // Platform info
   platform: NodeJS.Platform;
-  getRuntimeInfo?: () => Promise<{ platform: string; arch: string; translated: boolean; gpu: Record<string, string> }>;
+  getRuntimeInfo?: () => Promise<{ platform: string; arch: string; translated: boolean; gpu: Record<string, string>; updatesSupported?: boolean }>;
 
   // Window controls
   minimize: () => void;

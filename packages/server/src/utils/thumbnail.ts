@@ -11,9 +11,28 @@ let ffmpegAvailable: boolean | null = null;
 
 const PROFILE_LIMITS = { avatar: 256, icon: 256, banner: 1280 } as const;
 
+async function isAnimatedPng(filepath: string): Promise<boolean> {
+  const file = await fs.promises.open(filepath, 'r');
+  try {
+    const { size } = await file.stat();
+    const header = Buffer.alloc(8);
+    for (let offset = 8; offset + 12 <= size;) {
+      const { bytesRead } = await file.read(header, 0, 8, offset);
+      if (bytesRead !== 8) return false;
+      const type = header.toString('ascii', 4);
+      if (type === 'acTL') return true;
+      if (type === 'IDAT' || type === 'IEND') return false;
+      offset += header.readUInt32BE(0) + 12;
+    }
+    return false;
+  } finally {
+    await file.close();
+  }
+}
+
 /**
  * Resize a profile image (avatar, icon, or banner) to the target max dimension.
- * Preserves animated GIF frames. No-op if the image is already small enough.
+ * Animated sources stay byte-for-byte intact.
  * Writes to a temp file then atomically renames to avoid corruption.
  */
 export async function resizeProfileImage(
@@ -22,9 +41,11 @@ export async function resizeProfileImage(
 ): Promise<void> {
   const maxDim = PROFILE_LIMITS[type];
   try {
+    const ext = path.extname(filepath).toLowerCase();
+    if (ext === '.apng' || (ext === '.png' && await isAnimatedPng(filepath))) return;
     const image = sharp(filepath, { animated: true });
     const metadata = await image.metadata();
-    if (!metadata.width || metadata.width <= maxDim) return;
+    if ((metadata.pages ?? 1) > 1 || !metadata.width || metadata.width <= maxDim) return;
 
     const tmpPath = filepath + '.tmp';
     await sharp(filepath, { animated: true })

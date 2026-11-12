@@ -124,6 +124,11 @@ export function setStreamSubscription(room: Room | null, targetIdentity: string,
   });
 }
 
+export function setScreenPreviewSubscription(room: Room, targetIdentity: string, subscribed: boolean) {
+  const participant = room.remoteParticipants.get(targetIdentity);
+  participant?.getTrackPublication(Track.Source.ScreenShare)?.setSubscribed(subscribed);
+}
+
 export function setCameraSubscription(room: Room | null, targetIdentity: string, subscribed: boolean) {
   if (!room) return;
   const rp = room.remoteParticipants.get(targetIdentity);
@@ -782,6 +787,8 @@ export function useLiveKit() {
           // without having to press "Watch" on their own stream.
           publication.setSubscribed(true);
           useVoiceStore.getState().watchStream(parseIdentity(participant.identity).userId);
+        } else if (useVoiceStore.getState().watchingStreams.has(parseIdentity(participant.identity).userId)) {
+          publication.setSubscribed(true);
         }
         guardedUpdate();
       });

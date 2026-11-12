@@ -31,7 +31,7 @@ describe('self profile menu', () => {
     expect(screen.getByText('Minha órbita.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Administrador verificado do Lume' })).toBeInTheDocument();
     expect(container.querySelector('.lume-self-profile-banner')).toHaveStyle({ backgroundImage: 'url("/api/uploads/banner.gif")' });
-    expect(container.querySelector('.lume-avatar-decoration')).toHaveAttribute('src', '/api/customization/items/101/animated');
+    expect(container.querySelector('.lume-avatar-decoration img')).toHaveAttribute('src', '/api/customization/items/101/animated');
     expect(container.querySelector('.lume-nameplate')).not.toBeInTheDocument();
     expect(container.querySelector('.lume-self-profile-card')).toHaveStyle({ backgroundColor: '#121824' });
     const frame = container.querySelector<HTMLElement>('.lume-profile-frame-space')!;

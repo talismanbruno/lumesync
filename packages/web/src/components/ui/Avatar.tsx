@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User, UserStatus, ProfileCustomization } from '@backspace/shared';
-import { cosmeticAvatarUrl } from '../../stores/customizationStore';
+import { AvatarDecoration } from './AvatarDecoration';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useAuthStore } from '../../stores/authStore';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -25,6 +25,7 @@ interface AvatarProps {
   avatarColor?: string | null;
   freezeAnimation?: boolean;
   showDecoration?: boolean;
+  animateDecoration?: boolean;
   customization?: ProfileCustomization | null;
 }
 
@@ -113,7 +114,7 @@ function getDotMetrics(avatarSize: number, ringWidth: number = 0) {
   return { dot, gap, inset: avatarInset + ringWidth };
 }
 
-export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false, showDecoration = false, customization }: AvatarProps) {
+export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false, showDecoration = false, animateDecoration = true, customization }: AvatarProps) {
   const openUserProfile = useUIStore((s) => s.openUserProfile);
   const identityKey = user ? canonicalUserKey(user) : userId ?? null;
   const cachedCustomization = useSpaceStore(state => identityKey ? state.userViews?.get(identityKey)?.user.customization : undefined);
@@ -121,8 +122,7 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
   const appearance = customization !== undefined ? customization : selfCustomization !== undefined ? selfCustomization : cachedCustomization !== undefined ? cachedCustomization : user?.customization;
   const reducedMotion = useReducedMotion();
   const freeze = freezeAnimation || reducedMotion;
-  // Keep one source per decoration and motion preference, including while the catalog loads.
-  const decoration = showDecoration ? cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze) : undefined;
+  const decorationId = showDecoration && /^\d{1,24}$/.test(appearance?.avatarDecorationId ?? '') ? appearance?.avatarDecorationId : undefined;
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
@@ -130,6 +130,8 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
     return resolveAvatarSource(src);
   }, [src]);
   const displaySrc = useFrozenAvatar(resolvedSrc, freeze);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const avatarImage = displaySrc === failedSrc ? null : displaySrc;
 
   const ringWidth = ring?.width ?? 0;
   const outerSize = size + ringWidth * 2;
@@ -171,40 +173,25 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
           ...maskStyle,
         }}
       >
-        {displaySrc ? (
+        {avatarImage ? (
           <img
-            src={displaySrc}
+            key={avatarImage}
+            src={avatarImage}
             alt={name}
             loading="lazy"
             className="w-full h-full rounded-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-              const parent = (e.target as HTMLImageElement).parentElement;
-              if (parent) {
-                const fallback = parent.querySelector('.avatar-fallback') as HTMLElement;
-                if (fallback) fallback.style.display = 'flex';
-              }
-            }}
+            onError={() => setFailedSrc(avatarImage)}
           />
-        ) : null}
-        <div
-          className={`avatar-fallback w-full h-full rounded-full flex items-center justify-center font-bold text-white ${displaySrc ? 'hidden' : 'flex'}`}
-          style={{ background: gradient.gradient, color: gradient.foreground, fontSize: fontPx, ...(displaySrc ? { display: 'none' } : {}) }}
-        >
-          {initials}
-        </div>
+        ) : (
+          <div
+            className="avatar-fallback w-full h-full rounded-full flex items-center justify-center font-bold text-white"
+            style={{ background: gradient.gradient, color: gradient.foreground, fontSize: fontPx }}
+          >
+            {initials}
+          </div>
+        )}
       </div>
-      {decoration && (
-        <img
-          key={decoration}
-          src={decoration}
-          alt=""
-          aria-hidden="true"
-          className="lume-avatar-decoration"
-          loading="lazy"
-          onError={event => { event.currentTarget.hidden = true; }}
-        />
-      )}
+      {decorationId && <AvatarDecoration key={decorationId} id={decorationId} playing={animateDecoration && !freezeAnimation} />}
       {/* Status dot — outside the masked div so it isn't clipped */}
       {status && (
         <div

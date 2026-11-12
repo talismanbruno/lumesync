@@ -1,3 +1,4 @@
+import { isAnimatedProfileImage } from '../../../utils/animatedProfileImage';
 import { t as uiText } from '../../../i18n';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuthStore } from '../../../stores/authStore';
@@ -35,6 +36,7 @@ export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean })
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarCropSrc, setAvatarCropSrc] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarSelection = useRef(0);
 
   // Banner upload state
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean })
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [bannerCropSrc, setBannerCropSrc] = useState<string | null>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const bannerSelection = useRef(0);
 
   const addToast = useUIStore((s) => s.addToast);
   const [error, setError] = useState('');
@@ -213,32 +216,42 @@ export function AccountPanel({ profileOnly = false }: { profileOnly?: boolean })
     }
   };
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
-    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+    input.value = '';
+    const selection = ++avatarSelection.current;
+    const animated = await isAnimatedProfileImage(file).catch(() => false);
+    if (selection !== avatarSelection.current) return;
+    if (animated) {
       void uploadAnimatedAvatar(file);
-      if (avatarInputRef.current) avatarInputRef.current.value = '';
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setAvatarCropSrc(reader.result as string);
+    reader.onload = () => {
+      if (selection === avatarSelection.current) setAvatarCropSrc(reader.result as string);
+    };
     reader.readAsDataURL(file);
-    if (avatarInputRef.current) avatarInputRef.current.value = '';
   };
 
-  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
-    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+    input.value = '';
+    const selection = ++bannerSelection.current;
+    const animated = await isAnimatedProfileImage(file).catch(() => false);
+    if (selection !== bannerSelection.current) return;
+    if (animated) {
       void uploadAnimatedBanner(file);
-      if (bannerInputRef.current) bannerInputRef.current.value = '';
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setBannerCropSrc(reader.result as string);
+    reader.onload = () => {
+      if (selection === bannerSelection.current) setBannerCropSrc(reader.result as string);
+    };
     reader.readAsDataURL(file);
-    if (bannerInputRef.current) bannerInputRef.current.value = '';
   };
 
   // ── Crop complete handlers ──

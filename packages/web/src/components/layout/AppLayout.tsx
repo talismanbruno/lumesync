@@ -467,7 +467,6 @@ export function AppLayout() {
       <SoundController />
       <GlobalAudioRenderer />
       <NotificationController />
-      <UpdateToast />
       <BugReportButton />
       <BugReportModal />
 

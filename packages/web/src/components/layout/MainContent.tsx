@@ -229,7 +229,7 @@ export function MainContent() {
             {isGroupDm && dmChannel.members.length > 2 && <><div className="w-[1px] h-5 bg-border-soft mx-1" /><MemberListToggleButton /></>}
           </div>
         </div>
-        <CompactCallPanel key={currentChannelId} active={isInDmCall} />
+        <CompactCallPanel key={currentChannelId} active={isInDmCall} roomId={currentChannelId} privateCall />
         <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
           <MessageList channelId={currentChannelId} jumpToMessageId={jumpToMessageId} onJumpComplete={() => setJumpToMessageId(null)} />
           {dmPartnerDeleted
@@ -283,7 +283,7 @@ export function MainContent() {
           </div>
         </div>
 
-        <CompactCallPanel key={currentChannelId} active={isInThisChannel} />
+        <CompactCallPanel key={currentChannelId} active={isInThisChannel} roomId={currentChannelId} />
         {!isInThisChannel && (
           <div className="shrink-0 flex justify-center border-b border-border-soft bg-surface-base p-2">
             <button

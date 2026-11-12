@@ -15,9 +15,10 @@ interface VoiceUserProps {
   tile: UserTile;
   large?: boolean;
   compact?: boolean;
+  compactAvatarSize?: number;
 }
 
-export function VoiceUser({ tile, large, compact = false }: VoiceUserProps) {
+export function VoiceUser({ tile, large, compact = false, compactAvatarSize = 48 }: VoiceUserProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { participant } = tile;
@@ -55,11 +56,12 @@ export function VoiceUser({ tile, large, compact = false }: VoiceUserProps) {
     <Avatar
       src={avatar}
       name={displayName}
-      size={compact ? 48 : large ? 100 : 64}
+      size={compact ? compactAvatarSize : large ? 100 : 64}
       userId={avatarUserId}
       user={user ?? undefined}
       onClick={compact && user ? undefined : () => {}}
-      showDecoration={isSpeaking}
+      showDecoration
+      animateDecoration={isSpeaking}
       className={isSpeaking && compact ? 'rounded-full ring-2 ring-status-online' : ''}
     />
   );

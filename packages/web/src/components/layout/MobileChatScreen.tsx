@@ -122,7 +122,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
           </button>
         )}
       </header>
-      {channelId && <CompactCallPanel key={channelId} active={isInCall} />}
+      {channelId && <CompactCallPanel key={channelId} active={isInCall} roomId={channelId} privateCall={isDm} />}
 
       {/* Messages + floating composer.
           Mirrors the desktop pattern in `MainContent.tsx`: a single relative

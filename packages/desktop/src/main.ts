@@ -40,6 +40,8 @@ import {
 } from './recovery';
 import { migrateUserData } from './userDataMigration';
 import { WindowsScreenAudio } from './windowsScreenAudio';
+import type { AppUpdater } from 'electron-updater';
+import { configureDesktopUpdater } from './desktopUpdater';
 
 // Override Electron's package.json-derived app name so userData lives at
 // "<appData>/Backspace" instead of leaking the monorepo's "@backspace/desktop"
@@ -80,6 +82,8 @@ let tray: Tray | null = null;
 let isQuitting = false;
 let pendingDeepLink: string | null = null;
 let updateRelaunchGuardStarted = false;
+let desktopUpdater: AppUpdater | null = null;
+let voiceSessionActive = false;
 
 const knownInstanceOrigins = new Set<string>();
 
@@ -345,30 +349,17 @@ function loadTrayIcon(): Electron.NativeImage {
 
 // ─── Window & Tray Creation ─────────────────────────────────────────────────
 
-function installDownloadedUpdate(autoUpdater: { quitAndInstall: (isSilent?: boolean, isForceRunAfter?: boolean) => void }): void {
-  // electron-updater asks NSIS to relaunch Lume, but Windows can occasionally
-  // drop that final hand-off after the installer replaces the executable. A
-  // detached, hidden watchdog provides a safe second attempt. If Lume already
-  // reopened, the single-instance lock simply focuses that existing process.
-  if (process.platform === 'win32' && !updateRelaunchGuardStarted) {
-    updateRelaunchGuardStarted = true;
-    const target = process.execPath.replace(/'/g, "''");
-    const script = [
-      ` $target = '${target}'`,
-      'Start-Sleep -Seconds 20',
-      'for ($attempt = 0; $attempt -lt 24; $attempt++) {',
-      '  if (Test-Path -LiteralPath $target) { Start-Process -FilePath $target; exit 0 }',
-      '  Start-Sleep -Seconds 5',
-      '}',
-    ].join('; ');
-    const watchdog = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', script], {
-      detached: true,
-      stdio: 'ignore',
-      windowsHide: true,
-    });
-    watchdog.unref();
+function requestDesktopUpdateInstall(): void {
+  if (!desktopUpdater || voiceSessionActive || updateRelaunchGuardStarted || recoveryStore.get().updateState !== 'downloaded') return;
+  updateRelaunchGuardStarted = true;
+  isQuitting = true;
+  // NSIS owns installation and relaunch; never start the old executable on a timer.
+  try { desktopUpdater.quitAndInstall(true, true); }
+  catch (error) {
+    isQuitting = false;
+    updateRelaunchGuardStarted = false;
+    recoveryStore.update({ updateState: 'error', lastCheckResult: 'failed', lastUpdateError: { message: error instanceof Error ? error.message : String(error), code: extractErrorCode(error), at: Date.now() } });
   }
-  autoUpdater.quitAndInstall(true, true);
 }
 
 function createWindow(): void {
@@ -402,6 +393,8 @@ function createWindow(): void {
     },
   });
 
+  voiceSessionActive = false;
+  mainWindow.webContents.on('render-process-gone', () => { voiceSessionActive = false; });
   setMainWindow(mainWindow);
   attachRecoveryHandlers(mainWindow);
   keybindManager.setWindow(mainWindow);
@@ -581,6 +574,7 @@ function registerIpcHandlers(): void {
     arch: process.arch,
     translated: process.platform === 'darwin' && app.runningUnderARM64Translation,
     gpu: app.getGPUFeatureStatus(),
+    updatesSupported: desktopUpdater !== null,
   }));
 
   ipcMain.on('set-badge-count', (_event, count: number) => {
@@ -591,8 +585,9 @@ function registerIpcHandlers(): void {
 
   // Keep WebRTC signaling, audio meters and call controls responsive while the
   // window is hidden. Outside a call Chromium can throttle normally to save CPU.
-  ipcMain.on('set-voice-session-active', (_event, active: boolean) => {
-    if (typeof active !== 'boolean' || !mainWindow || mainWindow.isDestroyed()) return;
+  ipcMain.on('set-voice-session-active', (event, active: boolean) => {
+    if (typeof active !== 'boolean' || !mainWindow || event.sender !== mainWindow.webContents) return;
+    voiceSessionActive = active;
     mainWindow.webContents.setBackgroundThrottling(!active);
   });
 
@@ -655,23 +650,12 @@ function registerIpcHandlers(): void {
     }
   });
 
-  // Auto-update IPC
-  ipcMain.on('install-update', () => {
-    try {
-      const { autoUpdater } = require('electron-updater');
-      installDownloadedUpdate(autoUpdater);
-    } catch {
-      // Auto-updater not available
-    }
+  ipcMain.on('install-update', (event) => {
+    if (event.sender === mainWindow?.webContents) requestDesktopUpdateInstall();
   });
 
-  ipcMain.on('check-for-updates', () => {
-    try {
-      const { autoUpdater } = require('electron-updater');
-      autoUpdater.checkForUpdates().catch(() => {});
-    } catch {
-      // Auto-updater not available
-    }
+  ipcMain.on('check-for-updates', (event) => {
+    if (event.sender === mainWindow?.webContents) handleRecoveryAction('check-update');
   });
 
   ipcMain.handle('get-app-version', () => app.getVersion());
@@ -771,7 +755,8 @@ function registerIpcHandlers(): void {
       console.warn('[recovery] ignored unknown action:', action);
       return;
     }
-    handleRecoveryAction(action);
+    if (action === 'install-update') requestDesktopUpdateInstall();
+    else handleRecoveryAction(action);
   });
 
   ipcMain.handle('get-recovery-state', () => recoveryStore.get());
@@ -785,97 +770,22 @@ function initAutoUpdater(): void {
   if (!app.isPackaged || process.platform !== 'win32' || process.env.LUME_DISABLE_UPDATES === '1') return;
   try {
     const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = true;
-    autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.allowPrerelease = true;
-    autoUpdater.allowDowngrade = false;
-
     setAutoUpdater(autoUpdater);
-
-    let updateConfirmed = false;
-
-    autoUpdater.on('checking-for-update', () => {
-      recoveryStore.update({ updateState: 'checking', lastCheckResult: null });
-      updateConfirmed = false;
-      mainWindow?.webContents.send('update-checking');
-    });
-
-    autoUpdater.on('update-available', (info: { version: string }) => {
-      updateConfirmed = true;
-      recoveryStore.update({ updateState: 'downloading', updateVersion: info.version });
-      mainWindow?.webContents.send('update-available', { version: info.version });
-    });
-
-    autoUpdater.on('update-not-available', () => {
-      updateConfirmed = false;
-      recoveryStore.update({ updateState: 'idle', lastCheckResult: 'up-to-date' });
-      setTimeout(() => {
-        if (recoveryStore.get().lastCheckResult === 'up-to-date') {
-          recoveryStore.update({ lastCheckResult: null });
-        }
-      }, 5_000);
-    });
-
-    autoUpdater.on('download-progress', (progress: { percent: number; transferred: number; total: number }) => {
-      mainWindow?.webContents.send('update-progress', {
-        percent: Math.max(0, Math.min(100, progress.percent)),
-        transferred: progress.transferred,
-        total: progress.total,
-      });
-    });
-
-    autoUpdater.on('update-downloaded', (info: { version: string }) => {
-      const version = info.version.slice(0, 32);
-      recoveryStore.update({ updateState: 'downloaded', updateVersion: version });
-      mainWindow?.webContents.send('update-downloaded', { version });
-
-      // Symmetric focus-based suppression: if the user is looking at the
-      // window, the in-app banner (normal mode) or recovery Restart button
-      // (recovery mode) is visible — no need to also fire a native toast.
-      if (!mainWindow?.isFocused()) {
-        showNotification(
-          'Atualização do Lume pronta',
-          `Clique para reiniciar e instalar a versão ${version}.`,
-          () => autoUpdater.quitAndInstall(),
-        );
+    desktopUpdater = autoUpdater;
+    configureDesktopUpdater(autoUpdater, recoveryStore, version => {
+      if (!mainWindow?.isFocused() && !voiceSessionActive) {
+        showNotification('Atualização do Lume pronta', 'Clique para reiniciar e instalar a versão ' + version + '.', requestDesktopUpdateInstall);
       }
     });
 
-    autoUpdater.on('error', (err: unknown) => {
-      const message = err instanceof Error ? err.message : String(err);
-      const code = extractErrorCode(err);
-      recoveryStore.update({
-        updateState: 'error',
-        lastUpdateError: { message, code, at: Date.now() },
-        lastCheckResult: 'failed',
-      });
-      setTimeout(() => {
-        if (recoveryStore.get().lastCheckResult === 'failed') {
-          recoveryStore.update({ lastCheckResult: null });
-        }
-      }, 5_000);
-      // Existing behavior preserved: only push renderer error IPC after
-      // confirmed update. Check-phase errors stay silent.
-      if (updateConfirmed) {
-        mainWindow?.webContents.send('update-error', {
-          message,
-          releaseUrl: 'https://github.com/talismanbruno/lumesync/releases',
-        });
-      }
+    autoUpdater.on('error', () => {
+      if (updateRelaunchGuardStarted) { updateRelaunchGuardStarted = false; isQuitting = false; }
     });
-
     // Leave startup independent of the release host. Updates remain automatic
-    // in the background and are installed on quit or explicit user restart.
-    setTimeout(() => {
-      updateConfirmed = false;
-      autoUpdater.checkForUpdates().catch(() => {});
-    }, 10_000);
-
-    // Periodic check every 4 hours (existing behavior)
-    setInterval(() => {
-      updateConfirmed = false;
-      autoUpdater.checkForUpdates().catch(() => {});
-    }, 4 * 60 * 60 * 1000);
+    // in the background and are installed only on explicit user restart.
+    const check = () => handleRecoveryAction('check-update');
+    setTimeout(check, 10_000);
+    setInterval(check, 4 * 60 * 60 * 1000);
   } catch {
     // Auto-updater unavailable — recovery surface still functions, just
     // without update affordances. autoUpdaterRef stays null; recovery action
@@ -1118,7 +1028,7 @@ if (!gotTheLock) {
       // recovery state is always cleared on a Change Instance action).
       onChangeInstance: () => handleRecoveryAction('change-instance'),
       onCheckForUpdates: () => handleRecoveryAction('check-update'),
-      onRestartToInstall: () => handleRecoveryAction('install-update'),
+      onRestartToInstall: requestDesktopUpdateInstall,
       onOpenSource: () => openSourceCode(),
       onQuit: () => requestQuit(),
     };
@@ -1130,8 +1040,8 @@ if (!gotTheLock) {
       if (process.platform === 'darwin') {
         Menu.setApplicationMenu(Menu.buildFromTemplate(buildAppMenuTemplate(app.name, state, trayActions)));
       }
-      // Mode-gated push to renderer (recovery.html subscribes to this).
-      if (state.mode === 'recovery' && mainWindow && !mainWindow.isDestroyed()) {
+      // Both the settings pane and the recovery page use the main-process state.
+      if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('recovery-state-changed', state);
       }
     };

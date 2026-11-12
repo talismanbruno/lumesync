@@ -11,8 +11,8 @@ android {
         applicationId = "social.lume.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.0.0-beta.26"
+        versionCode = 27
+        versionName = "1.0.0-beta.27"
         buildConfigField("String", "LUME_BASE_URL", "\"https://lumesocial.online\"")
     }
 
