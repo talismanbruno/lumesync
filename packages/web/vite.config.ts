@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icons/favicon-32.png', 'icons/favicon-16.png', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Lume',
@@ -35,7 +35,7 @@ export default defineConfig({
         // Legacy routes stay available offline until installed manifests update.
         navigateFallbackAllowlist: [/^\/app(?:\/|$)/, /^\/(?:login|register|channels|join|explore|reset-password|verify-email|download)(?:\/|$)/],
         navigateFallbackDenylist: [/^\/api/, /^\/ws/, /^\/uploads/, /^\/site(?:\/|$)/],
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,

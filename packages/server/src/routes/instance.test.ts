@@ -89,7 +89,8 @@ describe('GET /api/instance/info', () => {
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(typeof body.name).toBe('string');
-    expect(typeof body.version).toBe('string');
+    const release = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../../package.json'), 'utf8'));
+    expect(body.version).toBe(release.version);
     expect(typeof body.registrationOpen).toBe('boolean');
     expect(typeof body.federatedRegistrationOpen).toBe('boolean');
     // AGPL § 13 source offer — always a URL; commit is a string or null.

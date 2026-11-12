@@ -2,14 +2,39 @@ import { t as uiText } from '../../i18n';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useTransferStore } from '../../stores/transferStore';
+import { useEffect, useRef } from 'react';
+
+function DesktopWorkerCleanup() {
+  useEffect(() => {
+    if (!navigator.serviceWorker) return;
+    let disposed = false;
+    void navigator.serviceWorker.getRegistrations().then(registrations => {
+      if (disposed) return;
+      return Promise.all(registrations.filter(registration => {
+        const worker = registration.active ?? registration.waiting ?? registration.installing;
+        if (!worker) return false;
+        const url = new URL(worker.scriptURL);
+        return url.origin === location.origin && /^\/(?:app\/)?sw\.js$/.test(url.pathname);
+      }).map(registration => registration.unregister()));
+    }).catch(() => {});
+    return () => { disposed = true; };
+  }, []);
+  return null;
+}
 
 export function SwAutoUpdate() {
+  return window.backspace ? <DesktopWorkerCleanup /> : <BrowserUpdatePrompt />;
+}
+
+function BrowserUpdatePrompt() {
+  const registered = useRef<ServiceWorkerRegistration | null>(null);
+  useEffect(() => {
+    const timer = window.setInterval(() => { void registered.current?.update().catch(() => {}); }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
-      if (!registration) return;
-      setInterval(() => {
-        registration.update();
-      }, 60_000);
+      registered.current = registration ?? null;
     },
   });
 
