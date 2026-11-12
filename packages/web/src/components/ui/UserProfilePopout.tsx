@@ -111,6 +111,7 @@ export function UserProfilePopout({ user: propUser, onClose, position }: UserPro
       <div className="px-4 pb-4 relative">
         {/* Avatar */}
         <Avatar
+          showDecoration
           src={user.avatar}
           name={displayName}
           size={80}

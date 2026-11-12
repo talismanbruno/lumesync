@@ -9,15 +9,19 @@ import type { ParticipantInfo, GridTile } from '../../hooks/useLiveKit';
 
 interface VoiceGridProps {
   participants: ParticipantInfo[];
+  mediaOnly?: boolean;
 }
 
-export function VoiceGrid({ participants }: VoiceGridProps) {
+export function VoiceGrid({ participants, mediaOnly = false }: VoiceGridProps) {
   const focusedParticipantId = useVoiceStore((s) => s.focusedParticipantId);
   const setFocusedParticipant = useVoiceStore((s) => s.setFocusedParticipant);
   const watchingStreams = useVoiceStore((s) => s.watchingStreams);
   const [stripHidden, setStripHidden] = useState(false);
 
-  const tiles = useMemo(() => deriveGridTiles(participants), [participants]);
+  const tiles = useMemo(() => {
+    const allTiles = deriveGridTiles(participants);
+    return mediaOnly ? allTiles.filter(tile => tile.kind === 'stream' || tile.participant.isCameraOn) : allTiles;
+  }, [participants, mediaOnly]);
 
   const { cols, tileWidth, tileHeight, ref: gridRef } = useGridLayout(tiles.length);
 

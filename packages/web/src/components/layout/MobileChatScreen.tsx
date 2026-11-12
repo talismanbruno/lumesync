@@ -5,6 +5,8 @@ import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useSpaceStore } from '../../stores/spaceStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useVoiceStore } from '../../stores/voiceStore';
+import { CompactCallPanel } from '../voice/CompactCallPanel';
 import { MessageList } from '../chat/MessageList';
 import { MessageInput } from '../chat/MessageInput';
 import { TransferIndicator } from './TransferIndicator';
@@ -27,6 +29,9 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
   const channelId = params?.channelId;
   const spaceId = params?.spaceId;
   const isDm = spaceId === '@me';
+  const isInCall = useVoiceStore(s => !!channelId && (isDm
+    ? s.activeDmCall?.dmChannelId === channelId
+    : s.currentVoiceChannelId === channelId));
 
   const loadMessages = useChatStore((s) => s.loadMessages);
   const setCurrentChannel = useChatStore((s) => s.setCurrentChannel);
@@ -117,6 +122,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
           </button>
         )}
       </header>
+      {channelId && <CompactCallPanel key={channelId} active={isInCall} />}
 
       {/* Messages + floating composer.
           Mirrors the desktop pattern in `MainContent.tsx`: a single relative

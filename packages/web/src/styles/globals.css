@@ -460,6 +460,12 @@
   100% { background-color: transparent; }
 }
 .search-highlight { animation: search-flash 2s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .search-highlight {
+    animation: none;
+    background-color: rgb(var(--accent-primary) / 0.12);
+  }
+}
 
 @keyframes stepForward {
   from { transform: translateX(24px); opacity: 0; }
@@ -771,30 +777,121 @@
 .lume-mic-level span { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.06); transition: background-color 75ms; }
 .lume-mic-level span.is-active { background: rgb(var(--status-online)); }
 
-.lume-dm-call-workspace {
-  container-type: inline-size;
-  container-name: dm-call;
-}
-
-.lume-dm-call-layout {
+.lume-compact-call {
   display: grid;
-  height: 100%;
-  grid-template-rows: minmax(190px, 42%) minmax(0, 1fr);
+  flex: none;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 180ms ease, opacity 160ms ease, visibility 180ms allow-discrete;
 }
 
-.lume-dm-call-chat {
-  border-top: 1px solid rgb(var(--border-soft));
-  background: rgb(var(--bg-chat));
+.lume-compact-call.is-active {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
 }
 
-.lume-dm-call-layout.is-chat-closed {
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
+.lume-compact-call-clip {
+  min-height: 0;
+  min-width: 0;
+  overflow: clip;
+}
+
+.lume-compact-call-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 4px 10px 8px;
+  background: rgb(var(--bg-base));
+  border-bottom: 1px solid rgb(var(--border-soft));
+}
+
+.lume-call-roster {
+  min-height: 84px;
+}
+
+.lume-call-participant-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.lume-call-participants {
+  display: flex;
+  gap: 6px;
+  width: max-content;
+  max-width: none;
+  margin-inline: auto;
+  padding: 2px 5px;
+}
+
+.lume-call-participant {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 76px;
+  padding: 8px 2px 4px;
+}
+
+.lume-call-status {
+  display: grid;
+  min-height: 74px;
+  place-items: center;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.lume-compact-call-media {
+  display: flex;
+  height: min(32dvh, 360px);
+  min-height: 0;
+  margin-block: 4px 8px;
+}
+
+.lume-voice-expanded .lume-compact-call-media,
+.lume-compact-call-panel:fullscreen .lume-compact-call-media {
+  flex: 1;
+  height: auto;
 }
 
 .lume-call-controls > div > button {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+}
+
+.lume-call-controls > div > .lume-call-disconnect {
+  width: 44px;
+  color: #f28b93;
+  background: rgb(229 57 66 / 0.12);
+}
+
+.lume-call-controls > div > .lume-call-disconnect:is(:hover, :focus-visible) {
+  background: rgb(229 57 66 / 0.22);
+}
+
+.lume-avatar-decoration {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+@media (pointer: coarse) {
+  .lume-call-controls > div > button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lume-compact-call {
+    transition: none;
+  }
 }
 
 .lume-voice-expanded:not(:fullscreen) {
@@ -804,17 +901,6 @@
   height: 100dvh;
   z-index: 150;
   background: rgb(var(--bg-base));
-}
-
-@container dm-call (min-width: 760px) {
-  .lume-dm-call-layout {
-    grid-template-columns: minmax(0, 1fr) 340px;
-    grid-template-rows: minmax(0, 1fr);
-  }
-  .lume-dm-call-chat {
-    border-top: 0;
-    border-left: 1px solid rgb(var(--border-soft));
-  }
 }
 
 .lume-friend-row {

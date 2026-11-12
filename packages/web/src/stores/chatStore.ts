@@ -18,7 +18,7 @@ const EVICT_TO_CHANNELS = 15;
 // the only state-based dedup the original guards relied on):
 //   - `AppLayout` and `MessageList` BOTH fire `loadMessages` on channel mount
 //     because `MessageList` is also rendered by surfaces that don't have the
-//     `AppLayout` chrome (`VoiceChatPanel`).
+//     the conversation rendered by `MainContent` or `MobileChatScreen`.
 //   - `MessageList.handleScroll`'s load-more block can fire multiple times in
 //     a single fast-scroll burst before React commits the `isLoadingMore=true`
 //     state update, sharing one closure with `!isLoadingMore` still true.
@@ -54,6 +54,7 @@ interface ChatState {
   realtimeMessageEvents: RealtimeMessageEvent[];
   channelAccessTimes: Map<string, number>;
   historyChannels: Set<string>;
+  aroundChannels: Set<string>;
   scrollPositions: Map<string, string>;
   setCurrentChannel: (channelId: string | null) => void;
   saveScrollPosition: (channelId: string, messageId: string) => void;
@@ -73,7 +74,7 @@ interface ChatState {
   removeReaction: (messageId: string, emoji: string) => void;
   onReactionAdded: (messageId: string, reaction: any) => void;
   onReactionRemoved: (messageId: string, userId: string, emoji: string) => void;
-  loadMessagesAround: (channelId: string, messageId: string) => Promise<void>;
+  loadMessagesAround: (channelId: string, messageId: string, signal?: AbortSignal) => Promise<void>;
   setTyping: (channelId: string, userId: string, username: string) => void;
   clearTyping: (channelId: string, userId: string) => void;
   getMessages: (channelId: string) => MessageWithUser[];
@@ -113,6 +114,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   realtimeMessageEvents: [],
   channelAccessTimes: new Map(),
   historyChannels: new Set(),
+  aroundChannels: new Set(),
   scrollPositions: new Map(),
 
   saveScrollPosition: (channelId, messageId) => {
@@ -134,6 +136,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       let newMessages = state.messages;
       let newHasMore = state.hasMore;
       let newScrollPositions = state.scrollPositions;
+      let aroundChannels = state.aroundChannels;
       if (state.messages.size > MAX_CACHED_CHANNELS) {
         const entries = [...newAccessTimes.entries()]
           .filter(([id]) => id !== channelId && !state.historyChannels.has(id))
@@ -144,11 +147,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           newMessages = new Map(state.messages);
           newHasMore = new Map(state.hasMore);
           newScrollPositions = new Map(state.scrollPositions);
+          aroundChannels = new Set(aroundChannels);
           for (const id of evictIds) {
             newMessages.delete(id);
             newHasMore.delete(id);
             newAccessTimes.delete(id);
             newScrollPositions.delete(id);
+            aroundChannels.delete(id);
           }
         }
       }
@@ -159,6 +164,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: newMessages,
         hasMore: newHasMore,
         scrollPositions: newScrollPositions,
+        aroundChannels,
       };
     });
   },
@@ -177,6 +183,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       realtimeMessageEvents: [],
       channelAccessTimes: new Map(),
       historyChannels: new Set(),
+      aroundChannels: new Set(),
       scrollPositions: new Map(),
       currentChannelId: null,
       replyTo: null,
@@ -197,7 +204,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   loadMessages: async (channelId: string, force?: boolean, background = false) => {
-    if (!force && get().hasMore.has(channelId)) return;
+    if (!force && get().hasMore.has(channelId) && !get().aroundChannels.has(channelId)) return;
     const isDm = isDmChannel(channelId);
     // For server channels, bail if we don't know which instance owns this channel yet.
     // The remote WS ready handler will call loadMessages once the map is populated.
@@ -246,7 +253,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           newHasMore.set(channelId, messages.length >= 50);
           const newAccessTimes = new Map(state.channelAccessTimes);
           newAccessTimes.set(channelId, Date.now());
-          return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes,
+          const aroundChannels = new Set(state.aroundChannels);
+          aroundChannels.delete(channelId);
+          return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes, aroundChannels,
             ...(!background ? { isLoading: false, loadError: null } : {}) };
         });
       } catch (err) {
@@ -295,7 +304,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const olderMessages = isDm
           ? await client.dm.messages(channelId, oldestMessage.id, limit)
           : await client.channels.messages(channelId, oldestMessage.id, limit);
-        if (epoch !== cacheEpoch || !get().hasMore.has(channelId)) return false;
+        if (epoch !== cacheEpoch || !get().hasMore.has(channelId) || get().messages.get(channelId)?.[0]?.id !== oldestMessage.id) return false;
 
         // Normalize remote asset URLs (avatars, attachment filenames)
         if (origin) {
@@ -327,15 +336,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  loadMessagesAround: async (channelId: string, messageId: string) => {
+  loadMessagesAround: async (channelId: string, messageId: string, signal?: AbortSignal) => {
+    const epoch = cacheEpoch;
     const isDm = isDmChannel(channelId);
     if (!isDm && !useSpaceStore.getState().channelOriginMap.has(channelId)) return;
     try {
       const origin = getChannelOrigin(channelId);
       const client = getApiForOrigin(origin);
       const messages = isDm
-        ? await client.dm.messagesAround(channelId, messageId)
-        : await client.channels.messagesAround(channelId, messageId);
+        ? await client.dm.messagesAround(channelId, messageId, signal)
+        : await client.channels.messagesAround(channelId, messageId, signal);
+      if (signal?.aborted || epoch !== cacheEpoch || !messages.some(message => message.id === messageId)) return;
 
       if (origin) {
         for (const msg of messages) normalizeMessageAssets(msg, origin);
@@ -348,10 +359,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         newHasMore.set(channelId, true);
         const newAccessTimes = new Map(state.channelAccessTimes);
         newAccessTimes.set(channelId, Date.now());
-        return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes };
+        return { messages: newMessages, hasMore: newHasMore, channelAccessTimes: newAccessTimes,
+          aroundChannels: new Set([...state.aroundChannels, channelId]) };
       });
     } catch (err) {
-      console.error('Failed to load messages around:', err);
+      if (!signal?.aborted) console.error('Failed to load messages around:', err);
     }
   },
 
@@ -817,14 +829,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const newMessages = new Map(state.messages);
       const newHasMore = new Map(state.hasMore);
       const historyChannels = new Set(state.historyChannels);
+      const aroundChannels = new Set(state.aroundChannels);
       for (const channelId of channelIds) {
         newUnread.delete(channelId);
         newReadStates.delete(channelId);
         newMessages.delete(channelId);
         newHasMore.delete(channelId);
         historyChannels.delete(channelId);
+        aroundChannels.delete(channelId);
       }
-      return { unreadChannels: newUnread, readStates: newReadStates, messages: newMessages, hasMore: newHasMore, historyChannels };
+      return { unreadChannels: newUnread, readStates: newReadStates, messages: newMessages, hasMore: newHasMore, historyChannels, aroundChannels };
     });
   },
 
@@ -843,6 +857,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const readStates = copyDelete(state.readStates);
       const channelAccessTimes = copyDelete(state.channelAccessTimes);
       const scrollPositions = copyDelete(state.scrollPositions);
+      const aroundChannels = new Set(state.aroundChannels);
+      aroundChannels.delete(oldId);
 
       let unreadChannels = state.unreadChannels;
       if (state.unreadChannels.has(oldId)) {
@@ -860,6 +876,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         readStates,
         channelAccessTimes,
         scrollPositions,
+        aroundChannels,
         unreadChannels,
         currentChannelId,
       };

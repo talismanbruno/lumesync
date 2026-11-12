@@ -60,7 +60,8 @@ export function VoiceUserRow({
         size={avatarSize}
         userId={userId}
         avatarColor={avatarColor}
-        freezeAnimation={!isSpeaking}
+        customization={user?.customization}
+        showDecoration={!!isSpeaking && !isMuted && !isDeafened && !showServerMicIcon}
         className={isSpeaking ? 'rounded-full ring-2 ring-status-online' : ''}
       />
       <span className="text-[13px] text-txt-secondary truncate flex-1 min-w-0">

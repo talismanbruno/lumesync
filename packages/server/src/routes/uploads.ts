@@ -2,8 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { getDb, schema } from '../db/index.js';
 import { eq, or } from 'drizzle-orm';
-import { AuthError, getRequestAuthToken, verifyJwtAndUser } from '../utils/auth.js';
-import { getChannelSpaceId, hasPermission, isDmMember, PermissionBits } from '../utils/permissions.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -39,14 +37,18 @@ export async function uploadRoutes(app: FastifyInstance): Promise<void> {
   }
 
   // GET /api/uploads/:filename - Serve uploaded file
-  app.get<{ Params: { filename: string } }>('/api/uploads/:filename', async (request, reply) => {
+  app.get<{ Params: { filename: string }; Querystring: { download?: string } }>('/api/uploads/:filename', async (request, reply) => {
     const { filename } = request.params;
 
     // Prevent directory traversal
     const safeName = path.basename(filename);
+    if (!safeName || safeName !== filename || safeName.startsWith('.') || /[\\/:]/.test(safeName)) {
+      return reply.code(404).send({ error: 'File not found', statusCode: 404 });
+    }
     const filepath = path.join(config.uploadDir, safeName);
 
-    if (!fs.existsSync(filepath)) {
+    const stat = fs.statSync(filepath, { throwIfNoEntry: false });
+    if (!stat?.isFile()) {
       return reply.code(404).send({ error: 'File not found', statusCode: 404 });
     }
 
@@ -57,46 +59,6 @@ export async function uploadRoutes(app: FastifyInstance): Promise<void> {
       eq(schema.attachments.thumbnailFilename, safeName),
     )).get();
 
-    // Profile/space assets and legacy orphan files retain their existing public
-    // behavior. Once an attachment belongs to a message, access follows the
-    // same authorization rule as reading that message.
-    if (attachment?.messageId || attachment?.dmMessageId) {
-      const token = getRequestAuthToken(request);
-      if (!token) {
-        return reply.code(401).send({ error: 'Authentication required', statusCode: 401 });
-      }
-
-      let userId: string;
-      try {
-        userId = (await verifyJwtAndUser(token)).userId;
-      } catch (err) {
-        if (err instanceof AuthError) {
-          return reply.code(err.statusCode).send({ error: err.message, statusCode: err.statusCode });
-        }
-        return reply.code(401).send({ error: 'Invalid or expired token', statusCode: 401 });
-      }
-
-      let allowed = false;
-      if (attachment.messageId) {
-        const message = db.select({ channelId: schema.messages.channelId })
-          .from(schema.messages).where(eq(schema.messages.id, attachment.messageId)).get();
-        const spaceId = message ? getChannelSpaceId(message.channelId) : null;
-        allowed = !!message && !!spaceId && hasPermission(
-          userId,
-          spaceId,
-          PermissionBits.VIEW_CHANNEL | PermissionBits.READ_MESSAGE_HISTORY,
-          message.channelId,
-        );
-      } else if (attachment.dmMessageId) {
-        const message = db.select({ dmChannelId: schema.dmMessages.dmChannelId })
-          .from(schema.dmMessages).where(eq(schema.dmMessages.id, attachment.dmMessageId)).get();
-        allowed = !!message && isDmMember(message.dmChannelId, userId);
-      }
-
-      if (!allowed) {
-        return reply.code(403).send({ error: 'You do not have access to this attachment', statusCode: 403 });
-      }
-    }
     const isThumbnail = attachment?.thumbnailFilename === safeName;
     const originalName = isThumbnail ? safeName : (attachment?.originalName ?? safeName);
     const mimetype = (!isThumbnail ? attachment?.mimetype : undefined)
@@ -104,12 +66,10 @@ export async function uploadRoutes(app: FastifyInstance): Promise<void> {
       ?? 'application/octet-stream';
 
     // Set caching and security headers
-    reply.header(
-      'Cache-Control',
-      attachment?.messageId || attachment?.dmMessageId
-        ? 'private, no-store'
-        : 'public, max-age=31536000, immutable',
-    );
+    // Shared file links are independent of chat permissions. Keep chat APIs authenticated.
+    reply.header('Cache-Control', attachment?.messageId || attachment?.dmMessageId
+      ? 'public, max-age=300'
+      : 'public, max-age=31536000, immutable');
     reply.header('Content-Type', mimetype);
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'");
@@ -117,12 +77,11 @@ export async function uploadRoutes(app: FastifyInstance): Promise<void> {
 
     // For non-media files and SVGs, force download instead of inline rendering
     const isSvg = mimetype === 'image/svg+xml';
-    if (isSvg || (!mimetype.startsWith('image/') && !mimetype.startsWith('video/') && !mimetype.startsWith('audio/'))) {
-      reply.header('Content-Disposition', `attachment; filename="${encodeURIComponent(originalName)}"`);
+    if (request.query.download === '1' || isSvg || (!mimetype.startsWith('image/') && !mimetype.startsWith('video/') && !mimetype.startsWith('audio/'))) {
+      reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(originalName).replace(/['()*]/g, char => '%' + char.charCodeAt(0).toString(16))}`);
     }
 
     // Support Range requests for audio/video seeking
-    const stat = fs.statSync(filepath);
     const fileSize = stat.size;
     const rangeHeader = request.headers.range;
 

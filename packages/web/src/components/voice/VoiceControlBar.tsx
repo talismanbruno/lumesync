@@ -13,18 +13,20 @@ import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 const btnBase = 'w-10 h-10 flex items-center justify-center rounded-full transition-colors';
 const btnDefault = `${btnBase} bg-surface-channel text-txt-secondary hover:bg-surface-elevated hover:text-txt-primary`;
-const btnActive = (color: string) => `${btnBase} bg-${color}/20 text-${color} hover:bg-${color}/30`;
 const btnGreen = `${btnBase} bg-surface-channel text-status-online hover:bg-surface-elevated`;
 
-export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { docked?: boolean; chatOpen?: boolean; onToggleChat?: () => void } = {}) {
+interface VoiceControlBarProps {
+  active: boolean;
+  mediaExpanded: boolean;
+  onToggleMedia?: () => void;
+}
+
+export function VoiceControlBar({ active, mediaExpanded, onToggleMedia }: VoiceControlBarProps) {
   const isMuted = useVoiceStore((s) => s.isMuted);
   const isDeafened = useVoiceStore((s) => s.isDeafened);
   const isCameraOn = useVoiceStore((s) => s.isCameraOn);
   const isScreenSharing = useVoiceStore((s) => s.isScreenSharing);
   const micPermissionDenied = useVoiceStore((s) => s.micPermissionDenied);
-  const globalVoiceChatOpen = useUIStore((s) => s.voiceChatOpen);
-  const voiceChatOpen = chatOpen ?? globalVoiceChatOpen;
-  const toggleVoiceChat = useUIStore((s) => s.toggleVoiceChat);
   const voiceFullscreen = useUIStore((s) => s.voiceFullscreen);
   const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const myUser = useAuthStore((s) => s.user);
@@ -61,6 +63,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
   };
 
   useEffect(() => {
+    if (!active || !voiceFullscreen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && voiceFullscreen) {
         useUIStore.getState().setVoiceFullscreen(false);
@@ -68,12 +71,16 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [voiceFullscreen]);
+  }, [active, voiceFullscreen]);
+
+  useEffect(() => {
+    if (!active) setQualityOpen(false);
+  }, [active]);
 
   return (
     <>
-    {micPermissionDenied && (
-      <div className={docked ? 'mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-xl border border-accent-amber/30 bg-surface-elevated px-3 py-2' : 'absolute bottom-[82px] left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 rounded-2xl border border-accent-amber/30 bg-surface-elevated/95 px-4 py-3 shadow-elevation-high backdrop-blur-xl'}>
+    {active && micPermissionDenied && (
+      <div className="mx-auto mb-2 flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-accent-amber/30 bg-surface-elevated px-2 py-1">
         <div className="min-w-0">
           <p className="whitespace-nowrap text-xs font-semibold text-accent-amber">{uiText("Microfone sem permissão")}</p>
           <p className="whitespace-nowrap text-[11px] text-txt-tertiary">{uiText("Você entrou apenas para ouvir.")}</p>
@@ -86,11 +93,12 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
           {uiText("Permitir microfone")}</button>
       </div>
     )}
-    <div className={docked ? 'lume-call-controls shrink-0 p-2 border-t border-border-soft' : 'absolute bottom-6 left-1/2 -translate-x-1/2 z-20 opacity-0 translate-y-4 group-hover/voice:opacity-100 group-hover/voice:translate-y-0 focus-within:opacity-100 focus-within:translate-y-0 transition-all duration-300 ease-out'}>
-      <div className={docked ? 'flex flex-wrap justify-center items-center gap-1' : 'flex items-center gap-1.5 rounded-full px-3 py-2 glass-bubble'}>
+    <div className="lume-call-controls">
+      <div className="flex flex-wrap justify-center items-center gap-1">
         {/* Mute */}
         <button
           onClick={handleMute}
+          aria-pressed={isMuted || isDeafened || isSpaceMuted || isSpaceDeafened}
           className={(isSpaceMuted || isSpaceDeafened)
             ? `${btnBase} bg-accent-amber/20 text-accent-amber cursor-not-allowed`
             : isMuted || isDeafened
@@ -105,6 +113,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
         {/* Deafen */}
         <button
           onClick={handleDeafen}
+          aria-pressed={isDeafened || isSpaceDeafened}
           className={isSpaceDeafened
             ? `${btnBase} bg-accent-amber/20 text-accent-amber cursor-not-allowed`
             : isDeafened
@@ -120,6 +129,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
         {canSpeak && (
           <button
             onClick={handleCamera}
+            aria-pressed={isCameraOn}
             className={isCameraOn ? btnGreen : btnDefault}
             title={isCameraOn ? uiText("Desligar câmera") : uiText("Ligar câmera")}
           >
@@ -140,6 +150,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
         {canStream && (
           <button
             onClick={handleScreenShare}
+            aria-pressed={isScreenSharing}
             className={isScreenSharing ? btnGreen : btnDefault}
             title={isScreenSharing ? uiText("Parar compartilhamento") : uiText("Compartilhar tela")}
           >
@@ -163,29 +174,22 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
         >
           <OrbitalIcon name="quality" />
         </button>
-        <ScreenShareSettingsPopover open={qualityOpen} onClose={() => setQualityOpen(false)} anchorRef={qualityBtnRef} />
+        {active && qualityOpen && <ScreenShareSettingsPopover open onClose={() => setQualityOpen(false)} anchorRef={qualityBtnRef} placement="bottom" />}
 
-        {/* Separator */}
-        <div className="w-[1px] h-6 bg-white/10 mx-0.5" />
+        {onToggleMedia && (
+          <button
+            type="button"
+            onClick={onToggleMedia}
+            className={mediaExpanded ? btnGreen : btnDefault}
+            title={mediaExpanded ? uiText("Recolher vídeos") : uiText("Expandir vídeos")}
+            aria-label={mediaExpanded ? uiText("Recolher vídeos") : uiText("Expandir vídeos")}
+            aria-expanded={mediaExpanded}
+          >
+            <OrbitalIcon name="video" />
+          </button>
+        )}
 
-        {/* Chat Toggle */}
-        <button
-          onClick={onToggleChat ?? toggleVoiceChat}
-          className={voiceChatOpen
-            ? `${btnBase} bg-surface-channel text-txt-primary`
-            : btnDefault
-          }
-          title={voiceChatOpen ? uiText("Ocultar conversa") : uiText("Mostrar conversa")}
-          aria-label={voiceChatOpen ? uiText("Ocultar conversa") : uiText("Mostrar conversa")}
-          aria-pressed={voiceChatOpen}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
-          </svg>
-        </button>
-
-        {/* Fullscreen Toggle */}
-        <button
+        {mediaExpanded && <button
           onClick={handleFullscreen}
           className={voiceFullscreen
             ? `${btnBase} bg-surface-channel text-txt-primary`
@@ -203,7 +207,7 @@ export function VoiceControlBar({ docked = false, chatOpen, onToggleChat }: { do
               <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
             </svg>
           )}
-        </button>
+        </button>}
 
         {/* Separator */}
         <div className="w-[1px] h-6 bg-white/10 mx-0.5" />

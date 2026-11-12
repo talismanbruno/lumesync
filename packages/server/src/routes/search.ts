@@ -357,43 +357,27 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(404).send({ error: 'Message not found', statusCode: 404 });
     }
 
-    // Messages before (inclusive of target)
     const beforeRows = db.select()
       .from(schema.messages)
       .where(and(
         eq(schema.messages.channelId, id),
-        sql`${schema.messages.id} <= ${messageId}`,
+        sql`(${schema.messages.createdAt}, ${schema.messages.id}) < (${target.createdAt}, ${target.id})`,
       ))
-      .orderBy(desc(schema.messages.createdAt))
-      .limit(half + 1)
+      .orderBy(desc(schema.messages.createdAt), desc(schema.messages.id))
+      .limit(half)
       .all();
 
-    // Messages after
     const afterRows = db.select()
       .from(schema.messages)
       .where(and(
         eq(schema.messages.channelId, id),
-        gt(schema.messages.id, messageId),
+        sql`(${schema.messages.createdAt}, ${schema.messages.id}) > (${target.createdAt}, ${target.id})`,
       ))
-      .orderBy(asc(schema.messages.createdAt))
-      .limit(half)
+      .orderBy(asc(schema.messages.createdAt), asc(schema.messages.id))
+      .limit(limit - half - 1)
       .all();
 
-    // Combine in chronological order
-    beforeRows.reverse();
-    const messageRows = [...beforeRows, ...afterRows];
-
-    // Deduplicate (target message appears in both queries)
-    const seen = new Set<string>();
-    const uniqueRows = messageRows.filter(m => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-
-    if (uniqueRows.length === 0) {
-      return reply.code(200).send([]);
-    }
+    const uniqueRows = [...beforeRows.reverse(), target, ...afterRows];
 
     // Hydrate
     const userIds = [...new Set(uniqueRows.map(m => m.userId))];
@@ -459,35 +443,23 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       .from(schema.dmMessages)
       .where(and(
         eq(schema.dmMessages.dmChannelId, id),
-        sql`${schema.dmMessages.id} <= ${messageId}`,
+        sql`(${schema.dmMessages.createdAt}, ${schema.dmMessages.id}) < (${target.createdAt}, ${target.id})`,
       ))
-      .orderBy(desc(schema.dmMessages.createdAt))
-      .limit(half + 1)
+      .orderBy(desc(schema.dmMessages.createdAt), desc(schema.dmMessages.id))
+      .limit(half)
       .all();
 
     const afterRows = db.select()
       .from(schema.dmMessages)
       .where(and(
         eq(schema.dmMessages.dmChannelId, id),
-        gt(schema.dmMessages.id, messageId),
+        sql`(${schema.dmMessages.createdAt}, ${schema.dmMessages.id}) > (${target.createdAt}, ${target.id})`,
       ))
-      .orderBy(asc(schema.dmMessages.createdAt))
-      .limit(half)
+      .orderBy(asc(schema.dmMessages.createdAt), asc(schema.dmMessages.id))
+      .limit(limit - half - 1)
       .all();
 
-    beforeRows.reverse();
-    const messageRows = [...beforeRows, ...afterRows];
-
-    const seen = new Set<string>();
-    const uniqueRows = messageRows.filter(m => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-
-    if (uniqueRows.length === 0) {
-      return reply.code(200).send([]);
-    }
+    const uniqueRows = [...beforeRows.reverse(), target, ...afterRows];
 
     // Hydrate
     const userIds = [...new Set(uniqueRows.map(m => m.userId))];

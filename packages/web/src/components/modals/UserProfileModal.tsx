@@ -291,6 +291,7 @@ export function UserProfileModal() {
           <button type="button" aria-label="Ampliar foto de perfil" disabled={!avatarSrc}
             onClick={() => setAvatarExpanded(true)} className="block rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 disabled:cursor-default">
           <Avatar
+            showDecoration
             onClick={() => {}}
             src={user.avatar}
             name={displayName}

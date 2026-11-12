@@ -131,7 +131,7 @@ export function buildDmMessageWithUser(
     })),
     embeds: embedRows.map(e => embedRowToEmbed(e)),
     reactions,
-    replyTo,
+    replyTo: replyTo?.dmChannelId === message.dmChannelId ? replyTo : null,
   };
 }
 
@@ -2525,6 +2525,11 @@ export async function dmRoutes(app: FastifyInstance): Promise<void> {
     const db = getDb();
     const messageId = generateSnowflake();
     const now = Date.now();
+
+    if (replyToId && !db.select({ id: schema.dmMessages.id }).from(schema.dmMessages)
+      .where(and(eq(schema.dmMessages.id, replyToId), eq(schema.dmMessages.dmChannelId, id))).get()) {
+      return reply.code(400).send({ error: 'Original message is unavailable', statusCode: 400 });
+    }
 
     // Verify attachment ownership before linking
     if (attachmentIds && attachmentIds.length > 0) {

@@ -164,7 +164,7 @@ export function buildMessageWithUser(
     })),
     embeds: embedRows.map(e => embedRowToEmbed(e)),
     reactions,
-    replyTo,
+    replyTo: replyTo?.channelId === message.channelId ? replyTo : null,
   };
 }
 
@@ -301,6 +301,11 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
     const db = getDb();
     const messageId = generateSnowflake();
     const now = Date.now();
+
+    if (replyToId && !db.select({ id: schema.messages.id }).from(schema.messages)
+      .where(and(eq(schema.messages.id, replyToId), eq(schema.messages.channelId, id))).get()) {
+      return reply.code(400).send({ error: 'Original message is unavailable', statusCode: 400 });
+    }
 
     // Verify attachment ownership before linking
     if (attachmentIds && attachmentIds.length > 0) {

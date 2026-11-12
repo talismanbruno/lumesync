@@ -1,5 +1,12 @@
 /** Product text only. Tuple order: English, Brazilian Portuguese. */
 export const messages = {
+  "Voice Call": ["Voice Call", "Chamada de voz"],
+  "Recolher vídeos": ["Collapse videos", "Recolher vídeos"],
+  "Expandir vídeos": ["Expand videos", "Expandir vídeos"],
+  "Microfone silenciado": ["Microphone muted", "Microfone silenciado"],
+  "Áudio desativado": ["Audio deafened", "Áudio desativado"],
+  "{0} está falando": ["{0} is speaking", "{0} está falando"],
+  "Câmera ligada": ["Camera on", "Câmera ligada"],
   "Baixar": [
     "Download",
     "Baixar"

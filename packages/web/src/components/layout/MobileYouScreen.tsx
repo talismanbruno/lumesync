@@ -85,6 +85,7 @@ export function MobileYouScreen() {
         <div className="px-4 -mt-10 relative z-10">
           <div className="w-20 h-20 rounded-full border-4 border-surface-channel">
             <Avatar
+              showDecoration
               src={avatarUrl}
               name={user.displayName ?? user.username}
               avatarColor={user.avatarColor}

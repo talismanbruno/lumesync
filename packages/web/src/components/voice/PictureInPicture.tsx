@@ -427,6 +427,7 @@ export function PictureInPicture() {
                 size={64}
                 userId={displayParticipant.homeUserId ?? displayParticipant.userId}
                 user={resolvedUser ?? undefined}
+                showDecoration={!displayParticipant.isMuted && speakingParticipantIds.has(displayParticipant.identity)}
               />
               {speakingParticipantIds.has(displayParticipant.identity) && (
                 <div className="absolute -inset-1 rounded-full ring-2 ring-status-online animate-pulse" />

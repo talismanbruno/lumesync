@@ -18,6 +18,7 @@ export class SpeakingDetector {
 
   /** Per-participant analysis nodes (keyed by participant identity) */
   private tracks: Map<string, {
+    track: MediaStreamTrack;
     source: MediaStreamAudioSourceNode;
     analyser: AnalyserNode;
   }> = new Map();
@@ -93,18 +94,12 @@ export class SpeakingDetector {
       // Check if we already have an analyser for this exact track
       const existing = this.tracks.get(p.identity);
       if (existing) {
-        // Verify the source is still connected to the same track
-        // MediaStreamAudioSourceNode doesn't expose its track, so we check
-        // if the existing entry's source's mediaStream still has live tracks
-        const srcStream = existing.source.mediaStream;
-        const srcTrack = srcStream?.getAudioTracks()[0];
-        if (srcTrack && srcTrack.id === p.audioTrack.id && srcTrack.readyState === 'live') {
-          continue; // Already tracking this exact track
-        }
+        if (existing.track === p.audioTrack) continue;
         // Track changed — disconnect old and create new
         existing.source.disconnect();
         existing.analyser.disconnect();
         this.tracks.delete(p.identity);
+        this.holdCounters.delete(p.identity);
       }
 
       // Create analysis-only nodes for this remote participant.
@@ -121,7 +116,7 @@ export class SpeakingDetector {
         // so no audio output, purely for level reading)
         source.connect(analyser);
 
-        this.tracks.set(p.identity, { source, analyser });
+        this.tracks.set(p.identity, { track: p.audioTrack, source, analyser });
       } catch (err) {
         console.error(`[SpeakingDetector] Failed to create analyser for ${p.identity}:`, err);
       }
@@ -199,8 +194,11 @@ export class SpeakingDetector {
 
     // --- Remote participants ---
     for (const [identity, entry] of this.tracks) {
-      const rms = this.computeRMS(entry.analyser);
-      if (this.applyHysteresis(identity, rms)) {
+      if (entry.track.muted) {
+        this.holdCounters.delete(identity);
+        continue;
+      }
+      if (this.applyHysteresis(identity, this.computeRMS(entry.analyser))) {
         speakingIds.add(identity);
       }
     }

@@ -4,6 +4,7 @@ import type { Attachment } from '@backspace/shared';
 import { useUIStore } from '../../stores/uiStore';
 import { useTransferStore } from '../../stores/transferStore';
 import { Tooltip } from '../ui/Tooltip';
+import { copyText } from '../../utils/clipboard';
 
 interface AttachmentRendererProps {
   attachment: Attachment;
@@ -151,7 +152,7 @@ function VideoAttachment({ attachment, attUrl, thumbUrl, federationInlineBadge }
       >
         <video
           controls
-          preload={hasDimensions ? 'none' : 'metadata'}
+          preload="none"
           poster={thumbUrl ?? undefined}
           src={attUrl}
           onError={() => setFailed(true)}
@@ -165,6 +166,31 @@ function VideoAttachment({ attachment, attUrl, thumbUrl, federationInlineBadge }
 }
 
 export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
+  const addToast = useUIStore(s => s.addToast);
+  const copyLink = async () => {
+    try {
+      const copied = await copyText(new URL(attUrlOf(attachment.filename), window.location.origin).href);
+      addToast(copied ? uiText("Copied link") : uiText("Failed to copy link"), copied ? 'success' : 'warning');
+    } catch {
+      addToast(uiText("Failed to copy link"), 'warning');
+    }
+  };
+
+  return (
+    <div className="flex min-w-0 items-start gap-1">
+      <div className="min-w-0"><AttachmentContent key={attachment.filename + (attachment.thumbnailFilename ?? '')} attachment={attachment} /></div>
+      <button type="button" onClick={() => void copyLink()}
+        aria-label={uiText("Copy Link")} title={uiText("Copy Link")}
+        className="mt-1 shrink-0 rounded p-1.5 text-txt-secondary hover:bg-interactive-hover hover:text-txt-primary">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M10 13.5l4-4m-6 6-1 1a3 3 0 0 1-4.2-4.2l4-4A3 3 0 0 1 11 8m2 8a3 3 0 0 0 4.2-.3l4-4A3 3 0 0 0 17 7.5l-1 1" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function AttachmentContent({ attachment }: AttachmentRendererProps) {
   const openImagePreview = useUIStore((s) => s.openImagePreview);
   const startDownload = useTransferStore((s) => s.startDownload);
 
@@ -176,6 +202,7 @@ export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
       : `/api/uploads/${attachment.thumbnailFilename}`
     : null;
 
+  const [failedPreview, setFailedPreview] = useState<string | null>(null);
   const { mimetype, originalName, size } = attachment;
 
   // Federation status — build tooltip text
@@ -229,6 +256,10 @@ export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
 
   if (mimetype.startsWith('image/')) {
     const { width, height } = attachment;
+    const previewUrl = thumbUrl && failedPreview !== thumbUrl ? thumbUrl : attUrl;
+    if (failedPreview === attUrl) {
+      return <p role="status" className="mt-1 text-sm text-txt-secondary">Imagem indisponível · {originalName}</p>;
+    }
     return (
       <div className="mt-1 max-w-fit">
         <div
@@ -236,7 +267,8 @@ export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
           style={width && height ? { aspectRatio: `${width}/${height}`, maxWidth: Math.min(width, 400), maxHeight: 300 } : undefined}
         >
           <img
-            src={thumbUrl ?? attUrl}
+            src={previewUrl}
+            onError={() => setFailedPreview(previewUrl)}
             alt={originalName}
             className="w-full h-full max-w-[400px] max-h-[300px] object-contain cursor-pointer hover:brightness-95 transition-all"
             onClick={() => openImagePreview(attUrl)}
@@ -281,9 +313,13 @@ export function AttachmentRenderer({ attachment }: AttachmentRendererProps) {
             </div>
           </div>
         </div>
-        <audio controls preload="metadata" className="w-full mt-2 h-8">
-          <source src={attUrl} type={mimetype} />
-          {uiText("Your browser does not support audio playback.")}</audio>
+        {failedPreview === attUrl ? (
+          <p role="status" className="mt-2 text-sm text-txt-secondary">Áudio indisponível para reprodução.</p>
+        ) : (
+          <audio controls preload="none" src={attUrl} onError={() => setFailedPreview(attUrl)} className="w-full mt-2 h-8">
+            {uiText("Your browser does not support audio playback.")}
+          </audio>
+        )}
       </div>
     );
   }

@@ -230,13 +230,8 @@ export function MobileSpacesScreen() {
     const connectFn = useVoiceStore.getState().connectFn;
     joinVoiceChannel(chId, connectFn ?? undefined);
     setVoiceJoinChannelId(null);
-    // Push the canonical mobile voice screen key. Previously this passed
-    // 'voice', which has no entry in MobileShell.screenMap — the renderer
-    // returned null while the root screen sat under `visibility: hidden`,
-    // exposing the desktop PictureInPicture popup as the only visible UI
-    // (the "PiP-style grey view" bug). The screen key must match
-    // MobileShell.tsx:91 ('voice-full').
-    pushMobileScreen('voice-full');
+    const spaceId = useSpaceStore.getState().channelToSpaceMap.get(chId);
+    if (spaceId) pushMobileScreen('channel-chat', { channelId: chId, spaceId });
   }, [pushMobileScreen]);
 
   const toggleCategory = (categoryId: string) => {
@@ -604,7 +599,7 @@ export function MobileSpacesScreen() {
                   userId={userId}
                   roomId={channel.id}
                   user={member?.user}
-                  onOpenCall={() => pushMobileScreen('voice-full')}
+                  onOpenCall={spaceId ? () => pushMobileScreen('channel-chat', { channelId: channel.id, spaceId }) : undefined}
                   data-context-menu={`voice-user-${userId}`}
                   className="px-3 py-1 rounded-lg hover:bg-interactive-hover transition-colors"
                   onOpenProfile={() => openModal('userProfile', { userId: member?.user.homeUserId ?? userId })}

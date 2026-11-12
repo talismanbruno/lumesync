@@ -30,7 +30,7 @@ export function CustomizationProfilePreview({ user, avatarSrc, bannerSrc, banner
   return <ProfileFrameSpace customization={user.customization}><article className="lume-customization-preview" aria-label="Prévia do perfil" style={getProfileThemeStyle(user)}>
     <ProfileBanner className="lume-customization-banner" customization={user.customization} src={bannerSrc} fallback={bannerFallback} />
     <div className="lume-customization-preview-body">
-      <Avatar src={avatarSrc ?? user.avatar} name={name} size={84} userId={user.id} avatarColor={user.avatarColor} customization={user.customization ?? null} status={user.status} className="lume-customization-preview-avatar" />
+      <Avatar showDecoration src={avatarSrc ?? user.avatar} name={name} size={84} userId={user.id} avatarColor={user.avatarColor} customization={user.customization ?? null} status={user.status} className="lume-customization-preview-avatar" />
       <div className="lume-customization-preview-name lume-nameplate-host"><Nameplate flag={user.customization?.nameplateFlag} id={user.customization?.nameplateId} /><span style={getNameStyle(user)}>{name}</span></div>
       <div className="lume-customization-preview-handle">@{user.username}</div>
       {editable ? <>
@@ -108,7 +108,7 @@ function CosmeticPicker({ field, user, avatarSrc, bannerSrc, bannerFallback, onA
 function CosmeticTile({ item, user, selected, onSelect }: { item: CosmeticItem; user: User; selected: boolean; onSelect: () => void }) {
   const [hovered, setHovered] = useState(false);
   return <button type="button" className={`lume-cosmetic-tile lume-cosmetic-type-${item.type}`} aria-label={item.name} aria-pressed={selected} onClick={onSelect} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocus={() => setHovered(true)} onBlur={() => setHovered(false)}>
-    <div className="lume-cosmetic-tile-art">{item.type === 0 ? <Avatar src={user.avatar} name={user.displayName || user.username} size={62} userId={user.id} avatarColor={user.avatarColor} customization={{ avatarDecorationId: item.id }} freezeAnimation={!hovered} /> : <img src={(hovered && item.animatedSrc) || item.staticSrc} alt="" loading="lazy" />}{item.type === 2 && <span style={getNameStyle(user)}>{user.displayName || user.username}</span>}</div><small>{item.name}</small>{selected && <span className="lume-cosmetic-check" aria-hidden="true">✓</span>}
+    <div className="lume-cosmetic-tile-art">{item.type === 0 ? <Avatar src={user.avatar} name={user.displayName || user.username} size={62} userId={user.id} avatarColor={user.avatarColor} customization={{ avatarDecorationId: item.id }} showDecoration freezeAnimation={!hovered} /> : <img src={(hovered && item.animatedSrc) || item.staticSrc} alt="" loading="lazy" />}{item.type === 2 && <span style={getNameStyle(user)}>{user.displayName || user.username}</span>}</div><small>{item.name}</small>{selected && <span className="lume-cosmetic-check" aria-hidden="true">✓</span>}
   </button>;
 }
 

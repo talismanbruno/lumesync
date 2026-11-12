@@ -34,6 +34,7 @@ interface MessageProps {
   isCompact: boolean;
   isFirstInGroup: boolean;
   previousMessageId: string | null;
+  onJumpToMessage?: (messageId: string) => void;
 }
 
 interface PendingAttachmentTileProps {
@@ -119,7 +120,7 @@ function getImageEmbedSourceUrl(content: string | null, embeds: Embed[]): string
   return hasMatchingImageEmbed ? trimmed : null;
 }
 
-export function Message({ message, isCompact, isFirstInGroup, previousMessageId }: MessageProps) {
+export function Message({ message, isCompact, isFirstInGroup, previousMessageId, onJumpToMessage }: MessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content ?? '');
   const [isHovered, setIsHovered] = useState(false);
@@ -423,20 +424,29 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
             : _rawReply;
           const replyDisplayName = replyIdentity.displayName ?? replyIdentity.username;
           return (
-            <div className="flex items-center gap-1 mb-1 ml-[-4px] opacity-80 hover:opacity-100 cursor-pointer group/reply">
+            <div className="flex items-center gap-1 mb-1 ml-[-4px] opacity-80 hover:opacity-100 group/reply">
               <Avatar src={replyIdentity.avatar} name={replyDisplayName} size={16} user={replyIdentity} />
               <Username
                 user={replyIdentity} username={replyDisplayName}
                 className="text-[14px] font-bold text-txt-primary hover:underline"
               />
-              <span className="text-[14px] text-txt-message truncate max-w-[400px] hover:text-txt-primary">
-                {message.replyTo.content ? renderInlineWithMentions(message.replyTo.content) : ''}
-              </span>
+              <button
+                type="button"
+                onClick={() => onJumpToMessage?.(message.replyTo!.id)}
+                aria-label="Ir para a mensagem original"
+                className="min-w-0 text-left text-[14px] text-txt-message truncate max-w-[400px] hover:text-txt-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300 rounded"
+              >
+                <span className="pointer-events-none">{message.replyTo.content ? renderInlineWithMentions(message.replyTo.content) : 'Ver mensagem original'}</span>
+              </button>
             </div>
           );
         })()}
 
-        {(isFirstInGroup || message.replyTo) && (
+        {message.replyToId && !message.replyTo && (
+          <p className="mb-1 text-xs text-txt-tertiary">A mensagem original não está disponível.</p>
+        )}
+
+        {(isFirstInGroup || message.replyToId) && (
           <div className="flex items-center gap-2 mb-0.5">
             <span onClick={handleUsernameClick}>
               <Username

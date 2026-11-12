@@ -174,7 +174,7 @@ export class BackspaceApiClient {
     update: (id: string, data: UpdateChannelRequest) => Promise<Channel>;
     delete: (id: string) => Promise<{ success: boolean }>;
     messages: (id: string, before?: string, limit?: number) => Promise<MessageWithUser[]>;
-    messagesAround: (id: string, messageId: string) => Promise<MessageWithUser[]>;
+    messagesAround: (id: string, messageId: string, signal?: AbortSignal) => Promise<MessageWithUser[]>;
     sendMessage: (channelId: string, data: CreateMessageRequest) => Promise<MessageWithUser>;
     getOverrides: (channelId: string) => Promise<{ channelId: string; targetType: string; targetId: string; allow: string; deny: string }[]>;
     putOverride: (channelId: string, data: { targetType: string; targetId: string; allow: string; deny: string }) => Promise<{ success: boolean }>;
@@ -206,7 +206,7 @@ export class BackspaceApiClient {
     createGroup: (data: CreateGroupDmRequest) => Promise<DmChannel>;
     close: (id: string) => Promise<{ success: boolean }>;
     messages: (id: string, before?: string, limit?: number) => Promise<DmMessageWithUser[]>;
-    messagesAround: (id: string, messageId: string) => Promise<DmMessageWithUser[]>;
+    messagesAround: (id: string, messageId: string, signal?: AbortSignal) => Promise<DmMessageWithUser[]>;
     sendMessage: (id: string, data: CreateDmMessageRequest) => Promise<DmMessageWithUser>;
     updateMessage: (id: string, data: UpdateMessageRequest) => Promise<DmMessageWithUser>;
     deleteMessage: (id: string) => Promise<{ success: boolean }>;
@@ -376,6 +376,7 @@ export class BackspaceApiClient {
       path: string,
       body?: unknown,
       requireAuth = true,
+      signal?: AbortSignal,
     ): Promise<T> {
       const headers: Record<string, string> = {};
 
@@ -409,10 +410,11 @@ export class BackspaceApiClient {
           method,
           headers,
           body: body ? JSON.stringify(body) : undefined,
-          signal: controller.signal,
+          signal: signal ? AbortSignal.any([controller.signal, signal]) : controller.signal,
         });
       } catch (err) {
         clearTimeout(timeoutId);
+        if (signal?.aborted) throw err;
         if (err instanceof DOMException && err.name === 'AbortError') {
           throw new Error('Request timed out');
         }
@@ -549,10 +551,10 @@ export class BackspaceApiClient {
         params.set('limit', String(limit));
         return request<MessageWithUser[]>('GET', `/channels/${id}/messages?${params}`);
       },
-      messagesAround: (id: string, messageId: string) => {
+      messagesAround: (id: string, messageId: string, signal?: AbortSignal) => {
         const params = new URLSearchParams();
         params.set('messageId', messageId);
-        return request<MessageWithUser[]>('GET', `/channels/${id}/messages/around?${params}`);
+        return request<MessageWithUser[]>('GET', `/channels/${id}/messages/around?${params}`, undefined, true, signal);
       },
       sendMessage: (channelId: string, data: CreateMessageRequest) =>
         request<MessageWithUser>('POST', `/channels/${channelId}/messages`, data),
@@ -605,10 +607,10 @@ export class BackspaceApiClient {
         params.set('limit', String(limit));
         return request<DmMessageWithUser[]>('GET', `/dm/${id}/messages?${params}`);
       },
-      messagesAround: (id: string, messageId: string) => {
+      messagesAround: (id: string, messageId: string, signal?: AbortSignal) => {
         const params = new URLSearchParams();
         params.set('messageId', messageId);
-        return request<DmMessageWithUser[]>('GET', `/dm/${id}/messages/around?${params}`);
+        return request<DmMessageWithUser[]>('GET', `/dm/${id}/messages/around?${params}`, undefined, true, signal);
       },
       sendMessage: (id: string, data: CreateDmMessageRequest) =>
         request<DmMessageWithUser>('POST', `/dm/${id}/messages`, data),

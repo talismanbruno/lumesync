@@ -24,6 +24,11 @@ vi.mock('../utils/snowflake.js', () => ({
   setWorkerId: vi.fn(),
 }));
 
+vi.mock('../config.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../config.js')>();
+  return { ...actual, config: { ...actual.config, domain: undefined } };
+});
+
 vi.mock('../utils/federationAuth.js', async (importActual) => {
   const actual = await importActual<typeof import('../utils/federationAuth.js')>();
   return { ...actual, getOurOrigin: () => 'https://home.test' };

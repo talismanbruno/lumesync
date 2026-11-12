@@ -15,6 +15,7 @@ interface ScreenShareSettingsPopoverProps {
   open: boolean;
   onClose: () => void;
   anchorRef: React.RefObject<HTMLElement | null>;
+  placement?: 'top' | 'bottom';
 }
 
 const MODES: { value: ScreenShareConfig['mode']; label: string }[] = [
@@ -46,7 +47,7 @@ function formatKbps(kbps: number): string {
     : `${kbps} kbps`;
 }
 
-export function ScreenShareSettingsPopover({ open, onClose, anchorRef }: ScreenShareSettingsPopoverProps) {
+export function ScreenShareSettingsPopover({ open, onClose, anchorRef, placement = 'top' }: ScreenShareSettingsPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const portalContainer = usePortalContainer();
   const config = useVoiceStore((s) => s.screenShareConfig);
@@ -56,7 +57,7 @@ export function ScreenShareSettingsPopover({ open, onClose, anchorRef }: ScreenS
   const limits = useSettingsStore((s) => s.streamingLimits);
 
   const { style } = useFloatingPosition(anchorRef, popoverRef, {
-    placement: 'top',
+    placement,
     offset: 12,
     enabled: open,
   });

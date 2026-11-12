@@ -2,13 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { and, eq } from 'drizzle-orm';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as schema from '../db/schema.js';
-import { signJwt } from '../utils/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 type TestDb = ReturnType<typeof drizzle<typeof schema>>;
@@ -112,70 +110,23 @@ afterEach(async () => {
   fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
 });
 
-describe('GET /api/uploads/:filename private attachment authorization', () => {
-  it('rejects anonymous and non-member access to a channel attachment', async () => {
-    const anonymous = await app.inject({ method: 'GET', url: `/api/uploads/${CHANNEL_FILE}` });
-    expect(anonymous.statusCode).toBe(401);
-
-    const outsiderToken = signJwt({ userId: OUTSIDER_ID, username: 'outsider' });
-    const outsider = await app.inject({
-      method: 'GET', url: `/api/uploads/${CHANNEL_FILE}`,
-      headers: { authorization: `Bearer ${outsiderToken}` },
-    });
-    expect(outsider.statusCode).toBe(403);
+describe('GET /api/uploads/:filename shareable attachment links', () => {
+  it.each([
+    [CHANNEL_FILE, 'channel secret'],
+    [DM_FILE, 'dm secret'],
+    [CHANNEL_THUMB, 'thumbnail'],
+  ])('serves %s without a session', async (filename, body) => {
+    const response = await app.inject({ method: 'GET', url: `/api/uploads/${filename}` });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe(body);
+    expect(response.headers['cache-control']).toContain('public');
   });
 
-  it('serves a channel attachment and its thumbnail to an authorized reader', async () => {
-    const token = signJwt({ userId: OWNER_ID, username: 'owner' });
-    const cookie = `lume_media_token=${encodeURIComponent(token)}`;
-
-    const attachment = await app.inject({
-      method: 'GET', url: `/api/uploads/${CHANNEL_FILE}`, headers: { cookie },
-    });
-    expect(attachment.statusCode).toBe(200);
-    expect(attachment.body).toBe('channel secret');
-    expect(attachment.headers['cache-control']).toBe('private, no-store');
-
-    const thumbnail = await app.inject({
-      method: 'GET', url: `/api/uploads/${CHANNEL_THUMB}`, headers: { cookie },
-    });
-    expect(thumbnail.statusCode).toBe(200);
-    expect(thumbnail.body).toBe('thumbnail');
-    expect(thumbnail.headers['content-type']).toContain('image/png');
-  });
-
-  it('rejects a non-member and serves a member of a DM', async () => {
-    const outsiderToken = signJwt({ userId: OUTSIDER_ID, username: 'outsider' });
-    const outsider = await app.inject({
-      method: 'GET', url: `/api/uploads/${DM_FILE}`,
-      headers: { authorization: `Bearer ${outsiderToken}` },
-    });
-    expect(outsider.statusCode).toBe(403);
-
-    testDb.insert(schema.dmMembers).values({ dmChannelId: 'private-dm', userId: OUTSIDER_ID }).run();
-    const newlyAuthorized = await app.inject({
-      method: 'GET', url: `/api/uploads/${DM_FILE}`,
-      headers: { authorization: `Bearer ${outsiderToken}` },
-    });
-    expect(newlyAuthorized.statusCode).toBe(200);
-
-    testDb.delete(schema.dmMembers).where(and(
-      eq(schema.dmMembers.dmChannelId, 'private-dm'),
-      eq(schema.dmMembers.userId, OUTSIDER_ID),
-    )).run();
-    const revoked = await app.inject({
-      method: 'GET', url: `/api/uploads/${DM_FILE}`,
-      headers: { authorization: `Bearer ${outsiderToken}` },
-    });
-    expect(revoked.statusCode).toBe(403);
-
-    const ownerToken = signJwt({ userId: OWNER_ID, username: 'owner' });
-    const member = await app.inject({
-      method: 'GET', url: `/api/uploads/${DM_FILE}`,
-      headers: { authorization: `Bearer ${ownerToken}` },
-    });
-    expect(member.statusCode).toBe(200);
-    expect(member.body).toBe('dm secret');
+  it('can force download of an otherwise inline image and rejects traversal', async () => {
+    const download = await app.inject({ method: 'GET', url: `/api/uploads/${CHANNEL_THUMB}?download=1` });
+    expect(download.headers['content-disposition']).toMatch(/^attachment;/);
+    const traversal = await app.inject({ method: 'GET', url: '/api/uploads/%2E%2E%2Favatar.png' });
+    expect(traversal.statusCode).toBe(404);
   });
 
   it('preserves anonymous access for unlinked profile and space assets', async () => {

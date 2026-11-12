@@ -3,8 +3,7 @@ import React from 'react';
 import { useUIStore } from '../../stores/uiStore';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useSpaceStore, getChannelOrigin, getMyUserIdForOrigin } from '../../stores/spaceStore';
-import { wsSend } from '../../hooks/useWebSocket';
-import { handleMuteAction, handleDeafenAction } from '../../utils/voiceActions';
+import { handleMuteAction, handleDeafenAction, handleDisconnectAction } from '../../utils/voiceActions';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
 
 export function MobileVoiceMiniBar() {
@@ -12,12 +11,13 @@ export function MobileVoiceMiniBar() {
   const mobileStack = useUIStore((s) => s.mobileStack);
 
   const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
+  const activeDmCall = useVoiceStore((s) => s.activeDmCall);
+  const participants = useVoiceStore((s) => s.participants);
   const isMuted = useVoiceStore((s) => s.isMuted);
   const isDeafened = useVoiceStore((s) => s.isDeafened);
   const spaceMutedUserIds = useVoiceStore((s) => s.spaceMutedUserIds);
   const spaceDeafenedUserIds = useVoiceStore((s) => s.spaceDeafenedUserIds);
   const voiceUsers = useVoiceStore((s) => s.voiceUsers);
-  const leaveVoice = useVoiceStore((s) => s.leaveVoice);
 
   const channels = useSpaceStore((s) => s.channels);
   const dmChannels = useSpaceStore((s) => s.dmChannels);
@@ -27,32 +27,32 @@ export function MobileVoiceMiniBar() {
   const isSpaceMuted = !!(myOriginId && spaceId && spaceMutedUserIds.has(`${spaceId}:${myOriginId}`));
   const isSpaceDeafened = !!(myOriginId && spaceId && spaceDeafenedUserIds.has(`${spaceId}:${myOriginId}`));
 
-  if (!currentVoiceChannelId) return null;
+  const callChannelId = activeDmCall?.dmChannelId ?? currentVoiceChannelId;
+  if (!callChannelId) return null;
 
-  // Don't show mini-bar if voice full-screen is on top of the stack
-  const topEntry = mobileStack.length > 0 ? mobileStack[mobileStack.length - 1] : undefined;
-  const topScreen = topEntry?.screen ?? null;
-  if (topScreen === 'voice-full') return null;
+  const topEntry = mobileStack.at(-1);
+  if (topEntry?.screen === 'voice-full' || (
+    topEntry?.screen === 'channel-chat' && topEntry.params?.channelId === callChannelId
+  )) return null;
 
-  // Resolve channel name
-  const isDmCall = currentVoiceChannelId.startsWith('dm-');
-  let channelName = 'Voice Call';
-  if (isDmCall) {
-    const dmId = currentVoiceChannelId.replace('dm-', '');
-    const dm = dmChannels.find(d => d.id === dmId);
-    if (dm) channelName = 'DM Call';
-  } else {
-    const ch = channels.find(c => c.id === currentVoiceChannelId);
-    if (ch) channelName = ch.name;
-  }
-
-  const participantCount = voiceUsers.get(currentVoiceChannelId)?.length ?? 0;
+  const channelName = activeDmCall
+    ? dmChannels.find(d => d.id === callChannelId)?.name || uiText("Chamada privada")
+    : channels.find(c => c.id === callChannelId)?.name || uiText("Voice Call");
+  const participantCount = participants.length || (voiceUsers.get(callChannelId)?.length ?? 0);
+  const conversationSpaceId = activeDmCall ? '@me' : spaceId;
+  const openCall = () => {
+    if (conversationSpaceId) {
+      pushMobileScreen('channel-chat', { channelId: callChannelId, spaceId: conversationSpaceId });
+    } else {
+      pushMobileScreen('voice-full');
+    }
+  };
 
   return (
     <div className="glass-bubble mx-2 mb-1 rounded-2xl flex items-center gap-2 px-3 py-2 shrink-0">
       {/* Tap to expand */}
       <button
-        onClick={() => pushMobileScreen('voice-full')}
+        onClick={openCall}
         className="flex-1 flex items-center gap-2 min-w-0"
       >
         <div className="w-8 h-8 rounded-full bg-accent-mint/20 flex items-center justify-center shrink-0">
@@ -105,19 +105,7 @@ export function MobileVoiceMiniBar() {
         </button>
 
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            const { activeDmCall, disconnectFn, federatedCallId, callOrigin } = useVoiceStore.getState();
-            if (activeDmCall) {
-              const origin = callOrigin || getChannelOrigin(activeDmCall.dmChannelId);
-              wsSend({ type: 'dm_call_end', dmChannelId: activeDmCall.dmChannelId, federatedCallId }, origin);
-              useVoiceStore.getState().setActiveDmCall(null);
-            } else if (currentVoiceChannelId) {
-              wsSend({ type: 'voice_leave' }, getChannelOrigin(currentVoiceChannelId));
-              leaveVoice();
-            }
-            if (disconnectFn) disconnectFn();
-          }}
+          onClick={handleDisconnectAction}
           className="lume-call-disconnect w-8 h-8 rounded-full flex items-center justify-center transition-colors"
           aria-label={uiText("Sair da chamada")}
         >

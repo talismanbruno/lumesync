@@ -103,9 +103,9 @@ export function UserSettingsModal() {
       <SettingsSectionsProvider>
       <div className="lume-settings-shell flex h-full">
         {/* Desktop Sidebar */}
-        <div className="lume-settings-nav hidden md:flex w-64 flex-shrink-0 flex-col p-4 gap-3">
+        <div className="lume-settings-nav hidden md:flex w-64 min-h-0 flex-shrink-0 flex-col p-4 gap-3">
           {/* User card */}
-          <button type="button" aria-label="Personalizar perfil" onClick={() => handleTabClick('profile')} className="lume-settings-identity p-3 flex items-center gap-3 text-left">
+          <button type="button" aria-label="Personalizar perfil" onClick={() => handleTabClick('profile')} className="lume-settings-identity shrink-0 p-3 flex items-center gap-3 text-left">
             <Avatar
               src={user?.avatar}
               name={user?.displayName || user?.username || ''}
@@ -120,7 +120,8 @@ export function UserSettingsModal() {
           </button>
 
           {/* Nav list */}
-          <div className="lume-settings-orbit-map p-2 flex-1 flex flex-col">
+          <div className="lume-settings-orbit-map p-2 flex-1 min-h-0 overflow-y-auto scrollbar-thin">
+            <div className="min-h-full flex flex-col">
             <div className="text-[9px] font-bold text-cyan-300/55 uppercase tracking-[0.2em] px-3 py-2">{uiText("Minha órbita")}</div>
             <button onClick={() => handleTabClick('account')} className={tabClass('account')}>{uiText("Identidade")}</button>
             <button onClick={() => handleTabClick('profile')} className={tabClass('profile')}>Personalização</button>
@@ -145,12 +146,13 @@ export function UserSettingsModal() {
             <div className="flex-1" />
 
             <div className="border-t border-white/[0.04] my-2 mx-2" />
+            <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
             <button
               onClick={handleLogout}
               className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
             >
               {uiText("Sair")}</button>
-            <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
+            </div>
           </div>
         </div>
 
@@ -194,12 +196,12 @@ export function UserSettingsModal() {
               )}
 
               <div className="border-t border-white/[0.04] my-2 mx-2" />
+              <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-txt-danger hover:bg-accent-rose/10 transition-colors"
               >
                 {uiText("Sair")}</button>
-            <button type="button" onClick={() => openModal('whatsNew')} className="lume-settings-whats-new"><span>✦ O que há de novo</span><span>Novo</span></button>
             </div>
           </div>
         )}

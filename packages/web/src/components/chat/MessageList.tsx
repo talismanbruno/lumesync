@@ -68,6 +68,7 @@ function shouldShowDateDivider(prev: MessageWithUser | undefined, curr: MessageW
 export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: MessageListProps) {
   const messages = useChatStore((s) => s.messages.get(channelId)) ?? EMPTY_MESSAGES;
   const loadMessages = useChatStore((s) => s.loadMessages);
+  const viewingOlderMessages = useChatStore((s) => s.aroundChannels?.has(channelId) ?? false);
   const loadMoreMessages = useChatStore((s) => s.loadMoreMessages);
   const loadMessagesAround = useChatStore((s) => s.loadMessagesAround);
   const isLoading = useChatStore((s) => s.isLoading);
@@ -76,6 +77,14 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
   const saveScrollPosition = useChatStore((s) => s.saveScrollPosition);
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [replyJump, setReplyJump] = useState<{ channelId: string; id: string } | null>(null);
+  const jumpCompleteRef = useRef(onJumpComplete);
+  const clearJumpHighlightRef = useRef<(() => void) | undefined>(undefined);
+  jumpCompleteRef.current = onJumpComplete;
+  const requestReplyJump = useCallback((id: string) => setReplyJump({ channelId, id }), [channelId]);
+  useEffect(() => {
+    setReplyJump(previous => previous?.channelId === channelId ? previous : null);
+  }, [channelId]);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const isNearBottomRef = useRef(true);
@@ -298,10 +307,10 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
   useEffect(() => {
     if (messages.length > 0 && isNearBottom) {
       clearTimeout(ackTimerRef.current);
-      ackTimerRef.current = setTimeout(() => ackChannel(channelId), 200);
+      if (!viewingOlderMessages) ackTimerRef.current = setTimeout(() => ackChannel(channelId), 200);
     }
     return () => clearTimeout(ackTimerRef.current);
-  }, [channelId, messages.length, lastMessageId, isNearBottom, ackChannel]);
+  }, [channelId, messages.length, lastMessageId, isNearBottom, viewingOlderMessages, ackChannel]);
 
   // Save scroll anchor (tracked by handleScroll) when leaving a channel, then reset tracking
   useEffect(() => {
@@ -371,7 +380,7 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
       const savedMsgId = useChatStore.getState().scrollPositions.get(channelId);
       requestAnimationFrame(() => {
         const container = containerRef.current;
-        if (!container) return;
+        if (!container || currentChannelIdRef.current !== channelId || smoothScrollIntentRef.current === 'message') return;
         if (savedMsgId) {
           const el = document.getElementById(`msg-${savedMsgId}`);
           if (el) {
@@ -481,36 +490,63 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
     };
   }, [channelId]);
 
+  useEffect(() => () => clearJumpHighlightRef.current?.(), [channelId]);
+
   // Jump-to-message: scroll to target and highlight
   useEffect(() => {
-    if (!jumpToMessageId) return;
+    const fromReply = replyJump?.channelId === channelId;
+    const targetId = fromReply ? replyJump.id : jumpToMessageId;
+    if (!targetId) return;
+    const controller = new AbortController();
+    let frame = 0;
+    const complete = () => {
+      if (fromReply) setReplyJump(null);
+      else jumpCompleteRef.current?.();
+    };
+    // Loading old messages must not trigger the live-message bottom pin.
+    isAtBottomRef.current = false;
+    setIsAtBottom(false);
+    beginSmoothScrollIntent('message');
 
     const scrollToMessage = () => {
-      const el = document.getElementById(`msg-${jumpToMessageId}`);
-      if (el) {
+      if (controller.signal.aborted || currentChannelIdRef.current !== channelId) return false;
+      const el = document.getElementById(`msg-${targetId}`);
+      if (el && containerRef.current?.contains(el)) {
         beginSmoothScrollIntent('message');
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+        clearJumpHighlightRef.current?.();
         el.classList.add('search-highlight');
-        setTimeout(() => el.classList.remove('search-highlight'), 2000);
-        onJumpComplete?.();
+        const timer = setTimeout(() => clearHighlight(), 2000);
+        const clearHighlight = () => {
+          clearTimeout(timer);
+          el.classList.remove('search-highlight');
+          clearJumpHighlightRef.current = undefined;
+        };
+        clearJumpHighlightRef.current = clearHighlight;
+        complete();
         return true;
       }
       return false;
     };
 
     // Check if the message is already in the cache
-    if (scrollToMessage()) return;
-
-    // Not in cache — load messages around the target
-    loadMessagesAround(channelId, jumpToMessageId).then(() => {
-      // Wait for React to render the new messages
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scrollToMessage();
+    if (!scrollToMessage()) {
+      // Server channels and private groups use their respective history endpoints.
+      void loadMessagesAround(channelId, targetId, controller.signal).then(() => {
+        if (controller.signal.aborted || currentChannelIdRef.current !== channelId) return;
+        frame = requestAnimationFrame(() => {
+          frame = requestAnimationFrame(() => {
+            if (controller.signal.aborted || currentChannelIdRef.current !== channelId) return;
+            if (!scrollToMessage()) {
+              useUIStore.getState().addToast('A mensagem original não está disponível.', 'info');
+              complete();
+            }
+          });
         });
       });
-    });
-  }, [jumpToMessageId, channelId, loadMessagesAround, onJumpComplete, beginSmoothScrollIntent]);
+    }
+    return () => { controller.abort(); cancelAnimationFrame(frame); };
+  }, [jumpToMessageId, replyJump, channelId, loadMessagesAround, beginSmoothScrollIntent]);
 
   const handleScroll = useCallback(async () => {
     const container = containerRef.current;
@@ -617,6 +653,7 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
     // upper bound and fire a spurious load during a rubber-band gesture.
     if (
       !suppressLoadMore &&
+      smoothScrollIntentRef.current !== 'message' &&
       container.scrollTop >= 0 &&
       container.scrollTop < PAGINATION_SLOT_HEIGHT_PX + 50 &&
       hasMore &&
@@ -748,6 +785,7 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
                     isCompact={!isFirstInGroup}
                     isFirstInGroup={isFirstInGroup}
                     previousMessageId={realPrevId}
+                    onJumpToMessage={requestReplyJump}
                   />
                 )}
               </React.Fragment>
@@ -779,11 +817,18 @@ export function MessageList({ channelId, jumpToMessageId, onJumpComplete }: Mess
         </div>
       )}
 
-      {!isNearBottom && messages.length > 0 && (
+      {(viewingOlderMessages || !isNearBottom) && messages.length > 0 && (
         <button
-          onClick={() => {
-            beginSmoothScrollIntent('bottom');
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+          onClick={async () => {
+            if (viewingOlderMessages) {
+              await loadMessages(channelId, true, true);
+              if (currentChannelIdRef.current !== channelId || useChatStore.getState().aroundChannels?.has(channelId)) return;
+            }
+            requestAnimationFrame(() => {
+              if (currentChannelIdRef.current !== channelId) return;
+              beginSmoothScrollIntent('bottom');
+              bottomRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+            });
           }}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[120] glass-bubble px-4 py-2 flex items-center gap-2 rounded-full text-txt-secondary hover:text-txt-primary transition-all animate-fade-in cursor-pointer"
         >

@@ -1,7 +1,6 @@
 import { t as uiText } from '../../i18n';
 import React, { useEffect } from 'react';
 import { useUIStore } from '../../stores/uiStore';
-import { useVoiceStore } from '../../stores/voiceStore';
 import { useLocation } from 'react-router-dom';
 import { MobileScreenStack } from './MobileScreenStack';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -134,7 +133,6 @@ export function MobileShell() {
   const popMobileScreen = useUIStore((s) => s.popMobileScreen);
   const pushMobileScreen = useUIStore((s) => s.pushMobileScreen);
   const mobileStack = useUIStore((s) => s.mobileStack);
-  const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const location = useLocation();
 
   // Deep links and refreshes should open the matching root tab. Keep the
@@ -256,7 +254,7 @@ export function MobileShell() {
       </React.Suspense>
 
       {/* Voice mini-bar — shown when in a voice call */}
-      {currentVoiceChannelId && <MobileVoiceMiniBar />}
+      <MobileVoiceMiniBar />
 
       {/* Bottom nav — MobileBottomNav hides itself when stack is non-empty */}
       <MobileBottomNav />

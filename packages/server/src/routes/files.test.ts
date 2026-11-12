@@ -73,6 +73,9 @@ async function buildApp(): Promise<FastifyInstance> {
   const { filesRoutes } = await import('./files.js');
   const f = Fastify();
   await f.register(filesRoutes);
+  await f.register((await import('./uploads.js')).uploadRoutes);
+  await f.register((await import('./dm.js')).dmRoutes);
+  await f.register((await import('./search.js')).searchRoutes);
   return f;
 }
 
@@ -303,7 +306,7 @@ describe('POST /api/files — tus upload endpoint', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('completes an upload end-to-end and returns Attachment JSON in final PATCH response', async () => {
+  it('uploads, sends and shares an attachment while keeping DM history private', async () => {
     const token = signJwt({ userId: USER_A_ID, username: 'user_a' });
     const body = Buffer.from('hello world\n'); // 12 bytes
 
@@ -356,6 +359,57 @@ describe('POST /api/files — tus upload endpoint', () => {
 
     // The committed file should exist in the upload dir.
     expect(fs.existsSync(path.join(tmpDir, json.filename))).toBe(true);
+
+    const now = Date.now();
+    const channelId = 'sharing-dm';
+    const outsiderId = 'user-c';
+    testDb.insert(schema.users).values({ id: outsiderId, username: 'user_c', passwordHash: 'x', createdAt: now }).run();
+    testDb.insert(schema.dmChannels).values({ id: channelId, createdAt: now }).run();
+    testDb.insert(schema.dmMembers).values([
+      { dmChannelId: channelId, userId: USER_A_ID },
+      { dmChannelId: channelId, userId: USER_B_ID },
+    ]).run();
+    const tokenB = signJwt({ userId: USER_B_ID, username: 'user_b' });
+    const tokenC = signJwt({ userId: outsiderId, username: 'user_c' });
+    const messagesUrl = `/api/dm/${channelId}/messages`;
+    const sent = await app.inject({ method: 'POST', url: messagesUrl,
+      headers: { authorization: `Bearer ${token}` }, payload: { attachments: [json.id] } });
+    expect(sent.statusCode).toBe(201);
+    const originalId = sent.json().id;
+    const readByB = await app.inject({ url: messagesUrl, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(readByB.statusCode).toBe(200);
+    const attachmentUrl = `/api/uploads/${readByB.json()[0].attachments[0].filename}`;
+    expect((await app.inject({ url: attachmentUrl, headers: { authorization: `Bearer ${tokenB}` } })).rawPayload).toEqual(body);
+    const download = await app.inject({ url: attachmentUrl + '?download=1' });
+    expect(download.rawPayload).toEqual(body);
+    expect(download.headers['content-disposition']).toMatch(/^attachment;/);
+    for (const session of [token, tokenB, tokenC]) {
+      expect((await app.inject({ url: attachmentUrl, headers: { authorization: `Bearer ${session}` } })).rawPayload).toEqual(body);
+    }
+    expect((await app.inject({ url: messagesUrl, headers: { authorization: `Bearer ${tokenC}` } })).statusCode).toBe(403);
+    expect((await app.inject({ url: messagesUrl })).statusCode).toBe(401);
+
+    // Put the attachment outside the first page, as in a real old reply.
+    testDb.update(schema.dmMessages).set({ createdAt: now - 600_000 })
+      .where(eq(schema.dmMessages.id, originalId)).run();
+    testDb.insert(schema.dmMessages).values(Array.from({ length: 55 }, (_, index) => ({
+      id: `sharing-history-${index}`, dmChannelId: channelId, userId: USER_A_ID,
+      content: 'Histórico de teste', createdAt: now - 300_000 + index,
+    }))).run();
+
+    const reply = await app.inject({ method: 'POST', url: messagesUrl,
+      headers: { authorization: `Bearer ${tokenB}` }, payload: { content: 'Recebido', replyToId: originalId } });
+    expect(reply.statusCode).toBe(201);
+    expect(reply.json().replyTo.id).toBe(originalId);
+    const recent = await app.inject({ url: messagesUrl, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(recent.json().some((message: { id: string }) => message.id === originalId)).toBe(false);
+    const around = await app.inject({ url: messagesUrl + `/around?messageId=${originalId}&limit=1`,
+      headers: { authorization: `Bearer ${tokenB}` } });
+    expect(around.statusCode).toBe(200);
+    expect(around.json().map((message: { id: string }) => message.id)).toEqual([originalId]);
+    expect(around.json()[0].attachments[0].id).toBe(json.id);
+    expect((await app.inject({ url: messagesUrl + `/around?messageId=${originalId}`,
+      headers: { authorization: `Bearer ${tokenC}` } })).statusCode).toBe(403);
   });
 
   it('oversize Upload-Length returns 413', async () => {

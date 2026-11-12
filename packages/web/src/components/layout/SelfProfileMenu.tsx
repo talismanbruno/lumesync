@@ -72,7 +72,7 @@ export function SelfProfileMenu({ user, onClose, onEdit }: { user: User; onClose
         <div className="lume-self-profile-body">
           <div className="lume-self-profile-avatar-row">
             <button type="button" aria-label="Ver perfil completo" onClick={viewProfile}>
-              <Avatar src={user.avatar} name={user.displayName || user.username} size={72} userId={user.id} avatarColor={user.avatarColor} customization={user.customization} status={user.status} statusLabel={status === 'offline' ? 'Invisível' : undefined} />
+              <Avatar showDecoration src={user.avatar} name={user.displayName || user.username} size={72} userId={user.id} avatarColor={user.avatarColor} customization={user.customization} status={user.status} statusLabel={status === 'offline' ? 'Invisível' : undefined} />
             </button>
             <button type="button" className="lume-self-status-bubble" onClick={() => { setDraftStatus(user.customStatus ?? ''); setStatusOpen(value => !value); }} aria-expanded={statusOpen}>{user.customStatus || '+ Adicionar status'}</button>
           </div>

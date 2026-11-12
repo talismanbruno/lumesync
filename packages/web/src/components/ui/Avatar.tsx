@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User, UserStatus, ProfileCustomization } from '@backspace/shared';
-import { cosmeticAvatarUrl, useCosmeticItem } from '../../stores/customizationStore';
+import { cosmeticAvatarUrl } from '../../stores/customizationStore';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useAuthStore } from '../../stores/authStore';
 import { useSpaceStore } from '../../stores/spaceStore';
@@ -24,19 +24,20 @@ interface AvatarProps {
   ring?: { width: number; color: string };
   avatarColor?: string | null;
   freezeAnimation?: boolean;
+  showDecoration?: boolean;
   customization?: ProfileCustomization | null;
 }
 
 const frozenAvatarCache = new Map<string, string>();
 
 function useFrozenAvatar(src: string | null, freeze: boolean): string | null {
-  const [frozenSrc, setFrozenSrc] = useState<string | null>(() => src ? frozenAvatarCache.get(src) ?? null : null);
+  const [frozen, setFrozen] = useState<{ original: string; still: string } | null>(null);
 
   useEffect(() => {
     if (!src || !freeze) return;
     const cached = frozenAvatarCache.get(src);
     if (cached) {
-      setFrozenSrc(cached);
+      setFrozen({ original: src, still: cached });
       return;
     }
 
@@ -47,22 +48,29 @@ function useFrozenAvatar(src: string | null, freeze: boolean): string | null {
       if (cancelled) return;
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = image.naturalWidth || 128;
-        canvas.height = image.naturalHeight || 128;
-        canvas.getContext('2d')?.drawImage(image, 0, 0);
+        const width = image.naturalWidth || 128;
+        const height = image.naturalHeight || 128;
+        const scale = Math.min(1, 256 / Math.max(width, height));
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        canvas.getContext('2d')?.drawImage(image, 0, 0, canvas.width, canvas.height);
         const still = canvas.toDataURL('image/webp', 0.9);
+        if (frozenAvatarCache.size >= 64) {
+          const oldest = frozenAvatarCache.keys().next().value;
+          if (oldest !== undefined) frozenAvatarCache.delete(oldest);
+        }
         frozenAvatarCache.set(src, still);
-        setFrozenSrc(still);
+        setFrozen({ original: src, still });
       } catch {
-        setFrozenSrc(src);
+        setFrozen({ original: src, still: src });
       }
     };
-    image.onerror = () => { if (!cancelled) setFrozenSrc(src); };
+    image.onerror = () => { if (!cancelled) setFrozen({ original: src, still: src }); };
     image.src = src;
     return () => { cancelled = true; };
   }, [src, freeze]);
 
-  return freeze ? frozenSrc : src;
+  return freeze && src ? frozenAvatarCache.get(src) ?? (frozen?.original === src ? frozen.still : null) : src;
 }
 
 const statusColors: Record<string, string> = {
@@ -105,7 +113,7 @@ function getDotMetrics(avatarSize: number, ringWidth: number = 0) {
   return { dot, gap, inset: avatarInset + ringWidth };
 }
 
-export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false, customization }: AvatarProps) {
+export function Avatar({ src, name, size = 40, status, statusLabel, className = '', onClick, user, userId, ring, avatarColor, freezeAnimation = false, showDecoration = false, customization }: AvatarProps) {
   const openUserProfile = useUIStore((s) => s.openUserProfile);
   const identityKey = user ? canonicalUserKey(user) : userId ?? null;
   const cachedCustomization = useSpaceStore(state => identityKey ? state.userViews?.get(identityKey)?.user.customization : undefined);
@@ -113,9 +121,8 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
   const appearance = customization !== undefined ? customization : selfCustomization !== undefined ? selfCustomization : cachedCustomization !== undefined ? cachedCustomization : user?.customization;
   const reducedMotion = useReducedMotion();
   const freeze = freezeAnimation || reducedMotion;
-  const decorationItem = useCosmeticItem(appearance?.avatarDecorationId);
-  const decoration = (freeze ? decorationItem?.staticSrc : decorationItem?.animatedSrc ?? decorationItem?.staticSrc)
-    ?? cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze);
+  // Keep one source per decoration and motion preference, including while the catalog loads.
+  const decoration = showDecoration ? cosmeticAvatarUrl(appearance?.avatarDecorationId, !freeze) : undefined;
   const initials = name.charAt(0).toUpperCase();
   const fontPx = Math.round(size * 0.4);
   const gradient = getAvatarGradient(userId ?? user?.homeUserId ?? user?.id, name, avatarColor ?? user?.avatarColor);
@@ -187,7 +194,17 @@ export function Avatar({ src, name, size = 40, status, statusLabel, className = 
           {initials}
         </div>
       </div>
-      {decoration && <img key={decoration} src={decoration} alt="" aria-hidden="true" className="lume-avatar-decoration" style={{ position: 'absolute', pointerEvents: 'none', width: '120%', height: '120%', maxWidth: 'none', left: '-10%', top: '-10%' }} loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />}
+      {decoration && (
+        <img
+          key={decoration}
+          src={decoration}
+          alt=""
+          aria-hidden="true"
+          className="lume-avatar-decoration"
+          loading="lazy"
+          onError={event => { event.currentTarget.hidden = true; }}
+        />
+      )}
       {/* Status dot — outside the masked div so it isn't clipped */}
       {status && (
         <div
