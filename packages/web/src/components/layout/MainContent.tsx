@@ -26,7 +26,6 @@ import { useCanonicalUserView } from '../../utils/userViewLookup';
 import type { User } from '@backspace/shared';
 import { Tooltip } from '../ui/Tooltip';
 import { OrbitalIcon } from '../ui/OrbitalIcon';
-import { joinVoiceChannel } from '../../utils/voice';
 import { SearchPopover } from '../chat/SearchPopover';
 import { isDmChannel, getChannelOrigin } from '../../stores/spaceStore';
 
@@ -35,7 +34,6 @@ export function MainContent() {
   const channels = useSpaceStore((s) => s.channels);
   const currentChannelId = useChatStore((s) => s.currentChannelId);
   const currentSpaceId = useSpaceStore((s) => s.currentSpaceId);
-  const currentVoiceChannelId = useVoiceStore((s) => s.currentVoiceChannelId);
   const showDms = useUIStore((s) => s.showDms);
   const location = useLocation();
   const isExplorePage = location.pathname === '/explore';
@@ -267,43 +265,7 @@ export function MainContent() {
   }
 
   if (isVoiceChannel) {
-    const isInThisChannel = currentVoiceChannelId === currentChannelId;
-
-    return (
-      <div className="flex-1 flex flex-col bg-surface-chat min-w-0 min-h-0 relative">
-        <div className="h-14 px-5 flex items-center justify-between border-b border-border-hard shrink-0 bg-surface-chat">
-          <div className="flex items-center gap-[10px]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-txt-tertiary">
-              <path d="M11 5L6 9H2V15H6L11 19V5ZM15.54 8.46C16.48 9.4 17 10.67 17 12S16.48 14.6 15.54 15.54L14.12 14.12C14.69 13.55 15 12.79 15 12S14.69 10.45 14.12 9.88L15.54 8.46Z" />
-            </svg>
-            <span className="font-bold text-[15px] tracking-[-0.02em] text-txt-primary">{channel.name}</span>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <TransferIndicator />
-            <MemberListToggleButton />
-          </div>
-        </div>
-
-        {isInThisChannel && <ServerVoiceView key={currentChannelId} channelId={currentChannelId} channelName={channel.name} />}
-        {!isInThisChannel && (
-          <div className="shrink-0 flex justify-center border-b border-border-soft bg-surface-base p-2">
-            <button
-              type="button"
-              onClick={() => joinVoiceChannel(currentChannelId, useVoiceStore.getState().connectFn ?? undefined)}
-              className="rounded-full bg-accent-primary px-4 py-2 text-sm font-semibold text-white hover:bg-accent-primary-hover"
-            >
-              {uiText("Join Voice")}
-            </button>
-          </div>
-        )}
-        {!isInThisChannel && (
-          <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
-            <MessageList channelId={currentChannelId} />
-            <MessageInput channelId={currentChannelId} channelName={channel.name} />
-          </div>
-        )}
-      </div>
-    );
+    return <ServerVoiceView key={currentChannelId} channelId={currentChannelId} channelName={channel.name} />;
   }
 
   return (

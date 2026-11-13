@@ -177,12 +177,12 @@ describe('private call panel stays exclusive to conversations', () => {
     expect(handleMuteAction).toHaveBeenCalledWith(false, false);
     expect(screen.getByRole('button', { name: 'Tela cheia' })).toBeVisible();
     expect(screen.queryByRole('textbox')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar conversa' }));
     expect(screen.getByText('Mensagens de server-voice')).toBeVisible();
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'rascunho do servidor' } });
     fireEvent.click(screen.getByRole('button', { name: 'Fechar chat' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar conversa' }));
     expect(screen.getByRole('textbox')).toBe(composer);
     expect(composer).toHaveValue('rascunho do servidor');
   });
@@ -194,7 +194,7 @@ describe('private call panel stays exclusive to conversations', () => {
     expect(container.querySelector('.lume-compact-call')).toBeNull();
     expect(screen.queryByTestId('voice-grid')).toBeNull();
     expect(screen.getByRole('button', { name: 'Join Voice' })).toBeVisible();
-    expect(screen.getByRole('textbox')).toBeVisible();
+    expect(screen.queryByRole('textbox')).toBeNull();
   });
 
   it('keeps the mobile panel only in private and group conversations', () => {

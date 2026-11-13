@@ -777,6 +777,44 @@
 .lume-mic-level span { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.06); transition: background-color 75ms; }
 .lume-mic-level span.is-active { background: rgb(var(--status-online)); }
 
+/* Original server voice layout; private call previews are scoped separately. */
+.lume-server-call-workspace {
+  container-type: inline-size;
+  container-name: server-call;
+}
+
+.lume-server-call-layout {
+  display: grid;
+  height: 100%;
+  grid-template-rows: minmax(190px, 42%) minmax(0, 1fr);
+}
+
+.lume-server-call-chat {
+  border-top: 1px solid rgb(var(--border-soft));
+  background: rgb(var(--bg-chat));
+}
+
+.lume-server-call-layout.is-chat-closed {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lume-server-call-workspace .lume-call-controls > div > button {
+  width: 34px;
+  height: 34px;
+}
+
+@container server-call (min-width: 760px) {
+  .lume-server-call-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .lume-server-call-chat {
+    border-top: 0;
+    border-left: 1px solid rgb(var(--border-soft));
+  }
+}
+
 .lume-compact-call {
   display: grid;
   flex: none;
