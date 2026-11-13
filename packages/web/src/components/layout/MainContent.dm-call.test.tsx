@@ -26,6 +26,7 @@ vi.mock('../chat/ExplorePage', () => ({ ExplorePage: () => null }));
 vi.mock('./TransferIndicator', () => ({ TransferIndicator: () => null }));
 
 import { MainContent } from './MainContent';
+import { MobileChatScreen } from './MobileChatScreen';
 import { useVoiceStore } from '../../stores/voiceStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
@@ -155,5 +156,54 @@ describe('conversation during private calls', () => {
     act(() => useVoiceStore.setState({ activeDmCall: null }));
     expect(screen.queryByRole('region', { name: 'Chamada' })).toBeNull();
     expect(screen.getByText('Mensagens de call-dm')).toBeVisible();
+  });
+});
+
+
+describe('private call panel stays exclusive to conversations', () => {
+  const enterServer = () => {
+    useUIStore.setState({ showDms: false });
+    useChatStore.setState({ currentChannelId: 'server-voice' });
+    useSpaceStore.setState({ currentSpaceId: 'server', channels: [{ id: 'server-voice', type: 'voice', name: 'Voz' }] as any });
+    useVoiceStore.setState({ activeDmCall: null, currentVoiceChannelId: 'server-voice' });
+  };
+
+  it('uses the full server grid with working controls and optional chat', () => {
+    enterServer();
+    const { container } = open();
+    expect(container.querySelector('.lume-compact-call')).toBeNull();
+    expect(screen.getByTestId('voice-grid')).toBeVisible();
+    fireEvent.click(screen.getByTitle('Silenciar microfone (M)'));
+    expect(handleMuteAction).toHaveBeenCalledWith(false, false);
+    expect(screen.getByRole('button', { name: 'Tela cheia' })).toBeVisible();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    expect(screen.getByText('Mensagens de server-voice')).toBeVisible();
+    const composer = screen.getByRole('textbox');
+    fireEvent.change(composer, { target: { value: 'rascunho do servidor' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }));
+    expect(screen.getByRole('textbox')).toBe(composer);
+    expect(composer).toHaveValue('rascunho do servidor');
+  });
+
+  it('does not show the private panel before joining a server voice room', () => {
+    enterServer();
+    useVoiceStore.setState({ currentVoiceChannelId: null });
+    const { container } = open();
+    expect(container.querySelector('.lume-compact-call')).toBeNull();
+    expect(screen.queryByTestId('voice-grid')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Join Voice' })).toBeVisible();
+    expect(screen.getByRole('textbox')).toBeVisible();
+  });
+
+  it('keeps the mobile panel only in private and group conversations', () => {
+    useChatStore.setState({ loadMessages: vi.fn() });
+    const { container, rerender } = render(<MobileChatScreen params={{ channelId: 'call-dm', spaceId: '@me' }} />);
+    expect(screen.getByRole('region', { name: 'Chamada' })).toBeVisible();
+    act(() => enterServer());
+    rerender(<MobileChatScreen params={{ channelId: 'server-voice', spaceId: 'server' }} />);
+    expect(container.querySelector('.lume-compact-call')).toBeNull();
+    expect(screen.getByRole('textbox')).toBeVisible();
   });
 });

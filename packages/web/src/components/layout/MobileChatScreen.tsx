@@ -29,9 +29,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
   const channelId = params?.channelId;
   const spaceId = params?.spaceId;
   const isDm = spaceId === '@me';
-  const isInCall = useVoiceStore(s => !!channelId && (isDm
-    ? s.activeDmCall?.dmChannelId === channelId
-    : s.currentVoiceChannelId === channelId));
+  const isInCall = useVoiceStore(s => isDm && !!channelId && s.activeDmCall?.dmChannelId === channelId);
 
   const loadMessages = useChatStore((s) => s.loadMessages);
   const setCurrentChannel = useChatStore((s) => s.setCurrentChannel);
@@ -122,7 +120,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
           </button>
         )}
       </header>
-      {channelId && <CompactCallPanel key={channelId} active={isInCall} roomId={channelId} privateCall={isDm} />}
+      {isDm && channelId && <CompactCallPanel key={channelId} active={isInCall} roomId={channelId} privateCall />}
 
       {/* Messages + floating composer.
           Mirrors the desktop pattern in `MainContent.tsx`: a single relative

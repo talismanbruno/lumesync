@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { MessageList } from '../chat/MessageList';
 import { MessageInput } from '../chat/MessageInput';
 import { CompactCallPanel } from '../voice/CompactCallPanel';
+import { ServerVoiceView } from '../voice/ServerVoiceView';
 import { FriendsPage } from '../chat/FriendsPage';
 import { ExplorePage } from '../chat/ExplorePage';
 import { Avatar } from '../ui/Avatar';
@@ -283,7 +284,7 @@ export function MainContent() {
           </div>
         </div>
 
-        <CompactCallPanel key={currentChannelId} active={isInThisChannel} roomId={currentChannelId} />
+        {isInThisChannel && <ServerVoiceView key={currentChannelId} channelId={currentChannelId} channelName={channel.name} />}
         {!isInThisChannel && (
           <div className="shrink-0 flex justify-center border-b border-border-soft bg-surface-base p-2">
             <button
@@ -295,10 +296,12 @@ export function MainContent() {
             </button>
           </div>
         )}
-        <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
-          <MessageList channelId={currentChannelId} />
-          <MessageInput channelId={currentChannelId} channelName={channel.name} />
-        </div>
+        {!isInThisChannel && (
+          <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
+            <MessageList channelId={currentChannelId} />
+            <MessageInput channelId={currentChannelId} channelName={channel.name} />
+          </div>
+        )}
       </div>
     );
   }
