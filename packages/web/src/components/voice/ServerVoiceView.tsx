@@ -22,6 +22,7 @@ export function ServerVoiceView({ channelId, channelName }: { channelId: string;
   const voiceFullscreen = useUIStore(s => s.voiceFullscreen);
   const setVoiceFullscreen = useUIStore(s => s.setVoiceFullscreen);
   const voiceContainerRef = useRef<HTMLDivElement>(null);
+  const isInThisChannel = currentVoiceChannelId === currentChannelId;
 
   useEffect(() => {
     const container = voiceContainerRef.current;
@@ -34,15 +35,13 @@ export function ServerVoiceView({ channelId, channelName }: { channelId: string;
       if (container && getVoiceFullscreenElement() === container) void exitVoiceFullscreen().catch(() => {});
       setVoiceFullscreen(false);
     };
-  }, [setVoiceFullscreen]);
+  }, [isInThisChannel, setVoiceFullscreen]);
 
   useEffect(() => {
     if (!voiceFullscreen && voiceContainerRef.current && getVoiceFullscreenElement() === voiceContainerRef.current) {
       void exitVoiceFullscreen().catch(() => {});
     }
   }, [voiceFullscreen]);
-
-    const isInThisChannel = currentVoiceChannelId === currentChannelId;
 
     if (!isInThisChannel) {
       return (

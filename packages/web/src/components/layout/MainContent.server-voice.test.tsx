@@ -98,6 +98,29 @@ describe('original server voice workspace with the real grid and player', () => 
     expect(attach).toHaveBeenLastCalledWith(container.querySelector('video'));
   });
 
+  it('synchronizes fullscreen after entering a room that was initially disconnected', () => {
+    useVoiceStore.setState({ currentVoiceChannelId: null });
+    const { container, unmount } = open();
+    expect(container.querySelector('[data-voice-fullscreen]')).toBeNull();
+    act(() => useVoiceStore.setState({ currentVoiceChannelId: 'voice' }));
+    const workspace = container.querySelector<HTMLElement>('[data-voice-fullscreen]')!;
+    const descriptor = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
+    workspace.requestFullscreen = vi.fn(async () => {
+      Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: workspace });
+      document.dispatchEvent(new Event('fullscreenchange'));
+    });
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Tela cheia' }));
+      expect(workspace.requestFullscreen).toHaveBeenCalled();
+      expect(useUIStore.getState().voiceFullscreen).toBe(true);
+      unmount();
+      expect(useUIStore.getState().voiceFullscreen).toBe(false);
+    } finally {
+      if (descriptor) Object.defineProperty(document, 'fullscreenElement', descriptor);
+      else Reflect.deleteProperty(document, 'fullscreenElement');
+    }
+  });
+
   it('opens the stream from the sidebar participant and keeps server screen-share controls', () => {
     const { container } = open();
     act(() => useChatStore.setState({ currentChannelId: 'text' }));
